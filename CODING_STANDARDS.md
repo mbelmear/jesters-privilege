@@ -9,7 +9,7 @@ These are non-negotiable, and a commit or pull request that breaks them is refus
 - **Tests are green.** The pre-commit hook and CI run Jest; CI also runs Playwright and Lighthouse. Logic in `src/lib/` keeps at least 90% line coverage.
 - **No `any`, explicit or implicit.** `strict` TypeScript rejects implicit `any`; ESLint rejects written `any`, any value that carries `any` in from a library (`JSON.parse`, `response.json()`), non-null assertions (`!`), and type assertions other than `as const` outside tests.
 - **Formatting.** Prettier, checked in CI.
-- **Colors and fonts come from design tokens.** ESLint rejects literal colors (hex, `rgb()`/`hsl()`/`oklch()` and friends), Tailwind arbitrary color and font-family values, and inline `font`/`fontFamily` styles anywhere in `src/` outside tests. Tokens live in `src/app/globals.css`.
+- **Colors and fonts come from design tokens.** ESLint rejects literal colors (hex, `rgb()`/`hsl()`/`oklch()` and friends), Tailwind's built-in palette (`bg-black`, `text-red-500`), Tailwind arbitrary color and font-family values, and inline `font`/`fontFamily` styles anywhere in `src/` outside tests. It also rejects `text-brand`: orange text uses `text-brand-display` (large) or `text-brand-ink` (small). Tokens live in `src/app/globals.css`.
 
 Reviewers skip these; the rules below are the ones that need judgement.
 
@@ -31,3 +31,5 @@ Reviewers skip these; the rules below are the ones that need judgement.
 - **Semantic HTML first.** Native elements (`button`, `a`, `nav`, `dialog`, headings in order) carry the behaviour; ARIA fills gaps no element covers. Every interactive element is reachable by keyboard and shows focus.
 - **Lists are keyed by identity**: a stable id such as the Episode number, never array index.
 - **Images go through `next/image` with real dimensions** and alt text that says what the picture shows (for a Fool's painting: who, and what they're doing).
+- **A library loads only where it's used.** A client library's provider wraps the sections that need it, never the root layout unless every page does: whatever the layout imports ships on every page and counts against the home page's Lighthouse budget.
+- **Animation goes through `MotionProvider`.** Animated sections use `m` components inside `src/components/motion-provider.tsx`, which loads Motion on demand, carries the reduced-motion setting, and applies the shared presets from `src/lib/motion.ts`.
