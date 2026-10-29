@@ -1,26 +1,209 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/*
+ * Design tokens: the one place every color, font, radius, and shadow is
+ * defined (motion presets live in src/lib/motion.ts; see below). A rebrand is
+ * a change to this file.
+ *
+ * Each color token holds its light and dark value together in `light-dark()`,
+ * so dark mode redefines the same names. Which value applies follows
+ * `color-scheme`: the system setting by default, or the visitor's choice
+ * written to `data-theme` on <html> before first paint (src/lib/theme.ts).
+ *
+ * Contrast rule: brand orange is for ornament and fills only. Large text in
+ * orange uses `brand-display` (3:1 or better); small orange text uses
+ * `brand-ink` (4.5:1 or better). Body text and links use `foreground` and
+ * `primary`. A fill of `brand` takes `on-brand` text.
+ */
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light dark;
+
+  /* Palette sampled from the logo. Private: components use the semantic
+     tokens below, never these. */
+  --palette-orange: #ed6913;
+  --palette-orange-deep: #d9590a;
+  --palette-orange-ink: #9c4208;
+  --palette-orange-bright: #f47a2a;
+  --palette-orange-glow: #f79a5c;
+  --palette-teal: #054f51;
+  --palette-teal-light: #8fd0cb;
+  --palette-parchment: #f7f1e3;
+  --palette-parchment-light: #fdfaf3;
+  --palette-parchment-shade: #e9e0cc;
+  --palette-parchment-edge: #d9cdb4;
+  --palette-ink: #172625;
+  --palette-ink-soft: #4f5e5b;
+  --palette-night: #0c1c1d;
+  --palette-night-raised: #14292a;
+  --palette-night-shade: #1d3536;
+  --palette-night-edge: #2c4748;
+  --palette-mist: #aeb8b2;
+  --palette-slate: #8a7f68;
+  --palette-slate-night: #5e7370;
+  --palette-red: #a3261b;
+  --palette-red-light: #f28b82;
+  --palette-black: #000000;
+
+  /* Surfaces and text */
+  --background: light-dark(var(--palette-parchment), var(--palette-night));
+  --foreground: light-dark(var(--palette-ink), var(--palette-parchment));
+  --card: light-dark(
+    var(--palette-parchment-light),
+    var(--palette-night-raised)
+  );
+  --card-foreground: var(--foreground);
+  --popover: var(--card);
+  --popover-foreground: var(--foreground);
+  --muted: light-dark(
+    var(--palette-parchment-shade),
+    var(--palette-night-shade)
+  );
+  --muted-foreground: light-dark(var(--palette-ink-soft), var(--palette-mist));
+
+  /* Teal carries links and primary actions */
+  --primary: light-dark(var(--palette-teal), var(--palette-teal-light));
+  --primary-foreground: light-dark(
+    var(--palette-parchment),
+    var(--palette-night)
+  );
+  --secondary: var(--muted);
+  --secondary-foreground: var(--foreground);
+
+  /* Highlight for the hovered or focused item in menus and lists */
+  --accent: var(--muted);
+  --accent-foreground: var(--foreground);
+
+  /* Brand orange */
+  --brand: light-dark(var(--palette-orange), var(--palette-orange-bright));
+  --on-brand: var(--palette-ink);
+  --brand-display: light-dark(
+    var(--palette-orange-deep),
+    var(--palette-orange-bright)
+  );
+  --brand-ink: light-dark(
+    var(--palette-orange-ink),
+    var(--palette-orange-glow)
+  );
+
+  /* Lines, fields, focus, errors, overlays */
+  --border: light-dark(
+    var(--palette-parchment-edge),
+    var(--palette-night-edge)
+  );
+  --input: light-dark(var(--palette-slate), var(--palette-slate-night));
+  --ring: var(--brand-display);
+  --destructive: light-dark(var(--palette-red), var(--palette-red-light));
+  --scrim: light-dark(
+    color-mix(in oklab, var(--palette-ink) 45%, transparent),
+    color-mix(in oklab, var(--palette-black) 60%, transparent)
+  );
+  --shadow-color: light-dark(
+    color-mix(in oklab, var(--palette-night) 14%, transparent),
+    color-mix(in oklab, var(--palette-black) 50%, transparent)
+  );
+
+  /* Shape: crisp, modern corners */
+  --radius: 0.25rem;
+}
+
+/* A remembered choice overrides the system setting. */
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+/* `dark:` follows the same rule as the tokens: a remembered choice, else the
+   system setting. Prefer a token; this is for the rare non-color change. */
+@custom-variant dark {
+  &:where([data-theme="dark"], [data-theme="dark"] *) {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:where(
+      :root:not([data-theme="light"]),
+      :root:not([data-theme="light"]) *
+    ) {
+      @slot;
+    }
+  }
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-brand: var(--brand);
+  --color-on-brand: var(--on-brand);
+  --color-brand-display: var(--brand-display);
+  --color-brand-ink: var(--brand-ink);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-destructive: var(--destructive);
+  --color-scrim: var(--scrim);
+
+  /* Fonts, self-hosted through next/font in src/app/fonts.ts */
+  --font-display: var(--font-gloock);
+  --font-body: var(--font-source-serif);
+  --font-ui: var(--font-barlow-semi-condensed);
+  --font-heading: var(--font-display);
+  --font-sans: var(--font-ui);
+  --font-serif: var(--font-body);
+
+  --radius-sm: calc(var(--radius) * 0.5);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) * 1.5);
+  --radius-xl: calc(var(--radius) * 2);
+  --radius-2xl: calc(var(--radius) * 3);
+  --radius-3xl: calc(var(--radius) * 4);
+  --radius-4xl: calc(var(--radius) * 6);
+
+  --shadow-sm: 0 1px 2px var(--shadow-color);
+  --shadow-md: 0 2px 4px var(--shadow-color), 0 6px 16px var(--shadow-color);
+  --shadow-lg: 0 4px 8px var(--shadow-color), 0 16px 40px var(--shadow-color);
+
+  /* Motion presets are defined in src/lib/motion.ts so Motion components and
+     CSS share them; the root layout writes them into <head> as
+     --motion-<name>-ease and --motion-<name>-duration. Durations are used as
+     duration-(--motion-courtly-duration). */
+  --ease-processional: var(--motion-processional-ease);
+  --ease-courtly: var(--motion-courtly-ease);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* Reduced motion, site-wide: CSS animations and transitions end at once.
+   Motion components follow the same setting through MotionConfig. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  * {
+    @apply border-border outline-ring;
+  }
+  body {
+    @apply bg-background font-body text-foreground;
+  }
 }
