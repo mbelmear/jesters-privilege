@@ -2,8 +2,7 @@
 # Mark a visual pull request ready for a Jester's review by adding the
 # `ready-for-human` label, and nothing else.
 #
-# Agents may run this without a prompt (.claude/settings.json), so it takes
-# exactly one argument, a PR number, and passes no other flags to gh.
+# It takes exactly one argument, a PR number, and passes no other flags to gh.
 #
 # Usage: npm run mark-ready -- <pr-number>
 set -euo pipefail

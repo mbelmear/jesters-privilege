@@ -2,10 +2,9 @@
 # Record that /code-review passed on a pull request's head commit, as the
 # "Code review: passed at <sha>" comment that `npm run merge` requires.
 #
-# Agents may run this without a prompt (.claude/settings.json), so it takes
-# exactly two arguments, passes no other flags to gh, and refuses unless the
-# reviewed commit is still the PR's head: a push after the review needs a
-# review of its own.
+# It takes exactly two arguments, passes no other flags to gh, and refuses
+# unless the reviewed commit is still the PR's head: a push after the review
+# needs a review of its own.
 #
 # Usage: npm run review-passed -- <pr-number> <reviewed full SHA>
 set -euo pipefail
