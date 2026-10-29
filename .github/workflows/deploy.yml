@@ -31,6 +31,31 @@ jobs:
       - run: npm run build
         env:
           BUILD_COMMIT: ${{ github.event.pull_request.head.sha }}
+      # A preview version can only be uploaded to a Worker that exists. Before the
+      # first production deploy it doesn't, so create it once with a blank
+      # placeholder page on workers.dev only: no custom domains, no PR content.
+      - name: Create the Worker on first run
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if npx wrangler deployments list --name jesters-privilege >/dev/null 2>&1; then
+            exit 0
+          fi
+          echo "::notice::Worker not found; creating it with a placeholder page"
+          dir="$RUNNER_TEMP/placeholder"
+          mkdir -p "$dir"
+          echo '<!doctype html><title>Coming soon</title>' > "$dir/index.html"
+          cat > "$RUNNER_TEMP/bootstrap.json" <<JSON
+          {
+            "name": "jesters-privilege",
+            "compatibility_date": "2026-10-01",
+            "assets": { "directory": "$dir" },
+            "workers_dev": true,
+            "preview_urls": true
+          }
+          JSON
+          npx wrangler deploy --config "$RUNNER_TEMP/bootstrap.json"
       - name: Upload a preview version
         id: upload
         env:

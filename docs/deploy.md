@@ -11,6 +11,8 @@ The site is one Cloudflare Worker (`jesters-privilege`) serving the static expor
 | Pull request                               | Build, `wrangler versions upload --preview-alias pr-<n>`, then post the preview URL as a PR comment, updated on each push |
 | Every 2 hours (feed check, #18)            | Not yet built                                                                                                             |
 
+Wrangler can't upload a preview version to a Worker that doesn't exist yet. If no Worker exists, the preview job first creates it with a blank placeholder page on workers.dev, with no custom domains. That happens once, before the first production deploy.
+
 If the build fails, the workflow stops before `wrangler deploy`, so the last good deploy stays live. A failed run emails the repo owner through GitHub's default Actions notifications.
 
 ## What production serves
