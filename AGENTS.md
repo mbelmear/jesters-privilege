@@ -8,10 +8,10 @@ Website for the Jester's Privilege podcast. The agreed v1 spec is `docs/spec.md`
 - **Vocabulary.** Use `GLOSSARY.md` terms in code, copy, tickets, and tests. In particular: "Jester" means only Michael, Dan, or Aaron; a historical figure is a "Fool".
 - **Test first.** Build logic with the `tdd` skill (Jest + React Testing Library + jest-axe). Browser behavior is covered by Playwright; performance by Lighthouse CI. How to run each layer: `docs/testing.md`.
 - **Design principle.** Modern construction, deliberate historical callbacks. Respect reduced motion.
-- **Content lives in content files**, never hard-coded in components. Copy awaiting the Jesters' words is marked `draft: true`, written at realistic length.
+- **Content lives in content files**, never hard-coded in components. Copy awaiting the Jesters' words is marked `draft: true`, written at realistic length. Before drafting copy, read the Jesters' inputs on #6 and in `docs/inputs/`.
 - **Merging.**
   - Logic/infra PRs: commit, then run `/code-review` (against `CODING_STANDARDS.md`) with `origin/main` as the fixed point; it reviews committed work only. When it finds nothing serious, record it with `npm run review-passed -- <n> <reviewed full SHA>`, then merge with `npm run merge -- <n>`. The script refuses a head without that comment and any failing, pending, or missing check. Each push after a review gets its own `/code-review` before a new comment, with the last reviewed SHA as the fixed point so it covers only the new commits (`origin/main` again after a rebase).
-  - Visual PRs (anything a visitor sees): post the Cloudflare preview URL on the PR, apply the `ready-for-human` label with `npm run mark-ready -- <n>`, and wait for a Jester to approve. Do not merge them yourself.
+  - Visual PRs (anything a visitor sees): post the Cloudflare preview URL on the PR, apply the `ready-for-human` label with `npm run mark-ready -- <n>`, and wait for a Jester to approve. Do not merge them yourself. `npm run pr-status -- <n>` waits for a push's checks and preview and says whether the PR still merges cleanly; a "Conflicts with main" comment means merge `origin/main` in before the Jester looks.
 
 ## Agent skills
 
