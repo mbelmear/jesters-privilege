@@ -105,7 +105,7 @@ The pre-commit hook formats staged files with Prettier, so `format:check` only f
 Two more run on every push to `main`:
 
 - **Merge audit** (`merge-audit.yml`, `scripts/audit-merge.sh`) fails when the commit came from a PR with neither a `Code review: passed at <head>` comment nor the `ready-for-human` label. GitHub Free can't block such a merge, so this makes it loud after the fact.
-- **Conflict watch** (`conflict-watch.yml`, `scripts/flag-conflicts.sh`) comments on each open `ready-for-human` PR that no longer merges cleanly with main, and removes the comment once it does. It also runs when such a PR is pushed to or labeled.
+- **Conflict watch** (`conflict-watch.yml`, `scripts/flag-conflicts.sh`) comments on each open `ready-for-human` PR that no longer merges cleanly with main, and removes the comment once a push to that PR resolves it. GitHub skips pull-request runs while a PR conflicts, so only pushes to `main` can add the comment.
 
 ## Merging
 

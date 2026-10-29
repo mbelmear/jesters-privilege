@@ -1,14 +1,20 @@
 name: Conflict watch
 
 # Flags visual PRs waiting for a Jester (ready-for-human) that no longer merge
-# cleanly with main, and clears the flag once they do. See
-# scripts/flag-conflicts.sh.
+# cleanly with main, and clears the flag once a push resolves it. GitHub skips
+# pull_request runs while a PR conflicts, so only pushes to main set the flag.
+# See scripts/flag-conflicts.sh.
 
 on:
   push:
     branches: [main]
   pull_request:
-    types: [synchronize, labeled]
+    types: [synchronize]
+
+# One run at a time, so two can't both post the comment.
+concurrency:
+  group: conflict-watch
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -21,6 +27,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - run: scripts/flag-conflicts.sh ${{ github.event.pull_request.number }}
+      # PR is empty on a push to main, which checks every waiting PR.
+      - run: scripts/flag-conflicts.sh ${PR:+"$PR"}
         env:
           GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}

@@ -15,21 +15,15 @@ else
 fi
 
 for pr in $prs; do
-  # GitHub works mergeability out in the background; UNKNOWN means not yet.
-  state=UNKNOWN
-  for _ in $(seq 1 10); do
-    state=$(gh pr view "$pr" --json mergeable --jq .mergeable)
-    [[ "$state" != UNKNOWN ]] && break
-    sleep 6
-  done
+  state=$("$(dirname "$0")/wait-mergeable.sh" "$pr")
 
   id=$(gh api "repos/{owner}/{repo}/issues/$pr/comments" --paginate \
     --jq ".[] | select(.body | startswith(\"$marker\")) | .id" | head -1)
 
   case "$state" in
     CONFLICTING)
-      main=$(git ls-remote origin refs/heads/main | cut -c1-7)
-      body=$(printf '%s\n**Conflicts with main** (as of %s). Merge `origin/main` into this branch and resolve before a Jester reviews the preview.' "$marker" "$main")
+      main_sha=$(git ls-remote origin refs/heads/main | cut -c1-7)
+      body=$(printf '%s\n**Conflicts with main** (as of %s). Merge `origin/main` into this branch and resolve before a Jester reviews the preview.' "$marker" "$main_sha")
       if [[ -n "$id" ]]; then
         gh api -X PATCH "repos/{owner}/{repo}/issues/comments/$id" -f body="$body" >/dev/null
       else
