@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Stand-in for the Jester's Privilege Spreaker feed until Episode 1 is
+  published. Shaped exactly like the Polemical with Dan Collins feed, which the
+  same producer publishes. The Episodes and Show notes are draft copy.
+-->
+<rss xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:podcast="https://podcastindex.org/namespace/1.0" xmlns:media="http://search.yahoo.com/mrss/" version="2.0">
+<channel>
+<title>Jester's Privilege</title>
+<link>https://www.spreaker.com/podcast/jester-s-privilege--6900001</link>
+<description><![CDATA[A weekly theology-and-humor podcast from three Jesters who serve the King.]]></description>
+<atom:link href="https://www.spreaker.com/show/6900001/episodes/feed" rel="self" type="application/rss+xml"/>
+<language>en</language>
+<category>Christianity</category>
+<copyright>Copyright Jester's Privilege</copyright>
+<image><url>https://jestersprivilegepodcast.com/brand/logo-draft.png</url><title>Jester's Privilege</title><link>https://www.spreaker.com/podcast/jester-s-privilege--6900001</link></image>
+<lastBuildDate>Thu, 14 Jan 2027 12:00:00 +0000</lastBuildDate>
+<itunes:author>Jester's Privilege</itunes:author>
+<itunes:owner><itunes:name>Jester's Privilege</itunes:name><itunes:email>hello@jestersprivilegepodcast.com</itunes:email></itunes:owner>
+<itunes:image href="https://jestersprivilegepodcast.com/brand/logo-draft.png"/>
+<itunes:summary><![CDATA[A weekly theology-and-humor podcast from three Jesters who serve the King.]]></itunes:summary>
+<itunes:category text="Religion &amp; Spirituality"><itunes:category text="Christianity"/></itunes:category>
+<itunes:explicit>clean</itunes:explicit>
+<itunes:type>episodic</itunes:type>
+
+<item>
+<title>Is Humor a Virtue?</title>
+<link>https://www.spreaker.com/episode/is-humor-a-virtue--70000006</link>
+<description><![CDATA[Aquinas thought a person who never jokes is guilty of a vice. Was he right? The Jesters work through <em>eutrapelia</em>, the old virtue of playfulness, and ask where wit ends and mockery begins. Michael defends the pun, Dan defends the Puritans, and Aaron tries to keep the levels even.<br /><br />Mentioned in this Episode: Thomas Aquinas, <em>Summa Theologiae</em> II-II, q. 168.<br /><br /><a href="https://www.instagram.com/jestersprivilege/" target="_blank" rel="noreferrer noopener">Follow us on Instagram.</a><br /><br /><a href="https://jestersprivilegepodcast.com/submit" target="_blank" rel="noreferrer noopener">Send us a Question or a Confession.</a>]]></description>
+<guid isPermaLink="false">https://api.spreaker.com/episode/70000006</guid>
+<pubDate>Thu, 14 Jan 2027 12:00:00 +0000</pubDate>
+<enclosure url="https://dts.podtrac.com/redirect.mp3/api.spreaker.com/download/episode/70000006/jesters_privilege_4.mp3" length="41230512" type="audio/mpeg"/>
+<podcast:transcript url="https://transcription.spreaker.com/starship/6a1f0c4e-0004-4c4d-9e10-000000000004/6a1f0c4e-0004-4c4d-9e10-000000000004.srt" type="application/x-subrip" language="en"/>
+<podcast:transcript url="https://transcription.spreaker.com/starship/6a1f0c4e-0004-4c4d-9e10-000000000004/6a1f0c4e-0004-4c4d-9e10-000000000004.txt" type="text/plain" language="en"/>
+<podcast:transcript url="https://transcription.spreaker.com/starship/6a1f0c4e-0004-4c4d-9e10-000000000004/6a1f0c4e-0004-4c4d-9e10-000000000004.vtt" type="text/vtt" language="en"/>
+<itunes:author>Jester's Privilege</itunes:author>
+<itunes:summary><![CDATA[Aquinas thought a person who never jokes is guilty of a vice. Was he right?]]></itunes:summary>
+<itunes:duration>2577</itunes:duration>
+<itunes:explicit>clean</itunes:explicit>
+<itunes:image href="https://jestersprivilegepodcast.com/brand/logo-draft.png"/>
+<itunes:episode>4</itunes:episode>
+<itunes:episodeType>full</itunes:episodeType>
+</item>
+
+<item>
+<title>Listener Confessions: Christmas Edition</title>
+<link>https://www.spreaker.com/episode/listener-confessions-christmas-edition--70000005</link>
+<description><![CDATA[A short bonus for the season. The Jesters read your Confessions of Christmas folly, from the nativity-play sheep who ate the hay to the pastor who preached on the wrong Gospel. Merry Christmas from the court.<br /><br /><a href="https://jestersprivilegepodcast.com/submit" target="_blank" rel="noreferrer noopener">Send us your own Confession.</a>]]></description>
+<guid isPermaLink="false">https://api.spreaker.com/episode/70000005</guid>
+<pubDate>Thu, 24 Dec 2026 12:00:00 +0000</pubDate>
+<enclosure url="https://dts.podtrac.com/redirect.mp3/api.spreaker.com/download/episode/70000005/jesters_privilege_bonus.mp3" length="14521904" type="audio/mpeg"/>
+<itunes:author>Jester's Privilege</itunes:author>
+<itunes:summary><![CDATA[A short bonus for the season.]]></itunes:summary>
+<itunes:duration>908</itunes:duration>
+<itunes:explicit>clean</itunes:explicit>
+<itunes:image href="https://jestersprivilegepodcast.com/brand/logo-draft.png"/>
+<itunes:episodeType>bonus</itunes:episodeType>
+</item>
+
+<item>
+<title>Mockery and the Prophets</title>
+<link>https://www.spreaker.com/episode/mockery-and-the-prophets--70000004</link>
+<description><![CDATA[Elijah taunted the prophets of Baal. Isaiah laughed at a man who warms himself with half a log and bows down to the other half. When is mockery a prophetic act, and when is it just cruelty with a Bible verse attached?<br /><br />In this Episode:<ul><li>1 Kings 18 and the god who might be asleep</li><li>Isaiah 44 and the carpenter's idol</li><li>Why the Fool can say what the courtier can't</li></ul><a href="https://www.instagram.com/jestersprivilege/" target="_blank" rel="noreferrer noopener">Follow us on Instagram.</a>]]></description>
+<guid isPermaLink="false">https://api.spreaker.com/episode/70000004</guid>
+<pubDate>Thu, 03 Dec 2026 12:00:00 +0000</pubDate>
+<enclosure url="https://dts.podtrac.com/redirect.mp3/api.spreaker.com/download/episode/70000004/jesters_privilege_3.mp3" length="38104672" type="audio/mpeg"/>
+<podcast:transcript url="https://transcription.spreaker.com/starship/6a1f0c4e-0003-4c4d-9e10-000000000003/6a1f0c4e-0003-4c4d-9e10-000000000003.srt" type="application/x-subrip" language="en"/>
+<podcast:transcript url="https://transcription.spreaker.com/starship/6a1f0c4e-0003-4c4d-9e10-000000000003/6a1f0c4e-0003-4c4d-9e10-000000000003.txt" type="text/plain" language="en"/>
+<podcast:transcript url="https://transcription.spreaker.com/starship/6a1f0c4e-0003-4c4d-9e10-000000000003/6a1f0c4e-0003-4c4d-9e10-000000000003.vtt" type="text/vtt" language="en"/>
+<itunes:author>Jester's Privilege</itunes:author>
+<itunes:summary><![CDATA[Elijah taunted the prophets of Baal.]]></itunes:summary>
+<itunes:duration>2381</itunes:duration>
+<itunes:explicit>clean</itunes:explicit>
+<itunes:image href="https://jestersprivilegepodcast.com/brand/logo-draft.png"/>
+<itunes:episode>3</itunes:episode>
+<itunes:episodeType>full</itunes:episodeType>
+</item>
+
+<item>
+<title>The Holy Fool</title>
+<link>https://www.spreaker.com/episode/the-holy-fool--70000003</link>
+<description><![CDATA[Paul called himself a fool for Christ, and the Church has had a few who took him literally. The Jesters meet the holy fools of the East, who walked barefoot through winter and threw stones at the houses of the respectable, and ask what a life of deliberate foolishness says to a Church that wants very badly to be taken seriously.<br /><br /><a href="https://jestersprivilegepodcast.com/fools" target="_blank" rel="noreferrer noopener">Visit the Fools' Gallery.</a>]]></description>
+<guid isPermaLink="false">https://api.spreaker.com/episode/70000003</guid>
+<pubDate>Thu, 19 Nov 2026 12:00:00 +0000</pubDate>
+<enclosure url="https://dts.podtrac.com/redirect.mp3/api.spreaker.com/download/episode/70000003/jesters_privilege_2.mp3" length="36448310" type="audio/mpeg"/>
+<podcast:transcript url="https://transcription.spreaker.com/starship/6a1f0c4e-0002-4c4d-9e10-000000000002/6a1f0c4e-0002-4c4d-9e10-000000000002.srt" type="application/x-subrip" language="en"/>
+<podcast:transcript url="https://transcription.spreaker.com/starship/6a1f0c4e-0002-4c4d-9e10-000000000002/6a1f0c4e-0002-4c4d-9e10-000000000002.txt" type="text/plain" language="en"/>
+<podcast:transcript url="https://transcription.spreaker.com/starship/6a1f0c4e-0002-4c4d-9e10-000000000002/6a1f0c4e-0002-4c4d-9e10-000000000002.vtt" type="text/vtt" language="en"/>
+<itunes:author>Jester's Privilege</itunes:author>
+<itunes:summary><![CDATA[Paul called himself a fool for Christ.]]></itunes:summary>
+<itunes:duration>2278</itunes:duration>
+<itunes:explicit>clean</itunes:explicit>
+<itunes:image href="https://jestersprivilegepodcast.com/brand/logo-draft.png"/>
+<itunes:episode>2</itunes:episode>
+<itunes:episodeType>full</itunes:episodeType>
+</item>
+
+<item>
+<title>Celebrity Pastors</title>
+<link>https://www.spreaker.com/episode/celebrity-pastors--70000002</link>
+<description><![CDATA[Every court needs a Fool, and every age has its celebrity pastors. In our first Episode, the Jesters ask why the Church keeps building platforms for preachers, what happens to a man when the crowd gets big, and whether laughter might be one of the few things that keeps a pastor honest. Dan tells a story about a green room, Aaron admits to a podcast he still listens to, and Michael explains why a king kept someone around whose job was to tell him the truth.<br /><br /><a href="https://www.instagram.com/jestersprivilege/" target="_blank" rel="noreferrer noopener">Follow us on Instagram.</a><br /><br /><a href="https://jestersprivilegepodcast.com/submit" target="_blank" rel="noreferrer noopener">Send us a Question, a Confession, or a Topic idea.</a>]]></description>
+<guid isPermaLink="false">https://api.spreaker.com/episode/70000002</guid>
+<pubDate>Thu, 12 Nov 2026 12:00:00 +0000</pubDate>
+<enclosure url="https://dts.podtrac.com/redirect.mp3/api.spreaker.com/download/episode/70000002/jesters_privilege_1.mp3" length="44032118" type="audio/mpeg"/>
+<podcast:transcript url="https://transcription.spreaker.com/starship/6a1f0c4e-0001-4c4d-9e10-000000000001/6a1f0c4e-0001-4c4d-9e10-000000000001.srt" type="application/x-subrip" language="en"/>
+<podcast:transcript url="https://transcription.spreaker.com/starship/6a1f0c4e-0001-4c4d-9e10-000000000001/6a1f0c4e-0001-4c4d-9e10-000000000001.txt" type="text/plain" language="en"/>
+<podcast:transcript url="https://transcription.spreaker.com/starship/6a1f0c4e-0001-4c4d-9e10-000000000001/6a1f0c4e-0001-4c4d-9e10-000000000001.vtt" type="text/vtt" language="en"/>
+<itunes:author>Jester's Privilege</itunes:author>
+<itunes:summary><![CDATA[Every court needs a Fool, and every age has its celebrity pastors.]]></itunes:summary>
+<itunes:duration>2752</itunes:duration>
+<itunes:explicit>clean</itunes:explicit>
+<itunes:image href="https://jestersprivilegepodcast.com/brand/logo-draft.png"/>
+<itunes:episode>1</itunes:episode>
+<itunes:episodeType>full</itunes:episodeType>
+</item>
+
+<item>
+<title>Introducing Jester's Privilege - Trailer</title>
+<link>https://www.spreaker.com/episode/introducing-jester-s-privilege-trailer--70000001</link>
+<description><![CDATA[Three Jesters, one King. A weekly theology-and-humor podcast from Michael, Dan, and Aaron of Redeemer Church in Bozeman.]]></description>
+<guid isPermaLink="false">https://api.spreaker.com/episode/70000001</guid>
+<pubDate>Thu, 05 Nov 2026 12:00:00 +0000</pubDate>
+<enclosure url="https://dts.podtrac.com/redirect.mp3/api.spreaker.com/download/episode/70000001/jesters_privilege_trailer.mp3" length="1489022" type="audio/mpeg"/>
+<podcast:transcript url="https://transcription.spreaker.com/sounder/6a1f0c4e-0000-4c4d-9e10-000000000000/6a1f0c4e-0000-4c4d-9e10-000000000000.srt" type="application/x-subrip" language="en"/>
+<podcast:transcript url="https://transcription.spreaker.com/sounder/6a1f0c4e-0000-4c4d-9e10-000000000000/6a1f0c4e-0000-4c4d-9e10-000000000000.txt" type="text/plain" language="en"/>
+<podcast:transcript url="https://transcription.spreaker.com/sounder/6a1f0c4e-0000-4c4d-9e10-000000000000/6a1f0c4e-0000-4c4d-9e10-000000000000.vtt" type="text/vtt" language="en"/>
+<itunes:author>Jester's Privilege</itunes:author>
+<itunes:summary><![CDATA[Three Jesters, one King.]]></itunes:summary>
+<itunes:duration>81</itunes:duration>
+<itunes:explicit>clean</itunes:explicit>
+<itunes:image href="https://jestersprivilegepodcast.com/brand/logo-draft.png"/>
+<itunes:episodeType>trailer</itunes:episodeType>
+</item>
+
+</channel>
+</rss>
