@@ -14,10 +14,6 @@ on:
 permissions:
   contents: read
 
-env:
-  CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-  CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-
 jobs:
   preview:
     name: Preview URL
@@ -33,13 +29,18 @@ jobs:
       - uses: actions/checkout@v5
       - uses: ./.github/actions/setup
       - run: npm run build
+        env:
+          BUILD_COMMIT: ${{ github.event.pull_request.head.sha }}
       - name: Upload a preview version
         id: upload
         env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           ALIAS: pr-${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           npx wrangler versions upload --preview-alias "$ALIAS" \
-            --message "PR #${{ github.event.pull_request.number }} at ${GITHUB_SHA::7}" \
+            --message "PR #${{ github.event.pull_request.number }} at ${HEAD_SHA::7}" \
             | tee upload.log
           url=$(grep -oE "https://$ALIAS-[a-z0-9.-]+\.workers\.dev" upload.log | head -1)
           if [ -z "$url" ]; then
@@ -52,14 +53,25 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           URL: ${{ steps.upload.outputs.url }}
           PR: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
-          body=$(printf '**Preview:** %s\n\nBuilt from %s. This comment updates on every push.' \
-            "$URL" "${{ github.event.pull_request.head.sha }}")
-          gh pr comment "$PR" --edit-last --create-if-none --body "$body"
+          # The marker finds this workflow's comment so each push edits it in
+          # place, whatever else gets posted on the pull request.
+          marker="<!-- deploy-preview -->"
+          body=$(printf '%s\n**Preview:** %s\n\nBuilt from %s. This comment updates on every push.' \
+            "$marker" "$URL" "$HEAD_SHA")
+          id=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR/comments" --paginate \
+            --jq ".[] | select(.body | startswith(\"$marker\")) | .id" | head -1)
+          if [ -n "$id" ]; then
+            gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$id" -f body="$body" >/dev/null
+          else
+            gh pr comment "$PR" --body "$body"
+          fi
 
   deploy:
     name: Deploy to production
-    if: github.event_name != 'pull_request'
+    # The Run workflow button can pick any branch; only main reaches production.
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     # Queue production deploys; never cancel one partway.
     concurrency:
@@ -70,5 +82,10 @@ jobs:
       - uses: ./.github/actions/setup
       # A failed build stops here, so the last good deploy stays live.
       - run: npm run build
+        env:
+          BUILD_COMMIT: ${{ github.sha }}
       - run: npx wrangler deploy --message "${GITHUB_SHA::7}"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       - run: scripts/smoke-check.sh "$GITHUB_SHA"

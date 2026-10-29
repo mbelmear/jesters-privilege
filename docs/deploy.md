@@ -17,7 +17,7 @@ If the build fails, the workflow stops before `wrangler deploy`, so the last goo
 
 - `https://jestersprivilegepodcast.com`: the site. Both it and `www` are Worker custom domains in `wrangler.jsonc`; Cloudflare creates their DNS records and certificates on first deploy.
 - `https://www.jestersprivilegepodcast.com/<path>`: a 301 to the apex, keeping path and query. The Worker (`src/worker/index.ts`) does this, which is why `run_worker_first` is on.
-- `/build-manifest.json`: `{ "newestEpisode": <feed GUID or null>, "commit": <git SHA or null> }`, written at build time by `src/app/build-manifest.json/route.ts`. The feed check reads it with `parseBuildManifest` (`src/lib/build-manifest.ts`) to decide whether to rebuild. `newestEpisode` stays null until feed ingestion (#11) lands.
+- `/build-manifest.json`: `{ "newestEpisodeGuid": <feed GUID or null>, "commit": <git SHA or null> }`, where `commit` comes from `BUILD_COMMIT` (the PR head on previews). It is written at build time by `src/app/build-manifest.json/route.ts`. The feed check reads it with `parseBuildManifest` (`src/lib/build-manifest.ts`) to decide whether to rebuild. `newestEpisodeGuid` stays null until feed ingestion (#11) lands.
 
 The smoke check confirms the manifest shows the commit just deployed, the home page serves, and `www` redirects.
 

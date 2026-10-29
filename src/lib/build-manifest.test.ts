@@ -4,18 +4,20 @@ describe("parseBuildManifest", () => {
   it("reads the newest Episode and commit a deploy was built with", () => {
     expect(
       parseBuildManifest({
-        newestEpisode: "https://www.spreaker.com/episode/61234567",
+        newestEpisodeGuid: "https://www.spreaker.com/episode/61234567",
         commit: "7c625bc",
       })
     ).toEqual({
-      newestEpisode: "https://www.spreaker.com/episode/61234567",
+      newestEpisodeGuid: "https://www.spreaker.com/episode/61234567",
       commit: "7c625bc",
     });
   });
 
   it("accepts a deploy built before the first Episode, outside CI", () => {
-    expect(parseBuildManifest({ newestEpisode: null, commit: null })).toEqual({
-      newestEpisode: null,
+    expect(
+      parseBuildManifest({ newestEpisodeGuid: null, commit: null })
+    ).toEqual({
+      newestEpisodeGuid: null,
       commit: null,
     });
   });
@@ -28,19 +30,19 @@ describe("parseBuildManifest", () => {
 
   it("names the field that is missing", () => {
     expect(() => parseBuildManifest({ commit: "7c625bc" })).toThrow(
-      "Build manifest is missing newestEpisode"
+      "Build manifest is missing newestEpisodeGuid"
     );
-    expect(() => parseBuildManifest({ newestEpisode: null })).toThrow(
+    expect(() => parseBuildManifest({ newestEpisodeGuid: null })).toThrow(
       "Build manifest is missing commit"
     );
   });
 
   it("names the field with the wrong type", () => {
     expect(() =>
-      parseBuildManifest({ newestEpisode: 61234567, commit: "7c625bc" })
-    ).toThrow("Build manifest newestEpisode must be a string or null");
+      parseBuildManifest({ newestEpisodeGuid: 61234567, commit: "7c625bc" })
+    ).toThrow("Build manifest newestEpisodeGuid must be a string or null");
     expect(() =>
-      parseBuildManifest({ newestEpisode: null, commit: false })
+      parseBuildManifest({ newestEpisodeGuid: null, commit: false })
     ).toThrow("Build manifest commit must be a string or null");
   });
 });

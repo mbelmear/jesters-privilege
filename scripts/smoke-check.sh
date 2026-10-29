@@ -8,7 +8,8 @@
 set -euo pipefail
 
 commit="${1:?Usage: scripts/smoke-check.sh <commit-sha>}"
-site="https://jestersprivilegepodcast.com"
+domain="jestersprivilegepodcast.com"
+site="https://$domain"
 
 retry() {
   for _ in $(seq 12); do
@@ -29,7 +30,7 @@ home_page_serves() {
 
 www_redirects_to_apex() {
   [ "$(curl -sS -o /dev/null -w '%{http_code} %{redirect_url}' \
-    "https://www.jestersprivilegepodcast.com/about?x=1")" = "301 $site/about?x=1" ]
+    "https://www.$domain/about?x=1")" = "301 $site/about?x=1" ]
 }
 
 retry manifest_has_commit
