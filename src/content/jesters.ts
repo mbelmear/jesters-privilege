@@ -27,7 +27,7 @@ export const jesters = [
     name: "Aaron Canen",
     role: "Producer",
     bio: {
-      text: "Aaron is a pastor's kid from Glendive who now runs Redeemer's sound and screens, where art meets technology. Husband to Mara, father of three, and the reason this show sounds like anything at all.",
+      text: "Aaron is a pastor's kid from Glendive and Redeemer's Technical and Communications Director, where art meets technology. Husband to Mara, father of three, and the reason this show sounds like anything at all.",
       draft: true,
     },
   },
