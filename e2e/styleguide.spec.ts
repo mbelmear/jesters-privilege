@@ -84,17 +84,18 @@ test.describe("Reduced motion", () => {
     const light = page.getByRole("region", { name: "Light theme" });
     const replay = light.getByRole("button", { name: "Replay processional" });
     const bar = replay.locator("xpath=..").locator("div > div").first();
+    const shortfall = () =>
+      bar.evaluate((el) => {
+        const track = el.parentElement?.getBoundingClientRect().width ?? 0;
+        return Math.round(el.getBoundingClientRect().width - track);
+      });
+
+    // The first sweep finishing shows Motion's lazily loaded animation code
+    // has arrived, so the timing below measures the animation, not the load.
+    await expect.poll(shortfall).toBe(0);
+
     await replay.click();
     // The processional preset takes most of a second; reduced, it's instant.
-    await expect
-      .poll(
-        () =>
-          bar.evaluate((el) => {
-            const track = el.parentElement?.getBoundingClientRect().width ?? 0;
-            return Math.round(el.getBoundingClientRect().width - track);
-          }),
-        { timeout: 300, intervals: [50] }
-      )
-      .toBe(0);
+    await expect.poll(shortfall, { timeout: 300, intervals: [50] }).toBe(0);
   });
 });
