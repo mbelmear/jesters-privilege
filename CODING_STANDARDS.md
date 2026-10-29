@@ -31,5 +31,6 @@ Reviewers skip these; the rules below are the ones that need judgement.
 - **Semantic HTML first.** Native elements (`button`, `a`, `nav`, `dialog`, headings in order) carry the behaviour; ARIA fills gaps no element covers. Every interactive element is reachable by keyboard and shows focus.
 - **Lists are keyed by identity**: a stable id such as the Episode number, never array index.
 - **Images go through `next/image` with real dimensions** and alt text that says what the picture shows (for a Fool's painting: who, and what they're doing).
+- **A page passes every content value it shows, metadata included, to `<DraftRibbon uses={…}>`.** A value left out hides its drafts from the preview ribbon.
 - **A library loads only where it's used.** A client library's provider wraps the sections that need it, never the root layout unless every page does: whatever the layout imports ships on every page and counts against the home page's Lighthouse budget.
 - **Animation goes through `MotionProvider`.** Animated sections use `m` components inside `src/components/motion-provider.tsx`, which loads Motion on demand, carries the reduced-motion setting, and applies the shared presets from `src/lib/motion.ts`.
