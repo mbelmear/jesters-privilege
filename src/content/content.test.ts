@@ -52,9 +52,12 @@ describe("content", () => {
     ]);
   });
 
-  it("sets the show title in Dan's bio in italics", () => {
-    const dan = content.jesters.find(({ id }) => id === "dan");
-    expect(dan?.bio?.paragraphs[0]).toContainEqual({ em: "Polemical" });
+  it.each([
+    ["michael", "The Perfect Lens"],
+    ["dan", "Polemical"],
+  ])("sets the podcast title in %s's bio in italics", (id, title) => {
+    const jester = content.jesters.find((jester) => jester.id === id);
+    expect(jester?.bio?.paragraphs[0]).toContainEqual({ em: title });
   });
 
   it("gives each Jester a two-line summary, drafted until they approve one", () => {

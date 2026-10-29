@@ -14,7 +14,9 @@ export const jesters = [
     bio: {
       paragraphs: [
         [
-          "Michael is a deacon and software engineer who spends his days arguing with computers and his Sundays arguing with Dan. At 24, he’s the youngest at the table and the voice of the pews, with all the confidence of a man who hasn’t been wrong long enough to notice. He co-hosted The Perfect Lens in college, until both of his co-hosts moved away. He’s choosing not to take it personally. He also named this show after a 160-year-old painting of a sulking court jester, which tells you most of what you need to know about him.",
+          "Michael is a deacon and software engineer who spends his days arguing with computers and his Sundays arguing with Dan. At 24, he’s the youngest at the table and the voice of the pews, with all the confidence of a man who hasn’t been wrong long enough to notice. He co-hosted ",
+          { em: "The Perfect Lens" },
+          " in college, until both of his co-hosts moved away. He’s choosing not to take it personally. He also named this show after a 160-year-old painting of a sulking court jester, which tells you most of what you need to know about him.",
         ],
       ],
     },
