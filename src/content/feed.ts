@@ -15,7 +15,8 @@ export const feedSource: FeedSource = {
 // be read or breaks a rule, so the last good deploy stays live.
 export async function getEpisodes(): Promise<Episode[]> {
   const text = await loadFeedText(feedSource, {
-    fetch: (url) => fetch(url),
+    // A hung feed fails the build rather than stalling it.
+    fetch: (url) => fetch(url, { signal: AbortSignal.timeout(30_000) }),
     readFile: (path) => readFile(join(process.cwd(), path), "utf8"),
   });
   return parseFeed(text);

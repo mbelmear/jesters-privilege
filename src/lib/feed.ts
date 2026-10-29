@@ -72,9 +72,10 @@ function episodePath(episode: Episode): string {
 function toEpisode(item: Element, showArtworkUrl: string | undefined): Episode {
   const guid = childText(item, "guid");
   const rawTitle = childText(item, "title");
-  const name = rawTitle ? `"${rawTitle}"` : `with guid "${guid ?? ""}"`;
+  const episodeLabel = rawTitle ? `"${rawTitle}"` : `with guid "${guid ?? ""}"`;
   const required = (field: string, value: string | undefined): string => {
-    if (!value) throw new Error(`Feed Episode ${name} is missing its ${field}`);
+    if (!value)
+      throw new Error(`Feed Episode ${episodeLabel} is missing its ${field}`);
     return value;
   };
 
@@ -86,11 +87,11 @@ function toEpisode(item: Element, showArtworkUrl: string | undefined): Episode {
     guid: required("guid", guid),
     title,
     publishedAt: publishDate(
-      name,
+      episodeLabel,
       required("publish date", childText(item, "pubDate"))
     ),
     durationSeconds: duration(
-      name,
+      episodeLabel,
       required("duration", childText(item, "itunes:duration"))
     ),
     audioUrl: required("audio URL", childAttribute(item, "enclosure", "url")),
@@ -105,18 +106,18 @@ function toEpisode(item: Element, showArtworkUrl: string | undefined): Episode {
         .filter((t) => getAttributeValue(t, "type") === "text/vtt")
         .map((t) => getAttributeValue(t, "url"))[0] ?? null,
   };
-  const type = episodeType(name, childText(item, "itunes:episodeType"));
+  const type = episodeType(episodeLabel, childText(item, "itunes:episodeType"));
   return type === "full"
-    ? { ...details, type, number: episodeNumber(item, name) }
-    : { ...details, type, slug: slugify(title) };
+    ? { ...details, type, number: episodeNumber(item, episodeLabel) }
+    : { ...details, type, slug: slug(episodeLabel, title) };
 }
 
 // A missing itunes:episodeType means full, as Apple Podcasts reads it.
-function episodeType(name: string, value = "full"): EpisodeType {
+function episodeType(episodeLabel: string, value = "full"): EpisodeType {
   const type = EPISODE_TYPES.find((t) => t === value);
   if (!type) {
     throw new Error(
-      `Feed Episode ${name} has type "${value}"; expected full, bonus, or trailer`
+      `Feed Episode ${episodeLabel} has type "${value}"; expected full, bonus, or trailer`
     );
   }
   return type;
@@ -135,6 +136,8 @@ function sanitizeShowNotes(html: string): string {
   });
 }
 
+// Checks the scheme itself (sanitize-html would only drop the href) so an
+// unsafe link loses target and rel too, leaving plain text.
 function safeLink(href: string): sanitizeHtml.Attributes {
   const safe = LINK_SCHEMES.some((scheme) =>
     href.trim().toLowerCase().startsWith(`${scheme}:`)
@@ -157,46 +160,54 @@ function excerpt(showNotesHtml: string): string {
   return `${lastSpace > 0 ? cut.slice(0, lastSpace) : cut}…`;
 }
 
-function publishDate(name: string, value: string): Date {
+function publishDate(episodeLabel: string, value: string): Date {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
     throw new Error(
-      `Feed Episode ${name} has a publish date that isn't a date: "${value}"`
+      `Feed Episode ${episodeLabel} has a publish date that isn't a date: "${value}"`
     );
   }
   return date;
 }
 
 // itunes:duration is whole seconds, or [[HH:]MM:]SS.
-function duration(name: string, value: string): number {
+function duration(episodeLabel: string, value: string): number {
   if (!/^\d+(:\d{1,2}){0,2}$/.test(value)) {
     throw new Error(
-      `Feed Episode ${name} has a duration that isn't a length of time: "${value}"`
+      `Feed Episode ${episodeLabel} has a duration that isn't a length of time: "${value}"`
     );
   }
   return value.split(":").reduce((total, part) => total * 60 + Number(part), 0);
 }
 
-function episodeNumber(item: Element, name: string): number {
+function episodeNumber(item: Element, episodeLabel: string): number {
   const value = childText(item, "itunes:episode");
   if (!value) {
-    throw new Error(`Feed Episode ${name} is a full Episode with no number`);
+    throw new Error(
+      `Feed Episode ${episodeLabel} is a full Episode with no number`
+    );
   }
   if (!/^\d+$/.test(value)) {
     throw new Error(
-      `Feed Episode ${name} has an Episode number that isn't a whole number: "${value}"`
+      `Feed Episode ${episodeLabel} has an Episode number that isn't a whole number: "${value}"`
     );
   }
   return Number(value);
 }
 
-function slugify(title: string): string {
-  return title
+function slug(episodeLabel: string, title: string): string {
+  const value = title
     .toLowerCase()
     .normalize("NFKD")
     .replace(/[\u0300-\u036f'’]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
+  if (!value) {
+    throw new Error(
+      `Feed Episode ${episodeLabel} has no letters or digits in its title to make its address from`
+    );
+  }
+  return value;
 }
 
 function children(parent: Element, name: string): Element[] {

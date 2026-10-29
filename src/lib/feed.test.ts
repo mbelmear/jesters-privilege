@@ -307,4 +307,12 @@ describe("parseFeed", () => {
       'Feed has two Episodes at /episodes/bonus/listener-confessions: "Listener Confessions!" and "Listener confessions"'
     );
   });
+
+  it("fails when an unnumbered Episode's title gives it no address", () => {
+    expect(() =>
+      parseFeed(feed(item({ title: "🃏 !!", episodeType: "bonus" })))
+    ).toThrow(
+      'Feed Episode "🃏 !!" has no letters or digits in its title to make its address from'
+    );
+  });
 });
