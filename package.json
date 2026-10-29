@@ -18,7 +18,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "merge": "scripts/merge-on-green.sh",
-    "ready": "scripts/ready-tickets.sh"
+    "ready": "scripts/ready-tickets.sh",
+    "worktree": "scripts/new-worktree.sh"
   },
   "dependencies": {
     "domhandler": "^6.0.1",
