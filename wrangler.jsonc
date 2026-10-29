@@ -16,6 +16,14 @@
     { "pattern": "jestersprivilegepodcast.com", "custom_domain": true },
     { "pattern": "www.jestersprivilegepodcast.com", "custom_domain": true },
   ],
+  // Submit emails go only to the show's inbox (src/worker/adapters.ts).
+  // TURNSTILE_SECRET_KEY is a Worker secret, uploaded by the deploy workflow.
+  "send_email": [
+    {
+      "name": "SUBMISSION_EMAIL",
+      "destination_address": "hello@jestersprivilegepodcast.com",
+    },
+  ],
   // workers.dev must stay on for per-PR preview URLs.
   "workers_dev": true,
   "preview_urls": true,

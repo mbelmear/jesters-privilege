@@ -25,9 +25,37 @@ The build reads the feed from `feedSource` in `src/content/feed.ts`: a fixture (
 
 The smoke check confirms the manifest shows the commit just deployed, the home page serves, and `www` redirects.
 
+## Submit endpoint
+
+`POST /api/submit` (`src/lib/submit.ts`, wired up in `src/worker/`) takes a JSON body of at most 32 KB:
+
+| Field            | Rule                                                                   |
+| ---------------- | ---------------------------------------------------------------------- |
+| `type`           | `"question"`, `"confession"`, `"topic-idea"`, or `"other"`             |
+| `message`        | Required, at most 5000 characters after trimming                       |
+| `name`           | Optional, at most 100 characters, one line; blank means Anonymous      |
+| `email`          | Optional, a plausible address of at most 254 characters                |
+| `consent`        | Must be `true`                                                         |
+| `website`        | The honeypot: hidden from people, so anything in it drops the request  |
+| `turnstileToken` | The Turnstile widget's token, checked with siteverify before any email |
+
+It answers with JSON the page uses for its success and failure states:
+
+| Status | Body                                               | Meaning                                          |
+| ------ | -------------------------------------------------- | ------------------------------------------------ |
+| 200    | `{ "ok": true }`                                   | Emailed to the show (or a honeypot hit, dropped) |
+| 400    | `{ "ok": false, "error": "invalid", "field"?: … }` | A rule above was broken; `field` names it        |
+| 403    | `{ "ok": false, "error": "verification" }`         | Turnstile rejected the token, or there was none  |
+| 502    | `{ "ok": false, "error": "verification" }`         | Turnstile couldn't be reached                    |
+| 502    | `{ "ok": false, "error": "delivery" }`             | The email couldn't be sent                       |
+
+Each Submission becomes one email from `submit@` to `hello@jestersprivilegepodcast.com` through the `SUBMISSION_EMAIL` send_email binding, and is stored nowhere else. Failures are logged to the Worker's logs.
+
+To try it locally, put Turnstile's always-pass test secret in `.dev.vars` (`TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA`) and run `npx wrangler dev` with a built `out/`; the email binding is simulated and prints the message.
+
 ## Credentials
 
-GitHub secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. The token needs **Account › Workers Scripts: Edit** and, for the custom domains, **Zone › Workers Routes: Edit** and **Zone › DNS: Edit** on `jestersprivilegepodcast.com`.
+GitHub secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. `TURNSTILE_SECRET_KEY` is uploaded as a Worker secret with every deploy and preview version (`--secrets-file`). The token needs **Account › Workers Scripts: Edit** and, for the custom domains, **Zone › Workers Routes: Edit** and **Zone › DNS: Edit** on `jestersprivilegepodcast.com`.
 
 ## Rolling back
 
