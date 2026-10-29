@@ -32,6 +32,10 @@ npx jest src/lib            # one folder or file
 
 The pre-commit hook runs ESLint, the type check, and the whole Jest suite, so a commit with a lint error, type error, or failing test is refused.
 
+### Dependencies that ship only as ES modules
+
+Jest loads code as CommonJS and doesn't transform `node_modules`, so a package published only as ES modules fails at import with `SyntaxError: Cannot use import statement outside a module` (or `Unexpected token 'export'`), even though `next build` works. The fix is to list the package in `transpilePackages` in `next.config.ts` (add the option if it isn't there yet), which `next/jest` also reads. List the ES-module-only packages it imports too: the error names one package at a time, so rerun Jest until it passes, and leave a comment saying which module needs them.
+
 ## Browser tests (Playwright)
 
 Playwright drives the **built static site** in `out/`, served the same way the host serves it, never the dev server. Build first:
