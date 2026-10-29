@@ -4,7 +4,7 @@ import { DraftRibbon } from "@/components/draft-ribbon";
 import { Button } from "@/components/ui/button";
 import { content } from "@/content";
 
-const { microcopy, site } = content;
+const { microcopy, shell, site } = content;
 
 // Served for every unknown address (out/404.html in the static export).
 export const metadata: Metadata = {
@@ -16,7 +16,8 @@ export default function NotFound() {
     <div className="flex flex-1 flex-col items-center justify-center gap-6 px-4 py-24 text-center">
       <DraftRibbon
         uses={[
-          site,
+          shell,
+          site.name,
           microcopy.notFoundTitle,
           microcopy.notFoundBody,
           microcopy.notFoundLink,

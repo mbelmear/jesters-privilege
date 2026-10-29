@@ -18,9 +18,15 @@ test.describe("Header", () => {
       header(page).evaluate((el) => getComputedStyle(el).backgroundColor);
     expect(await background()).toBe("rgba(0, 0, 0, 0)");
 
+    const height = () =>
+      header(page).evaluate((el) => el.getBoundingClientRect().height);
+    const fullHeight = await height();
+
     await page.evaluate(() => window.scrollTo(0, 600));
     await expect(header(page)).toHaveAttribute("data-scrolled", "true");
     await expect.poll(background).not.toBe("rgba(0, 0, 0, 0)");
+    // Compact once scrolled.
+    await expect.poll(height).toBeLessThan(fullHeight);
 
     await page.evaluate(() => window.scrollTo(0, 0));
     await expect(header(page)).not.toHaveAttribute("data-scrolled");
@@ -101,6 +107,35 @@ test.describe("Mobile menu", () => {
     const menu = page.getByRole("dialog", { name: "Menu" });
     await menu.getByRole("link", { name: "About" }).click();
     await expect(menu).toBeHidden();
+  });
+
+  test("slides in with Motion", async ({ page }) => {
+    await page.goto("/");
+    const open = page.getByRole("button", { name: "Open menu" });
+    const menu = page.getByRole("dialog", { name: "Menu" });
+    // The first open loads the panel and Motion; time the second.
+    await open.click();
+    await settled(menu);
+    await page.keyboard.press("Escape");
+    await expect(menu).toBeHidden();
+
+    // How far the panel sits from its resting place, frame by frame.
+    const offsets = await page.evaluate(async () => {
+      document
+        .querySelector<HTMLButtonElement>('button[aria-haspopup="dialog"]')
+        ?.click();
+      const seen: number[] = [];
+      const start = performance.now();
+      while (performance.now() - start < 600) {
+        await new Promise(requestAnimationFrame);
+        const panel = document.querySelector('[role="dialog"]');
+        if (panel)
+          seen.push(new DOMMatrix(getComputedStyle(panel).transform).m41);
+      }
+      return seen;
+    });
+    expect(Math.max(...offsets)).toBeGreaterThan(0);
+    expect(offsets.at(-1)).toBe(0);
   });
 
   test("slides with Motion, and appears at once under reduced motion", async ({

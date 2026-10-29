@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { DraftRibbon } from "@/components/draft-ribbon";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { content } from "@/content";
@@ -35,8 +34,6 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         >
           {shell.skipLink}
         </a>
-        {/* The shell's own drafts; each page marks the drafts it shows. */}
-        <DraftRibbon uses={[shell]} />
         <SiteHeader shell={shell} episodeCount={episodes.length} />
         {/* Content starts below the header at its full height. A page with
             a hero painting can pull it up under the transparent header. */}
