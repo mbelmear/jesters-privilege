@@ -30,7 +30,7 @@ npx jest src/lib            # one folder or file
   expect(await axe(container)).toHaveNoViolations();
   ```
 
-The pre-commit hook runs the type check and the whole Jest suite, so a commit with a failing test is refused.
+The pre-commit hook runs ESLint, the type check, and the whole Jest suite, so a commit with a lint error, type error, or failing test is refused.
 
 ## Browser tests (Playwright)
 

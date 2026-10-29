@@ -4,6 +4,7 @@ Website for the Jester's Privilege podcast. The agreed v1 spec is `docs/spec.md`
 
 ## Working rules
 
+- **Coding standards.** Before writing or reviewing code, read `CODING_STANDARDS.md`: the TypeScript and React rules `/code-review` checks.
 - **Vocabulary.** Use `GLOSSARY.md` terms in code, copy, tickets, and tests. In particular: "Jester" means only Michael, Dan, or Aaron; a historical figure is a "Fool".
 - **Test first.** Build logic with the `tdd` skill (Jest + React Testing Library + jest-axe). Browser behavior is covered by Playwright; performance by Lighthouse CI. How to run each layer: `docs/testing.md`.
 - **Design principle.** Modern construction, deliberate historical callbacks. Use design tokens, never literal colors or fonts in components. Respect reduced motion.
