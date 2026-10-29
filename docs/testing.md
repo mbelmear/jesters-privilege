@@ -109,6 +109,6 @@ gh pr comment <pr-number> --body "Code review: passed at <full head SHA>"   # af
 npm run merge -- <pr-number>
 ```
 
-It waits for pending checks, stops at the first failure, and refuses a pull request with no checks or whose latest passed review names an older commit. After pushing to a reviewed pull request, review the new commits with `/code-review`, using the last reviewed SHA as the fixed point, before posting a new comment. `scripts/merge-on-green.sh` has the details.
+It waits for pending checks, stops at the first failure, and refuses a pull request with no checks or whose latest passed review names an older commit. Each push after a review needs its own review first (`AGENTS.md`, Merging). `scripts/merge-on-green.sh` has the details.
 
 Visual pull requests also need a Jester's approval of the preview first; see `AGENTS.md`.
