@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
-import { site } from "@/content/site";
+import { content } from "@/content";
 import { motionCss, motionPresets } from "@/lib/motion";
 import { themeScript } from "@/lib/theme";
 import { fontVariables } from "./fonts";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: site.name,
-  description: site.tagline,
+  title: content.site.name,
+  description: content.site.description.text,
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

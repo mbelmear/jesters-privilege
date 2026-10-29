@@ -1,12 +1,16 @@
-// Site-wide copy. The content model (#10) replaces this file's shape; until
-// then, copy awaiting the Jesters' words is marked draft.
+import type { Site } from "@/lib/content";
 
+// Each Listen and social link appears on the site as soon as it's filled in.
 export const site = {
   name: "Jester's Privilege",
-  tagline:
-    "A weekly theology-and-humor podcast from three Jesters who serve the King.",
+  tagline: "Theology in the Motley.",
+  description: {
+    text: "A weekly theology-and-humor podcast from three Jesters who serve the King.",
+    draft: true,
+  },
   // The show's inbox: Email Routing forwards it to the Jesters, and Submit
   // emails land here (wrangler.jsonc pins the email binding to it too).
   contactEmail: "hello@jestersprivilegepodcast.com",
-  draft: true,
-} as const;
+  listen: {},
+  social: {},
+} as const satisfies Site;

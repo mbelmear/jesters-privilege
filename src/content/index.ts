@@ -1,0 +1,18 @@
+import { validateContent } from "@/lib/content";
+import { about } from "./about";
+import { gallery } from "./gallery";
+import { hero } from "./hero";
+import { jesters } from "./jesters";
+import { microcopy } from "./microcopy";
+import { site } from "./site";
+
+// Everything pages show, validated when the build loads it: content that
+// breaks a rule fails the build with a message naming where and why.
+export const content = validateContent({
+  site,
+  hero,
+  jesters,
+  gallery,
+  about,
+  microcopy,
+});
