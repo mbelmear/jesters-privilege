@@ -88,6 +88,10 @@
     var(--palette-orange-glow)
   );
 
+  /* The parchment shield the draft logo sits on in both themes, so its
+     baked-in white background never shows as a box. */
+  --logo-plate: var(--palette-parchment-light);
+
   /* Lines, fields, focus, errors, overlays */
   --border: light-dark(
     var(--palette-parchment-edge),
@@ -107,6 +111,12 @@
 
   /* Shape: crisp, modern corners */
   --radius: 0.25rem;
+
+  /* The site header's height at the top of a page and once scrolled. Pages
+     start below the taller one, and in-page links scroll clear of it. */
+  --header-height: 4.5rem;
+  --header-height-compact: 3.5rem;
+  scroll-padding-top: var(--header-height);
 }
 
 /* A remembered choice overrides the system setting. */
@@ -157,6 +167,7 @@
   --color-ring: var(--ring);
   --color-destructive: var(--destructive);
   --color-scrim: var(--scrim);
+  --color-logo-plate: var(--logo-plate);
 
   /* Fonts, self-hosted through next/font in src/app/fonts.ts */
   --font-display: var(--font-gloock);

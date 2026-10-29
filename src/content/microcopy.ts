@@ -17,7 +17,7 @@ export const microcopy = {
   },
   notFoundTitle: { text: "You've wandered from the court" },
   notFoundBody: {
-    text: "This page isn't here. Perhaps the jester hid it, or perhaps it never existed.",
+    text: "This page isn't here. Perhaps a Fool hid it, or perhaps it never existed.",
     draft: true,
   },
   notFoundLink: { text: "Return to the court", draft: true },

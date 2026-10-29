@@ -127,8 +127,38 @@ export type About = {
   readonly howToListen: Section;
 };
 
+// A main section of the site. Episodes is listed only once one is published,
+// so the coming-soon site never links to an empty archive.
+export type NavItem = {
+  readonly href: string;
+  readonly label: string;
+  readonly onlyWithEpisodes?: true;
+};
+
+// The frame every page sits in: header, mobile menu, and footer.
+export type Shell = {
+  readonly skipLink: string;
+  readonly homeLink: string;
+  readonly navLabel: string;
+  readonly nav: readonly NavItem[];
+  readonly menu: {
+    readonly open: string;
+    readonly close: string;
+    readonly title: string;
+  };
+  readonly themeToggle: string;
+  readonly footer: {
+    readonly social: { readonly [N in SocialNetwork]: string };
+    readonly socialLabel: string;
+    readonly contact: string;
+    readonly rss: string;
+    readonly privacyNote: Copy;
+  };
+};
+
 export type Content = {
   readonly site: Site;
+  readonly shell: Shell;
   readonly hero: { readonly paragraphs: readonly string[] };
   readonly jesters: readonly Jester[];
   readonly gallery: Gallery;
