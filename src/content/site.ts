@@ -1,9 +1,14 @@
-// Site-wide copy. The content model (#10) replaces this file's shape; until
-// then, copy awaiting the Jesters' words is marked draft.
+import type { Site } from "@/lib/content";
 
+// Each Listen and social link appears on the site as soon as it's filled in.
 export const site = {
   name: "Jester's Privilege",
-  tagline:
-    "A weekly theology-and-humor podcast from three Jesters who serve the King.",
-  draft: true,
-} as const;
+  tagline: "Theology in the Motley.",
+  description: {
+    text: "A weekly theology-and-humor podcast from three Jesters who serve the King.",
+    draft: true,
+  },
+  contactEmail: "hello@jestersprivilegepodcast.com",
+  listen: {},
+  social: {},
+} as const satisfies Site;

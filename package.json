@@ -18,7 +18,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "merge": "scripts/merge-on-green.sh",
-    "ready": "scripts/ready-tickets.sh"
+    "ready": "scripts/ready-tickets.sh",
+    "launch-check": "tsx scripts/launch-check.ts"
   },
   "dependencies": {
     "domhandler": "^6.0.1",
@@ -54,6 +55,7 @@
     "serve": "^14.2.6",
     "tailwindcss": "^4",
     "ts-node": "^10.9.2",
+    "tsx": "^4.23.15",
     "typescript": "^5",
     "typescript-eslint": "^8.72.1",
     "wrangler": "^4.155.0"

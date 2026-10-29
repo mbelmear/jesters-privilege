@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { site } from "@/content/site";
+import { content } from "@/content";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: site.name,
-  description: site.tagline,
+  title: content.site.name,
+  description: content.site.description.text,
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

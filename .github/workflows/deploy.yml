@@ -31,6 +31,8 @@ jobs:
       - run: npm run build
         env:
           BUILD_COMMIT: ${{ github.event.pull_request.head.sha }}
+          # Marks pages that use draft content with the DRAFT ribbon.
+          SITE_ENV: preview
       # A preview version can only be uploaded to a Worker that exists. Before the
       # first production deploy it doesn't, so create it once with a blank
       # placeholder page on workers.dev only: no custom domains, no PR content.
