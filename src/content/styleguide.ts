@@ -5,7 +5,6 @@ export const styleguide = {
   title: "Style guide",
   intro:
     "Every color, typeface, shape, motion preset, and component the site is built from, shown in both themes. Change a token in globals.css and check it here.",
-  themeToggleLabel: "Dark theme",
   panels: { light: "Light theme", dark: "Dark theme" },
   sections: {
     colors: "Colors",
@@ -30,6 +29,10 @@ export const styleguide = {
     { token: "input", role: "Form field outlines" },
     { token: "ring", role: "Keyboard focus" },
     { token: "destructive", role: "Errors and failure states" },
+    {
+      token: "logo-plate",
+      role: "Parchment shield behind the logo, in both themes",
+    },
     {
       token: "scrim",
       role: "Overlay behind dialogs and under painting titles",

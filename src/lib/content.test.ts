@@ -4,6 +4,7 @@ import {
   type Content,
   type Painting,
 } from "./content";
+import { shell } from "@/content/shell";
 
 const painting: Painting = {
   src: "/paintings/stanczyk.jpg",
@@ -33,6 +34,7 @@ function content(overrides: Partial<Content> = {}): Content {
       listen: { spotify: "https://open.spotify.com/show/abc" },
       social: {},
     },
+    shell,
     hero: { paragraphs: ["Long ago…"] },
     jesters: [{ id: "dan", name: "Dan Collins", role: "Co-host" }],
     gallery: {

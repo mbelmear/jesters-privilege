@@ -4,12 +4,14 @@ import { gallery } from "./gallery";
 import { hero } from "./hero";
 import { jesters } from "./jesters";
 import { microcopy } from "./microcopy";
+import { shell } from "./shell";
 import { site } from "./site";
 
 // Everything pages show, validated when the build loads it: content that
 // breaks a rule fails the build with a message naming where and why.
 export const content = validateContent({
   site,
+  shell,
   hero,
   jesters,
   gallery,

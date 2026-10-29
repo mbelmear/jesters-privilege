@@ -21,13 +21,6 @@ describe("Style guide", () => {
     ).toBeInTheDocument();
   });
 
-  it("offers the theme toggle", () => {
-    render(<Styleguide />);
-    expect(
-      screen.getByRole("button", { name: "Dark theme" })
-    ).toBeInTheDocument();
-  });
-
   it.each(["Light theme", "Dark theme"])(
     "shows every color token, typeface, and component in the %s panel",
     (name) => {
