@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh pr edit * --add-label ready-for-human)",
+      "Bash(gh pr comment *)",
+      "Bash(gh issue comment *)"
+    ]
+  }
+}
