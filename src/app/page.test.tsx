@@ -3,9 +3,11 @@ import { axe } from "jest-axe";
 import Home from "./page";
 
 describe("Home", () => {
-  it("shows a top-level heading", () => {
+  it("names the show in its top-level heading", () => {
     render(<Home />);
-    expect(screen.getByRole("heading", { level: 1 })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Jester's Privilege" })
+    ).toBeInTheDocument();
   });
 
   it("has no detectable accessibility violations", async () => {
