@@ -92,6 +92,25 @@ const eslintConfig = defineConfig([
       ],
     },
   },
+  // Each page renders the one DraftRibbon for everything it shows, the shell
+  // included; a ribbon in the layout would stack a second one on top.
+  {
+    files: ["src/app/layout.tsx"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["**/components/draft-ribbon"],
+              message:
+                "Pages render the DraftRibbon and pass content.shell to it (CODING_STANDARDS.md, React).",
+            },
+          ],
+        },
+      ],
+    },
+  },
   {
     files: ["**/*.test.{ts,tsx}", "e2e/**"],
     rules: {

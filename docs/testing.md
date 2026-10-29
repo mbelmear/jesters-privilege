@@ -78,6 +78,14 @@ The budget lives in `lighthouserc.json`. The run fails if any of these is exceed
 
 The Largest Contentful Paint budget was 2.5 s until the site shell (#12) arrived. Lighthouse simulates a throttled load from every byte requested before the first paint, and the header's script plus the UI typeface on every page put the bare home page at a steady 2.75 s (it paints in about 40 ms unthrottled). Menu code, a smaller logo, and a single UI weight didn't move that figure, so the budget sits at 3.0 s with headroom. Revisit it at the home page mockup gate (#14).
 
+When a change moves a budget, compare it with main:
+
+```bash
+npm run lighthouse:compare              # or: -- <base-ref>
+```
+
+It prints each page's simulated and observed LCP and FCP beside the base, with the bytes of each resource type requested before the observed paint. Those bytes are what the simulated figures track: a page that really paints in 40 ms still scores its LCP from everything it fetched by then, so trim early bytes rather than chase the paint.
+
 Reports are written to `.lighthouseci/reports/` and attached to each CI run as `lighthouse-reports`. They are not uploaded anywhere public.
 
 When a page is added, add its URL to `ci.collect.url` in `lighthouserc.json`.

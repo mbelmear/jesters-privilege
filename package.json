@@ -15,6 +15,7 @@
     "test:e2e": "playwright test --project='chromium-*' --project='webkit-*'",
     "test:e2e:firefox": "playwright test --project='firefox-*'",
     "lighthouse": "lhci autorun",
+    "lighthouse:compare": "scripts/lighthouse-compare.sh",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "merge": "scripts/merge-on-green.sh",
