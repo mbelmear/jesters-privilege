@@ -1,0 +1,3 @@
+# Static site, rebuilt on a schedule
+
+The site is a Next.js static export (`output: "export"`) served from Cloudflare, not server-rendered. New Episodes appear only after a rebuild, triggered by a GitHub Action that checks the podcast feed every 2 hours and builds only when the newest Episode has changed (plus a manual run button and a build on every push). We rejected fetching the feed at runtime in the browser because link previews read HTML without running JavaScript, so new Episodes would share with generic titles and images and their pages wouldn't exist yet. We rejected server rendering (OpenNext on Cloudflare) as more infrastructure than v1 needs; it remains the upgrade path if the site ever needs request-time features.

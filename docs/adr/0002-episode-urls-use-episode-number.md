@@ -1,0 +1,3 @@
+# Episode URLs use the episode number
+
+Episode pages live at `/episodes/<number>` (e.g. `/episodes/1`), taken from the feed's `itunes:episode`, and unnumbered bonus or trailer Episodes live at `/episodes/bonus/<title-slug>`. We chose the number over a title slug because it is short enough to say on the show and survives title edits, which a static site can't easily redirect; words in a URL are a negligible search signal next to the page title, Show notes, and Transcript. The build fails if two full Episodes share a number or a full Episode has none, so a publishing mistake surfaces as a failed deploy instead of a broken link.
