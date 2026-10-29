@@ -11,6 +11,13 @@ const COLOR_FUNCTION = "\\b(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color)\\(";
 // Tailwind `font-['Gloock']` / `font-[Gloock]`, but not weights (`font-[600]`)
 // or tokens (`font-[var(--font-display)]`).
 const ARBITRARY_FONT = "\\bfont-\\[(?!var\\()(?![0-9])";
+// Tailwind's built-in palette (`bg-black/10`, `text-red-500`): generated code
+// such as shadcn's arrives with it. No token is named after a palette color.
+const PALETTE_COLOR =
+  "\\b(?:bg|text|border(?:-[trblxyse])?|ring(?:-offset)?|outline|fill|stroke|from|via|to|shadow|decoration|divide|placeholder|caret|accent)-(?:black|white|slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)(?:-(?:50|[1-9]00|950))?(?![\\w-])";
+// Logo orange (`brand`) fails AA as text on parchment; text takes
+// `text-brand-display` (large) or `text-brand-ink` (small).
+const BRAND_TEXT = "\\btext-brand(?![\\w-])";
 
 // One no-restricted-syntax entry per string form a pattern can hide in.
 // Anchor links are skipped: `#feed` there is a fragment, not a color.
@@ -60,6 +67,14 @@ const eslintConfig = defineConfig([
         ...inStrings(
           COLOR_FUNCTION,
           "Literal color function. Use a color token from src/app/globals.css."
+        ),
+        ...inStrings(
+          PALETTE_COLOR,
+          "Tailwind palette color. Use a color token from src/app/globals.css (bg-background, text-foreground, bg-scrim, …)."
+        ),
+        ...inStrings(
+          BRAND_TEXT,
+          "Logo orange is for ornament and fills. For orange text use text-brand-display (large) or text-brand-ink (small)."
         ),
         ...inStrings(
           ARBITRARY_FONT,

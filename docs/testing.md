@@ -49,6 +49,8 @@ npx playwright test --ui    # interactive runner
 
 Specs live in `e2e/`. Every page should get an axe scan (`@axe-core/playwright`) and a no-horizontal-scroll check at phone width. Project names follow `<browser>-<size>`, so `--project=webkit-phone` runs a single combination.
 
+CI runners are slower than a laptop, so a timing assertion ("finishes within 300 ms") first waits for a state that proves the code it times has loaded, such as the first animation completing. Otherwise it measures the download, passes locally, and fails in CI. Likewise, let an opening animation finish before an axe scan, since axe samples colors mid-fade.
+
 When a run fails in CI, the HTML report is attached to the workflow run as `playwright-report`.
 
 ## Performance (Lighthouse CI)
