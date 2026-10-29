@@ -98,10 +98,13 @@ The pre-commit hook formats staged files with Prettier, so `format:check` only f
 
 ## Merging
 
-Never merge a pull request with a failing or pending check. Use the helper, which waits for every check, stops at the first failure, and merges only when all are green:
+Merge with the helper. It merges only a head commit that has passed review and every check:
 
 ```bash
+gh pr comment <pr-number> --body "Code review: passed at <full head SHA>"   # after /code-review finds nothing serious
 npm run merge -- <pr-number>
 ```
+
+It waits for pending checks, stops at the first failure, and refuses a pull request with no checks or whose latest passed review names an older commit. `scripts/merge-on-green.sh` has the details.
 
 Visual pull requests also need a Jester's approval of the preview first; see `AGENTS.md`.
