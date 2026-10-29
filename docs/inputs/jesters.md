@@ -1,6 +1,6 @@
 # Jester source material
 
-Raw bios as supplied, for condensing into the site's two-line bios. Church titles are from redeemerbozeman.org/about/team.
+The site's bios now come from the Jesters' own versions, posted on #6 and kept word for word in `src/content/jesters.ts`. The raw bios below were the earlier source material. Church titles are from redeemerbozeman.org/about/team.
 
 ## Dan Collins
 

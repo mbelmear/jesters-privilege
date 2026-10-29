@@ -5,8 +5,8 @@ The website for Jester's Privilege, a weekly theology-and-humor podcast. It is b
 ## The show
 
 **Jester**:
-One of the three people who make the show: Michael, Dan, and Aaron. Each gets equal billing; a Jester's role (deacon, pastor, producer) belongs in their bio, not their title.
-_Avoid_: Host, co-host, cast, team
+One of the three people who make the show: Michael, Dan, and Aaron. Each gets equal billing. Under their names, the site shows the labels they chose: "Co-host" for Michael and Dan, "Producer & Co-host" for Aaron. Their church roles (deacon, pastor) belong in their bios.
+_Avoid_: Host, co-host, cast, team (anywhere but those labels)
 
 **Fool**:
 A historical court jester or holy fool featured in the Fools' Gallery, such as Stańczyk or Will Somers. Never one of the three Jesters.

@@ -213,7 +213,7 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
   - Each era opens with a painting band, and each Fool gets a framed painting and their story.
   - v1 Fools, each depending on finding a suitable public-domain painting: Paul's "fools for Christ" and the holy fools (St. Francis's _jongleurs de Dieu_, the Russian _yurodivy_), Stańczyk (Matejko, 1862), Triboulet, Will Somers, Archibald Armstrong, Richard Tarlton, the Spanish court fools painted by Velázquez, and Erasmus's _In Praise of Folly_ with Holbein's marginal drawings.
   - It ends with why this show wears the motley.
-- **About**: why a jester; the three Jesters with equal billing and short show roles (Pastor, Deacon, Producer); what we believe; Redeemer Church; how to listen.
+- **About**: why a jester; the three Jesters with equal billing, each under the label they chose (Co-host; Aaron is Producer & Co-host) and with their full bio; what we believe; Redeemer Church; how to listen.
 - **Submit**
   - Type: Question (the default), Confession, Topic idea, or Other.
   - Message: required.
@@ -281,7 +281,7 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
   - Previews show a **DRAFT** ribbon on pages that use draft content.
   - The live site never shows it.
   - A launch check fails if draft content would go live.
-- Jester bios: Dan's and Aaron's source bios are on file. Michael's is to come. Site bios are condensed to two lines in the show's voice.
+- Jester bios: the Jesters supplied their full bios (on #6), used word for word on About, in the order Michael, Dan, Aaron. The home page shows a two-line summary of each, condensed from them.
 
 ### SEO and sharing
 
@@ -338,7 +338,7 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
   - the real feed URL once Episode 1 is published
   - Apple Podcasts, Spotify, and YouTube links
   - social handles
-  - Michael's bio and headshot
+  - headshots for all three Jesters
   - final logo files (SVG, transparent background, square mark, dark-background version)
 - **Human-only setup**: a Cloudflare account and domain purchase, Email Routing, a Cloudflare API token and account ID as GitHub secrets, and Turnstile keys.
 - **Build phases**:

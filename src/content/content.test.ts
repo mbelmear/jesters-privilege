@@ -1,4 +1,4 @@
-import { validateContent } from "@/lib/content";
+import { validateContent, type Jester, type Paragraph } from "@/lib/content";
 import { content } from ".";
 
 describe("content", () => {
@@ -15,17 +15,58 @@ describe("content", () => {
     ]);
   });
 
-  it("introduces the three Jesters, each with a draft bio until they write their own", () => {
+  it("introduces the three Jesters in their words, in their order", () => {
+    const jesters: readonly Jester[] = content.jesters;
     expect(
-      content.jesters.map(({ name, role, bio }) => ({
+      jesters.map(({ name, role, bio }) => ({
         name,
         role,
+        bio: bio?.paragraphs.map(plainText),
         draft: bio?.draft,
       }))
     ).toEqual([
-      { name: "Dan Collins", role: "Pastor", draft: true },
-      { name: "Michael Belmear", role: "Deacon", draft: true },
-      { name: "Aaron Canen", role: "Producer", draft: true },
+      {
+        name: "Michael Belmear",
+        role: "Co-host",
+        bio: [
+          "Michael is a deacon and software engineer who spends his days arguing with computers and his Sundays arguing with Dan. At 24, he\u2019s the youngest at the table and the voice of the pews, with all the confidence of a man who hasn\u2019t been wrong long enough to notice. He co-hosted The Perfect Lens in college, until both of his co-hosts moved away. He\u2019s choosing not to take it personally. He also named this show after a 160-year-old painting of a sulking court jester, which tells you most of what you need to know about him.",
+        ],
+        draft: undefined,
+      },
+      {
+        name: "Dan Collins",
+        role: "Co-host",
+        bio: [
+          "Dan is a discipleship pastor, a father of five, and a man who has been asked more than once to behave in staff meetings. When God called him back to Christ, he came back to the church and the Bible too, and he hasn't stopped talking about either since. He used to host Polemical by himself, which is why he now has two people to interrupt him. When he's not preaching, he's mountain biking, which he insists counts as a spiritual discipline.",
+        ],
+        draft: undefined,
+      },
+      {
+        name: "Aaron Canen",
+        role: "Producer & Co-host",
+        bio: [
+          "Aaron is the one who makes the rest of us sound good, which is harder than it looks. A pastor's kid from Glendive, Montana, he studied music technology at Montana State and has lived where art meets technology ever since. He produces the show, rules on every dispute, and is quietly the smartest guy in the room. He'd never say that, so we will. If a joke didn't make the episode, Aaron cut it. You're welcome.",
+        ],
+        draft: undefined,
+      },
     ]);
   });
+
+  it("sets the show title in Dan's bio in italics", () => {
+    const dan = content.jesters.find(({ id }) => id === "dan");
+    expect(dan?.bio?.paragraphs[0]).toContainEqual({ em: "Polemical" });
+  });
+
+  it("gives each Jester a two-line summary, drafted until they approve one", () => {
+    for (const { summary } of content.jesters) {
+      expect(summary?.draft).toBe(true);
+      expect(summary?.text.length).toBeLessThanOrEqual(160);
+    }
+  });
 });
+
+function plainText(paragraph: Paragraph): string {
+  return paragraph
+    .map((part) => (typeof part === "string" ? part : part.em))
+    .join("");
+}

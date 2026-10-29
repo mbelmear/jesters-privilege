@@ -34,7 +34,7 @@ function content(overrides: Partial<Content> = {}): Content {
       social: {},
     },
     hero: { paragraphs: ["Long ago…"] },
-    jesters: [{ id: "dan", name: "Dan Collins", role: "Pastor" }],
+    jesters: [{ id: "dan", name: "Dan Collins", role: "Co-host" }],
     gallery: {
       eras: [
         {

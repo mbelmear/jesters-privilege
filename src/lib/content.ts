@@ -52,12 +52,19 @@ export type JesterId = (typeof JESTER_IDS)[number];
 
 export type Photo = { readonly src: string; readonly alt: string };
 
+// Text with emphasis, such as a show title set in italics.
+export type Inline = string | { readonly em: string };
+export type Paragraph = readonly Inline[];
+
 // A missing photo shows the monogram shield; a missing bio, name and role only.
 export type Jester = {
   readonly id: JesterId;
   readonly name: string;
-  readonly role: "Pastor" | "Deacon" | "Producer";
-  readonly bio?: Copy;
+  readonly role: "Co-host" | "Producer & Co-host";
+  // Two lines for the home page's Meet the Jesters strip.
+  readonly summary?: Copy;
+  // The full bio on About, in the Jester's own words.
+  readonly bio?: { readonly paragraphs: readonly Paragraph[] } & Draftable;
   readonly photo?: Photo;
 };
 
