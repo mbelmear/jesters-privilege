@@ -1,8 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(npm run mark-ready -- *)",
-      "Bash(npm run review-passed -- *)"
-    ]
-  }
-}
