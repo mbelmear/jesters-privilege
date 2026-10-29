@@ -107,7 +107,7 @@ The pre-commit hook formats staged files with Prettier, so `format:check` only f
 Merge with the helper. It merges only a head commit that has passed review and every check:
 
 ```bash
-gh pr comment <pr-number> --body "Code review: passed at <full head SHA>"   # after /code-review finds nothing serious
+npm run review-passed -- <pr-number> <full head SHA>   # after /code-review finds nothing serious
 npm run merge -- <pr-number>
 ```
 

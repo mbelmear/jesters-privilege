@@ -10,8 +10,8 @@ Website for the Jester's Privilege podcast. The agreed v1 spec is `docs/spec.md`
 - **Design principle.** Modern construction, deliberate historical callbacks. Respect reduced motion.
 - **Content lives in content files**, never hard-coded in components. Copy awaiting the Jesters' words is marked `draft: true`, written at realistic length.
 - **Merging.**
-  - Logic/infra PRs: commit, then run `/code-review` (against `CODING_STANDARDS.md`) with `origin/main` as the fixed point; it reviews committed work only. When it finds nothing serious, comment `Code review: passed at <full head SHA>`, then merge with `npm run merge -- <n>`. The script refuses a head without that comment and any failing, pending, or missing check. Each push after a review gets its own `/code-review` before a new comment, with the last reviewed SHA as the fixed point so it covers only the new commits (`origin/main` again after a rebase).
-  - Visual PRs (anything a visitor sees): post the Cloudflare preview URL on the PR, apply the `ready-for-human` label, and wait for a Jester to approve. Do not merge them yourself.
+  - Logic/infra PRs: commit, then run `/code-review` (against `CODING_STANDARDS.md`) with `origin/main` as the fixed point; it reviews committed work only. When it finds nothing serious, record it with `npm run review-passed -- <n> <reviewed full SHA>`, then merge with `npm run merge -- <n>`. The script refuses a head without that comment and any failing, pending, or missing check. Each push after a review gets its own `/code-review` before a new comment, with the last reviewed SHA as the fixed point so it covers only the new commits (`origin/main` again after a rebase).
+  - Visual PRs (anything a visitor sees): post the Cloudflare preview URL on the PR, apply the `ready-for-human` label with `npm run mark-ready -- <n>`, and wait for a Jester to approve. Do not merge them yourself.
 
 ## Agent skills
 
