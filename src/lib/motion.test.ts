@@ -1,4 +1,4 @@
-import { motionCss, motionPresets } from "./motion";
+import { motionCss, motionPresets, transitionFor } from "./motion";
 
 describe("motionPresets", () => {
   it("makes the processional reveal slower than the courtly menu", () => {
@@ -23,5 +23,14 @@ describe("motionCss", () => {
         "--motion-courtly-duration:200ms;" +
         "}"
     );
+  });
+});
+
+describe("transitionFor", () => {
+  it("turns a preset into a Motion transition", () => {
+    expect(transitionFor({ duration: 0.2, ease: [0.4, 0, 0.2, 1] })).toEqual({
+      duration: 0.2,
+      ease: [0.4, 0, 0.2, 1],
+    });
   });
 });

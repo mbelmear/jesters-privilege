@@ -3,7 +3,7 @@
 import { m } from "motion/react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { motionPresets } from "@/lib/motion";
+import { motionPresets, transitionFor } from "@/lib/motion";
 
 type PresetName = keyof typeof motionPresets;
 
@@ -16,7 +16,6 @@ export function MotionDemo({
   replayLabel: string;
 }) {
   const [run, setRun] = useState(0);
-  const { duration, ease } = motionPresets[preset];
 
   return (
     <div className="flex items-center gap-3">
@@ -26,7 +25,7 @@ export function MotionDemo({
           className="h-full origin-left bg-brand"
           initial={{ scaleX: 0 }}
           animate={{ scaleX: 1 }}
-          transition={{ duration, ease: [...ease] }}
+          transition={transitionFor(motionPresets[preset])}
         />
       </div>
       <Button

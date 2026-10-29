@@ -1,7 +1,7 @@
 "use client";
 
 import { LazyMotion, MotionConfig } from "motion/react";
-import { motionPresets } from "@/lib/motion";
+import { motionPresets, transitionFor } from "@/lib/motion";
 
 // Animation features load in their own chunk once something animates.
 // `strict` keeps components on the light `m` API rather than the full
@@ -20,10 +20,7 @@ export function MotionProvider({ children }: { children: React.ReactNode }) {
   return (
     <MotionConfig
       reducedMotion="user"
-      transition={{
-        duration: motionPresets.processional.duration,
-        ease: [...motionPresets.processional.ease],
-      }}
+      transition={transitionFor(motionPresets.processional)}
     >
       <LazyMotion features={loadFeatures} strict>
         {children}

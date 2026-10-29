@@ -12,6 +12,15 @@ export const motionPresets = {
   courtly: { duration: 0.2, ease: [0.4, 0, 0.2, 1] },
 } as const satisfies Record<string, MotionPreset>;
 
+/** A preset as a Motion `transition`, which wants a mutable easing array. */
+export function transitionFor({ duration, ease }: MotionPreset): {
+  duration: number;
+  ease: [number, number, number, number];
+} {
+  const [x1, y1, x2, y2] = ease;
+  return { duration, ease: [x1, y1, x2, y2] };
+}
+
 /** A `:root` rule giving each preset to CSS as `--motion-<name>-ease/-duration`. */
 export function motionCss(presets: Record<string, MotionPreset>): string {
   const declarations = Object.entries(presets).map(

@@ -54,11 +54,12 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
-  closeLabel = "Close",
+  closeLabel,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean;
-  closeLabel?: string;
+  /** Screen-reader name for the close button, from content. */
+  closeLabel: string;
 }) {
   return (
     <DialogPortal>
