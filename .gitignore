@@ -20,6 +20,9 @@
 # production
 /build
 
+# images made by scripts/images.ts
+/public/images/
+
 # misc
 .DS_Store
 *.pem

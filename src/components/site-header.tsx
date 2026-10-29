@@ -22,7 +22,7 @@ export function SiteHeader({ shell, episodeCount }: Props) {
           href="/"
           className="h-full shrink-0 py-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
         >
-          <Logo alt={shell.homeLink} className="h-full" />
+          <Logo image={shell.logo} alt={shell.homeLink} className="h-full" />
         </Link>
         <div className="flex items-center gap-1">
           <nav aria-label={shell.navLabel} className="hidden md:block">

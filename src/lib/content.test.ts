@@ -1,5 +1,6 @@
 import {
   findDrafts,
+  findImages,
   validateContent,
   type Content,
   type Painting,
@@ -8,6 +9,8 @@ import { shell } from "@/content/shell";
 
 const painting: Painting = {
   src: "/paintings/stanczyk.jpg",
+  width: 2400,
+  height: 1785,
   source:
     "https://commons.wikimedia.org/wiki/File:Jan_Matejko,_Sta%C5%84czyk.jpg",
   alt: "Stańczyk slumped in a chair while a ball goes on in the next room",
@@ -34,6 +37,7 @@ function content(overrides: Partial<Content> = {}): Content {
       listen: { spotify: "https://open.spotify.com/show/abc" },
       social: {},
     },
+    paintings: { stanczyk: painting },
     shell,
     hero: { paragraphs: ["Long ago…"] },
     jesters: [{ id: "dan", name: "Dan Collins", role: "Co-host" }],
@@ -112,6 +116,17 @@ describe("validateContent", () => {
     );
   });
 
+  it("checks every painting in the catalogue, naming it by id", () => {
+    const focalPoint = { x: -0.1, y: 0.4 };
+    expect(() =>
+      validateContent(
+        content({ paintings: { stanczyk: { ...painting, focalPoint } } })
+      )
+    ).toThrow(
+      "Content paintings.stanczyk.focalPoint must lie within the painting (x and y from 0 to 1), not (-0.1, 0.4)"
+    );
+  });
+
   it("refuses a painting whose source isn't a Wikimedia Commons file page", () => {
     const valid = content();
     const source = "https://example.com/stanczyk.jpg";
@@ -184,5 +199,55 @@ describe("findDrafts", () => {
 
   it("finds nothing in final content", () => {
     expect(findDrafts({ hero: { paragraphs: ["Long ago…"] } })).toEqual([]);
+  });
+});
+
+describe("findImages", () => {
+  const logo = { src: "/brand/logo-draft.png", width: 583, height: 294 };
+
+  it("finds every image the site shows, with where it sits", () => {
+    const valid = content();
+    expect(findImages(content({ shell: { ...valid.shell, logo } }))).toEqual([
+      {
+        path: "paintings.stanczyk",
+        src: "/paintings/stanczyk.jpg",
+        width: 2400,
+        height: 1785,
+        focalPoint: { x: 0.45, y: 0.4 },
+      },
+      { path: "shell.logo", ...logo },
+    ]);
+  });
+
+  it("finds an image shown in several places once", () => {
+    const valid = content();
+    const found = findImages(
+      content({
+        gallery: {
+          ...valid.gallery,
+          eras: [{ ...valid.gallery.eras[0], band: painting }],
+        },
+      })
+    );
+    expect(found.filter((image) => image.src === painting.src)).toEqual([
+      expect.objectContaining({ path: "paintings.stanczyk" }),
+    ]);
+  });
+
+  it("refuses one file given two sizes or focal points, naming both places", () => {
+    const valid = content();
+    const band = { ...painting, focalPoint: { x: 0.6, y: 0.4 } };
+    expect(() =>
+      findImages(
+        content({
+          gallery: {
+            ...valid.gallery,
+            eras: [{ ...valid.gallery.eras[0], band }],
+          },
+        })
+      )
+    ).toThrow(
+      "Content paintings.stanczyk and gallery.eras[renaissance].band both show /paintings/stanczyk.jpg but describe it differently"
+    );
   });
 });

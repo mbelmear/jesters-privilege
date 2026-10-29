@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { DraftRibbon } from "@/components/draft-ribbon";
 import { shell } from "@/content/shell";
 import { site } from "@/content/site";
@@ -19,6 +20,12 @@ export default function Styleguide() {
       <div className="flex max-w-2xl flex-col gap-3">
         <h1 className="font-display text-5xl">{styleguide.title}</h1>
         <p className="text-lg text-muted-foreground">{styleguide.intro}</p>
+        <Link
+          href="/styleguide/paintings"
+          className="font-ui font-semibold text-primary underline underline-offset-4"
+        >
+          {styleguide.paintingsLink}
+        </Link>
       </div>
       <div className="grid gap-8 lg:grid-cols-2">
         <Specimen scheme="light" copy={styleguide} />

@@ -92,6 +92,13 @@
      baked-in white background never shows as a box. */
   --logo-plate: var(--palette-parchment-light);
 
+  /* Paintings: a framed painting hangs in a teal frame on a parchment mat in
+     both themes, like a lit wall in a gallery, and a title set on a painting
+     is parchment over the scrim. */
+  --frame: var(--palette-teal);
+  --mat: var(--palette-parchment-light);
+  --on-scrim: var(--palette-parchment);
+
   /* Lines, fields, focus, errors, overlays */
   --border: light-dark(
     var(--palette-parchment-edge),
@@ -168,6 +175,9 @@
   --color-destructive: var(--destructive);
   --color-scrim: var(--scrim);
   --color-logo-plate: var(--logo-plate);
+  --color-frame: var(--frame);
+  --color-mat: var(--mat);
+  --color-on-scrim: var(--on-scrim);
 
   /* Fonts, self-hosted through next/font in src/app/fonts.ts */
   --font-display: var(--font-gloock);
@@ -195,6 +205,20 @@
      duration-(--motion-courtly-duration). */
   --ease-processional: var(--motion-processional-ease);
   --ease-courtly: var(--motion-courtly-ease);
+
+  /* A painting band's slow zoom on desktops, drifting in and back out. Ambient
+     and endless, it runs in CSS rather than Motion so bands ship no script,
+     and the reduced-motion rule below stills it. Use as
+     lg:motion-safe:animate-band-zoom. */
+  --animate-band-zoom: band-zoom 30s ease-in-out infinite alternate;
+  @keyframes band-zoom {
+    from {
+      scale: 1;
+    }
+    to {
+      scale: 1.06;
+    }
+  }
 }
 
 /* Reduced motion, site-wide: CSS animations and transitions end at once.
