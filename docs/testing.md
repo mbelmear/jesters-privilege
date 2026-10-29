@@ -112,7 +112,7 @@ Two more run on every push to `main`:
 Merge with the helper. It merges only a head commit that has passed review and every check:
 
 ```bash
-gh pr comment <pr-number> --body "Code review: passed at <full head SHA>"   # after /code-review finds nothing serious
+npm run review-passed -- <pr-number> <reviewed full SHA>   # after /code-review finds nothing serious
 npm run merge -- <pr-number>
 ```
 

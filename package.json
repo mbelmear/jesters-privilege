@@ -18,6 +18,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "merge": "scripts/merge-on-green.sh",
+    "mark-ready": "scripts/mark-ready.sh",
+    "review-passed": "scripts/review-passed.sh",
     "ready": "scripts/ready-tickets.sh",
     "worktree": "scripts/new-worktree.sh",
     "launch-check": "tsx scripts/launch-check.ts",
