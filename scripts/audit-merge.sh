@@ -24,7 +24,7 @@ fi
 
 labels=$(gh pr view "$pr" --json labels --jq '.labels[].name')
 if grep -qx ready-for-human <<<"$labels"; then
-  echo "#$pr is a visual PR (ready-for-human), merged by a Jester."
+  echo "#$pr is labeled ready-for-human, a visual PR for a Jester to merge."
   exit 0
 fi
 

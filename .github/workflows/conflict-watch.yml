@@ -11,9 +11,11 @@ on:
   pull_request:
     types: [synchronize]
 
-# One run at a time, so two can't both post the comment.
+# Sweeps after pushes to main run one at a time, so two can't both post the
+# comment; a PR's own run only ever clears it, so it queues separately and
+# can't displace a waiting sweep.
 concurrency:
-  group: conflict-watch
+  group: conflict-watch-${{ github.event.pull_request.number || 'main' }}
   cancel-in-progress: false
 
 permissions:
