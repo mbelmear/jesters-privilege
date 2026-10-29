@@ -15,7 +15,7 @@ Reviewers skip these; the rules below are the ones that need judgement.
 
 ## TypeScript
 
-- **Outside data enters as `unknown` and is narrowed at the boundary.** The boundaries are the feed text, Transcript WebVTT, the Submit request body, anything read from `localStorage`, and `catch` variables. A validator or type guard at that boundary turns `unknown` into a domain type or throws a descriptive error; past the boundary, code works only with domain types. `unknown` that travels further than the function that received it is a finding.
+- **Outside data enters as `unknown` and is narrowed at the boundary.** The boundaries are the feed text, Transcript WebVTT, the Submit request body, anything read from `localStorage`, and `catch` variables. A validator or type guard at that boundary turns `unknown` into a domain type or throws a descriptive error; past the boundary, code works only with domain types. `unknown` that leaves its boundary validator (the receiving function and the non-exported helpers it calls) is a finding.
 - **Domain concepts get named types in `GLOSSARY.md` vocabulary**: `Episode`, `Fool`, `Jester`, `Submission`. A closed set is a union of string literals (`"question" | "confession" | "topic-idea" | "other"`), with one exported list as the source of truth for code that iterates it.
 - **Illegal states are unrepresentable.** State with modes (the player store, the Submit form) is a discriminated union, where each variant carries exactly the fields that mode has, in place of booleans plus optional fields.
 - **Switches over a union are exhaustive**, ending in a `never` check so a new variant fails to compile everywhere it needs handling.
