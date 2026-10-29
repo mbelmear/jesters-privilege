@@ -17,7 +17,8 @@
     "lighthouse": "lhci autorun",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "merge": "scripts/merge-on-green.sh"
+    "merge": "scripts/merge-on-green.sh",
+    "ready": "scripts/ready-tickets.sh"
   },
   "dependencies": {
     "next": "16.4.3",
