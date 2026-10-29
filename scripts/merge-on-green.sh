@@ -1,14 +1,34 @@
 #!/usr/bin/env bash
-# Merge a pull request only once every check has passed.
+# Merge a pull request only once its head commit has passed review and every
+# check.
 #
 # GitHub Free doesn't enforce branch protection on this private repo, so this
-# script is the enforcement: it waits for pending checks, stops at the first
-# failure, and refuses to merge a PR with no checks at all.
+# script is the enforcement. It refuses to merge unless:
+#   1. the newest "Code review: passed at <sha>" comment names the PR's head,
+#   2. the PR has at least one check, and
+#   3. every check passes (it waits for pending ones, stops at the first failure).
+# The merge is pinned to the reviewed commit, so a push during the wait fails it.
 #
 # Usage: npm run merge -- <pr-number>
 set -euo pipefail
 
 pr="${1:?Usage: npm run merge -- <pr-number>}"
 
+head=$(gh pr view "$pr" --json headRefOid --jq .headRefOid)
+
+reviewed=$(gh pr view "$pr" --json comments --jq '.comments[].body' |
+  sed -n 's/^Code review: passed at \([0-9a-f]\{40\}\).*/\1/p' | tail -n 1)
+if [[ "$reviewed" != "$head" ]]; then
+  echo "Refusing to merge #$pr: head is $head, but the last passed review is at ${reviewed:-no commit}." >&2
+  echo "Run /code-review on the head, then: gh pr comment $pr --body \"Code review: passed at $head\"" >&2
+  exit 1
+fi
+
+checks=$(gh pr view "$pr" --json statusCheckRollup --jq '.statusCheckRollup | length')
+if [[ "$checks" -eq 0 ]]; then
+  echo "Refusing to merge #$pr: no checks reported yet. Wait for CI to start, then retry." >&2
+  exit 1
+fi
+
 gh pr checks "$pr" --watch --fail-fast
-gh pr merge "$pr" --squash --delete-branch
+gh pr merge "$pr" --squash --delete-branch --match-head-commit "$head"

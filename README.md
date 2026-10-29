@@ -22,6 +22,6 @@ Open [http://localhost:3000](http://localhost:3000).
 | `npm run lighthouse`   | Mobile performance budget against `out/`  |
 | `npm run typecheck`    | Type-check the project                    |
 | `npm run format`       | Format everything with Prettier           |
-| `npm run merge -- <n>` | Merge PR `<n>` once every check is green  |
+| `npm run merge -- <n>` | Merge PR `<n>` once reviewed and green    |
 
 How each test layer works and how to run it locally: [`docs/testing.md`](docs/testing.md).
