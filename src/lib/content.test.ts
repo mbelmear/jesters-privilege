@@ -209,13 +209,13 @@ describe("findImages", () => {
     const valid = content();
     expect(findImages(content({ shell: { ...valid.shell, logo } }))).toEqual([
       {
-        path: "paintings.stanczyk",
+        contentPath: "paintings.stanczyk",
         src: "/paintings/stanczyk.jpg",
         width: 2400,
         height: 1785,
         focalPoint: { x: 0.45, y: 0.4 },
       },
-      { path: "shell.logo", ...logo },
+      { contentPath: "shell.logo", ...logo },
     ]);
   });
 
@@ -230,7 +230,7 @@ describe("findImages", () => {
       })
     );
     expect(found.filter((image) => image.src === painting.src)).toEqual([
-      expect.objectContaining({ path: "paintings.stanczyk" }),
+      expect.objectContaining({ contentPath: "paintings.stanczyk" }),
     ]);
   });
 

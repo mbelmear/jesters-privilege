@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 export default function StyleguidePaintings() {
   return (
     <div className="flex flex-col gap-12 pt-12 pb-16">
-      <DraftRibbon uses={[shell, copy]} />
+      <DraftRibbon uses={[shell, site, styleguide]} />
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-3 px-4 sm:px-6">
         <h1 className="font-display text-5xl">{copy.title}</h1>
         <p className="max-w-2xl text-lg text-muted-foreground">{copy.intro}</p>
@@ -24,7 +24,7 @@ export default function StyleguidePaintings() {
       <PaintingBand
         painting={copy.band.painting}
         title={copy.band.title}
-        loading="eager"
+        loading="largest-paint"
       />
       <div className="mx-auto grid w-full max-w-7xl items-start gap-12 px-4 sm:grid-cols-2 sm:px-6 lg:grid-cols-3">
         {copy.framed.map((painting) => (

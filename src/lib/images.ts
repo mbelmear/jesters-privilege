@@ -69,9 +69,14 @@ type ImageRequest = {
   readonly crop?: CropName;
 };
 
+// The folder holding an image's generated files, named for its source.
+export function imageFolder(src: string): string {
+  return `${IMAGE_ROOT}${src.replace(/\.[^./]+$/, "")}`;
+}
+
 export function imageUrl({ src, width, format, crop }: ImageRequest): string {
   const name = crop ? `${crop}-${width}` : `${width}`;
-  return `${IMAGE_ROOT}${src.replace(/\.[^./]+$/, "")}/${name}.${format}`;
+  return `${imageFolder(src)}/${name}.${format}`;
 }
 
 // An image the site shows: a file under public/ and its size in pixels. One

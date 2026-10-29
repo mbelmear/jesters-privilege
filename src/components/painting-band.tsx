@@ -1,4 +1,4 @@
-import { Picture } from "@/components/picture";
+import { Picture, type PictureLoading } from "@/components/picture";
 import { Placard } from "@/components/placard";
 import type { Painting } from "@/lib/content";
 
@@ -6,7 +6,7 @@ type Props = {
   painting: Painting;
   // A short title only: body text never sits on a painting.
   title: string;
-  loading?: "eager" | "lazy";
+  loading?: PictureLoading;
 };
 
 /**
@@ -26,8 +26,6 @@ export function PaintingBand({ painting, title, loading }: Props) {
           alt={painting.alt}
           sizes="100vw"
           loading={loading}
-          // A painting on the first screen is usually the largest paint.
-          fetchPriority={loading === "eager" ? "high" : undefined}
           phone={{ crop: "portrait", focalPoint: painting.focalPoint }}
           className="size-full object-cover lg:motion-safe:animate-band-zoom"
           style={{ objectPosition: focus, transformOrigin: focus }}

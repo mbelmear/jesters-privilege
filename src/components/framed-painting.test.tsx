@@ -37,11 +37,12 @@ describe("FramedPainting", () => {
     );
   });
 
-  it("loads lazily unless it's on the first screen", () => {
+  it("loads lazily unless it's the largest paint", () => {
     const { rerender } = render(<FramedPainting painting={painting} />);
     expect(screen.getByRole("img")).toHaveAttribute("loading", "lazy");
-    rerender(<FramedPainting painting={painting} loading="eager" />);
+    rerender(<FramedPainting painting={painting} loading="largest-paint" />);
     expect(screen.getByRole("img")).toHaveAttribute("loading", "eager");
+    expect(screen.getByRole("img")).toHaveAttribute("fetchpriority", "high");
   });
 
   it("has no accessibility violations", async () => {

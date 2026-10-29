@@ -38,7 +38,7 @@ describe("PaintingBand", () => {
     expect(screen.getByRole("img")).toHaveStyle({ objectPosition: "52% 30%" });
   });
 
-  it("loads lazily unless it's on the first screen", () => {
+  it("loads lazily unless it's the largest paint", () => {
     const { rerender } = render(
       <PaintingBand painting={painting} title="The Renaissance" />
     );
@@ -47,10 +47,11 @@ describe("PaintingBand", () => {
       <PaintingBand
         painting={painting}
         title="The Renaissance"
-        loading="eager"
+        loading="largest-paint"
       />
     );
     expect(screen.getByRole("img")).toHaveAttribute("loading", "eager");
+    expect(screen.getByRole("img")).toHaveAttribute("fetchpriority", "high");
   });
 
   it("has no accessibility violations", async () => {

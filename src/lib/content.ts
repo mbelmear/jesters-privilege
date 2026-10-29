@@ -187,7 +187,7 @@ export function findDrafts(value: ContentValue): string[] {
 
 // An image the content shows, with the first place it sits.
 export type FoundImage = ImageFile & {
-  readonly path: string;
+  readonly contentPath: string;
   readonly focalPoint?: FocalPoint;
 };
 
@@ -203,7 +203,7 @@ export function findImages(value: ContentValue): FoundImage[] {
       found.set(image.src, image);
     } else if (fingerprint(seen) !== fingerprint(image)) {
       throw new Error(
-        `Content ${seen.path} and ${path} both show ${image.src} but describe it differently`
+        `Content ${seen.contentPath} and ${path} both show ${image.src} but describe it differently`
       );
     }
   }
@@ -220,7 +220,7 @@ function asImage(path: string, node: ContentValue): FoundImage | undefined {
   ) {
     return undefined;
   }
-  const image = { path, src, width, height };
+  const image = { contentPath: path, src, width, height };
   if (
     isRecord(focalPoint) &&
     typeof focalPoint.x === "number" &&

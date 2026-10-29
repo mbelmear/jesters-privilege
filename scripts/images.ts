@@ -11,12 +11,17 @@ import path from "node:path";
 import sharp from "sharp";
 import { content } from "@/content";
 import { findImages, type FoundImage } from "@/lib/content";
-import { IMAGE_ROOT, planImage, type Variant } from "@/lib/images";
+import { IMAGE_ROOT, imageFolder, planImage, type Variant } from "@/lib/images";
 
 const PUBLIC = "public";
 const OUT = path.join(PUBLIC, IMAGE_ROOT);
 
-// Tuned so a phone's painting stays near 150 KB (docs/testing.md).
+// A phone downloads a painting's AVIF at up to 1200px wide (a 3× screen);
+// each must stay near 150 KB (#13, docs/testing.md), or the build fails.
+const PHONE_WIDTH = 1200;
+const PHONE_BYTES = 180_000;
+
+// Tuned so a phone's painting stays near 150 KB.
 const ENCODING = {
   avif: { quality: 45, effort: 6 },
   webp: { quality: 72, effort: 4 },
@@ -27,7 +32,7 @@ async function main() {
   const folders = new Set<string>();
   let made = 0;
   for (const image of images) {
-    const folder = path.join(OUT, image.src.replace(/\.[^./]+$/, ""));
+    const folder = path.join(PUBLIC, imageFolder(image.src));
     folders.add(folder);
     if (await makeSet(image, folder)) made += 1;
   }
@@ -42,13 +47,13 @@ async function makeSet(image: FoundImage, folder: string): Promise<boolean> {
   const file = path.join(PUBLIC, image.src);
   const source = await readFile(file).catch(() => {
     throw new Error(
-      `Image ${image.src} (content ${image.path}) isn't in ${PUBLIC}/`
+      `Image ${image.src} (content ${image.contentPath}) isn't in ${PUBLIC}/`
     );
   });
   const { width, height } = await sharp(source).metadata();
   if (width !== image.width || height !== image.height) {
     throw new Error(
-      `Image ${image.src} is ${width}×${height}, but content ${image.path} gives ${image.width}×${image.height}`
+      `Image ${image.src} is ${width}×${height}, but content ${image.contentPath} gives ${image.width}×${image.height}`
     );
   }
   const variants = planImage(image);
@@ -62,12 +67,36 @@ async function makeSet(image: FoundImage, folder: string): Promise<boolean> {
   }
   await rm(folder, { recursive: true, force: true });
   await mkdir(folder, { recursive: true });
-  await Promise.all(variants.map((variant) => encode(source, variant)));
+  const sizes = await Promise.all(
+    variants.map((variant) => encode(source, variant))
+  );
+  if (image.focalPoint) assertPhoneSizes(image, variants, sizes);
   await writeFile(stampFile, stamp);
   return true;
 }
 
-async function encode(source: Buffer, variant: Variant): Promise<void> {
+// A painting's phone files (those with a focal point are paintings).
+function assertPhoneSizes(
+  image: FoundImage,
+  variants: Variant[],
+  sizes: number[]
+): void {
+  for (const [index, variant] of variants.entries()) {
+    const bytes = sizes[index] ?? 0;
+    if (
+      variant.format === "avif" &&
+      variant.width <= PHONE_WIDTH &&
+      bytes > PHONE_BYTES
+    ) {
+      throw new Error(
+        `Image ${variant.url} is ${Math.round(bytes / 1000)} KB, over the ${PHONE_BYTES / 1000} KB a phone should download for one painting (content ${image.contentPath}); lower ENCODING.avif.quality in scripts/images.ts`
+      );
+    }
+  }
+}
+
+// Returns the file's size in bytes.
+async function encode(source: Buffer, variant: Variant): Promise<number> {
   const image = sharp(source);
   if (variant.crop) image.extract(variant.crop);
   image.resize({ width: variant.width });
@@ -75,7 +104,8 @@ async function encode(source: Buffer, variant: Variant): Promise<void> {
     variant.format === "avif"
       ? image.avif(ENCODING.avif)
       : image.webp(ENCODING.webp);
-  await encoded.toFile(path.join(PUBLIC, variant.url));
+  const { size } = await encoded.toFile(path.join(PUBLIC, variant.url));
+  return size;
 }
 
 // Deletes each stamped folder under `root` that no image in content made.
