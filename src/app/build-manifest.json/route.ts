@@ -1,11 +1,12 @@
+import { getEpisodes } from "@/content/feed";
 import type { BuildManifest } from "@/lib/build-manifest";
 
 export const dynamic = "force-static";
 
-export function GET() {
+export async function GET() {
+  const [newest] = await getEpisodes();
   const manifest: BuildManifest = {
-    // Stays null until feed ingestion (#11) supplies the newest Episode.
-    newestEpisodeGuid: null,
+    newestEpisodeGuid: newest?.guid ?? null,
     commit: process.env.BUILD_COMMIT ?? null,
   };
   return Response.json(manifest);
