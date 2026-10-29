@@ -2,7 +2,9 @@
 # Lighthouse for this branch beside a base (default origin/main), per page:
 # simulated and observed LCP/FCP, and the bytes requested before the observed
 # paint, which drive the simulated figure (docs/testing.md, Lighthouse).
-# Builds the base in a throwaway worktree. Usage:
+# Builds the base in a throwaway worktree. This branch is measured as it
+# stands in this checkout (uncommitted changes included), replacing its out/
+# and .lighthouseci/, so run it from your own ticket worktree. Usage:
 #   npm run lighthouse:compare [-- <base-ref>]
 set -euo pipefail
 

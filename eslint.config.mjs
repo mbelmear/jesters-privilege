@@ -100,9 +100,9 @@ const eslintConfig = defineConfig([
       "no-restricted-imports": [
         "error",
         {
-          paths: [
+          patterns: [
             {
-              name: "@/components/draft-ribbon",
+              group: ["**/components/draft-ribbon"],
               message:
                 "Pages render the DraftRibbon and pass content.shell to it (CODING_STANDARDS.md, React).",
             },
