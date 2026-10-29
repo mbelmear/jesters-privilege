@@ -63,10 +63,13 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
           ALIAS: pr-${{ github.event.pull_request.number }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
+          jq -n '{TURNSTILE_SECRET_KEY: env.TURNSTILE_SECRET_KEY}' > "$RUNNER_TEMP/secrets.json"
           npx wrangler versions upload --preview-alias "$ALIAS" \
+            --secrets-file "$RUNNER_TEMP/secrets.json" \
             --message "PR #${{ github.event.pull_request.number }} at ${HEAD_SHA::7}" \
             | tee upload.log
           url=$(grep -oE "https://$ALIAS-[a-z0-9.-]+\.workers\.dev" upload.log | head -1)
@@ -111,8 +114,12 @@ jobs:
       - run: npm run build
         env:
           BUILD_COMMIT: ${{ github.sha }}
-      - run: npx wrangler deploy --message "${GITHUB_SHA::7}"
+      - run: |
+          jq -n '{TURNSTILE_SECRET_KEY: env.TURNSTILE_SECRET_KEY}' > "$RUNNER_TEMP/secrets.json"
+          npx wrangler deploy --message "${GITHUB_SHA::7}" \
+            --secrets-file "$RUNNER_TEMP/secrets.json"
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
       - run: scripts/smoke-check.sh "$GITHUB_SHA"
