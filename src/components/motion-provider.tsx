@@ -3,9 +3,9 @@
 import { LazyMotion, MotionConfig } from "motion/react";
 import { motionPresets, transitionFor } from "@/lib/motion";
 
-// Animation features load in their own chunk once something animates.
-// `strict` keeps components on the light `m` API rather than the full
-// `motion` bundle.
+// Animation features load in their own chunk as soon as this provider
+// mounts, whether or not anything animates yet. `strict` keeps components on
+// the light `m` API rather than the full `motion` bundle.
 const loadFeatures = () =>
   import("./motion-features").then((features) => features.default);
 

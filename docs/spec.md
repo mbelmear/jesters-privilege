@@ -196,6 +196,8 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
 
 ### Pages
 
+- Section addresses (`/episodes`, `/gallery`, `/about`, `/submit`) are the `nav` entries in `src/content/shell.ts`; each page ticket builds its page there.
+
 - **Home**
   - the hero copy, with the reveal style chosen at the mockup gate: paragraph-by-paragraph on scroll, or simple
   - the "Listen on" buttons, each hidden until its link exists, plus "New to podcasts?"
