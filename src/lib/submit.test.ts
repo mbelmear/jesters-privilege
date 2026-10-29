@@ -5,7 +5,7 @@ import { handleSubmit, type Email, type SubmitDeps } from "./submit";
 
 const validBody = {
   type: "question",
-  message: "Do court jesters get dental?",
+  message: "Do court Fools get dental?",
   name: "Brother Tuck",
   email: "tuck@example.com",
   consent: true,
@@ -65,7 +65,7 @@ describe("handleSubmit", () => {
           "Email: tuck@example.com",
           "Consent: Yes, this may be mentioned on the show",
           "",
-          "Do court jesters get dental?",
+          "Do court Fools get dental?",
         ].join("\n"),
       },
     ]);

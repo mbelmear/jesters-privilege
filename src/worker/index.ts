@@ -31,8 +31,9 @@ const worker = {
       }
       return handleSubmit(request, {
         // Wrapped: the Workers runtime refuses a detached global fetch.
-        verifyTurnstile: turnstileVerifier(env.TURNSTILE_SECRET_KEY, (u, i) =>
-          fetch(u, i)
+        verifyTurnstile: turnstileVerifier(
+          env.TURNSTILE_SECRET_KEY,
+          (url, init) => fetch(url, init)
         ),
         sendEmail: emailSender(env.SUBMISSION_EMAIL),
       });
