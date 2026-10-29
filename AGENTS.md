@@ -4,13 +4,13 @@ Website for the Jester's Privilege podcast. The agreed v1 spec is `docs/spec.md`
 
 ## Working rules
 
-- **One worktree per ticket.** Several sessions build tickets at once, so implement each ticket in its own git worktree on its own branch, created from `origin/main` (the EnterWorktree tool, or `git worktree add ../jp-<issue> -b <branch> origin/main`). The main checkout belongs to the human.
+- **One worktree per ticket.** Several sessions build tickets at once, so implement each ticket in its own git worktree on its own branch, created from `origin/main` with `npm run worktree -- <issue> <branch>`, which also installs dependencies. The main checkout belongs to the human.
 - **Vocabulary.** Use `GLOSSARY.md` terms in code, copy, tickets, and tests. In particular: "Jester" means only Michael, Dan, or Aaron; a historical figure is a "Fool".
 - **Test first.** Build logic with the `tdd` skill (Jest + React Testing Library + jest-axe). Browser behavior is covered by Playwright; performance by Lighthouse CI. How to run each layer: `docs/testing.md`.
 - **Design principle.** Modern construction, deliberate historical callbacks. Respect reduced motion.
 - **Content lives in content files**, never hard-coded in components. Copy awaiting the Jesters' words is marked `draft: true`, written at realistic length.
 - **Merging.**
-  - Logic/infra PRs: run `/code-review` (against `CODING_STANDARDS.md`) on the PR's head commit. When it finds nothing serious, comment `Code review: passed at <full head SHA>`, then merge with `npm run merge -- <n>`. The script refuses a head without that comment and any failing, pending, or missing check, so every push after a review needs a fresh one.
+  - Logic/infra PRs: commit, then run `/code-review` (against `CODING_STANDARDS.md`) on the PR's head commit; it reviews committed work only. When it finds nothing serious, comment `Code review: passed at <full head SHA>`, then merge with `npm run merge -- <n>`. The script refuses a head without that comment and any failing, pending, or missing check, so every push after a review needs a fresh one: rerun `/code-review` with the last reviewed SHA as the fixed point, so it covers only the new commits.
   - Visual PRs (anything a visitor sees): post the Cloudflare preview URL on the PR, apply the `ready-for-human` label, and wait for a Jester to approve. Do not merge them yourself.
 
 ## Agent skills
