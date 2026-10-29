@@ -17,8 +17,13 @@ test.describe("Home", () => {
     expect(overflow).toBeLessThanOrEqual(0);
   });
 
-  test("has no detectable accessibility violations", async ({ page }) => {
-    const results = await new AxeBuilder({ page }).analyze();
-    expect(results.violations).toEqual([]);
-  });
+  for (const colorScheme of ["light", "dark"] as const) {
+    test(`has no detectable accessibility violations (${colorScheme})`, async ({
+      page,
+    }) => {
+      await page.emulateMedia({ colorScheme });
+      const results = await new AxeBuilder({ page }).analyze();
+      expect(results.violations).toEqual([]);
+    });
+  }
 });
