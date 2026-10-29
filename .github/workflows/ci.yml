@@ -10,6 +10,16 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  workflows:
+    name: Lint workflows
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      # actionlint also runs shellcheck on every `run:` block.
+      - uses: docker://rhysd/actionlint:1.7.12
+        with:
+          args: -color
+
   check:
     name: Format, lint, typecheck, unit tests
     runs-on: ubuntu-latest
@@ -33,6 +43,7 @@ jobs:
           name: site
           path: out/
           retention-days: 1
+          if-no-files-found: error
 
   e2e:
     name: Playwright (Chromium, WebKit)
@@ -55,6 +66,7 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 14
+          if-no-files-found: error
 
   lighthouse:
     name: Lighthouse (mobile budget)
@@ -74,4 +86,5 @@ jobs:
           name: lighthouse-reports
           path: .lighthouseci/reports/
           include-hidden-files: true
+          if-no-files-found: error
           retention-days: 14
