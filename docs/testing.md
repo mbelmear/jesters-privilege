@@ -91,6 +91,8 @@ npm run lint
 npm run typecheck
 ```
 
+`lint` and `typecheck` both run `next typegen` first: type-aware lint rules need the generated `next-env.d.ts` (gitignored), which types imports such as `import logo from "….webp"`.
+
 The pre-commit hook formats staged files with Prettier, so `format:check` only fails for files committed without the hook.
 
 ## In CI
