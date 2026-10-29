@@ -2,11 +2,13 @@
 # Start a ticket in its own worktree, next to the main checkout, branched from a
 # fresh origin/main, with dependencies installed. A bare `git worktree add` has
 # no node_modules, so npx would quietly run some other copy of a tool.
-# Usage: npm run worktree -- <issue-number> <branch>
+# The worktree is ../jp-<issue>; a non-number such as retro-17 works too. If npm
+# ci fails, cd in and rerun it rather than running this script again.
+# Usage: npm run worktree -- <issue> <branch>
 set -euo pipefail
 
-issue="${1:?Usage: npm run worktree -- <issue-number> <branch>}"
-branch="${2:?Usage: npm run worktree -- <issue-number> <branch>}"
+issue="${1:?Usage: npm run worktree -- <issue> <branch>}"
+branch="${2:?Usage: npm run worktree -- <issue> <branch>}"
 
 # The main checkout is the first worktree; new ones sit beside it.
 main=$(git worktree list --porcelain | sed -n '1s/^worktree //p')

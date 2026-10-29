@@ -20,7 +20,7 @@ reviewed=$(gh pr view "$pr" --json comments --jq '.comments[].body' |
   sed -n 's/^Code review: passed at \([0-9a-f]\{40\}\).*/\1/p' | tail -n 1)
 if [[ "$reviewed" != "$head" ]]; then
   echo "Refusing to merge #$pr: head is $head, but the last passed review is at ${reviewed:-no commit}." >&2
-  echo "Run /code-review on the head, then: gh pr comment $pr --body \"Code review: passed at $head\"" >&2
+  echo "Run /code-review with ${reviewed:-origin/main} as the fixed point, then: gh pr comment $pr --body \"Code review: passed at $head\"" >&2
   exit 1
 fi
 
