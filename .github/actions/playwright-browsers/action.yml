@@ -1,0 +1,24 @@
+name: Playwright browsers
+description: Restore cached Playwright browsers, installing them on a miss.
+inputs:
+  browsers:
+    description: Space-separated browser names, e.g. "chromium webkit".
+    required: true
+runs:
+  using: composite
+  steps:
+    - id: version
+      shell: bash
+      run: echo "playwright=$(npx playwright --version | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
+    - id: cache
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/ms-playwright
+        key: playwright-${{ runner.os }}-${{ steps.version.outputs.playwright }}-${{ inputs.browsers }}
+    - if: steps.cache.outputs.cache-hit != 'true'
+      shell: bash
+      run: npx playwright install --with-deps ${{ inputs.browsers }}
+    # The cache holds the browsers but not their system libraries.
+    - if: steps.cache.outputs.cache-hit == 'true'
+      shell: bash
+      run: npx playwright install-deps ${{ inputs.browsers }}

@@ -149,7 +149,7 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
 
 ### Feed and Episodes
 
-- Source: the Spreaker RSS feed, shaped exactly like the feed of *Polemical with Dan Collins*, which the same producer publishes.
+- Source: the Spreaker RSS feed, shaped exactly like the feed of _Polemical with Dan Collins_, which the same producer publishes.
 - Until the real feed exists, builds use a **fixture** with the same structure. Episode 1 in it is "Celebrity Pastors". It also includes multiple years, a bonus Episode, HTML Show notes, and Transcript links.
 - Swapping in the real feed is a one-value configuration change.
 - **Feed module** (a deep module with a small interface): takes the raw feed text and returns a validated, ordered list of Episodes or throws a descriptive error. An Episode carries:
@@ -211,7 +211,7 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
 - **Fools' Gallery**
   - A timeline in eras: Holy Fools, the Medieval Court, the Renaissance, the Reformation.
   - Each era opens with a painting band, and each Fool gets a framed painting and their story.
-  - v1 Fools, each depending on finding a suitable public-domain painting: Paul's "fools for Christ" and the holy fools (St. Francis's *jongleurs de Dieu*, the Russian *yurodivy*), Stańczyk (Matejko, 1862), Triboulet, Will Somers, Archibald Armstrong, Richard Tarlton, the Spanish court fools painted by Velázquez, and Erasmus's *In Praise of Folly* with Holbein's marginal drawings.
+  - v1 Fools, each depending on finding a suitable public-domain painting: Paul's "fools for Christ" and the holy fools (St. Francis's _jongleurs de Dieu_, the Russian _yurodivy_), Stańczyk (Matejko, 1862), Triboulet, Will Somers, Archibald Armstrong, Richard Tarlton, the Spanish court fools painted by Velázquez, and Erasmus's _In Praise of Folly_ with Holbein's marginal drawings.
   - It ends with why this show wears the motley.
 - **About**: why a jester; the three Jesters with equal billing and short show roles (Pastor, Deacon, Producer); what we believe; Redeemer Church; how to listen.
 - **Submit**
@@ -342,9 +342,11 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
   - final logo files (SVG, transparent background, square mark, dark-background version)
 - **Human-only setup**: a Cloudflare account and domain purchase, Email Routing, a Cloudflare API token and account ID as GitHub secrets, and Turnstile keys.
 - **Build phases**:
+
   0. Human setup.
   1. Foundation, built serially: tooling and CI, tokens and theming, the shell, the content model, feed ingestion, the image pipeline, and deploy.
   2. The home page mockup gate. Logic work continues in parallel.
   3. Fan-out: pages built in parallel.
   4. Hardening and launch.
+
 - **Next 16 note**: this version of Next.js differs from older training data. Agents read the bundled docs inside the installed `next` package before writing framework code, as `AGENTS.md` instructs.

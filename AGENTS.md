@@ -4,12 +4,13 @@ Website for the Jester's Privilege podcast. The agreed v1 spec is `docs/spec.md`
 
 ## Working rules
 
+- **Coding standards.** Before writing or reviewing code, read `CODING_STANDARDS.md`: the TypeScript and React rules `/code-review` checks.
 - **Vocabulary.** Use `GLOSSARY.md` terms in code, copy, tickets, and tests. In particular: "Jester" means only Michael, Dan, or Aaron; a historical figure is a "Fool".
-- **Test first.** Build logic with the `tdd` skill (Jest + React Testing Library + jest-axe). Browser behavior is covered by Playwright; performance by Lighthouse CI.
+- **Test first.** Build logic with the `tdd` skill (Jest + React Testing Library + jest-axe). Browser behavior is covered by Playwright; performance by Lighthouse CI. How to run each layer: `docs/testing.md`.
 - **Design principle.** Modern construction, deliberate historical callbacks. Use design tokens, never literal colors or fonts in components. Respect reduced motion.
 - **Content lives in content files**, never hard-coded in components. Copy awaiting the Jesters' words is marked `draft: true`, written at realistic length.
 - **Merging.**
-  - Logic/infra PRs: merge only when every check is green and a `code-review` pass finds nothing serious. Always merge with `gh pr checks <n> --watch --fail-fast && gh pr merge <n> --squash --delete-branch`; never merge a PR with a failing or pending check.
+  - Logic/infra PRs: merge only when every check is green and a `code-review` pass finds nothing serious. Always merge with `npm run merge -- <n>` (`scripts/merge-on-green.sh`: it waits for every check, stops at the first failure, then squash-merges and deletes the branch); never merge a PR with a failing or pending check.
   - Visual PRs (anything a visitor sees): post the Cloudflare preview URL on the PR, apply the `ready-for-human` label, and wait for a Jester to approve. Do not merge them yourself.
 
 ## Agent skills
