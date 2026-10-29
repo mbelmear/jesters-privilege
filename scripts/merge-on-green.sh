@@ -16,8 +16,7 @@ pr="${1:?Usage: npm run merge -- <pr-number>}"
 
 head=$(gh pr view "$pr" --json headRefOid --jq .headRefOid)
 
-reviewed=$(gh pr view "$pr" --json comments --jq '.comments[].body' |
-  sed -n 's/^Code review: passed at \([0-9a-f]\{40\}\).*/\1/p' | tail -n 1)
+reviewed=$("$(dirname "$0")/last-reviewed-sha.sh" "$pr")
 if [[ "$reviewed" != "$head" ]]; then
   echo "Refusing to merge #$pr: head is $head, but the last passed review is at ${reviewed:-no commit}." >&2
   # Review only the new commits, unless a rebase dropped the reviewed one.

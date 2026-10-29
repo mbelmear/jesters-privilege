@@ -102,6 +102,11 @@ The pre-commit hook formats staged files with Prettier, so `format:check` only f
 
 `.github/workflows/nightly.yml` runs the Playwright suite on Firefox every night, and can be started by hand from the Actions tab.
 
+Two more run on every push to `main`:
+
+- **Merge audit** (`merge-audit.yml`, `scripts/audit-merge.sh`) fails when the commit came from a PR with neither a `Code review: passed at <head>` comment nor the `ready-for-human` label. GitHub Free can't block such a merge, so this makes it loud after the fact.
+- **Conflict watch** (`conflict-watch.yml`, `scripts/flag-conflicts.sh`) comments on each open `ready-for-human` PR that no longer merges cleanly with main, and removes the comment once it does. It also runs when such a PR is pushed to or labeled.
+
 ## Merging
 
 Merge with the helper. It merges only a head commit that has passed review and every check:

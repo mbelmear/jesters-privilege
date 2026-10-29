@@ -24,6 +24,8 @@ Reviewers skip these; the rules below are the ones that need judgement.
 
 ## React
 
+- **A page passes every content value it shows, metadata included, to `<DraftRibbon uses={…}>`.** A value left out hides its drafts from the preview ribbon.
+
 - **Server Components by default.** `"use client"` goes on the smallest component that needs state, effects, or browser APIs, as far down the tree as it can sit.
 - **Components receive what they show.** Copy and data arrive through props from content files or the Feed; a component holds presentation and interaction only.
 - **The player store is the only owner of playback.** Archive rows, Episode pages, the Transcript, and the player UI send commands to the store and render its state; only the audio adapter touches the `<audio>` element.

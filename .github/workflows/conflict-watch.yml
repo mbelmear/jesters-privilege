@@ -1,0 +1,26 @@
+name: Conflict watch
+
+# Flags visual PRs waiting for a Jester (ready-for-human) that no longer merge
+# cleanly with main, and clears the flag once they do. See
+# scripts/flag-conflicts.sh.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [synchronize, labeled]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  flag:
+    name: Flag conflicts with main
+    if: github.event_name == 'push' || contains(github.event.pull_request.labels.*.name, 'ready-for-human')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - run: scripts/flag-conflicts.sh ${{ github.event.pull_request.number }}
+        env:
+          GH_TOKEN: ${{ github.token }}

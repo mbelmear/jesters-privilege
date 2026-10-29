@@ -1,0 +1,23 @@
+name: Merge audit
+
+# Fails when a commit reaches main without the agreed review: a passed
+# /code-review comment naming the PR's head, or the ready-for-human label for
+# visual PRs. See scripts/audit-merge.sh and AGENTS.md (Merging).
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  audit:
+    name: Review gate held
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - run: scripts/audit-merge.sh "$GITHUB_SHA"
+        env:
+          GH_TOKEN: ${{ github.token }}

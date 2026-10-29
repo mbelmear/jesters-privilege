@@ -20,7 +20,8 @@
     "merge": "scripts/merge-on-green.sh",
     "ready": "scripts/ready-tickets.sh",
     "worktree": "scripts/new-worktree.sh",
-    "launch-check": "tsx scripts/launch-check.ts"
+    "launch-check": "tsx scripts/launch-check.ts",
+    "pr-status": "scripts/pr-status.sh"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",
