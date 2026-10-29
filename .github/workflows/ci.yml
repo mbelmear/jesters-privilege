@@ -41,7 +41,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: ./.github/actions/setup
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v4
         with:
           name: site
           path: out/
@@ -63,7 +63,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: ./.github/actions/setup
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v4
         with:
           name: site
           path: out/
@@ -73,4 +73,5 @@ jobs:
         with:
           name: lighthouse-reports
           path: .lighthouseci/reports/
+          include-hidden-files: true
           retention-days: 14

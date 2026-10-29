@@ -2,8 +2,7 @@ import { defineConfig, devices } from "@playwright/test";
 
 const port = 4173;
 
-// Phone and desktop sizes for each browser. Pull requests run Chromium and
-// WebKit; Firefox runs on the nightly schedule (see docs/testing.md).
+// Firefox has no mobile emulation, so its phone project borrows this viewport.
 const phone = { width: 390, height: 844 };
 
 export default defineConfig({
@@ -16,12 +15,13 @@ export default defineConfig({
     baseURL: `http://localhost:${port}`,
     trace: "on-first-retry",
   },
+  // Phone and desktop sizes for each browser. Pull requests run Chromium and
+  // WebKit; Firefox runs on the nightly schedule (see docs/testing.md).
   projects: [
     { name: "chromium-phone", use: { ...devices["Pixel 7"] } },
     { name: "chromium-desktop", use: { ...devices["Desktop Chrome"] } },
     { name: "webkit-phone", use: { ...devices["iPhone 15"] } },
     { name: "webkit-desktop", use: { ...devices["Desktop Safari"] } },
-    // Firefox has no mobile emulation, so its phone project is viewport only.
     {
       name: "firefox-phone",
       use: { ...devices["Desktop Firefox"], viewport: phone },

@@ -2,7 +2,7 @@ name: Nightly
 
 on:
   schedule:
-    # 09:00 UTC, early morning in Bozeman.
+    # 09:00 UTC, the middle of the night in Bozeman.
     - cron: "0 9 * * *"
   workflow_dispatch:
 
