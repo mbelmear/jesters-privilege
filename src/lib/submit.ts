@@ -26,8 +26,8 @@ export type SubmitDeps = {
   sendEmail: (email: Email) => Promise<void>;
 };
 
-export const MESSAGE_MAX_LENGTH = 5000;
-export const NAME_MAX_LENGTH = 100;
+const MESSAGE_MAX_LENGTH = 5000;
+const NAME_MAX_LENGTH = 100;
 const EMAIL_MAX_LENGTH = 254;
 const BODY_MAX_BYTES = 32 * 1024;
 
@@ -57,7 +57,12 @@ export async function handleSubmit(
       // Answer as if it worked, so a bot learns nothing.
       return respond(200, { ok: true });
     case "submission":
-      return deliver(parsed.submission, parsed.token, request, deps);
+      return deliver(
+        parsed.submission,
+        parsed.token,
+        request.headers.get("CF-Connecting-IP"),
+        deps
+      );
     default: {
       const unhandled: never = parsed;
       return unhandled;
@@ -68,15 +73,12 @@ export async function handleSubmit(
 async function deliver(
   submission: Submission,
   token: string | null,
-  request: Request,
+  ip: string | null,
   deps: SubmitDeps
 ): Promise<Response> {
-  if (token === null) return respond(403, { ok: false, error: "verification" });
   try {
-    const ip = request.headers.get("CF-Connecting-IP");
-    if (!(await deps.verifyTurnstile(token, ip))) {
-      return respond(403, { ok: false, error: "verification" });
-    }
+    const verified = token !== null && (await deps.verifyTurnstile(token, ip));
+    if (!verified) return respond(403, { ok: false, error: "verification" });
   } catch (error: unknown) {
     console.error("Submit: Turnstile couldn't verify the token", error);
     return respond(502, { ok: false, error: "verification" });
@@ -123,41 +125,43 @@ function parseFields(fields: Record<string, unknown>): Parsed {
     return { kind: "invalid", field: "message" };
   }
 
-  const name = optionalText(fields.name);
-  if (
-    name === undefined ||
-    (name !== null && (name.length > NAME_MAX_LENGTH || /\p{Cc}/u.test(name)))
-  ) {
-    return { kind: "invalid", field: "name" };
-  }
+  // One line only: the name lands in the email's subject.
+  const name = optionalText(
+    fields.name,
+    (text) => text.length <= NAME_MAX_LENGTH && !/\p{Cc}/u.test(text)
+  );
+  if (!name.valid) return { kind: "invalid", field: "name" };
 
-  const email = optionalText(fields.email);
-  if (
-    email === undefined ||
-    (email !== null &&
-      (email.length > EMAIL_MAX_LENGTH ||
-        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)))
-  ) {
-    return { kind: "invalid", field: "email" };
-  }
+  const email = optionalText(
+    fields.email,
+    (text) =>
+      text.length <= EMAIL_MAX_LENGTH && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(text)
+  );
+  if (!email.valid) return { kind: "invalid", field: "email" };
 
   // The listener must tick "You can mention this on the show."
   if (fields.consent !== true) return { kind: "invalid", field: "consent" };
 
-  const token = optionalText(fields.turnstileToken) ?? null;
+  const token = optionalText(fields.turnstileToken, () => true);
   return {
     kind: "submission",
-    submission: { type, message, name, email },
-    token,
+    submission: { type, message, name: name.text, email: email.text },
+    token: token.valid ? token.text : null,
   };
 }
 
-// Blank or absent is null; anything other than text is undefined (invalid).
-function optionalText(value: unknown): string | null | undefined {
-  if (value === undefined || value === null) return null;
-  if (typeof value !== "string") return undefined;
+type OptionalText = { valid: true; text: string | null } | { valid: false };
+
+// An optional field: absent or blank is null, given text must pass the rule.
+function optionalText(
+  value: unknown,
+  rule: (text: string) => boolean
+): OptionalText {
+  if (value === undefined || value === null) return { valid: true, text: null };
+  if (typeof value !== "string") return { valid: false };
   const trimmed = value.trim();
-  return trimmed === "" ? null : trimmed;
+  if (trimmed === "") return { valid: true, text: null };
+  return rule(trimmed) ? { valid: true, text: trimmed } : { valid: false };
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -165,7 +169,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function composeEmail(submission: Submission): Email {
-  const type = typeLabel(submission.type);
+  const type = TYPE_LABELS[submission.type];
   const name = submission.name ?? "Anonymous";
   return {
     subject: `${type} from ${name}`,
@@ -180,19 +184,9 @@ function composeEmail(submission: Submission): Email {
   };
 }
 
-function typeLabel(type: SubmissionType): string {
-  switch (type) {
-    case "question":
-      return "Question";
-    case "confession":
-      return "Confession";
-    case "topic-idea":
-      return "Topic idea";
-    case "other":
-      return "Other";
-    default: {
-      const unhandled: never = type;
-      return unhandled;
-    }
-  }
-}
+const TYPE_LABELS: Record<SubmissionType, string> = {
+  question: "Question",
+  confession: "Confession",
+  "topic-idea": "Topic idea",
+  other: "Other",
+};

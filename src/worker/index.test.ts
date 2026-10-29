@@ -138,6 +138,14 @@ describe("Worker", () => {
 
     it.each([
       ["answers with an error", () => new Response("down", { status: 500 })],
+      [
+        "refuses the site's secret",
+        () =>
+          Response.json({
+            success: false,
+            "error-codes": ["invalid-input-secret"],
+          }),
+      ],
       ["answers with something other than a verdict", () => Response.json({})],
     ])("sends nothing when Turnstile %s", async (_case, answer) => {
       jest.spyOn(globalThis, "fetch").mockResolvedValue(answer());
