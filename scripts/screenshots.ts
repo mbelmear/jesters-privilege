@@ -6,6 +6,7 @@
 //   npm run screenshots -- /styleguide/home .screenshots/home
 import { spawn } from "node:child_process";
 import { mkdir } from "node:fs/promises";
+import { createServer } from "node:net";
 import { join } from "node:path";
 import { chromium, type Page } from "@playwright/test";
 
@@ -23,22 +24,37 @@ async function main() {
     );
   }
   await mkdir(folder, { recursive: true });
-  const port = 4300 + Math.floor(Math.random() * 600);
+  const port = await freePort();
+  // serve itself, not through npx, so killing it stops the server. A port the
+  // system just handed out is free; other sessions serve their own builds on
+  // fixed ports, and serve would quietly move off a busy one.
   const server = spawn(
-    "npx",
-    ["serve", "out", "--listen", String(port), "--no-request-logging"],
-    { stdio: "ignore" }
+    join("node_modules", ".bin", "serve"),
+    ["out", "--listen", String(port), "--no-request-logging"],
+    { stdio: ["ignore", "ignore", "inherit"] }
   );
-  const browser = await chromium.launch();
+  const exited = new Promise<never>((_, reject) => {
+    server.on("exit", (code) =>
+      reject(new Error(`serve stopped (exit ${code ?? "?"}) on port ${port}`))
+    );
+  });
+  const browser = await Promise.race([chromium.launch(), exited]).catch(
+    (error: unknown) => {
+      server.kill();
+      throw error;
+    }
+  );
   try {
     const url = `http://localhost:${port}${page}`;
-    await waitForServer(url);
+    await Promise.race([waitForServer(url), exited]);
     for (const [size, options] of Object.entries(SIZES)) {
       for (const colorScheme of SCHEMES) {
         const tab = await browser.newPage({ ...options, colorScheme });
         await tab.goto(url);
+        // Lazily loaded code (Motion, for an on-scroll reveal) arrives
+        // before the scroll that should trigger it.
+        await tab.waitForLoadState("networkidle");
         if (size === "phone" && colorScheme === "light") {
-          await tab.waitForTimeout(1000);
           await tab.screenshot({
             path: join(folder, "phone-first-screen.png"),
           });
@@ -52,6 +68,7 @@ async function main() {
     }
   } finally {
     await browser.close();
+    server.removeAllListeners("exit");
     server.kill();
   }
 }
@@ -65,6 +82,22 @@ async function scrollThrough(tab: Page) {
   }
   await tab.evaluate(() => window.scrollTo(0, 0));
   await tab.waitForTimeout(1200);
+}
+
+// A port nothing is listening on, from the system.
+function freePort(): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const probe = createServer();
+    probe.once("error", reject);
+    probe.listen(0, () => {
+      const address = probe.address();
+      probe.close(() =>
+        typeof address === "object" && address
+          ? resolve(address.port)
+          : reject(new Error("The system gave no free port"))
+      );
+    });
+  });
 }
 
 async function waitForServer(url: string) {

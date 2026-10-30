@@ -38,7 +38,9 @@ const buttonClasses = cva(
   }
 );
 
-// The classes for a button-styled element, with each variant's classes
+// buttonClasses is the variant table; buttonVariants (shadcn's name, kept so
+// copied components work) is what callers use: the classes for a
+// button-styled element, with each variant's classes
 // replacing the base's where they clash (border-primary over
 // border-transparent), so a link styled this way matches <Button>.
 function buttonVariants(props?: Parameters<typeof buttonClasses>[0]): string {
@@ -62,7 +64,7 @@ function Button({
       data-slot="button"
       data-variant={variant}
       data-size={size}
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={buttonVariants({ variant, size, className })}
       {...props}
     />
   );

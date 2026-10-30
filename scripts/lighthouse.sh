@@ -20,9 +20,8 @@ rm -rf .lighthouseci
 status=0
 npx lhci autorun ${args[@]+"${args[@]}"} || status=$?
 
-# The summary reads only Lighthouse reports, not lhci's other JSON files.
-reports=$(mktemp -d)
-trap 'rm -rf "$reports"' EXIT
-cp .lighthouseci/lhr-*.json "$reports/"
-npx tsx scripts/lighthouse-summary.ts "this checkout=$reports"
+# A run that failed before measuring leaves no reports to summarise.
+if compgen -G ".lighthouseci/lhr-*.json" >/dev/null; then
+  npx tsx scripts/lighthouse-summary.ts "this checkout=.lighthouseci"
+fi
 exit "$status"
