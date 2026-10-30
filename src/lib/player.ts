@@ -124,17 +124,21 @@ export function createPlayer({
   };
   // Counts loads, so a late answer from the audio about an Episode that has
   // since been replaced is ignored.
-  let loads = 0;
+  let loadCount = 0;
   const listeners = new Set<() => void>();
 
   // The Episode the lock screen shows, so its artwork is sent once per load.
-  let shown: Episode | null = null;
+  let lockScreenEpisode: Episode | null = null;
 
   function setState(next: PlayerState) {
     state = next;
     if (mediaSession && state.mode !== "empty") {
-      showOnLockScreen(mediaSession, state, state.episode !== shown);
-      shown = state.episode;
+      showOnLockScreen(
+        mediaSession,
+        state,
+        state.episode !== lockScreenEpisode
+      );
+      lockScreenEpisode = state.episode;
     }
     for (const listener of listeners) listener();
   }
@@ -145,10 +149,10 @@ export function createPlayer({
       case "play":
         return setState({ ...state, mode: "playing" });
       case "pause":
-        history.place(state.episode.guid, state.position, { now: true });
+        history.savePosition(state.episode.guid, state.position, { now: true });
         return setState({ ...state, mode: "paused" });
       case "time":
-        history.place(state.episode.guid, event.position);
+        history.savePosition(state.episode.guid, event.position);
         return setState({ ...state, position: event.position });
       case "duration":
         return setState({ ...state, duration: event.duration });
@@ -167,16 +171,20 @@ export function createPlayer({
   }
   audio.subscribe(onAudio);
 
-  // Asks the audio to play. A browser may refuse, as when autoplay is
-  // blocked; the audio then stays paused and so does the store.
+  // Asks the audio to play, from the start again if it was heard to the end.
+  // A browser may refuse, as when autoplay is blocked, or abandon the attempt
+  // when a new Episode loads; the store then shows paused. Any other failure,
+  // such as audio it can't decode, is thrown.
   async function startAudio() {
     if (state.mode === "empty") return;
-    const load = loads;
+    if (state.position >= state.duration) seek(0);
+    const load = loadCount;
     setState({ ...state, mode: "playing" });
     try {
       await audio.play();
-    } catch {
-      if (load === loads) setState({ ...state, mode: "paused" });
+    } catch (error: unknown) {
+      if (load === loadCount) setState({ ...state, mode: "paused" });
+      if (!isRefusal(error)) throw error;
     }
   }
 
@@ -184,7 +192,7 @@ export function createPlayer({
     if (state.mode === "empty") return;
     const position = Math.min(Math.max(seconds, 0), state.duration);
     audio.seek(position);
-    history.place(state.episode.guid, position, { now: true });
+    history.savePosition(state.episode.guid, position, { now: true });
     setState({ ...state, position });
   }
 
@@ -196,10 +204,10 @@ export function createPlayer({
     },
     async play(episode, { at } = {}) {
       if (state.mode === "empty" || state.episode.guid !== episode.guid) {
-        loads += 1;
+        loadCount += 1;
         audio.load(episode.audioUrl);
         audio.setRate(state.speed);
-        history.played(episode.guid);
+        history.markLastPlayed(episode.guid);
         // Subscribers hear of the load once it is playing, not as a pause.
         state = {
           mode: "paused",
@@ -290,13 +298,9 @@ function answerMediaAction(
     case "seekto":
       return seekTime === undefined ? undefined : player.seek(seekTime);
     case "seekbackward":
-      return seekOffset === undefined
-        ? player.skipBack()
-        : player.seek(position - seekOffset);
+      return player.seek(position - (seekOffset ?? SKIP_BACK_SECONDS));
     case "seekforward":
-      return seekOffset === undefined
-        ? player.skipForward()
-        : player.seek(position + seekOffset);
+      return player.seek(position + (seekOffset ?? SKIP_FORWARD_SECONDS));
     case "previoustrack":
       return player.skipBack();
     case "nexttrack":
@@ -339,11 +343,11 @@ function createHistory(storage: DeviceStorage | null) {
         ? position
         : null;
     },
-    played(guid: string) {
+    markLastPlayed(guid: string) {
       saved.lastPlayed = guid;
       write();
     },
-    place(guid: string, position: number, { now = false } = {}) {
+    savePosition(guid: string, position: number, { now = false } = {}) {
       saved.positions[guid] = position;
       const last = lastWritten.get(guid) ?? 0;
       if (now || Math.abs(position - last) >= SAVE_EVERY_SECONDS) {
@@ -395,5 +399,13 @@ function isPlace(entry: [string, unknown]): entry is [string, number] {
   const [, position] = entry;
   return (
     typeof position === "number" && Number.isFinite(position) && position >= 0
+  );
+}
+
+// How a browser declines to play: autoplay blocked, or interrupted by a load.
+function isRefusal(error: unknown): boolean {
+  return (
+    error instanceof DOMException &&
+    (error.name === "NotAllowedError" || error.name === "AbortError")
   );
 }

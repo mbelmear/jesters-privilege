@@ -53,7 +53,8 @@ class FakeAudio implements AudioAdapter {
     this.playing = false;
   }
   play() {
-    if (this.rejectPlay) return Promise.reject(new Error("NotAllowedError"));
+    if (this.rejectPlay)
+      return Promise.reject(new DOMException("Blocked", "NotAllowedError"));
     this.playing = true;
     this.emit({ type: "play" });
     return Promise.resolve();
@@ -147,7 +148,7 @@ describe("player", () => {
     audio.playTo(1);
     audio.play = FakeAudio.prototype.play;
     await player.play(secondEpisode);
-    refuse(new Error("AbortError"));
+    refuse(new DOMException("Interrupted", "AbortError"));
     await first;
     expect(player.getState()).toMatchObject({
       mode: "playing",
@@ -508,6 +509,24 @@ describe("player", () => {
       expect(player.getState().finished.size).toBe(0);
       expect(player.resumeOffer()).toBeNull();
     });
+  });
+
+  it("plays a finished Episode again from the start", async () => {
+    const { audio, player } = setup();
+    await player.play(episode());
+    audio.playTo(3000);
+    audio.emit({ type: "ended" });
+    await player.play(episode());
+    expect(audio.position).toBe(0);
+    expect(player.getState()).toMatchObject({ mode: "playing", position: 0 });
+  });
+
+  it("fails loudly when the audio can't be played at all", async () => {
+    const { audio, player } = setup();
+    audio.play = () =>
+      Promise.reject(new DOMException("No source", "NotSupportedError"));
+    await expect(player.play(episode())).rejects.toThrow("No source");
+    expect(player.getState().mode).toBe("paused");
   });
 
   it("shows paused when the browser refuses to start playback", async () => {
