@@ -68,7 +68,7 @@ The budget lives in `lighthouserc.json`. The run fails if any of these is exceed
 | ------------------------ | -------- |
 | Performance score        | ≥ 0.90   |
 | Accessibility score      | ≥ 0.95   |
-| Largest Contentful Paint | ≤ 3.0 s  |
+| Largest Contentful Paint | ≤ 3.2 s  |
 | Cumulative Layout Shift  | ≤ 0.1    |
 | Total Blocking Time      | ≤ 200 ms |
 | JavaScript               | ≤ 250 KB |
@@ -76,7 +76,13 @@ The budget lives in `lighthouserc.json`. The run fails if any of these is exceed
 | Fonts                    | ≤ 150 KB |
 | Everything               | ≤ 800 KB |
 
-The Largest Contentful Paint budget was 2.5 s until the site shell (#12) arrived. Lighthouse simulates a throttled load from every byte requested before the first paint, and the header's script plus the UI typeface on every page put the bare home page at a steady 2.75 s (it paints in about 40 ms unthrottled). Menu code, a smaller logo, and a single UI weight didn't move that figure, so the budget sits at 3.0 s with headroom. Revisit it at the home page mockup gate (#14).
+The Largest Contentful Paint budget was 2.5 s until the site shell (#12) arrived. Lighthouse simulates a throttled load from every byte requested before the first paint, and the header's script plus the UI typeface on every page put the bare home page at a steady 2.75 s (it paints in about 40 ms unthrottled). Menu code, a smaller logo, and a single UI weight didn't move that figure, so the budget moved to 3.0 s.
+
+It rose to 3.2 s with the painting pipeline (#13). A page whose largest paint is an image waits behind the same early bytes, plus the image's own request: the paintings page (`/styleguide/paintings`, a band on the first screen and framed paintings below) simulates at 3.05 s, and still at 2.9 s with its band swapped for a 2 KB file, so the floor comes from the shell, not the painting. Every Fools' Gallery page has that shape. Text-led pages sit lower (the home page is at 2.6 s). Revisit it at the home page mockup gate (#14), which is the place to trim the shell's early script.
+
+### Images
+
+Every image the content shows is a file under `public/` with its pixel size in the content record; `npm run images` (run by `build` and `dev`, `scripts/images.ts`) makes its responsive set in `public/images/`, AVIF and WebP at each width next/image asks for, plus a portrait crop around a painting's focal point for phones. It fails the build if a file is missing or its size doesn't match the content. A phone downloads 30 to 60 KB per painting at Lighthouse's emulated screen and up to about 150 KB on a 3× screen; the encoding settings in `scripts/images.ts` are tuned for that, and the build fails if a painting's AVIF a phone would fetch passes 180 KB. "Phone" there means one held upright, up to 430 CSS px wide; turned sideways it gets the desktop layout and larger files, which aren't checked.
 
 When a change moves a budget, compare it with main:
 

@@ -3,6 +3,8 @@ import type { Shell } from "@/lib/content";
 // The frame around every page: header, mobile menu, and footer. Section names
 // follow GLOSSARY.md; the footer's privacy note awaits the Jesters' words.
 export const shell = {
+  // The draft logo; swap in the final transparent one once it arrives.
+  logo: { src: "/brand/logo-draft.png", width: 583, height: 294 },
   skipLink: "Skip to content",
   homeLink: "Jester's Privilege, home",
   navLabel: "Main",

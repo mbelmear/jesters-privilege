@@ -1,3 +1,5 @@
+import { paintings } from "./paintings";
+
 // Copy for the style guide (/styleguide), an internal page for checking the
 // design system. Token names must match src/app/globals.css.
 
@@ -6,6 +8,16 @@ export const styleguide = {
   intro:
     "Every color, typeface, shape, motion preset, and component the site is built from, shown in both themes. Change a token in globals.css and check it here.",
   panels: { light: "Light theme", dark: "Dark theme" },
+  paintingsLink: "See the painting band and framed paintings",
+  // /styleguide/paintings: paintings as the Fools' Gallery shows them, in the
+  // page's own theme, on a page Lighthouse checks for weight.
+  paintings: {
+    title: "Paintings",
+    intro:
+      "A painting band opens each era of the Fools' Gallery, and each Fool hangs in a frame with a museum placard. Narrow the window to see the band's phone crop around its focal point.",
+    band: { painting: paintings.stanczyk, title: "The Renaissance" },
+    framed: [paintings["pablo-de-valladolid"], paintings.calabacillas],
+  },
   sections: {
     colors: "Colors",
     type: "Typefaces",
@@ -37,6 +49,9 @@ export const styleguide = {
       token: "scrim",
       role: "Overlay behind dialogs and under painting titles",
     },
+    { token: "on-scrim", role: "A title set on a painting, over the scrim" },
+    { token: "frame", role: "The frame around a framed painting" },
+    { token: "mat", role: "The mat inside a painting's frame" },
   ],
   typefaces: [
     {

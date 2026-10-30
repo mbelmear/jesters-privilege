@@ -50,7 +50,15 @@ export type Site = {
 export const JESTER_IDS = ["michael", "dan", "aaron"] as const;
 export type JesterId = (typeof JESTER_IDS)[number];
 
-export type Photo = { readonly src: string; readonly alt: string };
+// An image file under public/ and its size in pixels. The build makes its
+// responsive set (scripts/images.ts), and fails if the size is wrong.
+export type ImageFile = {
+  readonly src: string;
+  readonly width: number;
+  readonly height: number;
+};
+
+export type Photo = ImageFile & { readonly alt: string };
 
 // Text with emphasis, such as a show title set in italics.
 export type Inline = string | { readonly em: string };
@@ -72,8 +80,7 @@ export type Jester = {
 // it's cropped on a phone.
 export type FocalPoint = { readonly x: number; readonly y: number };
 
-export type Painting = {
-  readonly src: string;
+export type Painting = ImageFile & {
   // The Wikimedia Commons file page recording its public-domain status.
   readonly source: string;
   readonly alt: string;
@@ -137,6 +144,7 @@ export type NavItem = {
 
 // The frame every page sits in: header, mobile menu, and footer.
 export type Shell = {
+  readonly logo: ImageFile;
   readonly skipLink: string;
   readonly homeLink: string;
   readonly navLabel: string;
@@ -158,6 +166,9 @@ export type Shell = {
 
 export type Content = {
   readonly site: Site;
+  // Every painting sourced for the site, by id; the Gallery and other pages
+  // show them from here.
+  readonly paintings: { readonly [id: string]: Painting };
   readonly shell: Shell;
   readonly hero: { readonly paragraphs: readonly string[] };
   readonly jesters: readonly Jester[];
@@ -172,6 +183,59 @@ export function findDrafts(value: ContentValue): string[] {
   return [...nodes(value)]
     .filter(([, node]) => isRecord(node) && node.draft === true)
     .map(([path]) => path);
+}
+
+// An image the content shows, with the first place it sits.
+export type FoundImage = ImageFile & {
+  readonly contentPath: string;
+  readonly focalPoint?: FocalPoint;
+};
+
+// Every image file the content shows, each once, for the build to process.
+// Throws if two places describe the same file differently.
+export function findImages(value: ContentValue): FoundImage[] {
+  const found = new Map<string, FoundImage>();
+  for (const [path, node] of nodes(value)) {
+    const image = asImage(path, node);
+    if (!image) continue;
+    const seen = found.get(image.src);
+    if (!seen) {
+      found.set(image.src, image);
+    } else if (fingerprint(seen) !== fingerprint(image)) {
+      throw new Error(
+        `Content ${seen.contentPath} and ${path} both show ${image.src} but describe it differently`
+      );
+    }
+  }
+  return [...found.values()];
+}
+
+function asImage(
+  contentPath: string,
+  node: ContentValue
+): FoundImage | undefined {
+  if (!isRecord(node)) return undefined;
+  const { src, width, height, focalPoint } = node;
+  if (
+    typeof src !== "string" ||
+    typeof width !== "number" ||
+    typeof height !== "number"
+  ) {
+    return undefined;
+  }
+  const image = { contentPath, src, width, height };
+  if (
+    isRecord(focalPoint) &&
+    typeof focalPoint.x === "number" &&
+    typeof focalPoint.y === "number"
+  ) {
+    return { ...image, focalPoint: { x: focalPoint.x, y: focalPoint.y } };
+  }
+  return image;
+}
+
+function fingerprint({ src, width, height, focalPoint }: FoundImage): string {
+  return JSON.stringify([src, width, height, focalPoint?.x, focalPoint?.y]);
 }
 
 // Throws, failing the build, when content breaks a rule, naming where it is
@@ -191,6 +255,9 @@ export function validateContent<C extends Content>(content: C): C {
     for (const [name, link] of Object.entries(links)) {
       if (link !== undefined) assertHttpsUrl(`${path}.${name}`, link);
     }
+  }
+  for (const [id, painting] of Object.entries(content.paintings)) {
+    assertPainting(`paintings.${id}`, painting);
   }
   const { eras, fools } = content.gallery;
   for (const era of eras) {
