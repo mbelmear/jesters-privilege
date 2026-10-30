@@ -68,9 +68,9 @@ const fools = [
     story: {
       title: "The fool who wouldn't dance",
       paragraphs: [
-        "Stańczyk served three kings of Poland, and the Kraków court remembered him less for his clowning than for his nerve. The story goes that when King Sigismund let a bear out of its cage for a hunt, and the bear scattered the royal party, the king grumbled about the beast. Stańczyk told him the greater folly belonged to whoever had opened the cage.",
+        "Stańczyk served three kings of Poland, and the Kraków court remembered him less for his clowning than for his nerve. The story goes that at a royal hunt King Sigismund had a bear let out of its cage, and when it charged, Stańczyk ran. The king scolded him for fleeing. Stańczyk answered that the greater fool was the one who lets a bear out of its cage.",
         "Another story has him walking through Kraków with his face bound in a bandage, to settle a bet over which trade had the most practitioners. Everyone he passed offered him a cure, and he won the bet: the city was full of doctors.",
-        "Three centuries later, Jan Matejko painted him alone at a ball. In the next room the court dances; on the table beside him lies a letter announcing that Smolensk has fallen to Moscow. Only the fool understands what it means. This painting gave the show its name: a jester who sees the truth while the court looks away.",
+        "Three centuries later, Jan Matejko painted him alone at a ball. In the next room the court dances; on the table beside him lies a letter announcing that Smolensk has fallen to Moscow. Only the fool understands what it means. This painting gave the show its name: a fool who sees the truth while the court looks away.",
       ],
       draft: true,
     },

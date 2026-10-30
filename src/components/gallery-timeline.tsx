@@ -84,16 +84,16 @@ function EraSection({ era, fools }: { era: Era; fools: readonly Fool[] }) {
 // point straight at them.
 function FoolEntry({ fool }: { fool: Fool }) {
   const { slug, name, lived, story, painting } = fool;
-  const heading = `${slug}-name`;
+  const headingId = `${slug}-name`;
   return (
     <article
       id={slug}
-      aria-labelledby={heading}
+      aria-labelledby={headingId}
       className="grid scroll-mt-24 items-start gap-8 lg:grid-cols-2 lg:gap-12"
     >
       <div className="flex flex-col gap-4 lg:order-last">
         <div className="flex flex-col gap-1">
-          <h3 id={heading} className="font-display text-4xl">
+          <h3 id={headingId} className="font-display text-4xl">
             {name}
           </h3>
           <p className="font-ui text-sm font-semibold tracking-wider text-muted-foreground uppercase">

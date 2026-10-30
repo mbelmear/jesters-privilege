@@ -1,4 +1,5 @@
 import type { Home } from "@/lib/content";
+import { gallery } from "./gallery";
 
 // The home page's section copy. The hero copy (hero.ts), the Jesters'
 // summaries (jesters.ts), and "New to podcasts?" and coming-soon
@@ -22,7 +23,7 @@ export const home = {
     units: { hours: "hr", minutes: "min" },
   },
   gallery: {
-    title: "The Fools' Gallery",
+    title: gallery.title,
     intro: {
       text: "Long before this show, there were fools who told kings the truth: Stańczyk brooding while the Polish court danced, Triboulet trading barbs with the kings of France, and the holy fools who rebuked tsars barefoot in the snow. Walk through their history, painting by painting.",
       draft: true,
