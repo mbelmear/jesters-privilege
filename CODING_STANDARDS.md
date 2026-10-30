@@ -39,4 +39,4 @@ Reviewers skip these; the rules below are the ones that need judgement.
 
 ## Browser tests
 
-- **A motion test proves it can fail.** A test that an animation finishes at once, or is skipped under reduced motion, follows the timing method in `docs/testing.md` (Browser tests (Playwright)), and its PR shows it failing with motion on (`reducedMotion: "no-preference"`). The mobile menu's test passed with motion on until #60 because its first open came before Motion loaded.
+- **A motion test proves it can fail.** A test that an animation finishes at once, or is skipped under reduced motion, first waits for a state that proves Motion has loaded, then times the run after it (method in `docs/testing.md`, Browser tests (Playwright)), and its PR shows it failing with motion on (`reducedMotion: "no-preference"`). A test that runs before Motion loads passes either way, as the mobile menu's did until #60.
