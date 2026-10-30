@@ -221,6 +221,7 @@ describe("player", () => {
   it("seeks, keeping within the Episode", async () => {
     const { audio, player } = setup();
     await player.play(episode());
+    audio.emit({ type: "duration", duration: 3000 });
     player.seek(1500);
     expect(audio.position).toBe(1500);
     expect(player.getState()).toMatchObject({ position: 1500 });
@@ -243,6 +244,7 @@ describe("player", () => {
   it("doesn't skip past either end", async () => {
     const { audio, player } = setup();
     await player.play(episode());
+    audio.emit({ type: "duration", duration: 3000 });
     audio.playTo(5);
     player.skipBack();
     expect(audio.position).toBe(0);
@@ -361,6 +363,27 @@ describe("player", () => {
       expect(audio.position).toBe(110);
       session.press("seekbackward", { seekOffset: 5 });
       expect(audio.position).toBe(105);
+    });
+
+    it("reports a failure to play from the lock screen", async () => {
+      const session = fakeMediaSession();
+      const errors: unknown[] = [];
+      const { audio, player } = setup({
+        mediaSession: session.adapter,
+        onError: (error) => errors.push(error),
+      });
+      await player.play(episode());
+      player.pause();
+      audio.play = () =>
+        Promise.reject(new DOMException("No source", "NotSupportedError"));
+      session.press("play");
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(errors).toHaveLength(1);
+      expect(errors[0]).toHaveProperty(
+        "message",
+        'Can\'t play Episode "Celebrity Pastors" from https://example.com/ep-1.mp3: No source'
+      );
     });
 
     it("leaves out the position while the duration is unknown", async () => {
@@ -521,12 +544,42 @@ describe("player", () => {
     expect(player.getState()).toMatchObject({ mode: "playing", position: 0 });
   });
 
-  it("fails loudly when the audio can't be played at all", async () => {
+  it("fails loudly, naming the Episode, when its audio can't be played", async () => {
     const { audio, player } = setup();
     audio.play = () =>
       Promise.reject(new DOMException("No source", "NotSupportedError"));
-    await expect(player.play(episode())).rejects.toThrow("No source");
+    await expect(player.play(episode())).rejects.toThrow(
+      'Can\'t play Episode "Celebrity Pastors" from https://example.com/ep-1.mp3: No source'
+    );
     expect(player.getState().mode).toBe("paused");
+  });
+
+  it("trusts the audio over the feed's duration, which may be short", async () => {
+    const { audio, player } = setup();
+    await player.play(episode(), { at: 3050 });
+    expect(audio.position).toBe(3050);
+    player.pause();
+    await player.resume();
+    expect(audio.position).toBe(3050);
+  });
+
+  it("carries on mid-Episode when the feed gives no duration", async () => {
+    const { audio, player } = setup();
+    await player.play(episode({ durationSeconds: 0 }));
+    audio.playTo(50);
+    player.pause();
+    await player.toggle();
+    expect(audio.position).toBe(50);
+  });
+
+  it("carries on from the very end when sought there, rather than restarting", async () => {
+    const { audio, player } = setup();
+    await player.play(episode());
+    audio.emit({ type: "duration", duration: 3000 });
+    player.pause();
+    player.seek(3000);
+    await player.resume();
+    expect(audio.position).toBe(3000);
   });
 
   it("shows paused when the browser refuses to start playback", async () => {

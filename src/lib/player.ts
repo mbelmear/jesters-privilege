@@ -66,6 +66,9 @@ export type PlayerDeps = {
   audio: AudioAdapter;
   storage?: DeviceStorage | null;
   mediaSession?: MediaSessionAdapter | null;
+  // Receives failures no caller can catch, such as a lock-screen play that
+  // can't start. By default they are thrown as uncaught errors.
+  onError?: (error: Error) => void;
 };
 
 export type PlayerState = {
@@ -115,6 +118,10 @@ export function createPlayer({
   audio,
   storage = null,
   mediaSession = null,
+  onError = (error) =>
+    queueMicrotask(() => {
+      throw error;
+    }),
 }: PlayerDeps): Player {
   const history = createHistory(storage);
   let state: PlayerState = {
@@ -125,6 +132,11 @@ export function createPlayer({
   // Counts loads, so a late answer from the audio about an Episode that has
   // since been replaced is ignored.
   let loadCount = 0;
+  // About the loaded Episode: whether the audio has reported its real length
+  // (the feed's figure is an estimate, and may be short or 0), and whether
+  // playback has just reached the end.
+  let durationKnown = false;
+  let heardToEnd = false;
   const listeners = new Set<() => void>();
 
   // The Episode the lock screen shows, so its artwork is sent once per load.
@@ -155,8 +167,10 @@ export function createPlayer({
         history.savePosition(state.episode.guid, event.position);
         return setState({ ...state, position: event.position });
       case "duration":
+        durationKnown = true;
         return setState({ ...state, duration: event.duration });
       case "ended":
+        heardToEnd = true;
         history.finish(state.episode.guid);
         return setState({
           ...state,
@@ -177,20 +191,27 @@ export function createPlayer({
   // such as audio it can't decode, is thrown.
   async function startAudio() {
     if (state.mode === "empty") return;
-    if (state.position >= state.duration) seek(0);
+    if (heardToEnd) seek(0);
     const load = loadCount;
     setState({ ...state, mode: "playing" });
     try {
       await audio.play();
     } catch (error: unknown) {
       if (load === loadCount) setState({ ...state, mode: "paused" });
-      if (!isRefusal(error)) throw error;
+      if (isRefusal(error)) return;
+      const reason = error instanceof Error ? error.message : String(error);
+      throw new Error(
+        `Can't play Episode "${state.episode.title}" from ${state.episode.audioUrl}: ${reason}`,
+        { cause: error }
+      );
     }
   }
 
   function seek(seconds: number) {
     if (state.mode === "empty") return;
-    const position = Math.min(Math.max(seconds, 0), state.duration);
+    const end = durationKnown ? state.duration : Infinity;
+    const position = Math.min(Math.max(seconds, 0), end);
+    heardToEnd = false;
     audio.seek(position);
     history.savePosition(state.episode.guid, position, { now: true });
     setState({ ...state, position });
@@ -205,6 +226,8 @@ export function createPlayer({
     async play(episode, { at } = {}) {
       if (state.mode === "empty" || state.episode.guid !== episode.guid) {
         loadCount += 1;
+        durationKnown = false;
+        heardToEnd = false;
         audio.load(episode.audioUrl);
         audio.setRate(state.speed);
         history.markLastPlayed(episode.guid);
@@ -254,7 +277,7 @@ export function createPlayer({
   if (mediaSession) {
     for (const action of MEDIA_ACTIONS) {
       mediaSession.setActionHandler(action, (details) =>
-        answerMediaAction(player, action, details)
+        answerMediaAction(player, action, details, onError)
       );
     }
   }
@@ -286,13 +309,14 @@ function showOnLockScreen(
 function answerMediaAction(
   player: Player,
   action: MediaAction,
-  { seekTime, seekOffset }: MediaActionDetails
+  { seekTime, seekOffset }: MediaActionDetails,
+  onError: (error: Error) => void
 ) {
   const state = player.getState();
   const position = state.mode === "empty" ? 0 : state.position;
   switch (action) {
     case "play":
-      return void player.resume();
+      return void player.resume().catch(onError);
     case "pause":
       return player.pause();
     case "seekto":
@@ -382,20 +406,20 @@ function parseSaved(value: unknown): Saved | null {
   const finished = "finished" in value ? value.finished : undefined;
   const lastPlayed = "lastPlayed" in value ? value.lastPlayed : null;
   if (typeof positions !== "object" || positions === null) return null;
-  const places: [string, unknown][] = Object.entries(positions);
-  if (!places.every(isPlace)) return null;
+  const entries: [string, unknown][] = Object.entries(positions);
+  if (!entries.every(isSavedPosition)) return null;
   if (!Array.isArray(finished)) return null;
   const guids: unknown[] = finished;
   if (!guids.every((guid) => typeof guid === "string")) return null;
   if (lastPlayed !== null && typeof lastPlayed !== "string") return null;
   return {
-    positions: Object.fromEntries(places),
+    positions: Object.fromEntries(entries),
     finished: guids,
     lastPlayed,
   };
 }
 
-function isPlace(entry: [string, unknown]): entry is [string, number] {
+function isSavedPosition(entry: [string, unknown]): entry is [string, number] {
   const [, position] = entry;
   return (
     typeof position === "number" && Number.isFinite(position) && position >= 0
@@ -403,7 +427,7 @@ function isPlace(entry: [string, unknown]): entry is [string, number] {
 }
 
 // How a browser declines to play: autoplay blocked, or interrupted by a load.
-function isRefusal(error: unknown): boolean {
+function isRefusal(error: unknown): error is DOMException {
   return (
     error instanceof DOMException &&
     (error.name === "NotAllowedError" || error.name === "AbortError")
