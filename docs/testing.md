@@ -85,9 +85,9 @@ The budget lives in `lighthouserc.json`. The run fails if any of these is exceed
 
 The Largest Contentful Paint budget was 2.5 s until the site shell (#12) arrived. Lighthouse simulates a throttled load from every byte requested before the first paint, and the header's script plus the UI typeface on every page put the bare home page at a steady 2.75 s (it paints in about 40 ms unthrottled). Menu code, a smaller logo, and a single UI weight didn't move that figure, so the budget moved to 3.0 s.
 
-It rose to 3.2 s with the painting pipeline (#13). A page whose largest paint is an image waits behind the same early bytes, plus the image's own request: the paintings page (`/styleguide/paintings`, a band on the first screen and framed paintings below) simulates at 3.05 s, and still at 2.9 s with its band swapped for a 2 KB file, so the floor comes from the shell, not the painting. Every Fools' Gallery page has that shape. Text-led pages sit lower (the home page is at 2.6 s). Revisit it at the home page mockup gate (#14), which is the place to trim the shell's early script.
+It rose to 3.2 s with the painting pipeline (#13). A page whose largest paint is an image waits behind the same early bytes, plus the image's own request: the paintings page (`/styleguide/paintings`, a band on the first screen and framed paintings below) simulates at 3.05 s, and still at 2.9 s with its band swapped for a 2 KB file, so the floor comes from the shell, not the painting. Every Fools' Gallery page has that shape. Text-led pages sit lower (the 404 page is at 2.6 s). The home page rose from 2.6 s to 2.98 s when its largest paint became the hero logo (#55). Revisit it at the home page mockup gate (#14), which is the place to trim the shell's early script.
 
-When a change moves a budget, compare it with main:
+Before pushing a change to the header, the footer, the root layout, or the first screen of a page, compare it with main: everything those fetch counts against every page's largest paint.
 
 ```bash
 npm run lighthouse:compare              # or: -- <base-ref>
