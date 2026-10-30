@@ -187,6 +187,9 @@ test.describe("Not found", () => {
   }) => {
     const response = await page.goto("/no-such-page");
     expect(response?.status()).toBe(404);
+    await expect(page).toHaveTitle(
+      "You've wandered from the court | Jester's Privilege"
+    );
     await expect(
       page.getByRole("heading", {
         level: 1,

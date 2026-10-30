@@ -7,8 +7,9 @@ import { content } from "@/content";
 const { microcopy, shell, site } = content;
 
 // Served for every unknown address (out/404.html in the static export).
+// The root layout's title template appends the site name.
 export const metadata: Metadata = {
-  title: `${microcopy.notFoundTitle.text} · ${site.name}`,
+  title: microcopy.notFoundTitle.text,
 };
 
 export default function NotFound() {
