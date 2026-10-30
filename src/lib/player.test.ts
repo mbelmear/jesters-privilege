@@ -456,7 +456,6 @@ describe("player", () => {
       const { audio, player } = setup({ storage: refusing });
       await player.play(episode());
       audio.playTo(100);
-      player.pause();
       audio.end();
       expect(player.getState().finished.has("ep-1")).toBe(true);
       expect(player.savedPosition("ep-1")).toBeNull();
@@ -491,7 +490,15 @@ describe("player", () => {
     await player.play(episode());
     audio.playTo(3000);
     audio.end();
+    // A real element restarts by itself, after the store reports playing;
+    // the store shows the start from its first word.
+    const shown: number[] = [];
+    player.subscribe(() => {
+      const state = player.getState();
+      if (state.mode === "playing") shown.push(state.position);
+    });
     await player.play(episode());
+    expect(shown[0]).toBe(0);
     expect(audio.position).toBe(0);
     expect(player.getState()).toMatchObject({ mode: "playing", position: 0 });
   });

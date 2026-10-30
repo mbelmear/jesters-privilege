@@ -23,6 +23,7 @@ npx jest src/lib            # one folder or file
 ```
 
 - **Logic modules** live in `src/lib/`. Coverage there must stay at or above 90% of lines, or `test:coverage` fails.
+- **The player store** is tested, and driven from component tests, with `FakeAudio` (`src/lib/fake-audio.ts`). It copies the `<audio>` element's behaviour that the store depends on; its header lists where it differs.
 - **Component tests** assert what a user sees and include an accessibility check:
 
   ```tsx

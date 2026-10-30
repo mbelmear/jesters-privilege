@@ -4,12 +4,16 @@
 //
 // - Loading a new source stops playback and starts it again at 0.
 // - The duration is unknown until reportDuration(), as with real audio, whose
-//   length arrives after its metadata loads. The Feed's figure is an estimate.
-// - Reaching the end fires pause and then ended, and play() after that starts
-//   again from 0.
+//   length arrives after its metadata loads.
+// - Reaching the end fires pause (if it was playing) and then ended, and play()
+//   after that starts again from 0.
 //
-// One difference: the element queues its events as tasks, so they arrive after
-// the code that caused them, but this fake emits them at once.
+// Two differences:
+// - The element queues its events as tasks, so they arrive after the code that
+//   caused them, but this fake emits them at once.
+// - play() here settles at once, so no play is ever pending when a new source
+//   loads. The element rejects a pending play with an AbortError; a test that
+//   needs that replaces play() with a promise it rejects by hand.
 
 import type { AudioAdapter, AudioEvent } from "./player";
 
@@ -75,9 +79,11 @@ export class FakeAudio implements AudioAdapter {
   /** Playback reaches the end, at the real duration once it is known. */
   end() {
     this.playTo(this.duration ?? this.position);
-    this.playing = false;
     this.ended = true;
-    this.emit({ type: "pause" });
+    if (this.playing) {
+      this.playing = false;
+      this.emit({ type: "pause" });
+    }
     this.emit({ type: "ended" });
   }
 }
