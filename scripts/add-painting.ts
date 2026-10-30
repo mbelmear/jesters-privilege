@@ -44,13 +44,16 @@ async function main() {
     titles: commonsTitle(input),
     prop: "imageinfo",
     iiprop: "url|size|extmetadata",
+    // Commons' originals run to 30,000px, past what sharp will open.
+    iiurlwidth: String(LONG_SIDE),
+    iiurlheight: String(LONG_SIDE),
     iiextmetadatafilter: "LicenseShortName|Artist|DateTimeOriginal|ObjectName",
   });
   const file = parseCommonsFile(await fetchJson(`${API}?${query}`));
   assertPublicDomain(file);
 
-  const original = await fetchBytes(file.fileUrl);
-  const { data, info } = await sharp(original)
+  const download = await fetchBytes(file.downloadUrl);
+  const { data, info } = await sharp(download)
     .rotate()
     .resize(LONG_SIDE, LONG_SIDE, { fit: "inside", withoutEnlargement: true })
     .jpeg({ quality: 88, mozjpeg: true })
