@@ -21,10 +21,13 @@ type Props = {
 export function ShareButton({ title, path, copy }: Props) {
   const [outcome, setOutcome] = useState<ShareOutcome | null>(null);
 
-  async function share() {
+  function share() {
     setOutcome(null);
     const url = new URL(path, window.location.origin).href;
-    setOutcome(await shareLink({ title, url }, browserSharing()));
+    // shareLink reports its own failures; anything else still says so.
+    shareLink({ title, url }, browserSharing()).then(setOutcome, () =>
+      setOutcome("failed")
+    );
   }
 
   return (
@@ -34,7 +37,7 @@ export function ShareButton({ title, path, copy }: Props) {
         variant="outline"
         size="lg"
         className="self-start"
-        onClick={() => void share()}
+        onClick={share}
       >
         <Share aria-hidden="true" />
         {copy.button}
