@@ -18,6 +18,7 @@
     "test:e2e:firefox": "playwright test --project='firefox-*'",
     "lighthouse": "scripts/lighthouse.sh",
     "lighthouse:compare": "scripts/lighthouse-compare.sh",
+    "screenshots": "tsx scripts/screenshots.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "merge": "scripts/merge-on-green.sh",

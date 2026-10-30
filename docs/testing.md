@@ -51,13 +51,13 @@ npx playwright test --ui    # interactive runner
 
 Specs live in `e2e/`. Every page should get an axe scan (`@axe-core/playwright`) and a no-horizontal-scroll check at phone width. Project names follow `<browser>-<size>`, so `--project=webkit-phone` runs a single combination.
 
-CI runners are slower than a laptop, so a timing assertion ("finishes within 300 ms") first waits for a state that proves the code it times has loaded, such as the first animation completing. Otherwise it measures the download, passes locally, and fails in CI. Likewise, let an opening animation finish before an axe scan, since axe samples colors mid-fade.
+CI runners are slower than a laptop, so a timing assertion ("finishes within 300 ms") first waits for a state that proves the code it times has loaded, such as the first animation completing. It starts the clock when the thing it times begins, such as the replayed element mounting, not at the action that triggers it, so the event handling and rendering in between don't count against the window. Otherwise it measures the download, passes locally, and fails in CI. Likewise, let an opening animation finish before an axe scan, since axe samples colors mid-fade. A reveal on scroll (`whileInView` with `once`) plays only while its element is on screen, so a test holds each element in view until it shows; a quick scroll can pass it before Motion has loaded.
 
 Playwright's actions (`click`, `scrollIntoViewIfNeeded`) wait for an element to hold still, so one that animates without end, such as a painting band's slow zoom, stalls them until the test times out; scroll it with `locator.evaluate((el) => el.scrollIntoView())`.
 
 Sessions on this machine build and test in parallel. When tests a change didn't touch time out locally, check `uptime` before suspecting the code: a load average far above the core count slows every browser.
 
-When a run fails in CI, the HTML report is attached to the workflow run as `playwright-report`.
+When a run fails in CI, the HTML report is attached to the workflow run as `playwright-report`. One known flake: "Reduced motion › Motion animations finish at once" fails now and then on CI's WebKit (#60); a red run on that test alone gets a rerun. Any other failure that won't reproduce locally is usually timing: `gh run download <run-id> -n playwright-report` and open the failing test's trace (`npx playwright show-trace <trace>.zip`) to see what loaded around the failing step.
 
 ## Performance (Lighthouse CI)
 
@@ -69,7 +69,7 @@ npm run lighthouse
 npm run lighthouse -- /styleguide/paintings.html   # only the pages named
 ```
 
-The budget lives in `lighthouserc.json`. The run fails if any of these is exceeded:
+The budget lives in `lighthouserc.json`. Each figure is asserted on its median across the three runs (`aggregationMethod: "median"`), and the run fails if any of these is exceeded. Lighthouse CI's default asserts on the best run, which let #14's preview pass with two of its three runs over budget.
 
 | Measure                  | Budget   |
 | ------------------------ | -------- |
@@ -85,7 +85,7 @@ The budget lives in `lighthouserc.json`. The run fails if any of these is exceed
 
 The Largest Contentful Paint budget was 2.5 s until the site shell (#12) arrived. Lighthouse simulates a throttled load from every byte requested before the first paint, and the header's script plus the UI typeface on every page put the bare home page at a steady 2.75 s (it paints in about 40 ms unthrottled). Menu code, a smaller logo, and a single UI weight didn't move that figure, so the budget moved to 3.0 s.
 
-It rose to 3.2 s with the painting pipeline (#13). A page whose largest paint is an image waits behind the same early bytes, plus the image's own request: the paintings page (`/styleguide/paintings`, a band on the first screen and framed paintings below) simulates at 3.05 s, and still at 2.9 s with its band swapped for a 2 KB file, so the floor comes from the shell, not the painting. Every Fools' Gallery page has that shape. Text-led pages sit lower (the 404 page is at 2.6 s). The home page rose from 2.6 s to 2.98 s when its largest paint became the logo above the intro (#55). The home page mockup (#14, `/styleguide/home`) is over the budget at the median. Lighthouse CI asserts each figure on the best of its three runs, so the check can pass while two runs fail, as it did on #14's PR: 2.72, 3.49, and 3.50 s in CI with the reveal hero. Locally the medians were 3.43 s with the simple hero and 3.73 s with the reveal, against 2.9 s for the bare home page. #20 and #57 bring it back under. Two things cost it:
+It rose to 3.2 s with the painting pipeline (#13). A page whose largest paint is an image waits behind the same early bytes, plus the image's own request: the paintings page (`/styleguide/paintings`, a band on the first screen and framed paintings below) simulates at 3.05 s, and still at 2.9 s with its band swapped for a 2 KB file, so the floor comes from the shell, not the painting. Every Fools' Gallery page has that shape. Text-led pages sit lower (the 404 page is at 2.6 s). The home page rose from 2.6 s to 2.98 s when its largest paint became the logo above the intro (#55). The home page mockup (#14, `/styleguide/home`) is over the budget: 2.72, 3.49, and 3.50 s in CI with the reveal hero, and locally a median of 3.43 s with the simple hero and 3.73 s with the reveal, against 2.9 s for the bare home page. It's left out of `lighthouserc.json` until #57 brings it back under and adds it again. Two things cost it:
 
 - **Extended-Latin fonts (#57).** "Stańczyk" in the Gallery teaser and on his placard pulls in the latin-ext files of the body face (41 KB) and the UI face (10 KB). Fonts go from 83 KB to 135 KB, and first paint from 1.05 s to 1.5 s. Every Fools' Gallery page will pay this too.
 - **Motion, for the reveal hero only (52 KB of script, about 0.3 s).** Each preview page composes its own hero story, so the simple option ships no Motion. The real home page (#20) should import only the option the Jesters pick.
@@ -98,7 +98,12 @@ npm run lighthouse:compare              # or: -- <base-ref>
 
 It prints each page's simulated and observed LCP and FCP beside the base, with the bytes of each resource type requested before the observed paint. Those bytes are what the simulated figures track: a page that really paints in 40 ms still scores its LCP from everything it fetched by then, so trim early bytes rather than chase the paint. It also names each page's LCP element: an image paints only after its own request on top of those bytes, so an image-led page sits higher than a text-led one with the same early bytes.
 
-Reports are written to `.lighthouseci/reports/` and attached to each CI run as `lighthouse-reports`. They are not uploaded anywhere public.
+After the run, `npm run lighthouse` prints each page's median figures: simulated and observed LCP and FCP, the bytes of each type fetched before the paint, and the LCP element (`scripts/lighthouse-summary.ts`). Reports are written to `.lighthouseci/reports/` and attached to each CI run as `lighthouse-reports`. They are not uploaded anywhere public. To read CI's figures, download them and summarise them in the same way:
+
+```bash
+gh run download <run-id> -n lighthouse-reports -D /tmp/lh
+npx tsx scripts/lighthouse-summary.ts "CI=/tmp/lh"
+```
 
 When a page is added, add its URL to `ci.collect.url` in `lighthouserc.json`.
 

@@ -6,7 +6,7 @@ import { Slot } from "radix-ui";
 // Restyled to the site tokens: UI typeface in small capitals, crisp corners,
 // and the orange focus ring. Teal is the primary action; the orange `brand`
 // fill takes dark text, per the contrast rule in globals.css.
-const buttonVariants = cva(
+const buttonClasses = cva(
   "inline-flex shrink-0 items-center justify-center gap-2 rounded-md border border-transparent font-ui font-semibold tracking-wider whitespace-nowrap uppercase no-underline transition-colors duration-(--motion-courtly-duration) ease-courtly select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
@@ -38,6 +38,15 @@ const buttonVariants = cva(
   }
 );
 
+// buttonClasses is the variant table; buttonVariants (shadcn's name, kept so
+// copied components work) is what callers use: the classes for a
+// button-styled element, with each variant's classes
+// replacing the base's where they clash (border-primary over
+// border-transparent), so a link styled this way matches <Button>.
+function buttonVariants(props?: Parameters<typeof buttonClasses>[0]): string {
+  return cn(buttonClasses(props));
+}
+
 function Button({
   className,
   variant = "default",
@@ -45,7 +54,7 @@ function Button({
   asChild = false,
   ...props
 }: React.ComponentProps<"button"> &
-  VariantProps<typeof buttonVariants> & {
+  VariantProps<typeof buttonClasses> & {
     asChild?: boolean;
   }) {
   const Comp = asChild ? Slot.Root : "button";
@@ -55,7 +64,7 @@ function Button({
       data-slot="button"
       data-variant={variant}
       data-size={size}
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={buttonVariants({ variant, size, className })}
       {...props}
     />
   );

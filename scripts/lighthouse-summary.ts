@@ -1,5 +1,6 @@
 // Summarises Lighthouse reports, one column per label, for
-// scripts/lighthouse-compare.sh. Each argument is <label>=<folder of lhr JSON>.
+// scripts/lighthouse.sh, scripts/lighthouse-compare.sh, and CI's downloaded
+// lighthouse-reports. Each argument is <label>=<folder of reports>.
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -100,6 +101,13 @@ function median(numbers: number[]): number {
   return sorted[Math.floor(sorted.length / 2)] ?? 0;
 }
 
+// A Lighthouse report as lhci collect names it (lhr-*.json) or as its
+// filesystem upload does (*.report.json), not lhci's manifest or assertion
+// results beside them.
+function isReport(file: string): boolean {
+  return /^lhr-.*\.json$/.test(file) || file.endsWith(".report.json");
+}
+
 // Per label, per page: the median of each figure across runs.
 const columns = process.argv.slice(2).map((arg) => {
   const split = arg.indexOf("=");
@@ -108,7 +116,7 @@ const columns = process.argv.slice(2).map((arg) => {
   const folder = arg.slice(split + 1);
   const runs = new Map<string, Record<string, number>[]>();
   const elements = new Map<string, string>();
-  for (const file of readdirSync(folder).filter((f) => f.endsWith(".json"))) {
+  for (const file of readdirSync(folder).filter(isReport)) {
     const json: unknown = JSON.parse(readFileSync(join(folder, file), "utf8"));
     const report = readReport(file, json);
     runs.set(report.path, [...(runs.get(report.path) ?? []), figures(report)]);
