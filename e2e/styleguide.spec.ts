@@ -86,20 +86,18 @@ test.describe("Reduced motion", () => {
     const bars = replay.locator("xpath=..").locator("div > div");
     // How far a bar falls short of its track, read after `frames` more
     // rendered frames.
-    const shortfall =
-      (bar: Locator, frames = 0) =>
-      () =>
-        bar.evaluate(async (el, frames) => {
-          for (let i = 0; i < frames; i++)
-            await new Promise(requestAnimationFrame);
-          const track = el.parentElement?.getBoundingClientRect().width ?? 0;
-          return Math.round(el.getBoundingClientRect().width - track);
-        }, frames);
+    const shortfall = (bar: Locator, frames = 0) =>
+      bar.evaluate(async (el, frames) => {
+        for (let i = 0; i < frames; i++)
+          await new Promise(requestAnimationFrame);
+        const track = el.parentElement?.getBoundingClientRect().width ?? 0;
+        return Math.round(el.getBoundingClientRect().width - track);
+      }, frames);
 
     // The first sweep finishing shows Motion's lazily loaded animation code
     // has arrived, so the timing below measures the animation, not the load.
     const first = bars.first();
-    await expect.poll(shortfall(first)).toBe(0);
+    await expect.poll(() => shortfall(first)).toBe(0);
     await first.evaluate((el) => el.setAttribute("data-swept", ""));
 
     await replay.click();
@@ -112,7 +110,9 @@ test.describe("Reduced motion", () => {
       .first();
     await expect(replayed).toBeAttached();
     // Two frames into the processional preset's near-second, the sweep has
-    // barely begun; reduced, it's already done.
-    expect(await shortfall(replayed, 2)()).toBe(0);
+    // barely begun; reduced, it's already done. (A stall of a second across
+    // those frames would let a full sweep finish too, so on such a run this
+    // can't tell the two apart; at normal frame rates it can.)
+    expect(await shortfall(replayed, 2)).toBe(0);
   });
 });

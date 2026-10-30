@@ -154,7 +154,8 @@ test.describe("Mobile menu", () => {
     await expect(menu).toBeVisible();
     // Reduced, Motion skips the slide, so the panel is in place two rendered
     // frames on. Count frames, not milliseconds: CI's WebKit sometimes renders
-    // none for most of a second (#60).
+    // none for most of a second (#60). A stall that long would also let the
+    // 200 ms slide finish, so on such a run this can't catch a slide.
     const transform = await menu.evaluate(async (el) => {
       await new Promise(requestAnimationFrame);
       await new Promise(requestAnimationFrame);
