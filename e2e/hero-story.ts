@@ -54,3 +54,9 @@ export function offsetsAsItAppears(paragraph: Locator): Promise<number[]> {
       })
   );
 }
+
+// Between lowered (24 px) and in place, the story passes through every
+// offset as it rises; with reduced motion it only jumps from one to the
+// other while it fades.
+export const movingOffsets = (offsets: number[]) =>
+  offsets.filter((offset) => offset > 0.5 && offset < 23.5);

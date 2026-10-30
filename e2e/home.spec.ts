@@ -1,6 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 import {
+  movingOffsets,
   closingLine,
   motionLoaded,
   offsetsAsItAppears,
@@ -33,8 +34,9 @@ test.describe("Home", () => {
   });
 
   // The coming-soon build's absence check (coming-soon.spec.ts) finds it here.
-  test("lists Episodes in the navigation", async ({ page, isMobile }) => {
-    if (isMobile) await page.getByRole("button", { name: "Open menu" }).click();
+  test("lists Episodes in the navigation", async ({ page }) => {
+    const menu = page.getByRole("button", { name: "Open menu" });
+    if (await menu.isVisible()) await menu.click();
     const nav = page.getByRole("navigation", { name: "Main" });
     await expect(nav.getByRole("link", { name: "Episodes" })).toBeVisible();
   });
@@ -73,12 +75,6 @@ test.describe("Home", () => {
   }
 });
 
-// Between lowered (24 px) and in place, the story passes through every
-// offset as it rises; with reduced motion it only jumps from one to the
-// other while it fades.
-const between = (offsets: number[]) =>
-  offsets.filter((offset) => offset > 0.5 && offset < 23.5);
-
 for (const reducedMotion of ["reduce", "no-preference"] as const) {
   test.describe(`Home with reducedMotion: ${reducedMotion}`, () => {
     test.use({ reducedMotion });
@@ -92,8 +88,9 @@ for (const reducedMotion of ["reduce", "no-preference"] as const) {
         await page.goto("/");
         await motionLoaded(page);
         const offsets = await offsetsAsItAppears(closingLine(page));
-        if (reducedMotion === "reduce") expect(between(offsets)).toEqual([]);
-        else expect(between(offsets).length).toBeGreaterThan(0);
+        if (reducedMotion === "reduce")
+          expect(movingOffsets(offsets)).toEqual([]);
+        else expect(movingOffsets(offsets).length).toBeGreaterThan(0);
         expect(offsets.at(-1)).toBeCloseTo(0);
       }
     );

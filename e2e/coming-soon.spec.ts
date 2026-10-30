@@ -14,10 +14,11 @@ test.describe("Coming soon", { tag: "@empty-feed" }, () => {
     await expect(latest.getByRole("link")).toHaveCount(0);
   });
 
-  test("the navigation leaves out Episodes", async ({ page, isMobile }) => {
+  test("the navigation leaves out Episodes", async ({ page }) => {
     await page.goto("/");
-    // On phones the menu holds the navigation.
-    if (isMobile) await page.getByRole("button", { name: "Open menu" }).click();
+    // At phone width the menu holds the navigation.
+    const menu = page.getByRole("button", { name: "Open menu" });
+    if (await menu.isVisible()) await menu.click();
     const nav = page.getByRole("navigation", { name: "Main" });
     await expect(nav.getByRole("link", { name: "About" })).toBeVisible();
     await expect(nav.getByRole("link", { name: "Episodes" })).toHaveCount(0);

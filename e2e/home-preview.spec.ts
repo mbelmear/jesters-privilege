@@ -1,6 +1,13 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
-import { closingLine, reveal, scrollThrough } from "./hero-story";
+import {
+  movingOffsets,
+  closingLine,
+  motionLoaded,
+  offsetsAsItAppears,
+  reveal,
+  scrollThrough,
+} from "./hero-story";
 
 // The home page design at the mockup gate (#14): both hero options, each at
 // its own address.
@@ -105,12 +112,16 @@ test.describe("Home preview hero switch", () => {
   });
 });
 
+// The same check as the home page's (home.spec.ts), whose motion-on case
+// shows it finding the story rising.
 test.describe("Home preview with reduced motion", () => {
   test.use({ reducedMotion: "reduce" });
 
   test("the revealed story fades in without moving", async ({ page }) => {
     await page.goto("/styleguide/home");
-    await reveal(closingLine(page));
-    await expect(closingLine(page)).toHaveCSS("transform", "none");
+    await motionLoaded(page);
+    const offsets = await offsetsAsItAppears(closingLine(page));
+    expect(movingOffsets(offsets)).toEqual([]);
+    expect(offsets.at(-1)).toBeCloseTo(0);
   });
 });
