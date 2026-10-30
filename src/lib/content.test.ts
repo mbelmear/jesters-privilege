@@ -5,6 +5,7 @@ import {
   type Content,
   type Painting,
 } from "./content";
+import { episodePage } from "@/content/episode-page";
 import { home } from "@/content/home";
 import { shell } from "@/content/shell";
 
@@ -47,6 +48,7 @@ function content(overrides: Partial<Content> = {}): Content {
     shell,
     hero: { logo, paragraphs: ["Long ago…"] },
     home,
+    episodePage,
     jesters: [{ id: "dan", name: "Dan Collins", role: "Co-host" }],
     gallery: {
       eras: [

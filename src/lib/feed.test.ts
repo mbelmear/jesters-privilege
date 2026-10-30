@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { episodePath, parseFeed } from "./feed";
+import { episodeAddress, episodePath, findEpisode, parseFeed } from "./feed";
 
 const fixture = readFileSync(
   join(process.cwd(), "src/content/feed-fixture.xml"),
@@ -326,5 +326,60 @@ describe("episodePath", () => {
         "/episodes/bonus/introducing-jesters-privilege-trailer",
       ])
     );
+  });
+});
+
+describe("episodeAddress", () => {
+  it("gives the segments of the Episode's page under /episodes", () => {
+    const episodes = parseFeed(fixture);
+    expect(episodes.map(episodeAddress)).toEqual([
+      ["4"],
+      ["bonus", "listener-confessions-christmas-edition"],
+      ["3"],
+      ["2"],
+      ["1"],
+      ["bonus", "introducing-jesters-privilege-trailer"],
+    ]);
+  });
+});
+
+describe("findEpisode", () => {
+  const episodes = parseFeed(fixture);
+  const title = (episode: { title: string } | undefined) => episode?.title;
+
+  it("finds the Episode at an address, between the one before and the one after", () => {
+    const found = findEpisode(episodes, ["2"]);
+    expect(title(found?.episode)).toBe("The Holy Fool");
+    expect(title(found?.previous)).toBe("Celebrity Pastors");
+    expect(title(found?.next)).toBe("Mockery and the Prophets");
+  });
+
+  it("counts bonus and trailer Episodes among the neighbours", () => {
+    const found = findEpisode(episodes, [
+      "bonus",
+      "listener-confessions-christmas-edition",
+    ]);
+    expect(title(found?.previous)).toBe("Mockery and the Prophets");
+    expect(title(found?.next)).toBe("Is Humor a Virtue?");
+  });
+
+  it("has nothing before the first Episode or after the latest", () => {
+    const first = findEpisode(episodes, [
+      "bonus",
+      "introducing-jesters-privilege-trailer",
+    ]);
+    expect(first?.previous).toBeUndefined();
+    expect(title(first?.next)).toBe("Celebrity Pastors");
+    const latest = findEpisode(episodes, ["4"]);
+    expect(title(latest?.previous)).toBe(
+      "Listener Confessions: Christmas Edition"
+    );
+    expect(latest?.next).toBeUndefined();
+  });
+
+  it("finds nothing at an address no Episode has", () => {
+    expect(findEpisode(episodes, ["99"])).toBeUndefined();
+    expect(findEpisode(episodes, ["bonus"])).toBeUndefined();
+    expect(findEpisode([], ["1"])).toBeUndefined();
   });
 });

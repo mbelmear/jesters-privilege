@@ -4,7 +4,11 @@ import { useId } from "react";
 import { Button } from "@/components/ui/button";
 import type { Copy, Home } from "@/lib/content";
 import { episodePath, type Episode } from "@/lib/feed";
-import { formatListeningTime, formatPublishDate } from "@/lib/format-episode";
+import {
+  episodeLabel,
+  formatListeningTime,
+  formatPublishDate,
+} from "@/lib/format-episode";
 
 type Props = {
   // The newest Episode, or none before Episode 1 is published.
@@ -95,31 +99,4 @@ function EpisodeCard({
       </div>
     </article>
   );
-}
-
-// A full Episode shows its number; bonus and trailer Episodes a label.
-type EpisodeLabel =
-  | { kind: "numbered"; number: number; text: string }
-  | { kind: "labelled"; text: string };
-
-function episodeLabel(
-  episode: Episode,
-  copy: Home["latestEpisode"]
-): EpisodeLabel {
-  switch (episode.type) {
-    case "full":
-      return {
-        kind: "numbered",
-        number: episode.number,
-        text: `${copy.episode} ${episode.number}`,
-      };
-    case "bonus":
-      return { kind: "labelled", text: copy.bonus };
-    case "trailer":
-      return { kind: "labelled", text: copy.trailer };
-    default: {
-      const unhandled: never = episode;
-      return unhandled;
-    }
-  }
 }
