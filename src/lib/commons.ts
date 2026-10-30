@@ -8,8 +8,9 @@ import { parseDocument } from "htmlparser2";
 export type CommonsFile = {
   // The Commons title, "File:…".
   readonly fileTitle: string;
-  // A copy Commons resizes to fit the iiurlwidth × iiurlheight box (the
-  // original when that's smaller), so no scan is too large to open.
+  // A copy Commons resizes to one of its standard sizes at or above the
+  // iiurlwidth × iiurlheight box (the original when that's smaller), so no
+  // scan is too large to open; add-painting still resizes it to the box.
   readonly downloadUrl: string;
   readonly pageUrl: string;
   readonly width: number;

@@ -11,7 +11,7 @@ const edit =
 
 // Trimmed from the Commons API's answer for Matejko's Stańczyk
 // (action=query, prop=imageinfo, formatversion=2, iiurlwidth and
-// iiurlheight 2400).
+// iiurlheight 2400; Commons rounds the copy up to its 3840px standard size).
 const stanczyk = {
   query: {
     pages: [
