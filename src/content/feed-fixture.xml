@@ -3,6 +3,9 @@
   Stand-in for the Jester's Privilege Spreaker feed until Episode 1 is
   published. Shaped exactly like the Polemical with Dan Collins feed, which the
   same producer publishes. The Episodes and Show notes are draft copy.
+
+  For real Spreaker files (Show notes, WebVTT Transcripts), read Polemical's
+  feed: https://www.spreaker.com/show/6133436/episodes/feed
 -->
 <rss xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:podcast="https://podcastindex.org/namespace/1.0" xmlns:media="http://search.yahoo.com/mrss/" version="2.0">
 <channel>
