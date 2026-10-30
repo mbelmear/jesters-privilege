@@ -1,0 +1,399 @@
+// The player store: the single owner of playback (spec, "Persistent player").
+// Archive rows, Episode pages, the Transcript, and the player UI send it
+// commands and render its state. It drives the <audio> element only through
+// an injected AudioAdapter, so it runs in tests without real audio.
+
+import type { Episode } from "./feed";
+
+export const SPEEDS = [1, 1.25, 1.5, 2] as const;
+export type Speed = (typeof SPEEDS)[number];
+
+// What the audio element reports back.
+export type AudioEvent =
+  | { type: "play" }
+  | { type: "pause" }
+  | { type: "time"; position: number }
+  | { type: "duration"; duration: number }
+  | { type: "ended" };
+
+export type AudioAdapter = {
+  load: (src: string) => void;
+  play: () => Promise<void>;
+  pause: () => void;
+  seek: (seconds: number) => void;
+  setRate: (rate: Speed) => void;
+  subscribe: (listener: (event: AudioEvent) => void) => () => void;
+};
+
+// What the lock screen, Control Center, and car controls show.
+export type NowPlaying = { title: string; artworkUrl: string };
+export type MediaPosition = {
+  duration: number;
+  position: number;
+  playbackRate: number;
+};
+export type MediaPlaybackState = "none" | "playing" | "paused";
+
+// The controls the player answers. Track buttons skip, since there's no queue.
+export const MEDIA_ACTIONS = [
+  "play",
+  "pause",
+  "seekto",
+  "seekbackward",
+  "seekforward",
+  "previoustrack",
+  "nexttrack",
+] as const;
+export type MediaAction = (typeof MEDIA_ACTIONS)[number];
+export type MediaActionDetails = { seekTime?: number; seekOffset?: number };
+export type MediaActionHandler = (details: MediaActionDetails) => void;
+
+// The Media Session API, or what stands in for it.
+export type MediaSessionAdapter = {
+  setMetadata: (nowPlaying: NowPlaying) => void;
+  setPlaybackState: (state: MediaPlaybackState) => void;
+  setPositionState: (position: MediaPosition) => void;
+  setActionHandler: (action: MediaAction, handler: MediaActionHandler) => void;
+};
+
+// localStorage, or what stands in for it. Null where the browser has none.
+export type DeviceStorage = {
+  getItem: (key: string) => string | null;
+  setItem: (key: string, value: string) => void;
+};
+
+export type PlayerDeps = {
+  audio: AudioAdapter;
+  storage?: DeviceStorage | null;
+  mediaSession?: MediaSessionAdapter | null;
+};
+
+export type PlayerState = {
+  speed: Speed;
+  // The guids of Episodes heard to the end on this device.
+  finished: ReadonlySet<string>;
+} & (
+  | { mode: "empty" }
+  | {
+      mode: "playing" | "paused";
+      episode: Episode;
+      position: number;
+      duration: number;
+    }
+);
+
+export const SKIP_BACK_SECONDS = 15;
+export const SKIP_FORWARD_SECONDS = 30;
+
+// A place earlier than this isn't worth offering to resume.
+export const RESUME_MIN_SECONDS = 10;
+// While playing, the place is saved each time it moves this far, so a page
+// closed mid-Episode loses at most this much.
+const SAVE_EVERY_SECONDS = 5;
+
+export const PLAYER_STORAGE_KEY = "player";
+
+export type Player = {
+  getState: () => PlayerState;
+  subscribe: (listener: () => void) => () => void;
+  /** Plays an Episode, from `at` seconds if given. The loaded Episode carries on where it is. */
+  play: (episode: Episode, options?: { at?: number }) => Promise<void>;
+  pause: () => void;
+  resume: () => Promise<void>;
+  toggle: () => Promise<void>;
+  seek: (seconds: number) => void;
+  skipBack: () => void;
+  skipForward: () => void;
+  setSpeed: (speed: Speed) => void;
+  /** Where a partly heard Episode was left on this device, or null. */
+  savedPosition: (guid: string) => number | null;
+  /** The Episode last played on this device, if it was left partly heard. */
+  resumeOffer: () => { guid: string; position: number } | null;
+};
+
+export function createPlayer({
+  audio,
+  storage = null,
+  mediaSession = null,
+}: PlayerDeps): Player {
+  const history = createHistory(storage);
+  let state: PlayerState = {
+    mode: "empty",
+    speed: 1,
+    finished: history.finished(),
+  };
+  // Counts loads, so a late answer from the audio about an Episode that has
+  // since been replaced is ignored.
+  let loads = 0;
+  const listeners = new Set<() => void>();
+
+  // The Episode the lock screen shows, so its artwork is sent once per load.
+  let shown: Episode | null = null;
+
+  function setState(next: PlayerState) {
+    state = next;
+    if (mediaSession && state.mode !== "empty") {
+      showOnLockScreen(mediaSession, state, state.episode !== shown);
+      shown = state.episode;
+    }
+    for (const listener of listeners) listener();
+  }
+
+  function onAudio(event: AudioEvent) {
+    if (state.mode === "empty") return;
+    switch (event.type) {
+      case "play":
+        return setState({ ...state, mode: "playing" });
+      case "pause":
+        history.place(state.episode.guid, state.position, { now: true });
+        return setState({ ...state, mode: "paused" });
+      case "time":
+        history.place(state.episode.guid, event.position);
+        return setState({ ...state, position: event.position });
+      case "duration":
+        return setState({ ...state, duration: event.duration });
+      case "ended":
+        history.finish(state.episode.guid);
+        return setState({
+          ...state,
+          mode: "paused",
+          finished: history.finished(),
+        });
+      default: {
+        const unhandled: never = event;
+        return unhandled;
+      }
+    }
+  }
+  audio.subscribe(onAudio);
+
+  // Asks the audio to play. A browser may refuse, as when autoplay is
+  // blocked; the audio then stays paused and so does the store.
+  async function startAudio() {
+    if (state.mode === "empty") return;
+    const load = loads;
+    setState({ ...state, mode: "playing" });
+    try {
+      await audio.play();
+    } catch {
+      if (load === loads) setState({ ...state, mode: "paused" });
+    }
+  }
+
+  function seek(seconds: number) {
+    if (state.mode === "empty") return;
+    const position = Math.min(Math.max(seconds, 0), state.duration);
+    audio.seek(position);
+    history.place(state.episode.guid, position, { now: true });
+    setState({ ...state, position });
+  }
+
+  const player: Player = {
+    getState: () => state,
+    subscribe(listener) {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+    async play(episode, { at } = {}) {
+      if (state.mode === "empty" || state.episode.guid !== episode.guid) {
+        loads += 1;
+        audio.load(episode.audioUrl);
+        audio.setRate(state.speed);
+        history.played(episode.guid);
+        // Subscribers hear of the load once it is playing, not as a pause.
+        state = {
+          mode: "paused",
+          speed: state.speed,
+          finished: state.finished,
+          episode,
+          position: 0,
+          duration: episode.durationSeconds,
+        };
+      }
+      if (at !== undefined) seek(at);
+      await startAudio();
+    },
+    pause() {
+      if (state.mode === "empty") return;
+      audio.pause();
+    },
+    resume: startAudio,
+    async toggle() {
+      if (state.mode === "playing") audio.pause();
+      else await startAudio();
+    },
+    seek,
+    skipBack() {
+      if (state.mode === "empty") return;
+      seek(state.position - SKIP_BACK_SECONDS);
+    },
+    skipForward() {
+      if (state.mode === "empty") return;
+      seek(state.position + SKIP_FORWARD_SECONDS);
+    },
+    setSpeed(speed) {
+      audio.setRate(speed);
+      setState({ ...state, speed });
+    },
+    savedPosition: history.position,
+    resumeOffer() {
+      const guid = history.lastPlayed();
+      const position = guid === null ? null : history.position(guid);
+      return guid === null || position === null ? null : { guid, position };
+    },
+  };
+
+  if (mediaSession) {
+    for (const action of MEDIA_ACTIONS) {
+      mediaSession.setActionHandler(action, (details) =>
+        answerMediaAction(player, action, details)
+      );
+    }
+  }
+  return player;
+}
+
+function showOnLockScreen(
+  session: MediaSessionAdapter,
+  next: Exclude<PlayerState, { mode: "empty" }>,
+  newEpisode: boolean
+) {
+  if (newEpisode) {
+    session.setMetadata({
+      title: next.episode.title,
+      artworkUrl: next.episode.artworkUrl,
+    });
+  }
+  session.setPlaybackState(next.mode);
+  // The system rejects a position without a known, positive duration.
+  if (Number.isFinite(next.duration) && next.duration > 0) {
+    session.setPositionState({
+      duration: next.duration,
+      position: Math.min(next.position, next.duration),
+      playbackRate: next.speed,
+    });
+  }
+}
+
+function answerMediaAction(
+  player: Player,
+  action: MediaAction,
+  { seekTime, seekOffset }: MediaActionDetails
+) {
+  const state = player.getState();
+  const position = state.mode === "empty" ? 0 : state.position;
+  switch (action) {
+    case "play":
+      return void player.resume();
+    case "pause":
+      return player.pause();
+    case "seekto":
+      return seekTime === undefined ? undefined : player.seek(seekTime);
+    case "seekbackward":
+      return seekOffset === undefined
+        ? player.skipBack()
+        : player.seek(position - seekOffset);
+    case "seekforward":
+      return seekOffset === undefined
+        ? player.skipForward()
+        : player.seek(position + seekOffset);
+    case "previoustrack":
+      return player.skipBack();
+    case "nexttrack":
+      return player.skipForward();
+    default: {
+      const unhandled: never = action;
+      return unhandled;
+    }
+  }
+}
+
+// What this device remembers of the Episodes played on it.
+type Saved = {
+  positions: Record<string, number>;
+  finished: string[];
+  lastPlayed: string | null;
+};
+
+// Keeps the listening history in memory and mirrors it to storage. Storage
+// may refuse every read and write (private browsing, a full quota); playback
+// never depends on it, so a failure leaves only this page's memory.
+function createHistory(storage: DeviceStorage | null) {
+  const saved = read(storage);
+  const lastWritten = new Map<string, number>();
+
+  function write() {
+    try {
+      storage?.setItem(PLAYER_STORAGE_KEY, JSON.stringify(saved));
+    } catch {
+      // Unsaved: resume works for the rest of this visit only.
+    }
+  }
+
+  return {
+    finished: (): ReadonlySet<string> => new Set(saved.finished),
+    lastPlayed: () => saved.lastPlayed,
+    position(guid: string): number | null {
+      const position = saved.positions[guid];
+      return position !== undefined && position >= RESUME_MIN_SECONDS
+        ? position
+        : null;
+    },
+    played(guid: string) {
+      saved.lastPlayed = guid;
+      write();
+    },
+    place(guid: string, position: number, { now = false } = {}) {
+      saved.positions[guid] = position;
+      const last = lastWritten.get(guid) ?? 0;
+      if (now || Math.abs(position - last) >= SAVE_EVERY_SECONDS) {
+        lastWritten.set(guid, position);
+        write();
+      }
+    },
+    finish(guid: string) {
+      delete saved.positions[guid];
+      if (!saved.finished.includes(guid)) saved.finished.push(guid);
+      write();
+    },
+  };
+}
+
+function read(storage: DeviceStorage | null): Saved {
+  const empty: Saved = { positions: {}, finished: [], lastPlayed: null };
+  try {
+    const text = storage?.getItem(PLAYER_STORAGE_KEY);
+    if (!text) return empty;
+    const value: unknown = JSON.parse(text);
+    return parseSaved(value) ?? empty;
+  } catch {
+    return empty;
+  }
+}
+
+/** Narrows what storage held to a listening history, or null if it isn't one. */
+function parseSaved(value: unknown): Saved | null {
+  if (typeof value !== "object" || value === null) return null;
+  const positions = "positions" in value ? value.positions : undefined;
+  const finished = "finished" in value ? value.finished : undefined;
+  const lastPlayed = "lastPlayed" in value ? value.lastPlayed : null;
+  if (typeof positions !== "object" || positions === null) return null;
+  const places: [string, unknown][] = Object.entries(positions);
+  if (!places.every(isPlace)) return null;
+  if (!Array.isArray(finished)) return null;
+  const guids: unknown[] = finished;
+  if (!guids.every((guid) => typeof guid === "string")) return null;
+  if (lastPlayed !== null && typeof lastPlayed !== "string") return null;
+  return {
+    positions: Object.fromEntries(places),
+    finished: guids,
+    lastPlayed,
+  };
+}
+
+function isPlace(entry: [string, unknown]): entry is [string, number] {
+  const [, position] = entry;
+  return (
+    typeof position === "number" && Number.isFinite(position) && position >= 0
+  );
+}
