@@ -1,9 +1,23 @@
+import fontGlyphs from "@/fonts/glyphs.json";
 import { validateContent, type Jester, type Paragraph } from "@/lib/content";
 import { content } from ".";
+import { contentGlyphsBeyondLatin } from "./glyphs";
 
 describe("content", () => {
   it("passes validation", () => {
     expect(() => validateContent(content)).not.toThrow();
+  });
+
+  // A name such as Stańczyk sets its ń from the self-hosted subsets only if
+  // `npm run fonts` has added it; otherwise the page also fetches the rest of
+  // the typeface, up to 98 KB, before its first paint (#57).
+  it("sets every letter in the self-hosted font subsets", () => {
+    const used = contentGlyphsBeyondLatin();
+    const missing = [...used].filter(
+      (glyph) => !fontGlyphs.beyondLatin.includes(glyph)
+    );
+
+    expect(missing).toEqual([]);
   });
 
   it("opens with the show intro, word for word", () => {

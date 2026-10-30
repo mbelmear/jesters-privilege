@@ -86,10 +86,21 @@ The budget lives in `lighthouserc.json`. Each figure is asserted on its median a
 
 The Largest Contentful Paint budget was 2.5 s until the site shell (#12) arrived. Lighthouse simulates a throttled load from every byte requested before the first paint, and the header's script plus the UI typeface on every page put the bare home page at a steady 2.75 s (it paints in about 40 ms unthrottled). Menu code, a smaller logo, and a single UI weight didn't move that figure, so the budget moved to 3.0 s.
 
-It rose to 3.2 s with the painting pipeline (#13). A page whose largest paint is an image waits behind the same early bytes, plus the image's own request: the paintings page (`/styleguide/paintings`, a band on the first screen and framed paintings below) simulates at 3.05 s, and still at 2.9 s with its band swapped for a 2 KB file, so the floor comes from the shell, not the painting. Every Fools' Gallery page has that shape. Text-led pages sit lower (the 404 page is at 2.6 s). The home page rose from 2.6 s to 2.98 s when its largest paint became the logo above the intro (#55). The home page mockup (#14, `/styleguide/home`) is over the budget: 2.72, 3.49, and 3.50 s in CI with the reveal hero, and locally a median of 3.43 s with the simple hero and 3.73 s with the reveal, against 2.9 s for the bare home page. It's left out of `lighthouserc.json` until #57 brings it back under and adds it again. Two things cost it:
+It rose to 3.2 s with the painting pipeline (#13). A page whose largest paint is an image waits behind the same early bytes, plus the image's own request: the paintings page (`/styleguide/paintings`, a band on the first screen and framed paintings below) simulates at 3.05 s, and still at 2.9 s with its band swapped for a 2 KB file, so the floor comes from the shell, not the painting. Every Fools' Gallery page has that shape. Text-led pages sit lower (the 404 page is at 2.6 s). The home page rose from 2.6 s to 2.98 s when its largest paint became the logo above the intro (#55). The home page mockup (#14, `/styleguide/home`) is over the budget: 2.72, 3.49, and 3.50 s in CI with the reveal hero, and locally a median of 3.43 s with the simple hero and 3.73 s with the reveal, against 2.9 s for the bare home page. Two things cost it:
 
-- **Extended-Latin fonts (#57).** "Stańczyk" in the Gallery teaser and on his placard pulls in the latin-ext files of the body face (41 KB) and the UI face (10 KB). Fonts go from 83 KB to 135 KB, and first paint from 1.05 s to 1.5 s. Every Fools' Gallery page will pay this too.
-- **Motion, for the reveal hero only (52 KB of script, about 0.3 s).** Each preview page composes its own hero story, so the simple option ships no Motion. The real home page (#20) should import only the option the Jesters pick.
+- **Extended-Latin fonts (#57).** "Stańczyk" in the Gallery teaser and on his placard pulled in Google's latin-ext files of the body face (41 KB) and the UI face (10 KB): fonts went from 83 KB to 135 KB, and first paint from 1.05 s to 1.5 s. The fonts are now self-hosted subsets that carry the ń (see Fonts below). Measured locally against main, medians of three runs:
+
+  | Page                               | Before               | After               |
+  | ---------------------------------- | -------------------- | ------------------- |
+  | `/styleguide/home/simple` (mockup) | 3.43 s, fonts 135 KB | 3.05 s, fonts 79 KB |
+  | `/styleguide/home` (reveal hero)   | 3.73 s               | 3.35 s              |
+  | `/styleguide/paintings` (Stańczyk) | 3.05 s, fonts 95 KB  | 2.90 s, fonts 79 KB |
+  | `/`                                | 2.90 s, fonts 85 KB  | 2.90 s, fonts 79 KB |
+  | `/404`                             | 2.60 s, fonts 85 KB  | 2.52 s, fonts 79 KB |
+
+  The simple mockup is back in `lighthouserc.json`. The reveal hero is still over the budget, by Motion alone.
+
+- **Motion, for the reveal hero only (52 KB of script, about 0.3 s).** Each preview page composes its own hero story, so the simple option ships no Motion. The real home page (#20) should import only the option the Jesters pick; the reveal would need its Motion cost cut to fit.
 
 Before pushing a change to the header, the footer, the root layout, or the first screen of a page, compare it with main: everything those fetch counts against every page's largest paint.
 
@@ -113,6 +124,16 @@ When a page is added, add its URL to `ci.collect.url` in `lighthouserc.json`.
 Every image the content shows is a file under `public/` with its pixel size in the content record; `npm run images` (run by `build` and `dev`, `scripts/images.ts`) makes its responsive set in `public/images/`, AVIF and WebP at each width next/image asks for, plus a portrait crop around a painting's focal point for phones. It fails the build if a file is missing or its size doesn't match the content. A phone downloads 30 to 60 KB per painting at Lighthouse's emulated screen and up to about 150 KB on a 3× screen; the encoding settings in `scripts/images.ts` are tuned for that, and the build fails if a painting's AVIF a phone would fetch passes 180 KB. "Phone" there means one held upright, up to 430 CSS px wide; turned sideways it gets the desktop layout and larger files, which aren't checked.
 
 To add a public-domain painting, `npm run add-painting -- "<File:… or its Commons page address>" <slug>` saves it to `public/paintings/` and prints its entry for `src/content/paintings.ts`; the build fails until its alt text, medium, collection, and focal point are written.
+
+## Fonts
+
+The three typefaces are self-hosted from `src/fonts/`, each face split in two the way Google Fonts splits a family: a subset holding Google's latin subset plus the accented letters the content uses (the ń of Stańczyk), and a rest file holding every other glyph the typeface has. Each declares its unicode-range, so a page fetches a rest file only when it shows a letter the subset lacks, such as one in an episode title from the feed.
+
+```bash
+npm run fonts
+```
+
+`scripts/fonts.ts` downloads the upstream files from a fixed commit of google/fonts, cuts both halves of each face, and writes `src/fonts/` and `src/app/fonts.ts`: next/font reads only literal options, so the definitions are generated, and the script, not that file, is the one to edit. Its output is the same on every run until the content's letters change. Content with a letter the subsets lack fails the content test ("sets every letter in the self-hosted font subsets"); run `npm run fonts` and commit what it changes. `e2e/fonts.spec.ts` checks that a page naming Fools fetches no rest file, and that their accented letters set in the brand faces.
 
 ## Formatting, linting, and types
 

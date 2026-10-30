@@ -6,7 +6,8 @@
         "http://localhost/",
         "http://localhost/404.html",
         "http://localhost/episodes/1.html",
-        "http://localhost/styleguide/paintings.html"
+        "http://localhost/styleguide/paintings.html",
+        "http://localhost/styleguide/home/simple.html"
       ],
       "numberOfRuns": 3
     },
