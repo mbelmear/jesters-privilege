@@ -83,8 +83,8 @@ test.describe("Reduced motion", () => {
     await page.goto("/styleguide");
     const light = page.getByRole("region", { name: "Light theme" });
     const replay = light.getByRole("button", { name: "Replay processional" });
-    const bar = replay.locator("xpath=..").locator("div > div").first();
-    const shortfall = () =>
+    const bars = replay.locator("xpath=..").locator("div > div");
+    const shortfall = (bar: Locator) => () =>
       bar.evaluate((el) => {
         const track = el.parentElement?.getBoundingClientRect().width ?? 0;
         return Math.round(el.getBoundingClientRect().width - track);
@@ -92,13 +92,21 @@ test.describe("Reduced motion", () => {
 
     // The first sweep finishing shows Motion's lazily loaded animation code
     // has arrived, so the timing below measures the animation, not the load.
-    await expect.poll(shortfall).toBe(0);
-    // Links on the page prefetch their routes after load; on a slow runner
-    // that work can hold up the replay past the window below.
-    await page.waitForLoadState("networkidle");
+    const first = bars.first();
+    await expect.poll(shortfall(first)).toBe(0);
+    await first.evaluate((el) => el.setAttribute("data-swept", ""));
 
     await replay.click();
+    // Replaying mounts a new bar. The clock starts when it appears, not at
+    // the click: on CI the click's own handling can take half a second.
+    const replayed = replay
+      .locator("xpath=..")
+      .locator("div > div:not([data-swept])")
+      .first();
+    await expect(replayed).toBeAttached();
     // The processional preset takes most of a second; reduced, it's instant.
-    await expect.poll(shortfall, { timeout: 300, intervals: [50] }).toBe(0);
+    await expect
+      .poll(shortfall(replayed), { timeout: 300, intervals: [50] })
+      .toBe(0);
   });
 });
