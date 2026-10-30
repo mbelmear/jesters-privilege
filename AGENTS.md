@@ -4,7 +4,7 @@ Website for the Jester's Privilege podcast. The agreed v1 spec is `docs/spec.md`
 
 ## Working rules
 
-- **One worktree per ticket.** Several sessions build tickets at once, so implement each ticket in its own git worktree on its own branch, created from `origin/main` with `npm run worktree -- <issue> <branch>`, which also installs dependencies. The main checkout belongs to the human.
+- **One worktree per ticket.** Several sessions build tickets at once, so implement each ticket in its own git worktree on its own branch, created from `origin/main` with `npm run worktree -- <issue> <branch>`, which also installs dependencies; once its PR merges, `npm run worktree-done -- <pr>` removes the worktree and branch. The main checkout belongs to the human.
 - **Vocabulary.** Use `GLOSSARY.md` terms in code, copy, tickets, and tests. In particular: "Jester" means only Michael, Dan, or Aaron; a historical figure is a "Fool".
 - **Test first.** Build logic with the `tdd` skill (Jest + React Testing Library + jest-axe). Browser behavior is covered by Playwright; performance by Lighthouse CI. How to run each layer: `docs/testing.md`.
 - **Design principle.** Modern construction, deliberate historical callbacks. Respect reduced motion.

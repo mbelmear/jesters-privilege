@@ -29,6 +29,7 @@
     "review-passed": "scripts/review-passed.sh",
     "ready": "scripts/ready-tickets.sh",
     "worktree": "scripts/new-worktree.sh",
+    "worktree-done": "scripts/worktree-done.sh",
     "launch-check": "tsx scripts/launch-check.ts",
     "pr-status": "scripts/pr-status.sh",
     "fonts": "tsx scripts/fonts.ts"

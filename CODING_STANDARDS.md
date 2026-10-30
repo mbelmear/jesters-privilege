@@ -39,6 +39,10 @@ Reviewers skip these; the rules below are the ones that need judgement.
 - **Animation goes through `MotionProvider`.** Animated sections use `m` components inside `src/components/motion-provider.tsx`, which loads Motion on demand, carries the reduced-motion setting, and applies the shared presets from `src/lib/motion.ts`. One exception: an ambient, non-interactive loop (a painting band's slow zoom) may be a CSS keyframe defined in `globals.css` and applied under `motion-safe:`, so a Server Component animates without shipping Motion.
 - **A route over Episodes builds a placeholder page when the Feed is empty.** A static export refuses a route whose `generateStaticParams` returns nothing, and the Feed may hold no Episodes. The route builds one `noindex` address that shows the 404 page, as `src/app/episodes/[...address]/page.tsx` does; a set that can be empty while others aren't (bonus Episodes alone) shares a catch-all route with one that isn't.
 
+## Performance
+
+- **A change to the first screen shows its cost.** A diff that touches the header, the footer, the root layout, or what a page fetches before its first paint comes with `npm run lighthouse:compare` output against main, for each page it affects (`docs/testing.md`, Performance). Without that output, it is a finding. Early bytes that grew need a reason. A single `npm run lighthouse` run isn't enough, since its simulated times shift by up to half a second with the machine's load.
+
 ## Content
 
 - **Copy shown on more than one page lives once**, in a content record each page reads, such as the Episode labels and length units. A page that needs copy another page already has moves it into a shared record, in place of a second copy.
