@@ -57,17 +57,46 @@ function assertUniqueAddresses(episodes: Episode[]): void {
 
 // The Episode's page on the site.
 export function episodePath(episode: Episode): string {
+  return ["/episodes", ...episodeAddress(episode)].join("/");
+}
+
+// The segments of the Episode's page under /episodes: ["4"], or ["bonus",
+// "<slug>"] for an unnumbered Episode.
+export function episodeAddress(episode: Episode): string[] {
   switch (episode.type) {
     case "full":
-      return `/episodes/${episode.number}`;
+      return [String(episode.number)];
     case "bonus":
     case "trailer":
-      return `/episodes/bonus/${episode.slug}`;
+      return ["bonus", episode.slug];
     default: {
       const unhandled: never = episode;
       return unhandled;
     }
   }
+}
+
+// An Episode with the ones published just before and after it, for the
+// Episode page's previous and next links.
+export type EpisodeInSequence = {
+  episode: Episode;
+  previous: Episode | undefined;
+  next: Episode | undefined;
+};
+
+// The Episode at an address under /episodes, among Episodes newest first.
+export function findEpisode(
+  episodes: readonly Episode[],
+  address: readonly string[]
+): EpisodeInSequence | undefined {
+  const path = ["/episodes", ...address].join("/");
+  const index = episodes.findIndex((episode) => episodePath(episode) === path);
+  if (index === -1) return undefined;
+  return {
+    episode: episodes[index],
+    previous: episodes[index + 1],
+    next: episodes[index - 1],
+  };
 }
 
 function toEpisode(item: Element, showArtworkUrl: string | undefined): Episode {

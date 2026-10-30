@@ -1,5 +1,7 @@
-// How an Episode's date and length read beside its title: "Jan 14, 2027 ·
-// 43 min". The player's running clock is formatDuration's job.
+import type { Episode } from "./feed";
+
+// How an Episode's label, date, and length read beside its title: "Episode 4",
+// "Jan 14, 2027 · 43 min". The player's running clock is formatDuration's job.
 
 const publishDate = new Intl.DateTimeFormat("en-US", {
   month: "short",
@@ -29,4 +31,38 @@ export function formatListeningTime(
     rest > 0 && `${rest} ${units.minutes}`,
   ];
   return parts.filter(Boolean).join(" ");
+}
+
+// The words for each kind of Episode, from content.
+export type EpisodeLabels = {
+  readonly episode: string;
+  readonly bonus: string;
+  readonly trailer: string;
+};
+
+// A full Episode shows its number; bonus and trailer Episodes a label.
+export type EpisodeLabel =
+  | { kind: "numbered"; number: number; text: string }
+  | { kind: "labelled"; text: string };
+
+export function episodeLabel(
+  episode: Episode,
+  labels: EpisodeLabels
+): EpisodeLabel {
+  switch (episode.type) {
+    case "full":
+      return {
+        kind: "numbered",
+        number: episode.number,
+        text: `${labels.episode} ${episode.number}`,
+      };
+    case "bonus":
+      return { kind: "labelled", text: labels.bonus };
+    case "trailer":
+      return { kind: "labelled", text: labels.trailer };
+    default: {
+      const unhandled: never = episode;
+      return unhandled;
+    }
+  }
 }

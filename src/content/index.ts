@@ -1,5 +1,6 @@
 import { validateContent } from "@/lib/content";
 import { about } from "./about";
+import { episodePage } from "./episode-page";
 import { gallery } from "./gallery";
 import { hero } from "./hero";
 import { home } from "./home";
@@ -17,6 +18,7 @@ export const content = validateContent({
   shell,
   hero,
   home,
+  episodePage,
   jesters,
   gallery,
   about,

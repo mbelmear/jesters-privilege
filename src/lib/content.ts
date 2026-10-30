@@ -204,6 +204,27 @@ export type Home = {
   };
 };
 
+// The Episode page's own copy. The Show notes and titles come from the Feed.
+export type EpisodePage = {
+  readonly episode: string;
+  readonly bonus: string;
+  readonly trailer: string;
+  // How an Episode's length reads: "43 min", "1 hr 5 min".
+  readonly units: { readonly hours: string; readonly minutes: string };
+  readonly play: string;
+  readonly showNotes: string;
+  readonly sequence: {
+    readonly label: string;
+    readonly previous: string;
+    readonly next: string;
+  };
+  readonly share: {
+    readonly button: string;
+    readonly copied: string;
+    readonly failed: string;
+  };
+};
+
 export type Content = {
   readonly site: Site;
   // Every painting sourced for the site, by id; the Gallery and other pages
@@ -216,6 +237,7 @@ export type Content = {
     readonly paragraphs: readonly string[];
   };
   readonly home: Home;
+  readonly episodePage: EpisodePage;
   readonly jesters: readonly Jester[];
   readonly gallery: Gallery;
   readonly about: About;
