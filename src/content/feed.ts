@@ -11,12 +11,24 @@ import { loadTranscript, type Transcript } from "@/lib/transcript";
 
 // The one value to change once Episode 1 is published on Spreaker:
 //   { kind: "url", url: "https://www.spreaker.com/show/<id>/episodes/feed" }
-export const feedSource: FeedSource = {
+const configuredSource: FeedSource = {
   kind: "fixture",
   path: "src/content/feed-fixture.xml",
   transcripts: "src/content/transcripts",
   draft: true,
 };
+
+// `FEED=empty` builds the site with no Episodes, as before Episode 1, to test
+// the coming-soon state (docs/testing.md).
+export const feedSource: FeedSource =
+  process.env.FEED === "empty"
+    ? {
+        kind: "fixture",
+        path: "src/content/feed-fixture-empty.xml",
+        transcripts: "src/content/transcripts",
+        draft: true,
+      }
+    : configuredSource;
 
 const io: FeedIO = {
   // A hung download fails (or, for a Transcript, skips) rather than stalling

@@ -1,7 +1,8 @@
 import { act, render, screen } from "@testing-library/react";
 import { axe } from "jest-axe";
 import { content } from "@/content";
-import { Hero, HeroStory } from "./hero";
+import { Hero } from "./hero";
+import { HeroStory } from "./hero-story";
 import { HeroReveal } from "./hero-reveal";
 
 const { hero, site } = content;

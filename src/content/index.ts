@@ -24,3 +24,11 @@ export const content = validateContent({
   about,
   microcopy,
 });
+
+// Where a page's link to a section leads: the section's address in the site's
+// navigation (shell.ts), so a renamed address can't leave a stale link.
+export function sectionHref(label: string): string {
+  const item = content.shell.nav.find((nav) => nav.label === label);
+  if (!item) throw new Error(`Content shell.nav has no section "${label}"`);
+  return item.href;
+}

@@ -6,7 +6,7 @@ import { Hero } from "@/components/hero";
 import { LatestEpisode } from "@/components/latest-episode";
 import { ListenButtons } from "@/components/listen-buttons";
 import { MeetTheJesters } from "@/components/meet-the-jesters";
-import { content } from "@/content";
+import { content, sectionHref } from "@/content";
 import { feedSource, getEpisodes } from "@/content/feed";
 import { styleguide } from "@/content/styleguide";
 import { cn } from "@/lib/utils";
@@ -18,14 +18,6 @@ const copy = styleguide.home;
 // it, or all of it simply there.
 const HERO_OPTIONS = ["reveal", "simple"] as const;
 type HeroOption = (typeof HERO_OPTIONS)[number];
-
-// Where the home page's sections lead: the section's address in the site's
-// navigation (shell.ts), so a renamed address can't leave a stale link.
-function sectionHref(label: string): string {
-  const item = content.shell.nav.find((nav) => nav.label === label);
-  if (!item) throw new Error(`Content shell.nav has no section "${label}"`);
-  return item.href;
-}
 
 type Props = {
   heroOption: HeroOption;

@@ -1,4 +1,3 @@
-import { storyParagraphClass } from "@/components/hero-story";
 import { ThemedLogo } from "@/components/themed-logo";
 import type { Content } from "@/lib/content";
 
@@ -35,13 +34,4 @@ export function Hero({ logo, name, children }: Props) {
       </div>
     </section>
   );
-}
-
-/** The jester story, all of it simply there. */
-export function HeroStory({ paragraphs }: { paragraphs: readonly string[] }) {
-  return paragraphs.map((text, index) => (
-    <p key={text} className={storyParagraphClass(index, paragraphs.length)}>
-      {text}
-    </p>
-  ));
 }

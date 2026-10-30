@@ -1,5 +1,9 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
+import { closingLine, reveal, scrollThrough } from "./hero-story";
+
+// A transform animated to none computes as the identity matrix.
+const UNMOVED = /^(none|matrix\(1, 0, 0, 1, 0, 0\))$/;
 
 test.describe("Home", () => {
   test.beforeEach(async ({ page }) => {
@@ -7,7 +11,33 @@ test.describe("Home", () => {
   });
 
   test("shows a top-level heading", async ({ page }) => {
-    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Jester's Privilege" })
+    ).toBeVisible();
+  });
+
+  test("shows every section of the home page", async ({ page }) => {
+    for (const name of [
+      "Latest Episode",
+      "The Fools' Gallery",
+      "Meet the Jesters",
+    ]) {
+      await expect(page.getByRole("region", { name })).toBeAttached();
+    }
+  });
+
+  test("leads from the latest Episode to its page", async ({ page }) => {
+    const latest = page.getByRole("region", { name: "Latest Episode" });
+    await latest.getByRole("link", { name: /^Play/ }).click();
+    await expect(page).toHaveURL(/\/episodes\/\d+$/);
+  });
+
+  test("holds back the story until the visitor scrolls to it", async ({
+    page,
+  }) => {
+    await expect(closingLine(page)).not.toBeInViewport();
+    await expect(closingLine(page)).toHaveCSS("opacity", "0");
+    await reveal(closingLine(page));
   });
 
   test("has no horizontal scroll", async ({ page }) => {
@@ -22,8 +52,46 @@ test.describe("Home", () => {
       page,
     }) => {
       await page.emulateMedia({ colorScheme });
+      // axe samples colors mid-fade, so let the reveal finish first.
+      await scrollThrough(page);
       const results = await new AxeBuilder({ page }).analyze();
       expect(results.violations).toEqual([]);
     });
   }
+});
+
+test.describe("Home with reduced motion", () => {
+  test.use({ reducedMotion: "reduce" });
+
+  test("the story fades in without moving", async ({ page }) => {
+    await page.goto("/");
+    await reveal(closingLine(page));
+    await expect(closingLine(page)).toHaveCSS("transform", "none");
+  });
+});
+
+// The story renders hidden until Motion reveals it, so without Motion it
+// must show anyway.
+test.describe("Home without JavaScript", () => {
+  test.use({ javaScriptEnabled: false });
+
+  test("shows the whole story", async ({ page }) => {
+    await page.goto("/");
+    await expect(closingLine(page)).toHaveCSS("opacity", "1");
+    await expect(closingLine(page)).toHaveCSS("transform", UNMOVED);
+  });
+});
+
+test.describe("Home when its scripts fail to load", () => {
+  test("shows the whole story", async ({ page }) => {
+    // Scripts only: the stylesheet sits beside them and must still load.
+    await page.route(/\/_next\/static\/chunks\/.*\.js/, (route) =>
+      route.abort()
+    );
+    await page.goto("/");
+    await expect(closingLine(page)).toHaveCSS("opacity", "1", {
+      timeout: 10_000,
+    });
+    await expect(closingLine(page)).toHaveCSS("transform", UNMOVED);
+  });
 });

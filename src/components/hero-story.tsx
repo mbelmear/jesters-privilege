@@ -11,3 +11,16 @@ export function storyParagraphClass(index: number, count: number): string {
   if (index === 0) return OPENING;
   return index === count - 1 ? CLOSING : "";
 }
+
+// How a paragraph of the revealed story waits for its turn: faded out and
+// lowered, to rise into view.
+export const STORY_HIDDEN = { opacity: 0, y: 24 } as const;
+
+/** The jester story, all of it simply there. */
+export function HeroStory({ paragraphs }: { paragraphs: readonly string[] }) {
+  return paragraphs.map((text, index) => (
+    <p key={text} className={storyParagraphClass(index, paragraphs.length)}>
+      {text}
+    </p>
+  ));
+}

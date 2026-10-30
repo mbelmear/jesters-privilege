@@ -52,6 +52,16 @@ npx playwright test --ui    # interactive runner
 
 Specs live in `e2e/`. Every page should get an axe scan (`@axe-core/playwright`) and a no-horizontal-scroll check at phone width. Project names follow `<browser>-<size>`, so `--project=webkit-phone` runs a single combination.
 
+The site before Episode 1 is published has its own build. `FEED=empty` swaps the Feed for `src/content/feed-fixture-empty.xml`, a channel with no Episodes, and runs only the tests tagged `@empty-feed` (`e2e/coming-soon.spec.ts`), which the normal run leaves out:
+
+```bash
+npm run build:empty-feed
+npm run test:e2e:empty-feed
+npm run build               # before testing the normal site again
+```
+
+That build is the only check that every route still exports with no Episodes, since a static export refuses a route with no pages (CODING_STANDARDS.md, React).
+
 CI runners are slower than a laptop, so a timing assertion ("finishes at once") first waits for a state that proves the code it times has loaded, such as the first animation completing; otherwise it measures the download, passes locally, and fails in CI. Then it counts rendered frames, not milliseconds: it waits for the thing it times to begin, such as the replayed element mounting, awaits two `requestAnimationFrame`s inside `evaluate`, and measures once. CI's WebKit sometimes renders no frames for most of a second, and Motion applies even an instant reduced-motion value on the next frame, so a short `expect.poll` window flakes there (#60). Likewise, let an opening animation finish before an axe scan, since axe samples colors mid-fade. A reveal on scroll (`whileInView` with `once`) plays only while its element is on screen, so a test holds each element in view until it shows; a quick scroll can pass it before Motion has loaded.
 
 Playwright's actions (`click`, `scrollIntoViewIfNeeded`) wait for an element to hold still, so one that animates without end, such as a painting band's slow zoom, stalls them until the test times out; scroll it with `locator.evaluate((el) => el.scrollIntoView())`.
@@ -100,7 +110,7 @@ It rose to 3.2 s with the painting pipeline (#13). A page whose largest paint is
 
   The simple mockup is back in `lighthouserc.json`. The reveal hero is still over the budget, by Motion alone.
 
-- **Motion, for the reveal hero only (52 KB of script, about 0.3 s).** Each preview page composes its own hero story, so the simple option ships no Motion. The real home page (#20) should import only the option the Jesters pick; the reveal would need its Motion cost cut to fit.
+- **Motion, for the reveal hero (52 KB of script, about 0.3 s).** The home page (#20) uses the reveal, so `HeroReveal` draws the story hidden without Motion and loads Motion in its own chunk once React is running, after the first paint. That took `/` from 3.35 s to 3.06 s locally (median of three), with early script from 212 KB to 161 KB. The preview pages share `HeroReveal`, so `/styleguide/home` gains the same.
 
 Before pushing a change to the header, the footer, the root layout, or the first screen of a page, compare it with main: everything those fetch counts against every page's largest paint.
 
@@ -154,7 +164,7 @@ The pre-commit hook formats staged files with Prettier, so `format:check` only f
 
 1. **Format, lint, typecheck, unit tests**, with coverage
 2. **Build static site**, shared with the next two jobs
-3. **Playwright** on Chromium and WebKit, with browsers cached between runs
+3. **Playwright** on Chromium and WebKit, with browsers cached between runs, and the coming-soon journey against its own build from the empty feed
 4. **Lighthouse** with the mobile budget
 
 `.github/workflows/nightly.yml` runs the Playwright suite on Firefox every night, and can be started by hand from the Actions tab.

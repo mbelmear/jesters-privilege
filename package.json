@@ -17,6 +17,8 @@
     "test:coverage": "jest --coverage",
     "test:e2e": "playwright test --project='chromium-*' --project='webkit-*'",
     "test:e2e:firefox": "playwright test --project='firefox-*'",
+    "build:empty-feed": "FEED=empty npm run build",
+    "test:e2e:empty-feed": "FEED=empty playwright test --project='chromium-*' --project='webkit-*'",
     "lighthouse": "scripts/lighthouse.sh",
     "lighthouse:compare": "scripts/lighthouse-compare.sh",
     "screenshots": "tsx scripts/screenshots.ts",
