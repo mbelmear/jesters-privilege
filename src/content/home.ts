@@ -19,6 +19,7 @@ export const home = {
     bonus: "Bonus",
     trailer: "Trailer",
     play: "Play",
+    units: { hours: "hr", minutes: "min" },
   },
   gallery: {
     title: "The Fools' Gallery",

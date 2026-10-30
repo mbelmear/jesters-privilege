@@ -190,6 +190,8 @@ export type Home = {
     readonly bonus: string;
     readonly trailer: string;
     readonly play: string;
+    // How an Episode's length reads: "43 min", "1 hr 5 min".
+    readonly units: { readonly hours: string; readonly minutes: string };
   };
   readonly gallery: {
     readonly title: string;

@@ -14,20 +14,22 @@ describe("formatPublishDate", () => {
   });
 });
 
+const units = { hours: "hr", minutes: "min" };
+
 describe("formatListeningTime", () => {
   it("rounds to whole minutes", () => {
-    expect(formatListeningTime(2577)).toBe("43 min");
+    expect(formatListeningTime(2577, units)).toBe("43 min");
   });
 
   it("gives hours and minutes for a long Episode", () => {
-    expect(formatListeningTime(3900)).toBe("1 hr 5 min");
+    expect(formatListeningTime(3900, units)).toBe("1 hr 5 min");
   });
 
   it("gives hours alone on the hour", () => {
-    expect(formatListeningTime(7200)).toBe("2 hr");
+    expect(formatListeningTime(7200, units)).toBe("2 hr");
   });
 
   it("never shows a short clip as no time at all", () => {
-    expect(formatListeningTime(20)).toBe("1 min");
+    expect(formatListeningTime(20, units)).toBe("1 min");
   });
 });

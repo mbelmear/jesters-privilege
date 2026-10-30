@@ -54,7 +54,7 @@ function EpisodeCard({
   const label = episodeLabel(episode, copy);
   return (
     <article className="grid gap-x-8 gap-y-4 border-t-4 border-frame bg-card p-6 shadow-md sm:grid-cols-[auto_1fr] sm:p-8">
-      {label.number === undefined ? (
+      {label.kind === "labelled" ? (
         <p className="font-ui text-sm font-semibold tracking-widest text-brand-ink uppercase sm:pt-2">
           {label.text}
         </p>
@@ -79,7 +79,7 @@ function EpisodeCard({
         </h3>
         <p className="font-ui text-sm font-semibold text-muted-foreground">
           {formatPublishDate(episode.publishedAt)} ·{" "}
-          {formatListeningTime(episode.durationSeconds)}
+          {formatListeningTime(episode.durationSeconds, copy.units)}
         </p>
         <p className="line-clamp-3">{episode.excerpt}</p>
         <Button asChild variant="brand" size="lg" className="mt-2 self-start">
@@ -88,7 +88,7 @@ function EpisodeCard({
             {copy.play}
             <span className="sr-only">
               {" "}
-              {label.number === undefined ? episode.title : label.text}
+              {label.kind === "labelled" ? episode.title : label.text}
             </span>
           </Link>
         </Button>
@@ -97,21 +97,26 @@ function EpisodeCard({
   );
 }
 
-// "Episode 4" for a full Episode; "Bonus" or "Trailer" for the rest.
+// A full Episode shows its number; bonus and trailer Episodes a label.
+type EpisodeLabel =
+  | { kind: "numbered"; number: number; text: string }
+  | { kind: "labelled"; text: string };
+
 function episodeLabel(
   episode: Episode,
   copy: Home["latestEpisode"]
-): { text: string; number?: number } {
+): EpisodeLabel {
   switch (episode.type) {
     case "full":
       return {
-        text: `${copy.episode} ${episode.number}`,
+        kind: "numbered",
         number: episode.number,
+        text: `${copy.episode} ${episode.number}`,
       };
     case "bonus":
-      return { text: copy.bonus };
+      return { kind: "labelled", text: copy.bonus };
     case "trailer":
-      return { text: copy.trailer };
+      return { kind: "labelled", text: copy.trailer };
     default: {
       const unhandled: never = episode;
       return unhandled;
