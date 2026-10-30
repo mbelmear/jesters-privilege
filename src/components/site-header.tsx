@@ -24,13 +24,14 @@ export function SiteHeader({ shell, episodeCount }: Props) {
           aria-label={shell.homeLink}
           className="flex h-full shrink-0 py-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
         >
-          {/* The icon on phones, the wordmark from md up; at most 56px tall. */}
+          {/* The icon on phones, the wordmark from md up; at most 56px tall.
+              Lazy, so the browser fetches only the one image that shows
+              rather than all four ahead of the page's largest paint. */}
           <span className="flex h-full md:hidden">
             <ThemedLogo
               logo={shell.logo.icon}
               alt={shell.logo.alt}
               sizes="48px"
-              loading="eager"
               className="h-full w-auto"
             />
           </span>
@@ -39,7 +40,6 @@ export function SiteHeader({ shell, episodeCount }: Props) {
               logo={shell.logo.wordmark}
               alt={shell.logo.alt}
               sizes="140px"
-              loading="eager"
               className="h-full w-auto"
             />
           </span>
