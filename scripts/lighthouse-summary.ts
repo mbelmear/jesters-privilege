@@ -14,7 +14,7 @@ type Report = {
   // What the largest paint was, such as "img.size-full" or "p.max-w-prose":
   // an image waits on its own request as well as the early bytes.
   lcpElement: string;
-  requests: { startTime: number; type: string; bytes: number }[];
+  requests: { url: string; startTime: number; type: string; bytes: number }[];
 };
 
 // Walks a path through parsed JSON; undefined where it's absent.
@@ -67,10 +67,12 @@ function readReport(file: string, json: unknown): Report {
     observedFcp: metric("observedFirstContentfulPaint"),
     lcpElement: typeof element === "string" ? element : "unknown",
     requests: requests.map((request) => {
+      const url = dig(request, ["url"]);
       const type = dig(request, ["resourceType"]);
       const startTime = dig(request, ["rendererStartTime"]);
       const bytes = dig(request, ["transferSize"]);
       return {
+        url: typeof url === "string" ? url : "",
         type: typeof type === "string" ? type : "Other",
         startTime: typeof startTime === "number" ? startTime : Infinity,
         bytes: typeof bytes === "number" ? bytes : 0,
@@ -79,12 +81,22 @@ function readReport(file: string, json: unknown): Report {
   };
 }
 
+// A request fetched before the observed paint: what the simulated paint times
+// track.
+function isEarly(
+  { startTime }: Report["requests"][number],
+  report: Report
+): boolean {
+  return startTime <= report.observedLcp;
+}
+
 // The figures shown for one report: times in ms, sizes in KB. The early bytes
 // are what Lighthouse's simulated paint times track.
 function figures(report: Report): Record<string, number> {
   const early: Record<string, number> = {};
-  for (const { startTime, type, bytes } of report.requests) {
-    if (startTime > report.observedLcp) continue;
+  for (const request of report.requests) {
+    if (!isEarly(request, report)) continue;
+    const { type, bytes } = request;
     early[`early ${type} KB`] = (early[`early ${type} KB`] ?? 0) + bytes / 1000;
   }
   return {
@@ -94,6 +106,14 @@ function figures(report: Report): Record<string, number> {
     "FCP (observed)": report.observedFcp,
     ...early,
   };
+}
+
+// The font files fetched before the paint, by name and size in KB, so a
+// surprise file shows where "early Font KB" only shows a total (#57).
+function earlyFonts(report: Report): [string, number][] {
+  return report.requests
+    .filter((request) => request.type === "Font" && isEarly(request, report))
+    .map(({ url, bytes }) => [url.split("/").pop() ?? url, bytes / 1000]);
 }
 
 function median(numbers: number[]): number {
@@ -116,11 +136,15 @@ const columns = process.argv.slice(2).map((arg) => {
   const folder = arg.slice(split + 1);
   const runs = new Map<string, Record<string, number>[]>();
   const elements = new Map<string, string>();
+  const fonts = new Map<string, Map<string, number>>();
   for (const file of readdirSync(folder).filter(isReport)) {
     const json: unknown = JSON.parse(readFileSync(join(folder, file), "utf8"));
     const report = readReport(file, json);
     runs.set(report.path, [...(runs.get(report.path) ?? []), figures(report)]);
     elements.set(report.path, report.lcpElement);
+    const seen = fonts.get(report.path) ?? new Map<string, number>();
+    for (const [name, kb] of earlyFonts(report)) seen.set(name, kb);
+    fonts.set(report.path, seen);
   }
   const pages = new Map<string, Record<string, number>>();
   for (const [path, rows] of runs) {
@@ -132,7 +156,7 @@ const columns = process.argv.slice(2).map((arg) => {
       )
     );
   }
-  return { label, pages, elements };
+  return { label, pages, elements, fonts };
 });
 
 const line = (cells: string[]) =>
@@ -154,5 +178,11 @@ for (const path of paths) {
   }
   for (const { label, elements } of columns) {
     console.log(`    LCP element (${label}): ${elements.get(path) ?? "–"}`);
+  }
+  for (const { label, fonts } of columns) {
+    const files = [...(fonts.get(path) ?? [])].map(
+      ([name, kb]) => `${name} ${kb.toFixed(0)} KB`
+    );
+    console.log(`    early fonts (${label}): ${files.join(", ") || "–"}`);
   }
 }

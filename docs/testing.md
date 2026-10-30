@@ -108,9 +108,9 @@ Before pushing a change to the header, the footer, the root layout, or the first
 npm run lighthouse:compare              # or: -- <base-ref>
 ```
 
-It prints each page's simulated and observed LCP and FCP beside the base, with the bytes of each resource type requested before the observed paint. Those bytes are what the simulated figures track: a page that really paints in 40 ms still scores its LCP from everything it fetched by then, so trim early bytes rather than chase the paint. It also names each page's LCP element: an image paints only after its own request on top of those bytes, so an image-led page sits higher than a text-led one with the same early bytes.
+It prints each page's simulated and observed LCP and FCP beside the base, with the bytes of each resource type requested before the observed paint. Those bytes are what the simulated figures track: a page that really paints in 40 ms still scores its LCP from everything it fetched by then, so trim early bytes rather than chase the paint. It also names each font file fetched before the paint, so an unexpected one shows by name rather than hiding in the total, and each page's LCP element: an image paints only after its own request on top of those bytes, so an image-led page sits higher than a text-led one with the same early bytes.
 
-After the run, `npm run lighthouse` prints each page's median figures: simulated and observed LCP and FCP, the bytes of each type fetched before the paint, and the LCP element (`scripts/lighthouse-summary.ts`). Reports are written to `.lighthouseci/reports/` and attached to each CI run as `lighthouse-reports`. They are not uploaded anywhere public. To read CI's figures, download them and summarise them in the same way:
+After the run, `npm run lighthouse` prints each page's median figures: simulated and observed LCP and FCP, the bytes of each type fetched before the paint, each early font file by name, and the LCP element (`scripts/lighthouse-summary.ts`). Reports are written to `.lighthouseci/reports/` and attached to each CI run as `lighthouse-reports`. They are not uploaded anywhere public. To read CI's figures, download them and summarise them in the same way:
 
 ```bash
 gh run download <run-id> -n lighthouse-reports -D /tmp/lh

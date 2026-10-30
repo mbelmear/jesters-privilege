@@ -39,4 +39,5 @@ Reviewers skip these; the rules below are the ones that need judgement.
 
 ## Browser tests
 
+- **A test of absence proves it can fail.** A test that something doesn't happen (no animation, no request, no file fetched) passes just as well when it checks nothing, so a sibling case shows the same check finding the thing, or the PR shows it going red. #57's "fetches no rest file" matched `-rest` while the build names files `_rest`, until a sibling case that adds a letter found none.
 - **A motion test proves it can fail.** A test that an animation finishes at once, or is skipped under reduced motion, follows the timing method in `docs/testing.md` (Browser tests (Playwright)), and its PR shows it failing with motion on (`reducedMotion: "no-preference"`). A test that runs before Motion loads passes either way, as the mobile menu's did until #60.
