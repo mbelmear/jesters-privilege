@@ -3,7 +3,7 @@
 # it first waits for GitHub to show the commit checked out here, so a
 # pr-status or mark-ready run straight after `git push` checks that commit,
 # not the one before it (#57). Fails if GitHub still shows another commit
-# after a minute: push first, or check out the PR's branch.
+# after a minute: push or pull until they match.
 # Usage: scripts/wait-pushed-head.sh <pr-number>
 set -euo pipefail
 
@@ -23,5 +23,5 @@ for _ in $(seq 1 12); do
   fi
   sleep 5
 done
-echo "#$pr is at ${head:0:7} on GitHub, but $branch here is at ${local_head:0:7}; push it first." >&2
+echo "#$pr is at ${head:0:7} on GitHub, but $branch here is at ${local_head:0:7}; push or pull until they match." >&2
 exit 1

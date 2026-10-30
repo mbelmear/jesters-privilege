@@ -18,7 +18,10 @@ if [[ $# -ne 1 || ! "$1" =~ ^[0-9]+$ ]]; then
 fi
 pr=$1
 
-head=$("$(dirname "$0")/wait-pushed-head.sh" "$pr")
+if ! head=$("$(dirname "$0")/wait-pushed-head.sh" "$pr"); then
+  echo "Refusing to label #$pr: GitHub doesn't show this checkout's commit (see above)." >&2
+  exit 1
+fi
 # The report streams to the terminal as it waits, and is kept for the checks below.
 if ! status=$("$(dirname "$0")/pr-status.sh" "$pr" | tee /dev/stderr); then
   echo "Refusing to label #$pr: pr-status didn't pass (see above)." >&2
