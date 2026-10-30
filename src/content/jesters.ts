@@ -1,7 +1,8 @@
 import type { Jester } from "@/lib/content";
 
 // Equal billing, in the order the Jesters asked for. Bios are their own words,
-// as given on #6; summaries are condensed from them for the home page.
+// as given on #6; summaries are condensed from them for the home page. Michael
+// has no headshot yet, so he shows the monogram shield.
 export const jesters = [
   {
     id: "michael",
@@ -38,6 +39,12 @@ export const jesters = [
         ],
       ],
     },
+    photo: {
+      src: "/jesters/dan-collins.jpg",
+      width: 380,
+      height: 380,
+      alt: "Dan Collins smiling outdoors, with swept-back hair, a full graying beard, and a blue checked shirt",
+    },
   },
   {
     id: "aaron",
@@ -53,6 +60,12 @@ export const jesters = [
           "Aaron is the one who makes the rest of us sound good, which is harder than it looks. A pastor's kid from Glendive, Montana, he studied music technology at Montana State and has lived where art meets technology ever since. He produces the show, rules on every dispute, and is quietly the smartest guy in the room. He'd never say that, so we will. If a joke didn't make the episode, Aaron cut it. You're welcome.",
         ],
       ],
+    },
+    photo: {
+      src: "/jesters/aaron-canen.jpg",
+      width: 380,
+      height: 380,
+      alt: "Aaron Canen smiling outdoors, with glasses, a short beard, and a blue button-down shirt",
     },
   },
 ] as const satisfies readonly Jester[];

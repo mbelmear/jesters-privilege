@@ -177,6 +177,33 @@ export type Shell = {
   };
 };
 
+// The home page's own copy; the hero, Jesters, and microcopy it also shows
+// live in their own files.
+export type Home = {
+  readonly listen: {
+    readonly title: string;
+    readonly platforms: { readonly [P in ListenPlatform]: string };
+  };
+  readonly latestEpisode: {
+    readonly title: string;
+    readonly episode: string;
+    readonly bonus: string;
+    readonly trailer: string;
+    readonly play: string;
+    // How an Episode's length reads: "43 min", "1 hr 5 min".
+    readonly units: { readonly hours: string; readonly minutes: string };
+  };
+  readonly gallery: {
+    readonly title: string;
+    readonly intro: Copy;
+    readonly link: Copy;
+  };
+  readonly jesters: {
+    readonly title: string;
+    readonly link: string;
+  };
+};
+
 export type Content = {
   readonly site: Site;
   // Every painting sourced for the site, by id; the Gallery and other pages
@@ -188,6 +215,7 @@ export type Content = {
     readonly logo: ThemedImage;
     readonly paragraphs: readonly string[];
   };
+  readonly home: Home;
   readonly jesters: readonly Jester[];
   readonly gallery: Gallery;
   readonly about: About;

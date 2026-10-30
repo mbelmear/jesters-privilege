@@ -55,7 +55,8 @@ function assertUniqueAddresses(episodes: Episode[]): void {
   }
 }
 
-function episodePath(episode: Episode): string {
+// The Episode's page on the site.
+export function episodePath(episode: Episode): string {
   switch (episode.type) {
     case "full":
       return `/episodes/${episode.number}`;

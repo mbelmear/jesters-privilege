@@ -5,7 +5,8 @@
       "url": [
         "http://localhost/",
         "http://localhost/404.html",
-        "http://localhost/styleguide/paintings.html"
+        "http://localhost/styleguide/paintings.html",
+        "http://localhost/styleguide/home.html"
       ],
       "numberOfRuns": 3
     },

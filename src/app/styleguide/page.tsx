@@ -26,6 +26,12 @@ export default function Styleguide() {
         >
           {styleguide.paintingsLink}
         </Link>
+        <Link
+          href={styleguide.home.heroSwitch.options.reveal.href}
+          className="font-ui font-semibold text-primary underline underline-offset-4"
+        >
+          {styleguide.homeLink}
+        </Link>
       </div>
       <div className="grid gap-8 lg:grid-cols-2">
         <Specimen scheme="light" copy={styleguide} />

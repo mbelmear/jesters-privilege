@@ -2,6 +2,7 @@ import { validateContent } from "@/lib/content";
 import { about } from "./about";
 import { gallery } from "./gallery";
 import { hero } from "./hero";
+import { home } from "./home";
 import { jesters } from "./jesters";
 import { microcopy } from "./microcopy";
 import { paintings } from "./paintings";
@@ -15,6 +16,7 @@ export const content = validateContent({
   paintings,
   shell,
   hero,
+  home,
   jesters,
   gallery,
   about,

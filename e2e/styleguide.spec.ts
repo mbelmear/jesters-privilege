@@ -93,6 +93,9 @@ test.describe("Reduced motion", () => {
     // The first sweep finishing shows Motion's lazily loaded animation code
     // has arrived, so the timing below measures the animation, not the load.
     await expect.poll(shortfall).toBe(0);
+    // Links on the page prefetch their routes after load; on a slow runner
+    // that work can hold up the replay past the window below.
+    await page.waitForLoadState("networkidle");
 
     await replay.click();
     // The processional preset takes most of a second; reduced, it's instant.

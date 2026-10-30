@@ -60,6 +60,17 @@ describe("content", () => {
     expect(jester?.bio?.paragraphs[0]).toContainEqual({ em: title });
   });
 
+  it("has headshots of Dan and Aaron, and none yet of Michael", () => {
+    const jesters: readonly Jester[] = content.jesters;
+    expect(
+      jesters.map(({ id, photo }) => [id, photo?.src, Boolean(photo?.alt)])
+    ).toEqual([
+      ["michael", undefined, false],
+      ["dan", "/jesters/dan-collins.jpg", true],
+      ["aaron", "/jesters/aaron-canen.jpg", true],
+    ]);
+  });
+
   it("gives each Jester a two-line summary, drafted until they approve one", () => {
     for (const { summary } of content.jesters) {
       expect(summary?.draft).toBe(true);

@@ -5,6 +5,7 @@ import {
   type Content,
   type Painting,
 } from "./content";
+import { home } from "@/content/home";
 import { shell } from "@/content/shell";
 
 const painting: Painting = {
@@ -45,6 +46,7 @@ function content(overrides: Partial<Content> = {}): Content {
     paintings: { stanczyk: painting },
     shell,
     hero: { logo, paragraphs: ["Long ago…"] },
+    home,
     jesters: [{ id: "dan", name: "Dan Collins", role: "Co-host" }],
     gallery: {
       eras: [
