@@ -39,7 +39,7 @@ const assertQuietConsole = () => {
   const calls = consoleCalls.splice(0);
   if (calls.length > 0) {
     throw new Error(
-      `The test wrote to the console (stub it if expected):\n${calls.join("\n")}`
+      `The console was written to during this test, or after the one before it ended (stub it if expected):\n${calls.join("\n")}`
     );
   }
 };

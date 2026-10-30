@@ -5,13 +5,15 @@ import { parseDocument } from "htmlparser2";
 // (action=query, prop=imageinfo, iiprop=url|size|extmetadata, formatversion=2)
 // for scripts/add-painting.ts. Metadata a file page doesn't give is absent.
 export type CommonsFile = {
-  readonly title: string;
+  // The Commons title, "File:…".
+  readonly fileTitle: string;
   readonly fileUrl: string;
   readonly pageUrl: string;
   readonly width: number;
   readonly height: number;
   readonly license: string;
-  readonly name?: string;
+  // The painting's own title, for its placard.
+  readonly paintingTitle?: string;
   readonly artist?: string;
   readonly date?: string;
 };
@@ -32,60 +34,72 @@ export function commonsTitle(input: string): string {
   );
 }
 
-// The API's answer enters as unknown and leaves as a CommonsFile, or throws.
+// The API's answer enters as unknown and leaves as a CommonsFile, or throws
+// naming the field it couldn't read.
 export function parseCommonsFile(response: unknown): CommonsFile {
   const page = first(field(field(response, "query"), "pages"));
-  const title = field(page, "title");
-  if (typeof title === "string" && field(page, "missing") === true) {
-    throw new Error(`Commons has no file ${title}`);
+  const fileTitle = field(page, "title");
+  if (typeof fileTitle !== "string") {
+    throw new Error("Commons answered without a file page");
+  }
+  if (field(page, "missing") === true) {
+    throw new Error(`Commons has no file ${fileTitle}`);
   }
   const info = first(field(page, "imageinfo"));
-  const fileUrl = field(info, "url");
-  const pageUrl = field(info, "descriptionurl");
-  const width = field(info, "width");
-  const height = field(info, "height");
+  const missing = (name: string) =>
+    new Error(`Commons gave no ${name} for ${fileTitle}`);
+  const text = (key: string, name: string) => {
+    const value = field(info, key);
+    if (typeof value !== "string") throw missing(name);
+    return value;
+  };
+  const count = (key: string) => {
+    const value = field(info, key);
+    if (typeof value !== "number") throw missing(key);
+    return value;
+  };
   const metadata = field(info, "extmetadata");
   const license = metadataText(metadata, "LicenseShortName");
-  if (
-    typeof title !== "string" ||
-    typeof fileUrl !== "string" ||
-    typeof pageUrl !== "string" ||
-    typeof width !== "number" ||
-    typeof height !== "number" ||
-    license === undefined
-  ) {
-    throw new Error("Commons answered without image info for one file");
-  }
-  const name = metadataText(metadata, "ObjectName");
+  if (license === undefined) throw missing("license");
+  const paintingTitle = metadataText(metadata, "ObjectName");
   const artist = metadataText(metadata, "Artist");
   const date = metadataText(metadata, "DateTimeOriginal");
   return {
-    title,
-    fileUrl,
-    pageUrl,
-    width,
-    height,
+    fileTitle,
+    fileUrl: text("url", "file address"),
+    pageUrl: text("descriptionurl", "file page address"),
+    width: count("width"),
+    height: count("height"),
     license,
-    ...(name && { name }),
+    ...(paintingTitle && { paintingTitle }),
     ...(artist && { artist }),
     ...(date && { date }),
   };
+}
+
+// A painting's slug names its file and its catalogue entry.
+export function assertSlug(slug: string): void {
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
+    throw new Error(
+      `A painting's slug is lowercase words joined by hyphens, such as will-somers, not "${slug}"`
+    );
+  }
 }
 
 // The site shows only public-domain paintings (docs/spec.md, Paintings).
 export function assertPublicDomain(file: CommonsFile): void {
   if (!/^public domain$/i.test(file.license)) {
     throw new Error(
-      `${file.title} is licensed "${file.license}", not public domain`
+      `${file.fileTitle} is licensed "${file.license}", not public domain`
     );
   }
 }
 
 /**
  * A src/content/paintings.ts entry for the file, saved at `size`. What a
- * person must supply (alt text, medium, collection, and the focal point) is
- * left empty or centred: content validation refuses an empty string, so the
- * build fails until each is written.
+ * person must supply fails the build until it's written: alt text, medium,
+ * and collection are empty, which content validation refuses, and the focal
+ * point is left commented out, which the type check refuses.
  */
 export function paintingEntry(
   slug: string,
@@ -102,10 +116,10 @@ export function paintingEntry(
     `    source:`,
     `      ${text(file.pageUrl)},`,
     `    alt: "",`,
-    `    focalPoint: { x: 0.5, y: 0.5 },`,
+    `    // focalPoint: { x: , y: },`,
     `    placard: {`,
     `      artist: ${text(file.artist)},`,
-    `      title: ${text(file.name)},`,
+    `      title: ${text(file.paintingTitle)},`,
     `      year: ${text(file.date)},`,
     `      medium: "",`,
     `      collection: "",`,

@@ -112,7 +112,7 @@ const columns = process.argv.slice(2).map((arg) => {
     const json: unknown = JSON.parse(readFileSync(join(folder, file), "utf8"));
     const report = readReport(file, json);
     runs.set(report.path, [...(runs.get(report.path) ?? []), figures(report)]);
-    elements.set(report.path, report.lcpElement.split(" > ").at(-1) ?? "");
+    elements.set(report.path, report.lcpElement);
   }
   const pages = new Map<string, Record<string, number>>();
   for (const [path, rows] of runs) {

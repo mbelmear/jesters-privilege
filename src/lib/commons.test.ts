@@ -1,5 +1,6 @@
 import {
   assertPublicDomain,
+  assertSlug,
   commonsTitle,
   paintingEntry,
   parseCommonsFile,
@@ -43,7 +44,7 @@ const stanczyk = {
 describe("parseCommonsFile", () => {
   it("reads a file's address, size, license, and visible placard text", () => {
     expect(parseCommonsFile(stanczyk)).toEqual({
-      title: "File:Jan Matejko, Stańczyk.jpg",
+      fileTitle: "File:Jan Matejko, Stańczyk.jpg",
       fileUrl:
         "https://upload.wikimedia.org/wikipedia/commons/7/78/Jan_Matejko%2C_Sta%C5%84czyk.jpg?utm_source=commons.wikimedia.org",
       pageUrl:
@@ -51,7 +52,7 @@ describe("parseCommonsFile", () => {
       width: 5766,
       height: 4289,
       license: "Public domain",
-      name: "Stańczyk",
+      paintingTitle: "Stańczyk",
       artist: "Jan Matejko",
       date: "1862",
     });
@@ -76,7 +77,7 @@ describe("parseCommonsFile", () => {
       },
     };
     const file = parseCommonsFile(bare);
-    expect([file.name, file.artist, file.date]).toEqual([
+    expect([file.paintingTitle, file.artist, file.date]).toEqual([
       undefined,
       undefined,
       undefined,
@@ -93,8 +94,19 @@ describe("parseCommonsFile", () => {
 
   it("refuses an answer that isn't the shape it expects", () => {
     expect(() => parseCommonsFile({ error: { code: "badtitle" } })).toThrow(
-      "Commons answered without image info"
+      "Commons answered without a file page"
     );
+  });
+
+  it("names the field it couldn't read, and the file", () => {
+    const [page] = stanczyk.query.pages;
+    const [info] = page.imageinfo;
+    const sizeless = { ...info, width: undefined };
+    expect(() =>
+      parseCommonsFile({
+        query: { pages: [{ ...page, imageinfo: [sizeless] }] },
+      })
+    ).toThrow("Commons gave no width for File:Jan Matejko, Stańczyk.jpg");
   });
 });
 
@@ -111,7 +123,7 @@ describe("assertPublicDomain", () => {
 });
 
 describe("paintingEntry", () => {
-  it("writes a catalogue entry, leaving what a person must add empty", () => {
+  it("writes a catalogue entry, leaving out or empty what a person must add", () => {
     const file = parseCommonsFile(stanczyk);
     expect(paintingEntry("stanczyk", file, { width: 2400, height: 1785 })).toBe(
       `  stanczyk: {
@@ -121,7 +133,7 @@ describe("paintingEntry", () => {
     source:
       "https://commons.wikimedia.org/wiki/File:Jan_Matejko,_Sta%C5%84czyk.jpg",
     alt: "",
-    focalPoint: { x: 0.5, y: 0.5 },
+    // focalPoint: { x: , y: },
     placard: {
       artist: "Jan Matejko",
       title: "Stańczyk",
@@ -157,4 +169,19 @@ describe("commonsTitle", () => {
       'Expected a Commons file title ("File:…") or file page address, not "https://example.com/stanczyk.jpg"'
     );
   });
+});
+
+describe("assertSlug", () => {
+  it.each(["stanczyk", "will-somers", "el-primo-2"])("passes %s", (slug) => {
+    expect(() => assertSlug(slug)).not.toThrow();
+  });
+
+  it.each(["Will Somers", "will_somers", "-somers", ""])(
+    "refuses %p",
+    (slug) => {
+      expect(() => assertSlug(slug)).toThrow(
+        `A painting's slug is lowercase words joined by hyphens, such as will-somers, not "${slug}"`
+      );
+    }
+  );
 });

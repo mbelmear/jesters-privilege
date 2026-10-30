@@ -7,6 +7,7 @@ import { access, writeFile } from "node:fs/promises";
 import sharp from "sharp";
 import {
   assertPublicDomain,
+  assertSlug,
   commonsTitle,
   paintingEntry,
   parseCommonsFile,
@@ -20,11 +21,12 @@ const LONG_SIDE = 2400;
 
 async function main() {
   const [input, slug] = process.argv.slice(2);
-  if (!input || !slug || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
+  if (!input || slug === undefined) {
     throw new Error(
-      'Usage: npm run add-painting -- "<File:… or its Commons page address>" <slug>, with a slug such as will-somers'
+      'Usage: npm run add-painting -- "<File:… or its Commons page address>" <slug>'
     );
   }
+  assertSlug(slug);
   const out = `public/paintings/${slug}.jpg`;
   if (
     await access(out).then(
@@ -65,26 +67,28 @@ async function main() {
       "",
       "Then, before the build passes:",
       "  - alt: who is shown, and what they're doing",
-      "  - focalPoint: open the painting and set the subject's centre, as fractions of width and height",
+      "  - focalPoint: open the painting, set the subject's centre as fractions of width and height, and uncomment it",
       "  - placard: check the artist, title, and year Commons gave; add the medium and collection",
       "  - npm run images",
     ].join("\n")
   );
 }
 
-async function fetchJson(url: string): Promise<unknown> {
+async function fetchOk(url: string): Promise<Response> {
   const response = await fetch(url, { headers: { "User-Agent": USER_AGENT } });
-  if (!response.ok)
+  if (!response.ok) {
     throw new Error(`Commons answered ${response.status} for ${url}`);
-  const body: unknown = await response.json();
+  }
+  return response;
+}
+
+async function fetchJson(url: string): Promise<unknown> {
+  const body: unknown = await (await fetchOk(url)).json();
   return body;
 }
 
 async function fetchBytes(url: string): Promise<Buffer> {
-  const response = await fetch(url, { headers: { "User-Agent": USER_AGENT } });
-  if (!response.ok)
-    throw new Error(`Commons answered ${response.status} for ${url}`);
-  return Buffer.from(await response.arrayBuffer());
+  return Buffer.from(await (await fetchOk(url)).arrayBuffer());
 }
 
 main().catch((error: unknown) => {
