@@ -193,6 +193,9 @@
   --shadow-sm: 0 1px 2px var(--shadow-color);
   --shadow-md: 0 2px 4px var(--shadow-color), 0 6px 16px var(--shadow-color);
   --shadow-lg: 0 4px 8px var(--shadow-color), 0 16px 40px var(--shadow-color);
+  /* Cast upward, by the player docked at the foot of the page. */
+  --shadow-dock:
+    0 -2px 4px var(--shadow-color), 0 -6px 16px var(--shadow-color);
 
   /* Motion presets are defined in src/lib/motion.ts so Motion components and
      CSS share them; the root layout writes them into <head> as

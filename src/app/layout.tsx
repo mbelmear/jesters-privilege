@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { PlayerDock } from "@/components/player-dock";
+import { PlayerProvider } from "@/components/player-provider";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { content } from "@/content";
@@ -46,6 +48,8 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const { site, shell } = content;
+  // Only the words the player shows, since its props ship on every page.
+  const { episode, bonus, trailer } = content.episodePage;
   const episodes = await getEpisodes();
   return (
     // The theme script may set data-theme before React hydrates.
@@ -59,32 +63,39 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         <style dangerouslySetInnerHTML={{ __html: motionCss(motionPresets) }} />
       </head>
       <body className="flex min-h-full flex-col">
-        <a
-          href="#main"
-          className="sr-only z-50 rounded-md bg-primary px-4 py-2 font-ui font-semibold text-primary-foreground focus:not-sr-only focus:fixed focus:top-2 focus:left-2"
-        >
-          {shell.skipLink}
-        </a>
-        <SiteHeader shell={shell} episodeCount={episodes.length} />
-        {/* Content starts below the header at its full height. A page with
+        <PlayerProvider showName={site.name}>
+          <a
+            href="#main"
+            className="sr-only z-50 rounded-md bg-primary px-4 py-2 font-ui font-semibold text-primary-foreground focus:not-sr-only focus:fixed focus:top-2 focus:left-2"
+          >
+            {shell.skipLink}
+          </a>
+          <SiteHeader shell={shell} episodeCount={episodes.length} />
+          {/* Content starts below the header at its full height. A page with
             a hero painting can pull it up under the transparent header. */}
-        <main
-          id="main"
-          tabIndex={-1}
-          className="flex flex-1 flex-col pt-(--header-height) outline-none"
-        >
-          {children}
-        </main>
-        <SiteFooter
-          site={site}
-          copy={shell.footer}
-          logo={shell.logo}
-          year={new Date().getFullYear()}
-        />
-        {/* Reserved for the persistent player (#19). It lives here so audio
-            survives client-side navigation, and sticks to the bottom of the
-            viewport without ever covering the footer. */}
-        <div id="player" className="sticky bottom-0 z-40" />
+          <main
+            id="main"
+            tabIndex={-1}
+            className="flex flex-1 flex-col pt-(--header-height) outline-none"
+          >
+            {children}
+          </main>
+          <SiteFooter
+            site={site}
+            copy={shell.footer}
+            logo={shell.logo}
+            year={new Date().getFullYear()}
+          />
+          {/* The persistent player lives here so audio survives client-side
+            navigation. It sticks to the bottom of the viewport, in the page's
+            flow, so it never covers the footer. */}
+          <div id="player" className="sticky bottom-0 z-40">
+            <PlayerDock
+              copy={shell.player}
+              labels={{ episode, bonus, trailer }}
+            />
+          </div>
+        </PlayerProvider>
       </body>
     </html>
   );

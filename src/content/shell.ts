@@ -26,6 +26,28 @@ export const shell = {
   ],
   menu: { open: "Open menu", close: "Close menu", title: "Menu" },
   themeToggle: "Dark theme",
+  player: {
+    label: "Player",
+    play: "Play",
+    pause: "Pause",
+    resume: "Resume",
+    resumeFrom: "from",
+    startOver: "Start over",
+    loading: "Loading",
+    skipBack: "Back 15 seconds",
+    skipForward: "Forward 30 seconds",
+    speed: "Playback speed",
+    position: "Position",
+    of: "of",
+    elapsed: "Elapsed",
+    remaining: "Remaining",
+    expand: "Show player controls",
+    collapse: "Hide player controls",
+    failed: {
+      text: "The Episode stopped loading. Check your connection, then press Play to carry on from here.",
+      draft: true,
+    },
+  },
   footer: {
     social: {
       instagram: "Instagram",

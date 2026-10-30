@@ -510,7 +510,7 @@ describe("player", () => {
     await expect(player.play(episode())).rejects.toThrow(
       'Can\'t play Episode "Celebrity Pastors" from https://example.com/ep-1.mp3: No source'
     );
-    expect(player.getState().mode).toBe("paused");
+    expect(player.getState().mode).toBe("failed");
   });
 
   it("trusts the audio over the feed's duration, which may be short", async () => {
@@ -539,6 +539,35 @@ describe("player", () => {
     player.seek(3000);
     await player.resume();
     expect(audio.position).toBe(3000);
+  });
+
+  it("shows when playback waits for the network, until the audio carries on", async () => {
+    const { audio, player } = setup();
+    await player.play(episode());
+    expect(player.getState()).toMatchObject({ buffering: false });
+    audio.stall();
+    expect(player.getState()).toMatchObject({
+      mode: "playing",
+      buffering: true,
+    });
+    audio.carryOn();
+    expect(player.getState()).toMatchObject({
+      mode: "playing",
+      buffering: false,
+    });
+  });
+
+  it("shows a failure when the audio breaks off mid-Episode, and retries from there", async () => {
+    const { audio, player } = setup();
+    await player.play(episode());
+    audio.playTo(600);
+    audio.fail();
+    expect(player.getState()).toMatchObject({ mode: "failed", position: 600 });
+    audio.src = null;
+    await player.resume();
+    expect(audio.src).toBe("https://example.com/ep-1.mp3");
+    expect(audio.position).toBe(600);
+    expect(player.getState()).toMatchObject({ mode: "playing", position: 600 });
   });
 
   it("shows paused when the browser refuses to start playback", async () => {

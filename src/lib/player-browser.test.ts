@@ -39,13 +39,19 @@ describe("audioElementAdapter", () => {
     element.dispatchEvent(new Event("play"));
     element.currentTime = 12;
     element.dispatchEvent(new Event("timeupdate"));
+    element.dispatchEvent(new Event("waiting"));
+    element.dispatchEvent(new Event("playing"));
     element.dispatchEvent(new Event("pause"));
     element.dispatchEvent(new Event("ended"));
+    element.dispatchEvent(new Event("error"));
     expect(events).toEqual([
       { type: "play" },
       { type: "time", position: 12 },
+      { type: "waiting" },
+      { type: "playing" },
       { type: "pause" },
       { type: "ended" },
+      { type: "error" },
     ]);
   });
 

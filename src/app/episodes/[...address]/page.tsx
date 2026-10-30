@@ -43,7 +43,11 @@ export default async function EpisodePage({
   return (
     <>
       <DraftRibbon uses={[shell, site.name, episodePage, feedSource]} />
-      <EpisodeDetails sequence={sequence} copy={episodePage} />
+      <EpisodeDetails
+        sequence={sequence}
+        copy={episodePage}
+        playerCopy={shell.player}
+      />
     </>
   );
 }

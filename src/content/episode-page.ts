@@ -7,7 +7,6 @@ export const episodePage = {
   bonus: "Bonus",
   trailer: "Trailer",
   units: { hours: "hr", minutes: "min" },
-  play: "Play",
   showNotes: "Show notes",
   sequence: {
     label: "More Episodes",

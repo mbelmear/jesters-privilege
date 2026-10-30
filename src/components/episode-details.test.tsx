@@ -14,7 +14,11 @@ function renderEpisode(address: string[]) {
   const sequence = findEpisode(episodes, address);
   if (!sequence) throw new Error(`The fixture has no Episode at ${address}`);
   return render(
-    <EpisodeDetails sequence={sequence} copy={content.episodePage} />
+    <EpisodeDetails
+      sequence={sequence}
+      copy={content.episodePage}
+      playerCopy={content.shell.player}
+    />
   );
 }
 

@@ -1,4 +1,4 @@
-import type { Episode } from "./feed";
+import type { Episode, PlayableEpisode } from "./feed";
 
 // How an Episode's label, date, and length read beside its title: "Episode 4",
 // "Jan 14, 2027 · 43 min". The player's running clock is formatDuration's job.
@@ -56,7 +56,7 @@ export type EpisodeLabel =
   | { kind: "labelled"; text: string };
 
 export function episodeLabel(
-  episode: Episode,
+  episode: PlayableEpisode,
   labels: EpisodeLabels
 ): EpisodeLabel {
   switch (episode.type) {

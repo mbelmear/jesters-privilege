@@ -19,7 +19,6 @@ export const home = {
     episode: "Episode",
     bonus: "Bonus",
     trailer: "Trailer",
-    play: "Play",
     units: { hours: "hr", minutes: "min" },
   },
   gallery: {
