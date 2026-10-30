@@ -6,10 +6,13 @@ export type TextResponse = Pick<
 >;
 export type Fetch = (url: string) => Promise<TextResponse>;
 
+// What the build downloads, named in its errors.
+export type Download = "Feed" | "Transcript";
+
 // The body at `url`, or an error naming `what` was being fetched and why it
 // failed.
 export async function downloadText(
-  what: string,
+  what: Download,
   url: string,
   fetch: Fetch
 ): Promise<string> {
@@ -17,7 +20,9 @@ export async function downloadText(
   try {
     response = await fetch(url);
   } catch (error: unknown) {
-    throw new Error(`${what} ${url} couldn't be reached: ${reason(error)}`);
+    throw new Error(
+      `${what} ${url} couldn't be reached: ${errorMessage(error)}`
+    );
   }
   if (!response.ok) {
     throw new Error(
@@ -27,6 +32,6 @@ export async function downloadText(
   return response.text();
 }
 
-export function reason(error: unknown): string {
+export function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }

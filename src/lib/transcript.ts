@@ -1,6 +1,6 @@
 import { textContent } from "domutils";
 import { parseDocument } from "htmlparser2";
-import { downloadText, reason, type Fetch } from "./download";
+import { downloadText, errorMessage, type Fetch } from "./download";
 import type { Episode } from "./feed";
 
 // An Episode's Transcript as readers see it: paragraphs, each with the time
@@ -129,7 +129,7 @@ export async function loadTranscript(
     return parseTranscript(await downloadText("Transcript", url, io.fetch));
   } catch (error: unknown) {
     io.warn(
-      `Episode "${episode.title}" left without its Transcript: ${reason(error)}`
+      `Episode "${episode.title}" left without its Transcript: ${errorMessage(error)}`
     );
     return null;
   }
