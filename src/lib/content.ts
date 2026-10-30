@@ -230,6 +230,14 @@ export function findDrafts(value: ContentValue): string[] {
     .map(([path]) => path);
 }
 
+// Every string the content holds, in order, for the font subsets to cover
+// (scripts/fonts.ts).
+export function findText(value: ContentValue): string[] {
+  return [...nodes(value)]
+    .map(([, node]) => node)
+    .filter((node) => typeof node === "string");
+}
+
 // An image the content shows, with the first place it sits.
 export type FoundImage = ImageFile & {
   readonly contentPath: string;

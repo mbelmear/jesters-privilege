@@ -3,8 +3,8 @@ import type { Painting } from "@/lib/content";
 // The museum label beside a painting: artist, title and year, medium, and the
 // collection that holds it. All of it is set in the UI face's one loaded
 // weight, with the title upright, so a painting adds no font file to a page:
-// an italic title would load the body italic, and a name such as Stańczyk its
-// extended-Latin file too. Size, case, and color carry the hierarchy.
+// an italic title would load the body italic. Size, case, and color carry the
+// hierarchy.
 export function Placard({ placard }: { placard: Painting["placard"] }) {
   const { artist, title, year, medium, collection } = placard;
   return (

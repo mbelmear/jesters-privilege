@@ -1,5 +1,6 @@
 import {
   findDrafts,
+  findText,
   findImages,
   validateContent,
   type Content,
@@ -208,6 +209,28 @@ describe("findDrafts", () => {
 
   it("finds nothing in final content", () => {
     expect(findDrafts({ hero: { paragraphs: ["Long ago…"] } })).toEqual([]);
+  });
+});
+
+describe("findText", () => {
+  it("collects every string the content holds, keys and numbers aside", () => {
+    const content = {
+      hero: { paragraphs: ["Long ago…"] },
+      gallery: {
+        fools: [
+          { slug: "stanczyk", name: "Stańczyk", year: 1862, draft: true },
+        ],
+      },
+      jesters: [{ bio: { paragraphs: [["Named for ", { em: "Stańczyk" }]] } }],
+    } as const;
+
+    expect(findText(content)).toEqual([
+      "Long ago…",
+      "stanczyk",
+      "Stańczyk",
+      "Named for ",
+      "Stańczyk",
+    ]);
   });
 });
 
