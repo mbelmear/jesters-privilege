@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { parseFeed } from "./feed";
+import { episodePath, parseFeed } from "./feed";
 
 const fixture = readFileSync(
   join(process.cwd(), "src/content/feed-fixture.xml"),
@@ -313,6 +313,18 @@ describe("parseFeed", () => {
       parseFeed(feed(item({ title: "🃏 !!", episodeType: "bonus" })))
     ).toThrow(
       'Feed Episode "🃏 !!" has no letters or digits in its title to make its address from'
+    );
+  });
+});
+
+describe("episodePath", () => {
+  it("addresses a full Episode by number and the rest by slug (ADR 0002)", () => {
+    expect(parseFeed(fixture).map(episodePath)).toEqual(
+      expect.arrayContaining([
+        "/episodes/1",
+        "/episodes/bonus/listener-confessions-christmas-edition",
+        "/episodes/bonus/introducing-jesters-privilege-trailer",
+      ])
     );
   });
 });

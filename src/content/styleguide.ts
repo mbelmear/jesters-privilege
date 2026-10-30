@@ -9,6 +9,7 @@ export const styleguide = {
     "Every color, typeface, shape, motion preset, and component the site is built from, shown in both themes. Change a token in globals.css and check it here.",
   panels: { light: "Light theme", dark: "Dark theme" },
   paintingsLink: "See the painting band and framed paintings",
+  homeLink: "See the home page preview",
   // /styleguide/paintings: paintings as the Fools' Gallery shows them, in the
   // page's own theme, on a page Lighthouse checks for weight.
   paintings: {
@@ -17,6 +18,25 @@ export const styleguide = {
       "A painting band opens each era of the Fools' Gallery, and each Fool hangs in a frame with a museum placard. Narrow the window to see the band's phone crop around its focal point.",
     band: { painting: paintings.stanczyk, title: "The Renaissance" },
     framed: [paintings["pablo-de-valladolid"], paintings.calabacillas],
+  },
+  // /styleguide/home: the home page design for the Jesters to approve at the
+  // mockup gate (#14), with both hero options and placeholder Listen links so
+  // every button shows. The real home page hides each until it's linked.
+  home: {
+    title: "Home page preview",
+    heroSwitch: {
+      label: "Hero option",
+      options: {
+        reveal: { text: "Reveal on scroll", href: "/styleguide/home" },
+        simple: { text: "Simple", href: "/styleguide/home/simple" },
+      },
+    },
+    listen: {
+      "apple-podcasts": "https://podcasts.apple.com/",
+      spotify: "https://open.spotify.com/",
+      youtube: "https://www.youtube.com/",
+      rss: "https://www.spreaker.com/",
+    },
   },
   sections: {
     colors: "Colors",
