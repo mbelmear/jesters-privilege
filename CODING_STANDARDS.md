@@ -36,6 +36,12 @@ Reviewers skip these; the rules below are the ones that need judgement.
 - **A library loads only where it's used.** A client library's provider wraps the sections that need it, never the root layout unless every page does: whatever the layout imports ships on every page and counts against the home page's Lighthouse budget. The same holds for any component: its client imports ship on every page that renders it, whether or not the branch using them renders there. Where pages pick between alternatives, such as the hero's reveal or simple story, the page passes its choice in as `children`, so only that page imports it.
 - **UI on every page loads its animation on first use.** `MotionProvider` fetches Motion as soon as it mounts, so a part of the shell (the mobile menu, the player) mounts it only on a visitor's first interaction with that part, as `src/components/mobile-menu.tsx` does with its lazily loaded panel.
 - **Animation goes through `MotionProvider`.** Animated sections use `m` components inside `src/components/motion-provider.tsx`, which loads Motion on demand, carries the reduced-motion setting, and applies the shared presets from `src/lib/motion.ts`. One exception: an ambient, non-interactive loop (a painting band's slow zoom) may be a CSS keyframe defined in `globals.css` and applied under `motion-safe:`, so a Server Component animates without shipping Motion.
+- **A dynamic route builds at least one page, whatever the Feed holds.** A static export refuses a route whose `generateStaticParams` returns nothing, and the coming-soon site has no Episodes. A route over Episodes builds a `noindex` placeholder address that shows the 404 page when the list is empty, as `src/app/episodes/[...address]/page.tsx` does; a set that can be empty while others aren't (bonus Episodes alone) shares a catch-all route with one that isn't.
+
+## Content
+
+- **Copy shown on more than one page lives once**, in a content record each page reads, such as the Episode labels and length units. A page that needs copy another page already has moves it into a shared record, in place of a second copy.
+- **Copy is final only if `docs/spec.md` quotes it.** Any other sentence a visitor reads is a `Copy` marked `draft: true` until the Jesters supply or approve its words; bare interface labels ("Play", "Share", "Episode") are final as written. A sentence held as a plain string can't carry the mark.
 
 ## Browser tests
 

@@ -1,0 +1,6 @@
+# A merge that commits itself (no conflicts) skips pre-commit, so merging
+# origin/main gets the same checks here. Formatting is left to pre-commit:
+# the merged files are main's, already formatted.
+npm run lint
+npm run typecheck
+npm run test

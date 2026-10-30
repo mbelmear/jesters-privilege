@@ -1,0 +1,13 @@
+# CI checks a pull request merged with main, but the pre-commit hook checks
+# the branch alone, so a lint rule or test that landed on main since the
+# branch was cut fails only in CI (#22). Refuse the push until main is in.
+if ! git fetch --quiet origin main; then
+  echo "pre-push: couldn't fetch origin/main; pushing without checking it." >&2
+  exit 0
+fi
+if ! git merge-base --is-ancestor origin/main HEAD; then
+  echo "pre-push: origin/main has commits this branch lacks." >&2
+  echo "Run \`git merge origin/main\` (the pre-merge-commit hook lints and tests" >&2
+  echo "the result, as CI will), then push again." >&2
+  exit 1
+fi

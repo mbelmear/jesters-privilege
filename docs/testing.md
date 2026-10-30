@@ -33,7 +33,7 @@ npx jest src/lib            # one folder or file
 
 A test that writes to `console.error` or `console.warn` fails (`jest.setup.ts`), since React reports bugs such as an update outside `act()` that way. A test that expects an error stubs it with `jest.spyOn(console, "error").mockImplementation(() => {})`. A component that loads something after rendering (Motion's features under `MotionProvider`) needs that to land inside `act()` before the test checks it, as the style guide test does.
 
-The pre-commit hook runs ESLint, the type check, and the whole Jest suite, so a commit with a lint error, type error, or failing test is refused.
+The pre-commit hook runs ESLint, the type check, and the whole Jest suite, so a commit with a lint error, type error, or failing test is refused. A merge that commits itself skips that hook, so `pre-merge-commit` runs the same three. CI checks a pull request merged with main, so the pre-push hook refuses a branch missing commits from `origin/main`: merge it in, and the merge hook checks the result before CI does (#22 met a lint rule from main only in CI).
 
 ### Dependencies that ship only as ES modules
 

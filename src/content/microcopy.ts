@@ -1,7 +1,7 @@
 import type { Copy } from "@/lib/content";
 
-// Short copy used across the site. Strings quoted in docs/spec.md are final;
-// the rest are drafts.
+// Short copy used across the site. Which copy is final and which is draft:
+// CODING_STANDARDS.md, Content.
 export const microcopy = {
   draftRibbon: { text: "Draft" },
   draftRibbonNote: {
