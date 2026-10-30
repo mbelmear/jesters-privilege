@@ -10,7 +10,8 @@ const edit =
   '<span class="noprint"><a href="https://www.wikidata.org/wiki/Q6609268"><img alt="Edit this at Wikidata" src="x.png"></a></span>';
 
 // Trimmed from the Commons API's answer for Matejko's Stańczyk
-// (action=query, prop=imageinfo, formatversion=2).
+// (action=query, prop=imageinfo, formatversion=2, iiurlwidth and
+// iiurlheight 2400).
 const stanczyk = {
   query: {
     pages: [
@@ -21,6 +22,8 @@ const stanczyk = {
             width: 5766,
             height: 4289,
             url: "https://upload.wikimedia.org/wikipedia/commons/7/78/Jan_Matejko%2C_Sta%C5%84czyk.jpg?utm_source=commons.wikimedia.org",
+            thumburl:
+              "https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Jan_Matejko%2C_Sta%C5%84czyk.jpg/3840px-Jan_Matejko%2C_Sta%C5%84czyk.jpg",
             descriptionurl:
               "https://commons.wikimedia.org/wiki/File:Jan_Matejko,_Sta%C5%84czyk.jpg",
             extmetadata: {
@@ -42,11 +45,13 @@ const stanczyk = {
 };
 
 describe("parseCommonsFile", () => {
-  it("reads a file's address, size, license, and visible placard text", () => {
+  // The resized copy, not the original: a scan such as the Google Art
+  // Project's 30,000px Ambassadors is too large for sharp to open.
+  it("reads the resized copy's address, size, license, and visible placard text", () => {
     expect(parseCommonsFile(stanczyk)).toEqual({
       fileTitle: "File:Jan Matejko, Stańczyk.jpg",
-      fileUrl:
-        "https://upload.wikimedia.org/wikipedia/commons/7/78/Jan_Matejko%2C_Sta%C5%84czyk.jpg?utm_source=commons.wikimedia.org",
+      downloadUrl:
+        "https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Jan_Matejko%2C_Sta%C5%84czyk.jpg/3840px-Jan_Matejko%2C_Sta%C5%84czyk.jpg",
       pageUrl:
         "https://commons.wikimedia.org/wiki/File:Jan_Matejko,_Sta%C5%84czyk.jpg",
       width: 5766,

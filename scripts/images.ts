@@ -111,8 +111,14 @@ function assertPhoneSizes(
       variant.width <= widest &&
       bytes > PHONE_BYTES
     ) {
+      // A dense painting, such as Bruegel's Netherlandish Proverbs, can pass
+      // the budget alone; the fix is usually that painting, not the encoding
+      // every painting shares (#24).
+      const crop = variant.crop
+        ? ", or move its focalPoint so the phone crop takes in a calmer part"
+        : "";
       throw new Error(
-        `Image ${variant.url} is ${Math.round(bytes / 1000)} KB, over the ${PHONE_BYTES / 1000} KB a phone should download for one painting (content ${image.contentPath}); lower ENCODING.avif.quality in scripts/images.ts`
+        `Image ${variant.url} is ${Math.round(bytes / 1000)} KB, over the ${PHONE_BYTES / 1000} KB a phone should download for one painting (content ${image.contentPath}). Fine detail costs bytes: choose a calmer painting or scan${crop}. Lowering ENCODING.avif.quality in scripts/images.ts would re-encode every painting at the lower quality.`
       );
     }
   }

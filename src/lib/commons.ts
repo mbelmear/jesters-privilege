@@ -2,12 +2,15 @@ import { isTag, isText, type ChildNode } from "domhandler";
 import { parseDocument } from "htmlparser2";
 
 // A painting's file on Wikimedia Commons, read from the API's image info
-// (action=query, prop=imageinfo, iiprop=url|size|extmetadata, formatversion=2)
-// for scripts/add-painting.ts. Metadata a file page doesn't give is absent.
+// (action=query, prop=imageinfo, iiprop=url|size|extmetadata, formatversion=2,
+// iiurlwidth and iiurlheight) for scripts/add-painting.ts. Metadata a file
+// page doesn't give is absent.
 export type CommonsFile = {
   // The Commons title, "File:…".
   readonly fileTitle: string;
-  readonly fileUrl: string;
+  // A copy Commons resizes to fit the iiurlwidth × iiurlheight box (the
+  // original when that's smaller), so no scan is too large to open.
+  readonly downloadUrl: string;
   readonly pageUrl: string;
   readonly width: number;
   readonly height: number;
@@ -66,7 +69,7 @@ export function parseCommonsFile(response: unknown): CommonsFile {
   const date = metadataText(metadata, "DateTimeOriginal");
   return {
     fileTitle,
-    fileUrl: text("url", "file address"),
+    downloadUrl: text("thumburl", "resized file address"),
     pageUrl: text("descriptionurl", "file page address"),
     width: count("width"),
     height: count("height"),
