@@ -89,8 +89,10 @@ export function findEpisode(
   episodes: readonly Episode[],
   address: readonly string[]
 ): EpisodeInSequence | undefined {
-  const path = ["/episodes", ...address].join("/");
-  const index = episodes.findIndex((episode) => episodePath(episode) === path);
+  const wanted = address.join("/");
+  const index = episodes.findIndex(
+    (episode) => episodeAddress(episode).join("/") === wanted
+  );
   if (index === -1) return undefined;
   return {
     episode: episodes[index],

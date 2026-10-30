@@ -1,3 +1,5 @@
+import type { EpisodeLabels, TimeUnits } from "./format-episode";
+
 // Plain data a content file can hold: what findDrafts and validateContent walk.
 export type ContentValue =
   | string
@@ -205,12 +207,9 @@ export type Home = {
 };
 
 // The Episode page's own copy. The Show notes and titles come from the Feed.
-export type EpisodePage = {
-  readonly episode: string;
-  readonly bonus: string;
-  readonly trailer: string;
+export type EpisodePage = EpisodeLabels & {
   // How an Episode's length reads: "43 min", "1 hr 5 min".
-  readonly units: { readonly hours: string; readonly minutes: string };
+  readonly units: TimeUnits;
   readonly play: string;
   readonly showNotes: string;
   readonly sequence: {
@@ -220,8 +219,8 @@ export type EpisodePage = {
   };
   readonly share: {
     readonly button: string;
-    readonly copied: string;
-    readonly failed: string;
+    readonly copied: Copy;
+    readonly failed: Copy;
   };
 };
 

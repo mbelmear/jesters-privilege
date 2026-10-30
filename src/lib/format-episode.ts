@@ -16,6 +16,11 @@ export function formatPublishDate(date: Date): string {
   return publishDate.format(date);
 }
 
+// The same day for a <time> element's datetime: "2027-01-14".
+export function publishDateAttribute(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
 // The unit words come from content, such as { hours: "hr", minutes: "min" }.
 export type TimeUnits = { readonly hours: string; readonly minutes: string };
 
@@ -39,6 +44,11 @@ export type EpisodeLabels = {
   readonly bonus: string;
   readonly trailer: string;
 };
+
+// "Episode 4: Is Humor a Virtue?", for the browser tab and the share sheet.
+export function episodeTitle(episode: Episode, labels: EpisodeLabels): string {
+  return `${episodeLabel(episode, labels).text}: ${episode.title}`;
+}
 
 // A full Episode shows its number; bonus and trailer Episodes a label.
 export type EpisodeLabel =

@@ -53,9 +53,9 @@ function message(
 ): string | null {
   switch (outcome) {
     case "copied":
-      return copy.copied;
+      return copy.copied.text;
     case "failed":
-      return copy.failed;
+      return copy.failed.text;
     case "shared":
     case "cancelled":
     case null:

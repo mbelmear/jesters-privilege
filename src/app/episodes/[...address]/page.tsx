@@ -5,7 +5,7 @@ import { EpisodeDetails } from "@/components/episode-details";
 import { content } from "@/content";
 import { feedSource, getEpisodes } from "@/content/feed";
 import { episodeAddress, findEpisode } from "@/lib/feed";
-import { episodeLabel } from "@/lib/format-episode";
+import { episodeTitle } from "@/lib/format-episode";
 
 // One page per Episode: /episodes/<number>, or /episodes/bonus/<slug> for one
 // without a number (ADR 0002). Only the Feed's Episodes are built.
@@ -29,9 +29,8 @@ export async function generateMetadata({
   params,
 }: PageProps<"/episodes/[...address]">): Promise<Metadata> {
   const { episode } = await episodeAt((await params).address);
-  const label = episodeLabel(episode, content.episodePage);
   return {
-    title: `${label.text}: ${episode.title}`,
+    title: episodeTitle(episode, content.episodePage),
     description: episode.excerpt,
   };
 }

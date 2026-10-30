@@ -37,7 +37,7 @@ describe("ShareButton", () => {
     renderShare();
     await u.click(screen.getByRole("button", { name: "Share" }));
     expect(writeText).toHaveBeenCalledWith("http://localhost/episodes/1");
-    expect(screen.getByRole("status")).toHaveTextContent(copy.copied);
+    expect(screen.getByRole("status")).toHaveTextContent(copy.copied.text);
   });
 
   it("opens the native share sheet where the browser has one", async () => {
@@ -60,7 +60,7 @@ describe("ShareButton", () => {
     stubNavigator({});
     renderShare();
     await u.click(screen.getByRole("button", { name: "Share" }));
-    expect(screen.getByRole("status")).toHaveTextContent(copy.failed);
+    expect(screen.getByRole("status")).toHaveTextContent(copy.failed.text);
   });
 
   it("has no detectable accessibility violations once it has copied", async () => {

@@ -16,8 +16,13 @@ export const episodePage = {
   },
   share: {
     button: "Share",
-    copied: "Link copied. Paste it anywhere to share this Episode.",
-    failed:
-      "Your browser wouldn't copy the link. Copy this page's address to share it.",
+    copied: {
+      text: "Link copied. Paste it anywhere to share this Episode.",
+      draft: true,
+    },
+    failed: {
+      text: "Your browser wouldn't copy the link. Copy this page's address to share it.",
+      draft: true,
+    },
   },
 } as const satisfies EpisodePage;

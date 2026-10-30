@@ -8,8 +8,10 @@ import type { EpisodePage } from "@/lib/content";
 import { episodePath, type Episode, type EpisodeInSequence } from "@/lib/feed";
 import {
   episodeLabel,
+  episodeTitle,
   formatListeningTime,
   formatPublishDate,
+  publishDateAttribute,
 } from "@/lib/format-episode";
 import { cn } from "@/lib/utils";
 
@@ -48,7 +50,7 @@ export function EpisodeDetails({ sequence, copy }: Props) {
           {episode.title}
         </h1>
         <p className="font-ui text-sm font-semibold text-muted-foreground">
-          <time dateTime={episode.publishedAt.toISOString().slice(0, 10)}>
+          <time dateTime={publishDateAttribute(episode.publishedAt)}>
             {formatPublishDate(episode.publishedAt)}
           </time>{" "}
           ·{" "}
@@ -68,7 +70,7 @@ export function EpisodeDetails({ sequence, copy }: Props) {
             </span>
           </Button>
           <ShareButton
-            title={`${label.text}: ${episode.title}`}
+            title={episodeTitle(episode, copy)}
             path={episodePath(episode)}
             copy={copy.share}
           />

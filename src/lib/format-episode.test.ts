@@ -1,8 +1,10 @@
 import type { Episode } from "./feed";
 import {
   episodeLabel,
+  episodeTitle,
   formatListeningTime,
   formatPublishDate,
+  publishDateAttribute,
 } from "./format-episode";
 
 describe("formatPublishDate", () => {
@@ -20,6 +22,14 @@ describe("formatPublishDate", () => {
 });
 
 const units = { hours: "hr", minutes: "min" };
+
+describe("publishDateAttribute", () => {
+  it("gives the feed's calendar day in the form a <time> element reads", () => {
+    expect(publishDateAttribute(new Date("2026-12-24T23:30:00Z"))).toBe(
+      "2026-12-24"
+    );
+  });
+});
 
 describe("formatListeningTime", () => {
   it("rounds to whole minutes", () => {
@@ -61,6 +71,15 @@ describe("episodeLabel", () => {
       number: 4,
       text: "Episode 4",
     });
+  });
+
+  it("titles an Episode with its label, for the browser tab and sharing", () => {
+    expect(episodeTitle(episode({}), labels)).toBe(
+      "Episode 4: Is Humor a Virtue?"
+    );
+    expect(
+      episodeTitle(episode({ type: "bonus", slug: "a-bonus" }), labels)
+    ).toBe("Bonus: Is Humor a Virtue?");
   });
 
   it("labels bonus and trailer Episodes in place of a number", () => {
