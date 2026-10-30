@@ -129,6 +129,9 @@ export type Fool = {
 };
 
 export type Gallery = {
+  readonly title: string;
+  // What the Gallery holds, above the first era and in link previews.
+  readonly intro: Copy;
   readonly eras: readonly Era[];
   readonly fools: readonly Fool[];
   // Why this show wears the motley.

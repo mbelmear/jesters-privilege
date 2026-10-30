@@ -21,6 +21,21 @@ export const paintings = {
       collection: "National Museum in Warsaw",
     },
   },
+  "the-ambassadors": {
+    src: "/paintings/the-ambassadors.jpg",
+    width: 2394,
+    height: 2400,
+    source: "https://commons.wikimedia.org/wiki/File:Holbein_Ambassadors.jpg",
+    alt: "Two French envoys in fur and silk stand either side of a table laden with globes, instruments, and a lute with a broken string, while a distorted skull stretches across the floor at their feet",
+    focalPoint: { x: 0.5, y: 0.22 },
+    placard: {
+      artist: "Hans Holbein the Younger",
+      title: "The Ambassadors",
+      year: "1533",
+      medium: "Oil on oak",
+      collection: "National Gallery, London",
+    },
+  },
   "pablo-de-valladolid": {
     src: "/paintings/pablo-de-valladolid.jpg",
     width: 1391,

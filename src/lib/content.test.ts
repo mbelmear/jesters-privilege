@@ -52,6 +52,8 @@ function content(overrides: Partial<Content> = {}): Content {
     episodePage,
     jesters: [{ id: "dan", name: "Dan Collins", role: "Co-host" }],
     gallery: {
+      title: "The Fools' Gallery",
+      intro: { text: "For as long as there have been kings…" },
       eras: [
         {
           id: "renaissance",
