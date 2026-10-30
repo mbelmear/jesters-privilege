@@ -139,6 +139,13 @@ describe("parseTranscript", () => {
     }
   );
 
+  it('takes "I." at the end of a cue for a sentence end', () => {
+    const paragraphs = parseTranscript(
+      vtt(backToBack([words(40, " and so did I."), "Francis was a holy fool."]))
+    );
+    expect(paragraphs.map((p) => p.startSeconds)).toEqual([0, 3]);
+  });
+
   it("rejects a file that isn't WebVTT", () => {
     expect(() =>
       parseTranscript('<?xml version="1.0"?><Error>AccessDenied</Error>')
@@ -216,7 +223,7 @@ describe("loadTranscript", () => {
     const { io: fake, warnings } = io(() => response(403, "Forbidden"));
     expect(await loadTranscript(episode, fake)).toBeNull();
     expect(warnings).toEqual([
-      `Transcript of "Celebrity Pastors" skipped: ${url} answered 403 Forbidden`,
+      `Episode "Celebrity Pastors" left without its Transcript: Transcript ${url} answered 403 Forbidden`,
     ]);
   });
 
@@ -228,7 +235,7 @@ describe("loadTranscript", () => {
     );
     expect(await loadTranscript(episode, fake)).toBeNull();
     expect(warnings).toEqual([
-      `Transcript of "Celebrity Pastors" skipped: ${url} couldn't be reached: The operation timed out.`,
+      `Episode "Celebrity Pastors" left without its Transcript: Transcript ${url} couldn't be reached: The operation timed out.`,
     ]);
   });
 
@@ -238,7 +245,7 @@ describe("loadTranscript", () => {
     );
     expect(await loadTranscript(episode, fake)).toBeNull();
     expect(warnings).toEqual([
-      `Transcript of "Celebrity Pastors" skipped: Transcript isn't WebVTT: it doesn't start with WEBVTT`,
+      `Episode "Celebrity Pastors" left without its Transcript: Transcript isn't WebVTT: it doesn't start with WEBVTT`,
     ]);
   });
 });

@@ -1,5 +1,6 @@
 import { textContent } from "domutils";
 import { parseDocument } from "htmlparser2";
+import { downloadText, reason, type Fetch } from "./download";
 import type { Episode } from "./feed";
 
 // An Episode's Transcript as readers see it: paragraphs, each with the time
@@ -22,14 +23,14 @@ const PAUSE_SECONDS = 1;
 // WebVTT text in, readable paragraphs out. Throws, naming the problem, when
 // the text isn't WebVTT or holds no words.
 export function parseTranscript(vtt: string): Transcript {
-  const all = cues(vtt);
+  const cues = parseCues(vtt);
   const paragraphs: Transcript = [];
-  let current: Cue[] = [];
+  let paragraphCues: Cue[] = [];
   let words = 0;
-  for (const [i, cue] of all.entries()) {
-    current.push(cue);
+  for (const [i, cue] of cues.entries()) {
+    paragraphCues.push(cue);
     words += cue.text.split(" ").length;
-    const next = all[i + 1];
+    const next = cues[i + 1];
     const pause =
       next !== undefined && next.startSeconds - cue.endSeconds >= PAUSE_SECONDS;
     const last = next === undefined;
@@ -38,12 +39,12 @@ export function parseTranscript(vtt: string): Transcript {
       words >= MAX_WORDS ||
       (words >= MIN_WORDS && (endsSentence(cue.text) || pause))
     ) {
-      const [first = cue] = current;
+      const [first = cue] = paragraphCues;
       paragraphs.push({
         startSeconds: first.startSeconds,
-        text: current.map(({ text }) => text).join(" "),
+        text: paragraphCues.map(({ text }) => text).join(" "),
       });
-      current = [];
+      paragraphCues = [];
       words = 0;
     }
   }
@@ -51,8 +52,8 @@ export function parseTranscript(vtt: string): Transcript {
 }
 
 // A period after an initial ("George W.") or a title ("St. Francis") ends no
-// sentence.
-const ABBREVIATION = /(?:^|\s)(?:[A-Z]|Dr|Mr|Mrs|Ms|St|Jr|Sr|vs)\.$/;
+// sentence, though one after "I" ("so did I.") does.
+const ABBREVIATION = /(?:^|\s)(?:[A-HJ-Z]|Dr|Mr|Mrs|Ms|St|Jr|Sr|vs)\.$/;
 
 function endsSentence(text: string): boolean {
   return /[.!?]["'”’)]*$/.test(text) && !ABBREVIATION.test(text);
@@ -64,7 +65,7 @@ const TIMING = new RegExp(`^(${TIMESTAMP})[ \\t]+-->[ \\t]+(${TIMESTAMP})`);
 
 // The cue blocks of a WebVTT file, in order. Notes, styles, regions and the
 // header have no timing line and are skipped.
-function cues(vtt: string): Cue[] {
+function parseCues(vtt: string): Cue[] {
   const text = vtt.replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n");
   if (!/^WEBVTT(?:[ \t\n]|$)/.test(text)) {
     throw new Error("Transcript isn't WebVTT: it doesn't start with WEBVTT");
@@ -110,15 +111,10 @@ function seconds(timestamp: string): number {
 }
 
 export type TranscriptIO = {
-  fetch: (url: string) => Promise<TranscriptResponse>;
+  fetch: Fetch;
   // Where the build log notes an Episode left without its Transcript.
   warn: (message: string) => void;
 };
-
-type TranscriptResponse = Pick<
-  Response,
-  "ok" | "status" | "statusText" | "text"
->;
 
 // An Episode's Transcript, or null when it has none. A Transcript that is
 // missing, unreachable or unreadable leaves the Episode without one rather
@@ -130,26 +126,11 @@ export async function loadTranscript(
   const url = episode.transcriptUrl;
   if (!url) return null;
   try {
-    return parseTranscript(await download(url, io));
+    return parseTranscript(await downloadText("Transcript", url, io.fetch));
   } catch (error: unknown) {
-    const reason = error instanceof Error ? error.message : String(error);
-    io.warn(`Transcript of "${episode.title}" skipped: ${reason}`);
+    io.warn(
+      `Episode "${episode.title}" left without its Transcript: ${reason(error)}`
+    );
     return null;
   }
-}
-
-async function download(url: string, io: TranscriptIO): Promise<string> {
-  let response: TranscriptResponse;
-  try {
-    response = await io.fetch(url);
-  } catch (error: unknown) {
-    const reason = error instanceof Error ? error.message : String(error);
-    throw new Error(`${url} couldn't be reached: ${reason}`);
-  }
-  if (!response.ok) {
-    throw new Error(
-      `${url} answered ${response.status} ${response.statusText}`
-    );
-  }
-  return response.text();
 }

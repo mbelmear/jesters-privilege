@@ -1,7 +1,12 @@
 import { readFile } from "node:fs/promises";
-import { basename, join } from "node:path";
+import { join } from "node:path";
 import { parseFeed, type Episode } from "@/lib/feed";
-import { loadFeedText, type FeedSource } from "@/lib/feed-source";
+import {
+  loadFeedText,
+  transcriptFetch,
+  type FeedIO,
+  type FeedSource,
+} from "@/lib/feed-source";
 import { loadTranscript, type Transcript } from "@/lib/transcript";
 
 // The one value to change once Episode 1 is published on Spreaker:
@@ -9,35 +14,28 @@ import { loadTranscript, type Transcript } from "@/lib/transcript";
 export const feedSource: FeedSource = {
   kind: "fixture",
   path: "src/content/feed-fixture.xml",
+  transcripts: "src/content/transcripts",
   draft: true,
+};
+
+const io: FeedIO = {
+  // A hung download fails (or, for a Transcript, skips) rather than stalling
+  // the build.
+  fetch: (url) => fetch(url, { signal: AbortSignal.timeout(30_000) }),
+  readFile: (path) => readFile(join(process.cwd(), path), "utf8"),
 };
 
 // Every Episode, newest first. Throws (failing the build) when the feed can't
 // be read or breaks a rule, so the last good deploy stays live.
 export async function getEpisodes(): Promise<Episode[]> {
-  const text = await loadFeedText(feedSource, {
-    // A hung feed fails the build rather than stalling it.
-    fetch: (url) => fetch(url, { signal: AbortSignal.timeout(30_000) }),
-    readFile: (path) => readFile(join(process.cwd(), path), "utf8"),
-  });
-  return parseFeed(text);
+  return parseFeed(await loadFeedText(feedSource, io));
 }
 
 // An Episode's Transcript, or null when it has none or it can't be had (the
-// build log says which). The fixture's Transcripts are local files, named like
-// the files Spreaker links to.
+// build log says which).
 export function getTranscript(episode: Episode): Promise<Transcript | null> {
   return loadTranscript(episode, {
-    fetch:
-      feedSource.kind === "fixture"
-        ? readFixtureTranscript
-        : (url) => fetch(url, { signal: AbortSignal.timeout(30_000) }),
+    fetch: transcriptFetch(feedSource, io),
     warn: (message) => console.warn(message),
   });
-}
-
-async function readFixtureTranscript(url: string) {
-  const path = join("src/content/transcripts", basename(new URL(url).pathname));
-  const text = await readFile(join(process.cwd(), path), "utf8");
-  return { ok: true, status: 200, statusText: "OK", text: async () => text };
 }
