@@ -1,4 +1,4 @@
-import { formatDuration } from "./format-duration";
+import { formatDuration, resumeLabel } from "./format-duration";
 
 describe("formatDuration", () => {
   it("shows minutes and seconds for an Episode under an hour", () => {
@@ -11,5 +11,13 @@ describe("formatDuration", () => {
 
   it("drops fractions of a second, as reported by the audio element", () => {
     expect(formatDuration(59.9)).toBe("0:59");
+  });
+});
+
+describe("resumeLabel", () => {
+  it("offers to resume from where the Episode was left", () => {
+    expect(resumeLabel({ resume: "Resume", resumeFrom: "from" }, 3725)).toBe(
+      "Resume from 1:02:05"
+    );
   });
 });

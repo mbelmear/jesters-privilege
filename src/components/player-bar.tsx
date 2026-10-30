@@ -15,7 +15,7 @@ import { useId, useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { PlayerCopy } from "@/lib/content";
 import { episodePath } from "@/lib/feed";
-import { formatDuration } from "@/lib/format-duration";
+import { formatDuration, resumeLabel } from "@/lib/format-duration";
 import { episodeLabel, type EpisodeLabels } from "@/lib/format-episode";
 import {
   SKIP_BACK_SECONDS,
@@ -23,6 +23,7 @@ import {
   SPEEDS,
   type Player,
   type LoadedState,
+  type PartlyHeard,
   type Speed,
 } from "@/lib/player";
 import { cn } from "@/lib/utils";
@@ -153,20 +154,21 @@ export function PlayerBar({ copy, labels }: Props) {
  * partly heard on this device.
  */
 export function ResumeOffer({
+  player,
   offer,
   onDismiss,
   copy,
   labels,
 }: {
-  offer: NonNullable<ReturnType<Player["resumeOffer"]>>;
+  player: Player;
+  offer: PartlyHeard;
   onDismiss: () => void;
   copy: PlayerCopy;
   labels: EpisodeLabels;
 }) {
-  const player = usePlayer();
   const { episode, position } = offer;
   const label = episodeLabel(episode, labels).text;
-  const resume = `${copy.resume} ${copy.resumeFrom} ${formatDuration(position)}`;
+  const resume = resumeLabel(copy, position);
   return (
     <section
       aria-label={copy.label}
@@ -179,7 +181,7 @@ export function ResumeOffer({
           size="icon"
           className="rounded-full"
           onClick={() =>
-            player?.play(episode, { at: position }).catch(reportPlayerError)
+            player.play(episode, { at: position }).catch(reportPlayerError)
           }
         >
           <Play aria-hidden="true" className="size-5 fill-current" />

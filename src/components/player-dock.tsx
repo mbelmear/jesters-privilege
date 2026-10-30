@@ -36,6 +36,7 @@ export function PlayerDock({ copy, labels }: Props) {
     return (
       <Suspense fallback={null}>
         <ResumeOffer
+          player={player}
           offer={offer}
           onDismiss={() => setDeclined(true)}
           copy={copy}

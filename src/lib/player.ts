@@ -5,7 +5,7 @@
 
 import type { PlayableEpisode } from "./feed";
 
-/** Only what playing an Episode needs, from the Feed's Episode or a fuller one. */
+/** Only what playing an Episode needs; the Feed's Episodes carry more. */
 export function playableEpisode(episode: PlayableEpisode): PlayableEpisode {
   const { guid, title, durationSeconds, audioUrl, artworkUrl } = episode;
   const details = { guid, title, durationSeconds, audioUrl, artworkUrl };
@@ -75,6 +75,9 @@ export type DeviceStorage = {
   getItem: (key: string) => string | null;
   setItem: (key: string, value: string) => void;
 };
+
+// An Episode left partly heard, and where.
+export type PartlyHeard = { episode: PlayableEpisode; position: number };
 
 export type PlayerDeps = {
   audio: AudioAdapter;
@@ -151,7 +154,7 @@ export type Player = {
   /** Where a partly heard Episode was left on this device, or null. */
   savedPosition: (guid: string) => number | null;
   /** The Episode last played on this device, if it was left partly heard. */
-  resumeOffer: () => { episode: PlayableEpisode; position: number } | null;
+  resumeOffer: () => PartlyHeard | null;
 };
 
 export function createPlayer({

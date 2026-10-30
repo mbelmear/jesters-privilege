@@ -4,7 +4,7 @@ import { Pause, Play, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { PlayerCopy } from "@/lib/content";
 import type { PlayableEpisode } from "@/lib/feed";
-import { formatDuration } from "@/lib/format-duration";
+import { resumeLabel } from "@/lib/format-duration";
 import {
   reportPlayerError,
   usePlayer,
@@ -78,7 +78,7 @@ export function PlayEpisodeButton({ episode, name, copy }: Props) {
           }
         >
           <Play aria-hidden="true" className="fill-current" />
-          {named(`${copy.resume} ${copy.resumeFrom} ${formatDuration(saved)}`)}
+          {named(resumeLabel(copy, saved))}
         </Button>
         <Button
           type="button"
