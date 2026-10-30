@@ -55,8 +55,12 @@ export function offsetsAsItAppears(paragraph: Locator): Promise<number[]> {
   );
 }
 
-// Between lowered (24 px) and in place, the story passes through every
+// Between lowered (LOWERED_PX) and in place, the story passes through every
 // offset as it rises; with reduced motion it only jumps from one to the
 // other while it fades.
 export const movingOffsets = (offsets: number[]) =>
-  offsets.filter((offset) => offset > 0.5 && offset < 23.5);
+  offsets.filter((offset) => offset > 0.5 && offset < LOWERED_PX - 0.5);
+
+// How far below its place a waiting paragraph sits: STORY_HIDDEN.y in
+// src/components/hero-story.tsx.
+const LOWERED_PX = 24;

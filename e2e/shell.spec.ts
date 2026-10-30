@@ -63,8 +63,13 @@ test.describe("Header", () => {
 });
 
 test.describe("Mobile menu", () => {
-  test.beforeEach(({ isMobile }) => {
-    test.skip(!isMobile, "The menu replaces the header links on phones");
+  // Below Tailwind's md breakpoint, where the header's links give way to the
+  // menu. By width, not isMobile, which Firefox's phone project lacks.
+  test.beforeEach(({ viewport }) => {
+    test.skip(
+      (viewport?.width ?? 0) >= 768,
+      "The menu replaces the header links on phones"
+    );
   });
 
   test("opens and closes from the keyboard, keeping focus inside", async ({

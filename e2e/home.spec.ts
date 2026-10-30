@@ -1,9 +1,9 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 import {
-  movingOffsets,
   closingLine,
   motionLoaded,
+  movingOffsets,
   offsetsAsItAppears,
   reveal,
   scrollThrough,
