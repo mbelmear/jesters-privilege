@@ -1,3 +1,5 @@
+import type { EpisodeLabels, TimeUnits } from "./format-episode";
+
 // Plain data a content file can hold: what findDrafts and validateContent walk.
 export type ContentValue =
   | string
@@ -204,6 +206,24 @@ export type Home = {
   };
 };
 
+// The Episode page's own copy. The Show notes and titles come from the Feed.
+export type EpisodePage = EpisodeLabels & {
+  // How an Episode's length reads: "43 min", "1 hr 5 min".
+  readonly units: TimeUnits;
+  readonly play: string;
+  readonly showNotes: string;
+  readonly sequence: {
+    readonly label: string;
+    readonly previous: string;
+    readonly next: string;
+  };
+  readonly share: {
+    readonly button: string;
+    readonly copied: Copy;
+    readonly failed: Copy;
+  };
+};
+
 export type Content = {
   readonly site: Site;
   // Every painting sourced for the site, by id; the Gallery and other pages
@@ -216,6 +236,7 @@ export type Content = {
     readonly paragraphs: readonly string[];
   };
   readonly home: Home;
+  readonly episodePage: EpisodePage;
   readonly jesters: readonly Jester[];
   readonly gallery: Gallery;
   readonly about: About;

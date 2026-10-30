@@ -1,14 +1,17 @@
+import { basename, join } from "node:path";
+import { downloadText, type Fetch } from "./download";
+
 // Where the Feed comes from. Until Episode 1 is published, a fixture shaped like
-// the Spreaker feed stands in; its Episodes are draft copy.
+// the Spreaker feed stands in, with its Transcripts in a folder beside it; its
+// Episodes are draft copy.
 export type FeedSource =
-  { kind: "fixture"; path: string; draft: true } | { kind: "url"; url: string };
+  | { kind: "fixture"; path: string; transcripts: string; draft: true }
+  | { kind: "url"; url: string };
 
 export type FeedIO = {
-  fetch: (url: string) => Promise<FeedResponse>;
+  fetch: Fetch;
   readFile: (path: string) => Promise<string>;
 };
-
-type FeedResponse = Pick<Response, "ok" | "status" | "statusText" | "text">;
 
 // Any failure here fails the build, so the last good deploy stays live (ADR 0001).
 export async function loadFeedText(
@@ -19,7 +22,7 @@ export async function loadFeedText(
     case "fixture":
       return io.readFile(source.path);
     case "url":
-      return download(source.url, io);
+      return downloadText("Feed", source.url, io.fetch);
     default: {
       const unhandled: never = source;
       return unhandled;
@@ -27,18 +30,27 @@ export async function loadFeedText(
   }
 }
 
-async function download(url: string, io: FeedIO): Promise<string> {
-  let response: FeedResponse;
-  try {
-    response = await io.fetch(url);
-  } catch (error: unknown) {
-    const reason = error instanceof Error ? error.message : String(error);
-    throw new Error(`Feed ${url} couldn't be reached: ${reason}`);
+// How to fetch the Transcripts the Feed links to. The fixture's are files named
+// like the ones Spreaker serves.
+export function transcriptFetch(source: FeedSource, io: FeedIO): Fetch {
+  switch (source.kind) {
+    case "fixture":
+      return async (url) => {
+        const text = await io.readFile(
+          join(source.transcripts, basename(new URL(url).pathname))
+        );
+        return {
+          ok: true,
+          status: 200,
+          statusText: "OK",
+          text: async () => text,
+        };
+      };
+    case "url":
+      return io.fetch;
+    default: {
+      const unhandled: never = source;
+      return unhandled;
+    }
   }
-  if (!response.ok) {
-    throw new Error(
-      `Feed ${url} answered ${response.status} ${response.statusText}`
-    );
-  }
-  return response.text();
 }
