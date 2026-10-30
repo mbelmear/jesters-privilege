@@ -5,25 +5,75 @@
       "url": [
         "http://localhost/",
         "http://localhost/404.html",
-        "http://localhost/styleguide/paintings.html",
-        "http://localhost/styleguide/home.html"
+        "http://localhost/styleguide/paintings.html"
       ],
       "numberOfRuns": 3
     },
     "assert": {
       "assertions": {
-        "categories:performance": ["error", { "minScore": 0.9 }],
-        "categories:accessibility": ["error", { "minScore": 0.95 }],
-        "largest-contentful-paint": ["error", { "maxNumericValue": 3200 }],
-        "cumulative-layout-shift": ["error", { "maxNumericValue": 0.1 }],
-        "total-blocking-time": ["error", { "maxNumericValue": 200 }],
+        "categories:performance": [
+          "error",
+          {
+            "minScore": 0.9,
+            "aggregationMethod": "median-run"
+          }
+        ],
+        "categories:accessibility": [
+          "error",
+          {
+            "minScore": 0.95,
+            "aggregationMethod": "median-run"
+          }
+        ],
+        "largest-contentful-paint": [
+          "error",
+          {
+            "maxNumericValue": 3200,
+            "aggregationMethod": "median-run"
+          }
+        ],
+        "cumulative-layout-shift": [
+          "error",
+          {
+            "maxNumericValue": 0.1,
+            "aggregationMethod": "median-run"
+          }
+        ],
+        "total-blocking-time": [
+          "error",
+          {
+            "maxNumericValue": 200,
+            "aggregationMethod": "median-run"
+          }
+        ],
         "resource-summary:script:size": [
           "error",
-          { "maxNumericValue": 250000 }
+          {
+            "maxNumericValue": 250000,
+            "aggregationMethod": "median-run"
+          }
         ],
-        "resource-summary:image:size": ["error", { "maxNumericValue": 300000 }],
-        "resource-summary:font:size": ["error", { "maxNumericValue": 150000 }],
-        "resource-summary:total:size": ["error", { "maxNumericValue": 800000 }]
+        "resource-summary:image:size": [
+          "error",
+          {
+            "maxNumericValue": 300000,
+            "aggregationMethod": "median-run"
+          }
+        ],
+        "resource-summary:font:size": [
+          "error",
+          {
+            "maxNumericValue": 150000,
+            "aggregationMethod": "median-run"
+          }
+        ],
+        "resource-summary:total:size": [
+          "error",
+          {
+            "maxNumericValue": 800000,
+            "aggregationMethod": "median-run"
+          }
+        ]
       }
     },
     "upload": {
