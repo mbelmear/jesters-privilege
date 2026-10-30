@@ -30,12 +30,20 @@ async function main() {
   // fixed ports, and serve would quietly move off a busy one.
   const server = spawn(
     join("node_modules", ".bin", "serve"),
-    ["out", "--listen", String(port), "--no-request-logging"],
+    [
+      "out",
+      "--listen",
+      String(port),
+      "--no-port-switching",
+      "--no-request-logging",
+    ],
     { stdio: ["ignore", "ignore", "inherit"] }
   );
   const exited = new Promise<never>((_, reject) => {
-    server.on("exit", (code) =>
-      reject(new Error(`serve stopped (exit ${code ?? "?"}) on port ${port}`))
+    server.on("exit", (code, signal) =>
+      reject(
+        new Error(`serve stopped (${code ?? signal ?? "?"}) on port ${port}`)
+      )
     );
   });
   const browser = await Promise.race([chromium.launch(), exited]).catch(
@@ -55,6 +63,8 @@ async function main() {
         // before the scroll that should trigger it.
         await tab.waitForLoadState("networkidle");
         if (size === "phone" && colorScheme === "light") {
+          // The first screen's own reveal takes most of a second to rise.
+          await tab.waitForTimeout(1200);
           await tab.screenshot({
             path: join(folder, "phone-first-screen.png"),
           });
@@ -67,9 +77,9 @@ async function main() {
       }
     }
   } finally {
-    await browser.close();
     server.removeAllListeners("exit");
     server.kill();
+    await browser.close();
   }
 }
 
