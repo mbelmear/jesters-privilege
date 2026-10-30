@@ -24,14 +24,22 @@ const OUT = path.join(PUBLIC, IMAGE_ROOT);
 
 // What a phone downloads of a painting must stay near 150 KB (#13,
 // docs/testing.md), or the build fails; the limit leaves headroom for a busy
-// canvas. Phones run to 430 CSS px at 3×. A band spans the screen and shows
-// its portrait crop there; a framed painting shows whole at no more than
-// 90vw. Each takes the first srcset width that covers it.
+// canvas. "Phone" means one held upright, up to 430 CSS px at 3×: there a band
+// spans the screen with its portrait crop, and a framed painting shows whole
+// at no more than 90vw (the sizes in painting-band.tsx and
+// framed-painting.tsx). Each takes the first srcset width that covers it.
+// A phone turned sideways, at 48rem or wider, gets the desktop layout and its
+// larger files, which this doesn't check.
 const PHONE_BYTES = 180_000;
 const PHONE_PIXELS = 430 * 3;
 const phoneWidth = (fraction: number) =>
   IMAGE_SIZES.deviceSizes.find((width) => width >= PHONE_PIXELS * fraction) ??
-  PHONE_PIXELS;
+  failNoPhoneWidth(fraction);
+function failNoPhoneWidth(fraction: number): never {
+  throw new Error(
+    `No deviceSizes width in src/lib/images.ts covers a ${PHONE_PIXELS}px phone at ${fraction * 100}vw; add one`
+  );
+}
 const PHONE_WIDTHS = { crop: phoneWidth(1), whole: phoneWidth(0.9) };
 
 const ENCODING = {
