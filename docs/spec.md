@@ -171,7 +171,7 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
 
 - Transcripts are fetched at build time from Spreaker's WebVTT file for each Episode.
 - A **Transcript module** turns the caption cues into readable paragraphs, each with a start timestamp. It groups cues on pauses and sentence ends, within a target paragraph length.
-- A missing or unreachable Transcript leaves that Episode without one and doesn't fail the build.
+- A missing, unreachable, or unreadable Transcript leaves that Episode without one and doesn't fail the build. The build log names the Episode and why.
 - On the page, the Transcript is a secondary section below the Show notes:
   - It's collapsed to a faded preview with "Read the full transcript". The full text is always in the HTML so search engines can index it.
   - Each paragraph has a timestamp in the margin, like verse numbers.
