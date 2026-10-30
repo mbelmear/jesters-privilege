@@ -210,7 +210,10 @@ export function findImages(value: ContentValue): FoundImage[] {
   return [...found.values()];
 }
 
-function asImage(path: string, node: ContentValue): FoundImage | undefined {
+function asImage(
+  contentPath: string,
+  node: ContentValue
+): FoundImage | undefined {
   if (!isRecord(node)) return undefined;
   const { src, width, height, focalPoint } = node;
   if (
@@ -220,7 +223,7 @@ function asImage(path: string, node: ContentValue): FoundImage | undefined {
   ) {
     return undefined;
   }
-  const image = { contentPath: path, src, width, height };
+  const image = { contentPath, src, width, height };
   if (
     isRecord(focalPoint) &&
     typeof focalPoint.x === "number" &&

@@ -11,17 +11,29 @@ import path from "node:path";
 import sharp from "sharp";
 import { content } from "@/content";
 import { findImages, type FoundImage } from "@/lib/content";
-import { IMAGE_ROOT, imageFolder, planImage, type Variant } from "@/lib/images";
+import {
+  IMAGE_ROOT,
+  IMAGE_SIZES,
+  imageFolder,
+  planImage,
+  type Variant,
+} from "@/lib/images";
 
 const PUBLIC = "public";
 const OUT = path.join(PUBLIC, IMAGE_ROOT);
 
-// A phone downloads a painting's AVIF at up to 1200px wide (a 3× screen);
-// each must stay near 150 KB (#13, docs/testing.md), or the build fails.
-const PHONE_WIDTH = 1200;
+// What a phone downloads of a painting must stay near 150 KB (#13,
+// docs/testing.md), or the build fails; the limit leaves headroom for a busy
+// canvas. Phones run to 430 CSS px at 3×. A band spans the screen and shows
+// its portrait crop there; a framed painting shows whole at no more than
+// 90vw. Each takes the first srcset width that covers it.
 const PHONE_BYTES = 180_000;
+const PHONE_PIXELS = 430 * 3;
+const phoneWidth = (fraction: number) =>
+  IMAGE_SIZES.deviceSizes.find((width) => width >= PHONE_PIXELS * fraction) ??
+  PHONE_PIXELS;
+const PHONE_WIDTHS = { crop: phoneWidth(1), whole: phoneWidth(0.9) };
 
-// Tuned so a phone's painting stays near 150 KB.
 const ENCODING = {
   avif: { quality: 45, effort: 6 },
   webp: { quality: 72, effort: 4 },
@@ -67,25 +79,28 @@ async function makeSet(image: FoundImage, folder: string): Promise<boolean> {
   }
   await rm(folder, { recursive: true, force: true });
   await mkdir(folder, { recursive: true });
-  const sizes = await Promise.all(
-    variants.map((variant) => encode(source, variant))
+  const made = await Promise.all(
+    variants.map(async (variant) => ({
+      variant,
+      bytes: await encode(source, variant),
+    }))
   );
-  if (image.focalPoint) assertPhoneSizes(image, variants, sizes);
+  // Only paintings carry a focal point (the Painting type requires one).
+  if (image.focalPoint) assertPhoneSizes(image, made);
   await writeFile(stampFile, stamp);
   return true;
 }
 
-// A painting's phone files (those with a focal point are paintings).
+// Fails when a file a phone would download of this painting is too heavy.
 function assertPhoneSizes(
   image: FoundImage,
-  variants: Variant[],
-  sizes: number[]
+  made: { variant: Variant; bytes: number }[]
 ): void {
-  for (const [index, variant] of variants.entries()) {
-    const bytes = sizes[index] ?? 0;
+  for (const { variant, bytes } of made) {
+    const widest = variant.crop ? PHONE_WIDTHS.crop : PHONE_WIDTHS.whole;
     if (
       variant.format === "avif" &&
-      variant.width <= PHONE_WIDTH &&
+      variant.width <= widest &&
       bytes > PHONE_BYTES
     ) {
       throw new Error(
