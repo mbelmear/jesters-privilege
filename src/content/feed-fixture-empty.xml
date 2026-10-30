@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  The Jester's Privilege feed before Episode 1 is published: the channel of
+  feed-fixture.xml with no Episodes. `FEED=empty npm run build` builds the
+  site from it, to test the coming-soon state (docs/testing.md).
+-->
+<rss xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:podcast="https://podcastindex.org/namespace/1.0" xmlns:media="http://search.yahoo.com/mrss/" version="2.0">
+<channel>
+<title>Jester's Privilege</title>
+<link>https://www.spreaker.com/podcast/jester-s-privilege--6900001</link>
+<description><![CDATA[A weekly theology-and-humor podcast from three Jesters who serve the King.]]></description>
+<atom:link href="https://www.spreaker.com/show/6900001/episodes/feed" rel="self" type="application/rss+xml"/>
+<language>en</language>
+<category>Christianity</category>
+<copyright>Copyright Jester's Privilege</copyright>
+<image><url>https://jestersprivilegepodcast.com/brand/logo-draft.png</url><title>Jester's Privilege</title><link>https://www.spreaker.com/podcast/jester-s-privilege--6900001</link></image>
+<lastBuildDate>Thu, 14 Jan 2027 12:00:00 +0000</lastBuildDate>
+<itunes:author>Jester's Privilege</itunes:author>
+<itunes:owner><itunes:name>Jester's Privilege</itunes:name><itunes:email>hello@jestersprivilegepodcast.com</itunes:email></itunes:owner>
+<itunes:image href="https://jestersprivilegepodcast.com/brand/logo-draft.png"/>
+<itunes:summary><![CDATA[A weekly theology-and-humor podcast from three Jesters who serve the King.]]></itunes:summary>
+<itunes:category text="Religion &amp; Spirituality"><itunes:category text="Christianity"/></itunes:category>
+<itunes:explicit>clean</itunes:explicit>
+<itunes:type>episodic</itunes:type>
+</channel>
+</rss>

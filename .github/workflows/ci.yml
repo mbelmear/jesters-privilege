@@ -68,6 +68,27 @@ jobs:
           retention-days: 14
           if-no-files-found: error
 
+  # The site before Episode 1: a full build from the empty feed, which fails
+  # if any route can't export with no Episodes, then the coming-soon journey.
+  e2e-empty-feed:
+    name: Playwright, empty feed (Chromium, WebKit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
+      - run: npm run build:empty-feed
+      - uses: ./.github/actions/playwright-browsers
+        with:
+          browsers: chromium webkit
+      - run: npm run test:e2e:empty-feed
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-empty-feed
+          path: playwright-report/
+          retention-days: 14
+          if-no-files-found: ignore
+
   lighthouse:
     name: Lighthouse (mobile budget)
     needs: build

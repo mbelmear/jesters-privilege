@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
+import { closingLine, reveal, scrollThrough } from "./hero-story";
 
 // The home page design at the mockup gate (#14): both hero options, each at
 // its own address.
@@ -7,28 +8,6 @@ const OPTIONS = [
   { name: "Reveal on scroll", path: "/styleguide/home" },
   { name: "Simple", path: "/styleguide/home/simple" },
 ] as const;
-
-const closingLine = (page: Page) =>
-  page.getByText("This is Jester's Privilege.", { exact: true });
-
-// Brings every section into view, so the reveal and lazy images have run.
-// Each story paragraph is held in view until it shows: the reveal plays only
-// while a paragraph is on screen, and on a slow runner Motion may still be
-// loading as a quick scroll passes it.
-async function scrollThrough(page: Page) {
-  // The jester story: four paragraphs under the logo heading.
-  const story = page.locator("h1 + div > p");
-  await expect(story).toHaveCount(4);
-  for (const paragraph of await story.all()) {
-    await paragraph.evaluate((el) => el.scrollIntoView({ block: "center" }));
-    await expect(paragraph).toHaveCSS("opacity", "1");
-  }
-  const height = await page.evaluate(() => document.body.scrollHeight);
-  for (let y = 0; y <= height; y += 300) {
-    await page.evaluate((top) => window.scrollTo(0, top), y);
-    await page.waitForTimeout(50);
-  }
-}
 
 for (const option of OPTIONS) {
   test.describe(`Home preview (${option.name})`, () => {
@@ -117,10 +96,7 @@ test.describe("Home preview hero switch", () => {
     await page.goto("/styleguide/home");
     await expect(closingLine(page)).not.toBeInViewport();
     await expect(closingLine(page)).toHaveCSS("opacity", "0");
-    await closingLine(page).evaluate((el) =>
-      el.scrollIntoView({ block: "center" })
-    );
-    await expect(closingLine(page)).toHaveCSS("opacity", "1");
+    await reveal(closingLine(page));
   });
 
   test("the simple hero shows the whole story at once", async ({ page }) => {
@@ -134,10 +110,7 @@ test.describe("Home preview with reduced motion", () => {
 
   test("the revealed story fades in without moving", async ({ page }) => {
     await page.goto("/styleguide/home");
-    await closingLine(page).evaluate((el) =>
-      el.scrollIntoView({ block: "center" })
-    );
-    await expect(closingLine(page)).toHaveCSS("opacity", "1");
+    await reveal(closingLine(page));
     await expect(closingLine(page)).toHaveCSS("transform", "none");
   });
 });

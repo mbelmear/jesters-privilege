@@ -214,6 +214,18 @@
       scale: 1.06;
     }
   }
+
+  /* The revealed jester story renders hidden until Motion shows it, so if
+     Motion is slow or never loads it shows anyway after a moment: an
+     animation's value outranks the hidden inline style. HeroReveal drops it
+     once Motion loads, and shows it at once without JavaScript. */
+  --animate-story-fallback: story-fallback 0s 4s forwards;
+  @keyframes story-fallback {
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
 }
 
 /* Reduced motion, site-wide: CSS animations and transitions end at once.

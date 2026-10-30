@@ -12,8 +12,14 @@ const port = PORT_BASE + (pathHash.readUInt16BE(0) % PORT_SPAN);
 // Firefox has no mobile emulation, so its phone project borrows this viewport.
 const phone = { width: 390, height: 844 };
 
+// `FEED=empty` runs only the coming-soon journey (tagged @empty-feed), which
+// needs a build from the empty feed; otherwise it is left out.
+const emptyFeed = process.env.FEED === "empty";
+
 export default defineConfig({
   testDir: "./e2e",
+  grep: emptyFeed ? /@empty-feed/ : undefined,
+  grepInvert: emptyFeed ? undefined : /@empty-feed/,
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,

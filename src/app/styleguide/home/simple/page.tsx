@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { HeroStory } from "@/components/hero";
+import { HeroStory } from "@/components/hero-story";
 import { hero } from "@/content/hero";
 import { site } from "@/content/site";
 import { styleguide } from "@/content/styleguide";

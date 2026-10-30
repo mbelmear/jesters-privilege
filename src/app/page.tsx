@@ -1,24 +1,60 @@
 import { DraftRibbon } from "@/components/draft-ribbon";
-import { ThemedLogo } from "@/components/themed-logo";
-import { content } from "@/content";
+import { FleuronRule } from "@/components/fleuron-rule";
+import { GalleryTeaser } from "@/components/gallery-teaser";
+import { Hero } from "@/components/hero";
+import { HeroReveal } from "@/components/hero-reveal";
+import { LatestEpisode } from "@/components/latest-episode";
+import { ListenButtons } from "@/components/listen-buttons";
+import { MeetTheJesters } from "@/components/meet-the-jesters";
+import { content, sectionHref } from "@/content";
+import { feedSource, getEpisodes } from "@/content/feed";
 
-export default function Home() {
-  const { site, shell, hero } = content;
+// The home page as the Jesters approved it at the mockup gate (#14), with the
+// jester story revealed a paragraph at a time as the visitor scrolls (#58).
+export default async function Home() {
+  const { site, shell, hero, home, jesters, microcopy, paintings } = content;
+  const [latest] = await getEpisodes();
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-4 px-4 py-16 text-center">
-      <DraftRibbon uses={[shell, site, hero]} />
-      {/* The logo is the heading; the label names it once, as only one of
-          its two images shows. */}
-      <h1 aria-label={site.name} className="w-64 sm:w-80">
-        <ThemedLogo
-          logo={hero.logo}
-          alt={shell.logo.alt}
-          sizes="(width < 40rem) 256px, 320px"
-          loading="largest-paint"
-          className="h-auto w-full"
-        />
-      </h1>
-      <p className="max-w-md text-lg">{site.description.text}</p>
+    <div className="flex flex-col gap-16 pb-20 sm:gap-20">
+      <DraftRibbon
+        uses={[
+          shell,
+          site,
+          hero,
+          home,
+          jesters,
+          microcopy.newToPodcasts,
+          microcopy.comingSoon,
+          paintings.stanczyk,
+          feedSource,
+        ]}
+      />
+      <Hero logo={hero.logo} name={site.name}>
+        <HeroReveal paragraphs={hero.paragraphs} />
+      </Hero>
+      <ListenButtons
+        links={site.listen}
+        copy={home.listen}
+        newToPodcasts={microcopy.newToPodcasts}
+      />
+      <FleuronRule className="mx-auto w-full max-w-xs px-4" />
+      {/* Play leads to the Episode page until the player arrives (#19). */}
+      <LatestEpisode
+        episode={latest}
+        copy={home.latestEpisode}
+        comingSoon={microcopy.comingSoon}
+      />
+      <GalleryTeaser
+        painting={paintings.stanczyk}
+        copy={home.gallery}
+        galleryHref={sectionHref("Fools' Gallery")}
+      />
+      <FleuronRule className="mx-auto w-full max-w-xs px-4" />
+      <MeetTheJesters
+        jesters={jesters}
+        copy={home.jesters}
+        aboutHref={sectionHref("About")}
+      />
     </div>
   );
 }

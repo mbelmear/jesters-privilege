@@ -52,6 +52,16 @@ npx playwright test --ui    # interactive runner
 
 Specs live in `e2e/`. Every page should get an axe scan (`@axe-core/playwright`) and a no-horizontal-scroll check at phone width. Project names follow `<browser>-<size>`, so `--project=webkit-phone` runs a single combination.
 
+The site before Episode 1 is published has its own build. `FEED=empty` swaps the Feed for `src/content/feed-fixture-empty.xml`, a channel with no Episodes, and runs only the tests tagged `@empty-feed` (`e2e/coming-soon.spec.ts`), which the normal run leaves out:
+
+```bash
+npm run build:empty-feed
+npm run test:e2e:empty-feed
+npm run build               # before testing the normal site again
+```
+
+That build is the only check that every route still exports with no Episodes, since a static export refuses a route with no pages (CODING_STANDARDS.md, React).
+
 CI runners are slower than a laptop, so a timing assertion ("finishes at once") first waits for a state that proves the code it times has loaded, such as the first animation completing; otherwise it measures the download, passes locally, and fails in CI. Then it counts rendered frames, not milliseconds: it waits for the thing it times to begin, such as the replayed element mounting, awaits two `requestAnimationFrame`s inside `evaluate`, and measures once. CI's WebKit sometimes renders no frames for most of a second, and Motion applies even an instant reduced-motion value on the next frame, so a short `expect.poll` window flakes there (#60). Likewise, let an opening animation finish before an axe scan, since axe samples colors mid-fade. A reveal on scroll (`whileInView` with `once`) plays only while its element is on screen, so a test holds each element in view until it shows; a quick scroll can pass it before Motion has loaded.
 
 Playwright's actions (`click`, `scrollIntoViewIfNeeded`) wait for an element to hold still, so one that animates without end, such as a painting band's slow zoom, stalls them until the test times out; scroll it with `locator.evaluate((el) => el.scrollIntoView())`.
@@ -86,7 +96,7 @@ The budget lives in `lighthouserc.json`. Each figure is asserted on its median a
 
 The Largest Contentful Paint budget was 2.5 s until the site shell (#12) arrived. Lighthouse simulates a throttled load from every byte requested before the first paint, and the header's script plus the UI typeface on every page put the bare home page at a steady 2.75 s (it paints in about 40 ms unthrottled). Menu code, a smaller logo, and a single UI weight didn't move that figure, so the budget moved to 3.0 s.
 
-It rose to 3.2 s with the painting pipeline (#13). A page whose largest paint is an image waits behind the same early bytes, plus the image's own request: the paintings page (`/styleguide/paintings`, a band on the first screen and framed paintings below) simulates at 3.05 s, and still at 2.9 s with its band swapped for a 2 KB file, so the floor comes from the shell, not the painting. Every Fools' Gallery page has that shape. Text-led pages sit lower (the 404 page is at 2.6 s). The home page rose from 2.6 s to 2.98 s when its largest paint became the logo above the intro (#55). The home page mockup (#14, `/styleguide/home`) is over the budget: 2.72, 3.49, and 3.50 s in CI with the reveal hero, and locally a median of 3.43 s with the simple hero and 3.73 s with the reveal, against 2.9 s for the bare home page. Two things cost it:
+It rose to 3.2 s with the painting pipeline (#13). A page whose largest paint is an image waits behind the same early bytes, plus the image's own request: the paintings page (`/styleguide/paintings`, a band on the first screen and framed paintings below) simulates at 3.05 s, and still at 2.9 s with its band swapped for a 2 KB file, so the floor comes from the shell, not the painting. Every Fools' Gallery page has that shape. Text-led pages sit lower (the 404 page is at 2.6 s). The home page rose from 2.6 s to 2.98 s when its largest paint became the logo above the intro (#55). The home page mockup (#14, `/styleguide/home`) was over the budget: 2.72, 3.49, and 3.50 s in CI with the reveal hero, and locally a median of 3.43 s with the simple hero and 3.73 s with the reveal, against 2.9 s for the bare home page. Two things cost it:
 
 - **Extended-Latin fonts (#57).** "Stańczyk" in the Gallery teaser and on his placard pulled in Google's latin-ext files of the body face (41 KB) and the UI face (10 KB): fonts went from 83 KB to 135 KB, and first paint from 1.05 s to 1.5 s. The fonts are now self-hosted subsets that carry the ń (see Fonts below). Measured locally against main, medians of three runs:
 
@@ -98,9 +108,9 @@ It rose to 3.2 s with the painting pipeline (#13). A page whose largest paint is
   | `/`                                | 2.90 s, fonts 85 KB  | 2.90 s, fonts 79 KB |
   | `/404`                             | 2.60 s, fonts 85 KB  | 2.52 s, fonts 79 KB |
 
-  The simple mockup is back in `lighthouserc.json`. The reveal hero is still over the budget, by Motion alone.
+  The simple mockup is back in `lighthouserc.json`. That left the reveal hero over the budget by Motion alone, until #20 (below).
 
-- **Motion, for the reveal hero only (52 KB of script, about 0.3 s).** Each preview page composes its own hero story, so the simple option ships no Motion. The real home page (#20) should import only the option the Jesters pick; the reveal would need its Motion cost cut to fit.
+- **Motion, for the reveal hero (52 KB of script, about 0.3 s).** The home page (#20) uses the reveal, so `HeroReveal` draws the story hidden without Motion and loads Motion in its own chunk once React is running, after the first paint. That took `/` from 3.35 s to between 2.56 s and 3.06 s locally (medians of three, across runs), with early script from 212 KB to 161 KB. The preview pages share `HeroReveal`, so `/styleguide/home` gains the same.
 
 Before pushing a change to the header, the footer, the root layout, or the first screen of a page, compare it with main: everything those fetch counts against every page's largest paint.
 
@@ -154,7 +164,7 @@ The pre-commit hook formats staged files with Prettier, so `format:check` only f
 
 1. **Format, lint, typecheck, unit tests**, with coverage
 2. **Build static site**, shared with the next two jobs
-3. **Playwright** on Chromium and WebKit, with browsers cached between runs
+3. **Playwright** on Chromium and WebKit, with browsers cached between runs, and the coming-soon journey against its own build from the empty feed
 4. **Lighthouse** with the mobile budget
 
 `.github/workflows/nightly.yml` runs the Playwright suite on Firefox every night, and can be started by hand from the Actions tab.
