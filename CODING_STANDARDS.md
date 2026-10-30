@@ -16,7 +16,7 @@ Reviewers skip these; the rules below are the ones that need judgement.
 
 ## TypeScript
 
-- **Outside data enters as `unknown` and is narrowed at the boundary.** The boundaries are the feed text, Transcript WebVTT, the Submit request body, anything read from `localStorage`, and `catch` variables. A validator or type guard at that boundary turns `unknown` into a domain type or throws a descriptive error; past the boundary, code works only with domain types. `unknown` that leaves its boundary validator (the receiving function and the non-exported helpers it calls) is a finding.
+- **Outside data enters as `unknown` and is narrowed at the boundary.** The boundaries are the feed text, Transcript WebVTT, the Submit request body, anything read from `localStorage`, and `catch` variables. A validator or type guard at that boundary turns `unknown` into a domain type or throws a descriptive error; past the boundary, code works only with domain types. `Array.isArray` and `Object.entries` on an unknown value give `any`, which lint can miss; annotate their results as `unknown[]` and `[string, unknown][]`. `unknown` that leaves its boundary validator (the receiving function and the non-exported helpers it calls) is a finding.
 - **Domain concepts get named types in `GLOSSARY.md` vocabulary**: `Episode`, `Fool`, `Jester`, `Submission`. A closed set is a union of string literals (`"question" | "confession" | "topic-idea" | "other"`), with one exported list as the source of truth for code that iterates it.
 - **Illegal states are unrepresentable.** State with modes (the player store, the Submit form) is a discriminated union, where each variant carries exactly the fields that mode has, in place of booleans plus optional fields.
 - **Switches over a union are exhaustive**, ending in a `never` check so a new variant fails to compile everywhere it needs handling.
@@ -27,7 +27,7 @@ Reviewers skip these; the rules below are the ones that need judgement.
 
 - **Server Components by default.** `"use client"` goes on the smallest component that needs state, effects, or browser APIs, as far down the tree as it can sit.
 - **Components receive what they show.** Copy and data arrive through props from content files or the Feed; a component holds presentation and interaction only.
-- **The player store is the only owner of playback.** Archive rows, Episode pages, the Transcript, and the player UI send commands to the store and render its state; only the audio adapter touches the `<audio>` element.
+- **The player store is the only owner of playback.** Archive rows, Episode pages, the Transcript, and the player UI send commands to the store and render its state; only the audio adapter touches the `<audio>` element. The audio element is the source of truth for an Episode's length and for reaching its end; the Feed's `durationSeconds` is a placeholder until the element reports its own.
 - **Derive during render.** A value computable from props or state is computed where it's used. Effects are for syncing with something outside React (the audio element, `localStorage`, the theme on `<html>`).
 - **Semantic HTML first.** Native elements (`button`, `a`, `nav`, `dialog`, headings in order) carry the behaviour; ARIA fills gaps no element covers. Every interactive element is reachable by keyboard and shows focus.
 - **Lists are keyed by identity**: a stable id such as the Episode number, never array index.

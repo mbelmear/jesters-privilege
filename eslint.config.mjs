@@ -44,6 +44,12 @@ const eslintConfig = defineConfig([
       "@typescript-eslint/no-unsafe-member-access": "error",
       "@typescript-eslint/no-unsafe-return": "error",
       "@typescript-eslint/no-non-null-assertion": "error",
+      // A promise's failure is handled or returned, never dropped: `void` on
+      // a promise hides its rejection, as a lock-screen play once did (#15).
+      "@typescript-eslint/no-floating-promises": [
+        "error",
+        { ignoreVoid: false },
+      ],
       // Only `as const`. Tests may assert to build partial fixtures.
       "@typescript-eslint/consistent-type-assertions": [
         "error",

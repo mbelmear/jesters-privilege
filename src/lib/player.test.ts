@@ -1,8 +1,7 @@
+import { FakeAudio } from "./fake-audio";
 import type { Episode } from "./feed";
 import {
   createPlayer,
-  type AudioAdapter,
-  type AudioEvent,
   type MediaAction,
   type MediaActionDetails,
   type MediaActionHandler,
@@ -37,53 +36,6 @@ const secondEpisode = episode({
   artworkUrl: "https://example.com/ep-2.jpg",
 } as Partial<Episode>);
 
-// Behaves like an <audio> element: commands change it, and it reports back
-// through events, as the element does.
-class FakeAudio implements AudioAdapter {
-  src: string | null = null;
-  position = 0;
-  rate = 1;
-  playing = false;
-  rejectPlay = false;
-  private listeners = new Set<(event: AudioEvent) => void>();
-
-  load(src: string) {
-    this.src = src;
-    this.position = 0;
-    this.playing = false;
-  }
-  play() {
-    if (this.rejectPlay)
-      return Promise.reject(new DOMException("Blocked", "NotAllowedError"));
-    this.playing = true;
-    this.emit({ type: "play" });
-    return Promise.resolve();
-  }
-  pause() {
-    this.playing = false;
-    this.emit({ type: "pause" });
-  }
-  seek(seconds: number) {
-    this.position = seconds;
-    this.emit({ type: "time", position: seconds });
-  }
-  setRate(rate: number) {
-    this.rate = rate;
-  }
-  subscribe(listener: (event: AudioEvent) => void) {
-    this.listeners.add(listener);
-    return () => this.listeners.delete(listener);
-  }
-  emit(event: AudioEvent) {
-    for (const listener of this.listeners) listener(event);
-  }
-  // Playback reaching a moment on its own.
-  playTo(seconds: number) {
-    this.position = seconds;
-    this.emit({ type: "time", position: seconds });
-  }
-}
-
 function setup(overrides: Partial<PlayerDeps> = {}) {
   const audio = new FakeAudio();
   const player = createPlayer({ audio, ...overrides });
@@ -112,7 +64,7 @@ describe("player", () => {
   it("follows the audio's position and its real duration", async () => {
     const { audio, player } = setup();
     await player.play(episode());
-    audio.emit({ type: "duration", duration: 3012.5 });
+    audio.reportDuration(3012.5);
     audio.playTo(42);
     expect(player.getState()).toMatchObject({ position: 42, duration: 3012.5 });
   });
@@ -221,7 +173,7 @@ describe("player", () => {
   it("seeks, keeping within the Episode", async () => {
     const { audio, player } = setup();
     await player.play(episode());
-    audio.emit({ type: "duration", duration: 3000 });
+    audio.reportDuration(3000);
     player.seek(1500);
     expect(audio.position).toBe(1500);
     expect(player.getState()).toMatchObject({ position: 1500 });
@@ -244,7 +196,7 @@ describe("player", () => {
   it("doesn't skip past either end", async () => {
     const { audio, player } = setup();
     await player.play(episode());
-    audio.emit({ type: "duration", duration: 3000 });
+    audio.reportDuration(3000);
     audio.playTo(5);
     player.skipBack();
     expect(audio.position).toBe(0);
@@ -305,7 +257,7 @@ describe("player", () => {
       const session = fakeMediaSession();
       const { audio, player } = setup({ mediaSession: session.adapter });
       await player.play(episode());
-      audio.emit({ type: "duration", duration: 3000 });
+      audio.reportDuration(3000);
       audio.playTo(100);
       return { audio, player, session };
     }
@@ -478,7 +430,7 @@ describe("player", () => {
       const { audio, player } = setup({ storage });
       await player.play(episode());
       audio.playTo(2999);
-      audio.emit({ type: "ended" });
+      audio.end();
       expect(player.getState().finished.has("ep-1")).toBe(true);
       expect(player.getState().mode).toBe("paused");
       const later = setup({ storage }).player;
@@ -504,8 +456,7 @@ describe("player", () => {
       const { audio, player } = setup({ storage: refusing });
       await player.play(episode());
       audio.playTo(100);
-      player.pause();
-      audio.emit({ type: "ended" });
+      audio.end();
       expect(player.getState().finished.has("ep-1")).toBe(true);
       expect(player.savedPosition("ep-1")).toBeNull();
       expect(player.resumeOffer()).toBeNull();
@@ -538,8 +489,16 @@ describe("player", () => {
     const { audio, player } = setup();
     await player.play(episode());
     audio.playTo(3000);
-    audio.emit({ type: "ended" });
+    audio.end();
+    // A real element restarts by itself, after the store reports playing;
+    // the store shows the start from its first word.
+    const shown: number[] = [];
+    player.subscribe(() => {
+      const state = player.getState();
+      if (state.mode === "playing") shown.push(state.position);
+    });
     await player.play(episode());
+    expect(shown[0]).toBe(0);
     expect(audio.position).toBe(0);
     expect(player.getState()).toMatchObject({ mode: "playing", position: 0 });
   });
@@ -575,7 +534,7 @@ describe("player", () => {
   it("carries on from the very end when sought there, rather than restarting", async () => {
     const { audio, player } = setup();
     await player.play(episode());
-    audio.emit({ type: "duration", duration: 3000 });
+    audio.reportDuration(3000);
     player.pause();
     player.seek(3000);
     await player.resume();
