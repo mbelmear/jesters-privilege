@@ -12,13 +12,22 @@ const closingLine = (page: Page) =>
   page.getByText("This is Jester's Privilege.", { exact: true });
 
 // Brings every section into view, so the reveal and lazy images have run.
+// Each story paragraph is held in view until it shows: the reveal plays only
+// while a paragraph is on screen, and on a slow runner Motion may still be
+// loading as a quick scroll passes it.
 async function scrollThrough(page: Page) {
+  // The jester story: four paragraphs under the logo heading.
+  const story = page.locator("h1 + div > p");
+  await expect(story).toHaveCount(4);
+  for (const paragraph of await story.all()) {
+    await paragraph.evaluate((el) => el.scrollIntoView({ block: "center" }));
+    await expect(paragraph).toHaveCSS("opacity", "1");
+  }
   const height = await page.evaluate(() => document.body.scrollHeight);
   for (let y = 0; y <= height; y += 300) {
     await page.evaluate((top) => window.scrollTo(0, top), y);
     await page.waitForTimeout(50);
   }
-  await expect(closingLine(page)).toHaveCSS("opacity", "1");
 }
 
 for (const option of OPTIONS) {
