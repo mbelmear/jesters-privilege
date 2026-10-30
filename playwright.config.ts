@@ -1,11 +1,13 @@
 import { createHash } from "node:crypto";
 import { defineConfig, devices } from "@playwright/test";
 
-// Each worktree serves its own out/ on its own port, so parallel sessions
-// never test one another's build. A taken port fails the run rather than
-// being reused.
-const worktree = createHash("sha1").update(process.cwd()).digest();
-const port = 20000 + (worktree.readUInt16BE(0) % 10000);
+// Each worktree serves its own out/ on its own port, picked from its path in
+// a range clear of common dev servers, so parallel sessions never test one
+// another's build. A taken port fails the run rather than being reused.
+const PORT_BASE = 20000;
+const PORT_SPAN = 10000;
+const pathHash = createHash("sha1").update(__dirname).digest();
+const port = PORT_BASE + (pathHash.readUInt16BE(0) % PORT_SPAN);
 
 // Firefox has no mobile emulation, so its phone project borrows this viewport.
 const phone = { width: 390, height: 844 };

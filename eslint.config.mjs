@@ -126,9 +126,9 @@ const eslintConfig = defineConfig([
         "error",
         {
           selector:
-            "CallExpression[callee.object.name='expect'][callee.property.name='poll'] > ObjectExpression > Property[key.name='timeout'][value.value<1000]",
+            "CallExpression[callee.object.name='expect'][callee.property.name='poll'] > ObjectExpression > Property:matches([key.name='timeout'], [key.value='timeout'])[value.value<1000]",
           message:
-            "Sub-second expect.poll timeout. Count rendered frames instead: await two requestAnimationFrames inside evaluate, then measure once (docs/testing.md, Browser tests).",
+            "Sub-second expect.poll timeout. Count rendered frames instead: await two requestAnimationFrames inside evaluate, then measure once (docs/testing.md, Browser tests (Playwright)).",
         },
       ],
     },
