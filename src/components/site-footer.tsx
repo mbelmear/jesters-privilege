@@ -1,8 +1,10 @@
+import { ThemedLogo } from "@/components/themed-logo";
 import { SOCIAL_NETWORKS, type Shell, type Site } from "@/lib/content";
 
 type Props = {
   site: Site;
   copy: Shell["footer"];
+  logo: Shell["logo"];
   // The copyright year, from the build.
   year: number;
 };
@@ -12,7 +14,7 @@ const linkClass =
 
 // Each social link and the RSS link appear once they're filled in. Footer UI
 // text is semibold, like the header's, so the shell loads one Barlow weight.
-export function SiteFooter({ site, copy, year }: Props) {
+export function SiteFooter({ site, copy, logo, year }: Props) {
   const social = SOCIAL_NETWORKS.flatMap((network) => {
     const href = site.social[network];
     return href ? [{ network, href }] : [];
@@ -21,6 +23,15 @@ export function SiteFooter({ site, copy, year }: Props) {
   return (
     <footer className="mt-auto border-t-4 border-brand bg-muted">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-10 sm:px-6">
+        {/* Decorative: the name is in the copyright line. */}
+        <span className="flex h-12">
+          <ThemedLogo
+            logo={logo.icon}
+            alt=""
+            sizes="48px"
+            className="h-full w-auto"
+          />
+        </span>
         <div className="flex flex-col gap-3 font-ui text-base font-semibold sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-8">
           <p>
             <span className="text-muted-foreground">{copy.contact}: </span>

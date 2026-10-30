@@ -88,10 +88,6 @@
     var(--palette-orange-glow)
   );
 
-  /* The parchment shield the draft logo sits on in both themes, so its
-     baked-in white background never shows as a box. */
-  --logo-plate: var(--palette-parchment-light);
-
   /* Paintings: a framed painting hangs in a teal frame on a parchment mat in
      both themes, like a lit wall in a gallery, and a title set on a painting
      is parchment over the scrim. */
@@ -174,7 +170,6 @@
   --color-ring: var(--ring);
   --color-destructive: var(--destructive);
   --color-scrim: var(--scrim);
-  --color-logo-plate: var(--logo-plate);
   --color-frame: var(--frame);
   --color-mat: var(--mat);
   --color-on-scrim: var(--on-scrim);

@@ -3,8 +3,18 @@ import type { Shell } from "@/lib/content";
 // The frame around every page: header, mobile menu, and footer. Section names
 // follow GLOSSARY.md; the footer's privacy note awaits the Jesters' words.
 export const shell = {
-  // The draft logo; swap in the final transparent one once it arrives.
-  logo: { src: "/brand/logo-draft.png", width: 583, height: 294 },
+  // Aaron's logo set (public/brand/), trimmed to the artwork.
+  logo: {
+    wordmark: {
+      light: { src: "/brand/horizontal.png", width: 2971, height: 1189 },
+      dark: { src: "/brand/horizontal-dark.png", width: 2971, height: 1189 },
+    },
+    icon: {
+      light: { src: "/brand/icon.png", width: 2342, height: 2722 },
+      dark: { src: "/brand/icon-dark.png", width: 2342, height: 2722 },
+    },
+    alt: "Jester's Privilege",
+  },
   skipLink: "Skip to content",
   homeLink: "Jester's Privilege, home",
   navLabel: "Main",

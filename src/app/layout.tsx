@@ -9,8 +9,39 @@ import { fontVariables } from "./fonts";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: content.site.name,
+  // Resolves the Open Graph image (opengraph-image.png) to an absolute URL.
+  metadataBase: new URL("https://jestersprivilegepodcast.com"),
+  title: {
+    default: content.site.name,
+    template: `%s | ${content.site.name}`,
+  },
   description: content.site.description.text,
+  // The tab icon follows the browser's color scheme, so it stays legible on
+  // a dark tab bar. Browsers that ignore `media` fall back to /favicon.ico.
+  // Declared here rather than as app/ icon files, which can't take `media`
+  // and which this list would hide.
+  icons: {
+    icon: [
+      {
+        url: "/brand/favicon-light.png",
+        type: "image/png",
+        sizes: "96x96",
+        media: "(prefers-color-scheme: light)",
+      },
+      {
+        url: "/brand/favicon-dark.png",
+        type: "image/png",
+        sizes: "96x96",
+        media: "(prefers-color-scheme: dark)",
+      },
+    ],
+    // On parchment, as iOS fills transparency with black.
+    apple: {
+      url: "/brand/apple-icon.png",
+      type: "image/png",
+      sizes: "180x180",
+    },
+  },
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
@@ -47,6 +78,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         <SiteFooter
           site={site}
           copy={shell.footer}
+          logo={shell.logo}
           year={new Date().getFullYear()}
         />
         {/* Reserved for the persistent player (#19). It lives here so audio

@@ -60,6 +60,12 @@ export type ImageFile = {
 
 export type Photo = ImageFile & { readonly alt: string };
 
+// A logo in two colorways: teal for the light theme, white for the dark.
+export type ThemedImage = {
+  readonly light: ImageFile;
+  readonly dark: ImageFile;
+};
+
 // Text with emphasis, such as a show title set in italics.
 export type Inline = string | { readonly em: string };
 export type Paragraph = readonly Inline[];
@@ -144,7 +150,14 @@ export type NavItem = {
 
 // The frame every page sits in: header, mobile menu, and footer.
 export type Shell = {
-  readonly logo: ImageFile;
+  readonly logo: {
+    // The horizontal wordmark the header shows from the md breakpoint up.
+    readonly wordmark: ThemedImage;
+    // The icon alone: the header on phones, and the footer.
+    readonly icon: ThemedImage;
+    // What the wordmark says, for its alt text.
+    readonly alt: string;
+  };
   readonly skipLink: string;
   readonly homeLink: string;
   readonly navLabel: string;
@@ -170,7 +183,11 @@ export type Content = {
   // show them from here.
   readonly paintings: { readonly [id: string]: Painting };
   readonly shell: Shell;
-  readonly hero: { readonly paragraphs: readonly string[] };
+  readonly hero: {
+    // The stacked logo with its tagline, above the intro.
+    readonly logo: ThemedImage;
+    readonly paragraphs: readonly string[];
+  };
   readonly jesters: readonly Jester[];
   readonly gallery: Gallery;
   readonly about: About;

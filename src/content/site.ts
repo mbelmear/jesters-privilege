@@ -6,7 +6,6 @@ export const site = {
   tagline: "Theology in the Motley.",
   description: {
     text: "A weekly theology-and-humor podcast from three Jesters who serve the King.",
-    draft: true,
   },
   // The show's inbox: Email Routing forwards it to the Jesters, and Submit
   // emails land here (wrangler.jsonc pins the email binding to it too).

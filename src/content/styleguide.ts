@@ -42,10 +42,6 @@ export const styleguide = {
     { token: "ring", role: "Keyboard focus" },
     { token: "destructive", role: "Errors and failure states" },
     {
-      token: "logo-plate",
-      role: "Parchment shield behind the logo, in both themes",
-    },
-    {
       token: "scrim",
       role: "Overlay behind dialogs and under painting titles",
     },
