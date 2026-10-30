@@ -44,6 +44,12 @@ const eslintConfig = defineConfig([
       "@typescript-eslint/no-unsafe-member-access": "error",
       "@typescript-eslint/no-unsafe-return": "error",
       "@typescript-eslint/no-non-null-assertion": "error",
+      // A promise's failure is handled or returned, never dropped: `void` on
+      // a promise hides its rejection, as a lock-screen play once did (#15).
+      "@typescript-eslint/no-floating-promises": [
+        "error",
+        { ignoreVoid: false },
+      ],
       // Only `as const`. Tests may assert to build partial fixtures.
       "@typescript-eslint/consistent-type-assertions": [
         "error",
@@ -115,6 +121,22 @@ const eslintConfig = defineConfig([
     files: ["**/*.test.{ts,tsx}", "e2e/**"],
     rules: {
       "@typescript-eslint/consistent-type-assertions": "off",
+    },
+  },
+  // A sub-second poll times wall-clock milliseconds, which CI's WebKit can
+  // spend rendering no frames at all (#60).
+  {
+    files: ["e2e/**"],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector:
+            "CallExpression[callee.object.name='expect'][callee.property.name='poll'] > ObjectExpression > Property:matches([key.name='timeout'], [key.value='timeout'])[value.value<1000]",
+          message:
+            "Sub-second expect.poll timeout. Count rendered frames instead: await two requestAnimationFrames inside evaluate, then measure once (docs/testing.md, Browser tests (Playwright)).",
+        },
+      ],
     },
   },
   // Override default ignores of eslint-config-next.

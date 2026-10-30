@@ -23,6 +23,7 @@ npx jest src/lib            # one folder or file
 ```
 
 - **Logic modules** live in `src/lib/`. Coverage there must stay at or above 90% of lines, or `test:coverage` fails.
+- **The player store** is tested, and driven from component tests, with `FakeAudio` (`src/lib/fake-audio.ts`). It copies the `<audio>` element's behaviour that the store depends on; its header lists where it differs.
 - **Component tests** assert what a user sees and include an accessibility check:
 
   ```tsx
@@ -55,7 +56,7 @@ CI runners are slower than a laptop, so a timing assertion ("finishes at once") 
 
 Playwright's actions (`click`, `scrollIntoViewIfNeeded`) wait for an element to hold still, so one that animates without end, such as a painting band's slow zoom, stalls them until the test times out; scroll it with `locator.evaluate((el) => el.scrollIntoView())`.
 
-Sessions on this machine build and test in parallel. When tests a change didn't touch time out locally, check `uptime` before suspecting the code: a load average far above the core count slows every browser.
+Sessions on this machine build and test in parallel. Each worktree serves its build on its own port (derived from its path in `playwright.config.ts`), and a run fails if that port is taken rather than testing whatever already listens there; stop the stray server (`lsof -nP -iTCP:<port> -sTCP:LISTEN`) and rerun. When tests a change didn't touch time out locally, check `uptime` before suspecting the code: a load average far above the core count slows every browser.
 
 When a run fails in CI, the HTML report is attached to the workflow run as `playwright-report`. A failure that won't reproduce locally is usually timing: `gh run download <run-id> -n playwright-report` and open the failing test's trace (`npx playwright show-trace <trace>.zip`) to see what loaded around the failing step.
 
