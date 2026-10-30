@@ -3,6 +3,7 @@
 # then report: every check, the preview URL built from that head, and whether
 # the PR merges cleanly with main. Exits 1 if a check fails or it conflicts.
 # Read-only. Usage: npm run pr-status -- <pr-number>
+# mark-ready.sh reads the "Preview: https://" line; keep its shape.
 set -euo pipefail
 
 pr="${1:?Usage: npm run pr-status -- <pr-number>}"
