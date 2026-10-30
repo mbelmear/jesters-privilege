@@ -117,6 +117,22 @@ const eslintConfig = defineConfig([
       "@typescript-eslint/consistent-type-assertions": "off",
     },
   },
+  // A sub-second poll times wall-clock milliseconds, which CI's WebKit can
+  // spend rendering no frames at all (#60).
+  {
+    files: ["e2e/**"],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector:
+            "CallExpression[callee.object.name='expect'][callee.property.name='poll'] > ObjectExpression > Property[key.name='timeout'][value.value<1000]",
+          message:
+            "Sub-second expect.poll timeout. Count rendered frames instead: await two requestAnimationFrames inside evaluate, then measure once (docs/testing.md, Browser tests).",
+        },
+      ],
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:

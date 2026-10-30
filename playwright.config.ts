@@ -1,6 +1,11 @@
+import { createHash } from "node:crypto";
 import { defineConfig, devices } from "@playwright/test";
 
-const port = 4173;
+// Each worktree serves its own out/ on its own port, so parallel sessions
+// never test one another's build. A taken port fails the run rather than
+// being reused.
+const worktree = createHash("sha1").update(process.cwd()).digest();
+const port = 20000 + (worktree.readUInt16BE(0) % 10000);
 
 // Firefox has no mobile emulation, so its phone project borrows this viewport.
 const phone = { width: 390, height: 844 };
@@ -32,6 +37,6 @@ export default defineConfig({
   webServer: {
     command: `npx serve out --listen ${port} --no-request-logging`,
     url: `http://localhost:${port}`,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
   },
 });
