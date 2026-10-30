@@ -30,6 +30,8 @@ npx jest src/lib            # one folder or file
   expect(await axe(container)).toHaveNoViolations();
   ```
 
+A test that writes to `console.error` or `console.warn` fails (`jest.setup.ts`), since React reports bugs such as an update outside `act()` that way. A test that expects an error stubs it with `jest.spyOn(console, "error").mockImplementation(() => {})`. A component that loads something after rendering (Motion's features under `MotionProvider`) needs that to land inside `act()` before the test checks it, as the style guide test does.
+
 The pre-commit hook runs ESLint, the type check, and the whole Jest suite, so a commit with a lint error, type error, or failing test is refused.
 
 ### Dependencies that ship only as ES modules
@@ -51,6 +53,10 @@ Specs live in `e2e/`. Every page should get an axe scan (`@axe-core/playwright`)
 
 CI runners are slower than a laptop, so a timing assertion ("finishes within 300 ms") first waits for a state that proves the code it times has loaded, such as the first animation completing. Otherwise it measures the download, passes locally, and fails in CI. Likewise, let an opening animation finish before an axe scan, since axe samples colors mid-fade.
 
+Playwright's actions (`click`, `scrollIntoViewIfNeeded`) wait for an element to hold still, so one that animates without end, such as a painting band's slow zoom, stalls them until the test times out; scroll it with `locator.evaluate((el) => el.scrollIntoView())`.
+
+Sessions on this machine build and test in parallel. When tests a change didn't touch time out locally, check `uptime` before suspecting the code: a load average far above the core count slows every browser.
+
 When a run fails in CI, the HTML report is attached to the workflow run as `playwright-report`.
 
 ## Performance (Lighthouse CI)
@@ -60,6 +66,7 @@ Lighthouse runs against the built site with its default mobile emulation (a mid-
 ```bash
 npm run build
 npm run lighthouse
+npm run lighthouse -- /styleguide/paintings.html   # only the pages named
 ```
 
 The budget lives in `lighthouserc.json`. The run fails if any of these is exceeded:
@@ -80,21 +87,23 @@ The Largest Contentful Paint budget was 2.5 s until the site shell (#12) arrived
 
 It rose to 3.2 s with the painting pipeline (#13). A page whose largest paint is an image waits behind the same early bytes, plus the image's own request: the paintings page (`/styleguide/paintings`, a band on the first screen and framed paintings below) simulates at 3.05 s, and still at 2.9 s with its band swapped for a 2 KB file, so the floor comes from the shell, not the painting. Every Fools' Gallery page has that shape. Text-led pages sit lower (the home page is at 2.6 s). Revisit it at the home page mockup gate (#14), which is the place to trim the shell's early script.
 
-### Images
-
-Every image the content shows is a file under `public/` with its pixel size in the content record; `npm run images` (run by `build` and `dev`, `scripts/images.ts`) makes its responsive set in `public/images/`, AVIF and WebP at each width next/image asks for, plus a portrait crop around a painting's focal point for phones. It fails the build if a file is missing or its size doesn't match the content. A phone downloads 30 to 60 KB per painting at Lighthouse's emulated screen and up to about 150 KB on a 3× screen; the encoding settings in `scripts/images.ts` are tuned for that, and the build fails if a painting's AVIF a phone would fetch passes 180 KB. "Phone" there means one held upright, up to 430 CSS px wide; turned sideways it gets the desktop layout and larger files, which aren't checked.
-
 When a change moves a budget, compare it with main:
 
 ```bash
 npm run lighthouse:compare              # or: -- <base-ref>
 ```
 
-It prints each page's simulated and observed LCP and FCP beside the base, with the bytes of each resource type requested before the observed paint. Those bytes are what the simulated figures track: a page that really paints in 40 ms still scores its LCP from everything it fetched by then, so trim early bytes rather than chase the paint.
+It prints each page's simulated and observed LCP and FCP beside the base, with the bytes of each resource type requested before the observed paint. Those bytes are what the simulated figures track: a page that really paints in 40 ms still scores its LCP from everything it fetched by then, so trim early bytes rather than chase the paint. It also names each page's LCP element: an image paints only after its own request on top of those bytes, so an image-led page sits higher than a text-led one with the same early bytes.
 
 Reports are written to `.lighthouseci/reports/` and attached to each CI run as `lighthouse-reports`. They are not uploaded anywhere public.
 
 When a page is added, add its URL to `ci.collect.url` in `lighthouserc.json`.
+
+## Images
+
+Every image the content shows is a file under `public/` with its pixel size in the content record; `npm run images` (run by `build` and `dev`, `scripts/images.ts`) makes its responsive set in `public/images/`, AVIF and WebP at each width next/image asks for, plus a portrait crop around a painting's focal point for phones. It fails the build if a file is missing or its size doesn't match the content. A phone downloads 30 to 60 KB per painting at Lighthouse's emulated screen and up to about 150 KB on a 3× screen; the encoding settings in `scripts/images.ts` are tuned for that, and the build fails if a painting's AVIF a phone would fetch passes 180 KB. "Phone" there means one held upright, up to 430 CSS px wide; turned sideways it gets the desktop layout and larger files, which aren't checked.
+
+To add a public-domain painting, `npm run add-painting -- "<File:… or its Commons page address>" <slug>` saves it to `public/paintings/` and prints its entry for `src/content/paintings.ts`; the build fails until its alt text, medium, and collection are written.
 
 ## Formatting, linting, and types
 

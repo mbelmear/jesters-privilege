@@ -32,6 +32,22 @@ _Avoid_: Notes, description, summary
 The machine-generated text of an Episode, supplied by the podcast host and shown on the Episode page.
 _Avoid_: Captions, subtitles
 
+## Paintings
+
+**Painting band**:
+A public-domain painting shown full width between reading sections, opening each era of the Fools' Gallery, with only a short title over it.
+_Avoid_: Hero, banner
+
+**Framed painting**:
+A painting shown whole, in a frame and mat, beside a Fool's story.
+
+**Placard**:
+The museum label under a painting: artist, title, year, medium, and collection.
+_Avoid_: Caption, credit
+
+**Focal point**:
+The point in a painting to keep in view when it is cropped, such as Stańczyk's face; given as fractions of the painting's width and height.
+
 ## Listener submissions
 
 **Submission**:

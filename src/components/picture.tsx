@@ -52,6 +52,8 @@ export function Picture({
       alt,
       sizes,
       loading: loading === "lazy" ? "lazy" : "eager",
+      // Passed here, not only through images.loaderFile in next.config.ts:
+      // Jest doesn't read loaderFile, so getImageProps would throw there.
       loader: ({ src, width }) => imageUrl({ src, width, format, crop }),
     }).props;
   };

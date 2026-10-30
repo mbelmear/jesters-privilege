@@ -10,6 +10,9 @@ type Report = {
   simulatedFcp: number;
   observedLcp: number;
   observedFcp: number;
+  // What the largest paint was, such as "img.size-full" or "p.max-w-prose":
+  // an image waits on its own request as well as the early bytes.
+  lcpElement: string;
   requests: { startTime: number; type: string; bytes: number }[];
 };
 
@@ -39,6 +42,17 @@ function readReport(file: string, json: unknown): Report {
   const url = dig(json, ["finalDisplayedUrl"]);
   if (typeof url !== "string") throw new Error(`${file} has no page URL`);
   const items = dig(json, ["audits", "network-requests", "details", "items"]);
+  const element = dig(json, [
+    "audits",
+    "largest-contentful-paint-element",
+    "details",
+    "items",
+    0,
+    "items",
+    0,
+    "node",
+    "selector",
+  ]);
   const requests: unknown[] = Array.isArray(items) ? items : [];
   return {
     path: new URL(url).pathname,
@@ -50,6 +64,7 @@ function readReport(file: string, json: unknown): Report {
     simulatedFcp: numberAt("audits", "first-contentful-paint", "numericValue"),
     observedLcp: metric("observedLargestContentfulPaint"),
     observedFcp: metric("observedFirstContentfulPaint"),
+    lcpElement: typeof element === "string" ? element : "unknown",
     requests: requests.map((request) => {
       const type = dig(request, ["resourceType"]);
       const startTime = dig(request, ["rendererStartTime"]);
@@ -92,10 +107,12 @@ const columns = process.argv.slice(2).map((arg) => {
   const label = arg.slice(0, split);
   const folder = arg.slice(split + 1);
   const runs = new Map<string, Record<string, number>[]>();
+  const elements = new Map<string, string>();
   for (const file of readdirSync(folder).filter((f) => f.endsWith(".json"))) {
     const json: unknown = JSON.parse(readFileSync(join(folder, file), "utf8"));
     const report = readReport(file, json);
     runs.set(report.path, [...(runs.get(report.path) ?? []), figures(report)]);
+    elements.set(report.path, report.lcpElement.split(" > ").at(-1) ?? "");
   }
   const pages = new Map<string, Record<string, number>>();
   for (const [path, rows] of runs) {
@@ -107,7 +124,7 @@ const columns = process.argv.slice(2).map((arg) => {
       )
     );
   }
-  return { label, pages };
+  return { label, pages, elements };
 });
 
 const line = (cells: string[]) =>
@@ -126,5 +143,8 @@ for (const path of paths) {
       return value === undefined ? "–" : value.toFixed(0);
     });
     console.log(line([key, ...cells]));
+  }
+  for (const { label, elements } of columns) {
+    console.log(`    LCP element (${label}): ${elements.get(path) ?? "–"}`);
   }
 }
