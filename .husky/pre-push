@@ -1,0 +1,23 @@
+# CI checks a pull request merged with main, while pre-commit checks the
+# branch alone, so a lint rule or test that reached main after the branch
+# was cut fails only in CI. Each branch pushed must already contain
+# origin/main; deletions and tags pass.
+if ! git fetch --quiet origin main; then
+  echo "pre-push: couldn't fetch origin/main; pushing without checking it." >&2
+  exit 0
+fi
+behind=""
+# Git passes one line per ref pushed: <local ref> <local sha> <remote ref> <remote sha>.
+while read -r local_ref local_sha _remote_ref _remote_sha; do
+  case "$local_ref" in refs/heads/*) ;; *) continue ;; esac
+  case "$local_sha" in *[!0]*) ;; *) continue ;; esac
+  if ! git merge-base --is-ancestor origin/main "$local_sha"; then
+    behind="$behind ${local_ref#refs/heads/}"
+  fi
+done
+if [ -n "$behind" ]; then
+  echo "pre-push: origin/main has commits missing from:$behind" >&2
+  echo "Run \`git merge origin/main\` (the pre-merge-commit hook checks the" >&2
+  echo "result, as CI will), then push again." >&2
+  exit 1
+fi

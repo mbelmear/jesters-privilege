@@ -6,7 +6,7 @@ How code in this repo is written. `/code-review` checks every change against thi
 
 These are non-negotiable, and a commit or pull request that breaks them is refused before review:
 
-- **Tests are green.** The pre-commit hook and CI run Jest; CI also runs Playwright and Lighthouse. Logic in `src/lib/` keeps at least 90% line coverage.
+- **Tests are green.** The commit and merge hooks and CI run Jest; CI also runs Playwright and Lighthouse. Logic in `src/lib/` keeps at least 90% line coverage.
 - **No `any`, explicit or implicit.** `strict` TypeScript rejects implicit `any`; ESLint rejects written `any`, any value that carries `any` in from a library (`JSON.parse`, `response.json()`), non-null assertions (`!`), and type assertions other than `as const` outside tests.
 - **Formatting.** Prettier, checked in CI.
 - **Colors and fonts come from design tokens.** ESLint rejects literal colors (hex, `rgb()`/`hsl()`/`oklch()` and friends), Tailwind's built-in palette (`bg-black`, `text-red-500`), Tailwind arbitrary color and font-family values, and inline `font`/`fontFamily` styles anywhere in `src/` outside tests. It also rejects `text-brand`: orange text uses `text-brand-display` (large) or `text-brand-ink` (small). Tokens live in `src/app/globals.css`.
@@ -37,6 +37,11 @@ Reviewers skip these; the rules below are the ones that need judgement.
 - **A library loads only where it's used.** A client library's provider wraps the sections that need it, never the root layout unless every page does: whatever the layout imports ships on every page and counts against the home page's Lighthouse budget. The same holds for any component: its client imports ship on every page that renders it, whether or not the branch using them renders there. Where pages pick between alternatives, such as the hero's reveal or simple story, the page passes its choice in as `children`, so only that page imports it.
 - **UI on every page loads its animation on first use.** `MotionProvider` fetches Motion as soon as it mounts, so a part of the shell (the mobile menu, the player) mounts it only on a visitor's first interaction with that part, as `src/components/mobile-menu.tsx` does with its lazily loaded panel.
 - **Animation goes through `MotionProvider`.** Animated sections use `m` components inside `src/components/motion-provider.tsx`, which loads Motion on demand, carries the reduced-motion setting, and applies the shared presets from `src/lib/motion.ts`. One exception: an ambient, non-interactive loop (a painting band's slow zoom) may be a CSS keyframe defined in `globals.css` and applied under `motion-safe:`, so a Server Component animates without shipping Motion.
+- **A route over Episodes builds a placeholder page when the Feed is empty.** A static export refuses a route whose `generateStaticParams` returns nothing, and the Feed may hold no Episodes. The route builds one `noindex` address that shows the 404 page, as `src/app/episodes/[...address]/page.tsx` does; a set that can be empty while others aren't (bonus Episodes alone) shares a catch-all route with one that isn't.
+
+## Content
+
+- **Copy shown on more than one page lives once**, in a content record each page reads, such as the Episode labels and length units. A page that needs copy another page already has moves it into a shared record, in place of a second copy.
 
 ## Browser tests
 

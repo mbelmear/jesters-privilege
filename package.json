@@ -12,6 +12,7 @@
     "prepare": "husky",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "jest",
+    "check": "npm run lint && npm run typecheck && npm run test",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:e2e": "playwright test --project='chromium-*' --project='webkit-*'",
