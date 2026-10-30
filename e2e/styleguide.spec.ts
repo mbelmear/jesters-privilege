@@ -84,11 +84,17 @@ test.describe("Reduced motion", () => {
     const light = page.getByRole("region", { name: "Light theme" });
     const replay = light.getByRole("button", { name: "Replay processional" });
     const bars = replay.locator("xpath=..").locator("div > div");
-    const shortfall = (bar: Locator) => () =>
-      bar.evaluate((el) => {
-        const track = el.parentElement?.getBoundingClientRect().width ?? 0;
-        return Math.round(el.getBoundingClientRect().width - track);
-      });
+    // How far a bar falls short of its track, read after `frames` more
+    // rendered frames.
+    const shortfall =
+      (bar: Locator, frames = 0) =>
+      () =>
+        bar.evaluate(async (el, frames) => {
+          for (let i = 0; i < frames; i++)
+            await new Promise(requestAnimationFrame);
+          const track = el.parentElement?.getBoundingClientRect().width ?? 0;
+          return Math.round(el.getBoundingClientRect().width - track);
+        }, frames);
 
     // The first sweep finishing shows Motion's lazily loaded animation code
     // has arrived, so the timing below measures the animation, not the load.
@@ -97,16 +103,16 @@ test.describe("Reduced motion", () => {
     await first.evaluate((el) => el.setAttribute("data-swept", ""));
 
     await replay.click();
-    // Replaying mounts a new bar; the clock starts when it appears. CI's
-    // WebKit has intermittently left that bar unmoved past the window (#60).
+    // Replaying mounts a new bar. Motion applies even an instant value on the
+    // next rendered frame, and CI's WebKit sometimes renders none for most of
+    // a second (#60), so count frames, not milliseconds.
     const replayed = replay
       .locator("xpath=..")
       .locator("div > div:not([data-swept])")
       .first();
     await expect(replayed).toBeAttached();
-    // The processional preset takes most of a second; reduced, it's instant.
-    await expect
-      .poll(shortfall(replayed), { timeout: 300, intervals: [50] })
-      .toBe(0);
+    // Two frames into the processional preset's near-second, the sweep has
+    // barely begun; reduced, it's already done.
+    expect(await shortfall(replayed, 2)()).toBe(0);
   });
 });
