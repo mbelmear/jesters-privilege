@@ -21,15 +21,8 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { format, resolveConfig } from "prettier";
 import subsetFont from "subset-font";
-import { content } from "@/content";
-import { styleguide } from "@/content/styleguide";
-import { findText } from "@/lib/content";
-import {
-  codePoints,
-  glyphsBeyondLatin,
-  subsetText,
-  unicodeRange,
-} from "@/lib/fonts";
+import { contentGlyphsBeyondLatin } from "@/content/glyphs";
+import { codePoints, subsetText, unicodeRange } from "@/lib/fonts";
 
 const OUT = path.join("src", "fonts");
 const DEFINITIONS = path.join("src", "app", "fonts.ts");
@@ -38,18 +31,22 @@ const SOURCE =
 
 // Source Serif 4's optical-size axis is pinned at its default, as Google
 // serves it when only weight is asked for: the axis more than doubles the file.
-const SOURCE_SERIF_AXES = { opsz: 20, wght: { min: 200, max: 900 } };
+type VariationAxes = Record<string, number | { min: number; max: number }>;
+const SOURCE_SERIF_AXES: VariationAxes = {
+  opsz: 20,
+  wght: { min: 200, max: 900 },
+};
 
 type FaceSpec = {
   // The constant src/app/fonts.ts exports, and the CSS family name, unless
   // `family` joins the face to another's family.
   name: string;
-  family?: string;
+  family?: "sourceSerif" | "barlowSemiCondensed";
   file: string;
   source: string;
   weight: string;
   style: "normal" | "italic";
-  variationAxes?: typeof SOURCE_SERIF_AXES;
+  variationAxes?: VariationAxes;
   // The CSS variable the font tokens in globals.css read.
   variable: string;
   // The local font next/font sizes to match while the face loads.
@@ -210,7 +207,7 @@ function definition(
 }
 
 async function main() {
-  const beyondLatin = glyphsBeyondLatin(findText({ content, styleguide }));
+  const beyondLatin = contentGlyphsBeyondLatin();
   const subset = new Set(codePoints(subsetText(beyondLatin)));
   await mkdir(OUT, { recursive: true });
 

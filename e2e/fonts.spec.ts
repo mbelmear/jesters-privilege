@@ -5,6 +5,10 @@ import { expect, test, type Locator } from "@playwright/test";
 // fetched only for a letter the subset lacks (#57, scripts/fonts.ts).
 const PAGE = "/styleguide/paintings";
 
+// A rest file, as the build names it, such as
+// barlow_semi_condensed_600_rest.<hash>.woff2.
+const isRest = (url: string) => /_rest\.[^/]*\.woff2$/.test(url);
+
 // How wide a letter sets in the element's brand face, the first family of its
 // font, with monospace behind it, and in monospace alone: the same width means
 // the brand face lacked the letter. (next/font's own fallback is sized to match
@@ -35,7 +39,7 @@ test.describe("Fonts", () => {
     await page.evaluate(() => document.fonts.ready);
 
     expect(fonts.length).toBeGreaterThan(0);
-    expect(fonts.filter((url) => /-rest\b/.test(url))).toEqual([]);
+    expect(fonts.filter(isRest)).toEqual([]);
   });
 
   for (const [name, letter] of [
@@ -51,4 +55,25 @@ test.describe("Fonts", () => {
       expect(Math.abs(brand - fallback)).toBeGreaterThan(1);
     });
   }
+
+  // A letter no content uses yet, as an episode title from the feed might
+  // carry: the rest of the typeface, in the same family, sets it.
+  test("a letter beyond the subsets fetches the rest of the face", async ({
+    page,
+  }) => {
+    const fonts: string[] = [];
+    page.on("request", (request) => {
+      if (request.resourceType() === "font") fonts.push(request.url());
+    });
+    await page.goto(PAGE);
+    const element = page.getByText("Stańczyk").first();
+    await element.evaluate((el) => {
+      el.textContent += " Dvořák";
+    });
+
+    await expect.poll(() => fonts.filter(isRest)).toHaveLength(1);
+    await page.evaluate(() => document.fonts.ready);
+    const { brand, fallback } = await letterWidths(element, "ř");
+    expect(Math.abs(brand - fallback)).toBeGreaterThan(1);
+  });
 });

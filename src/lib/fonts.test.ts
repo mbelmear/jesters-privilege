@@ -31,6 +31,7 @@ describe("subsetText", () => {
       expect.arrayContaining([..."Stańczyk, Velázquez – “Las Meninas”"])
     );
     expect(glyphsBeyondLatin([text])).toBe("ń");
+    // Google's latin unicode-range spans 387 code points.
     expect([...text]).toHaveLength(387 + 1);
   });
 });

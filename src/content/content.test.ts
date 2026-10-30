@@ -1,13 +1,7 @@
 import fontGlyphs from "@/fonts/glyphs.json";
-import {
-  findText,
-  validateContent,
-  type Jester,
-  type Paragraph,
-} from "@/lib/content";
-import { glyphsBeyondLatin } from "@/lib/fonts";
+import { validateContent, type Jester, type Paragraph } from "@/lib/content";
 import { content } from ".";
-import { styleguide } from "./styleguide";
+import { contentGlyphsBeyondLatin } from "./glyphs";
 
 describe("content", () => {
   it("passes validation", () => {
@@ -18,7 +12,7 @@ describe("content", () => {
   // `npm run fonts` has added it; otherwise the page also fetches the rest of
   // the typeface, up to 98 KB, before its first paint (#57).
   it("sets every letter in the self-hosted font subsets", () => {
-    const used = glyphsBeyondLatin(findText({ content, styleguide }));
+    const used = contentGlyphsBeyondLatin();
     const missing = [...used].filter(
       (glyph) => !fontGlyphs.beyondLatin.includes(glyph)
     );

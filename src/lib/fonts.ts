@@ -1,7 +1,7 @@
 // Google Fonts' "latin" subset, as code point ranges: what every self-hosted
 // font file carries before the glyphs the content adds (scripts/fonts.ts).
 // Copied from the unicode-range next/font/google gives its latin faces.
-export const LATIN: readonly (readonly [number, number])[] = [
+const LATIN: readonly (readonly [number, number])[] = [
   [0x0000, 0x00ff],
   [0x0131, 0x0131],
   [0x0152, 0x0153],
