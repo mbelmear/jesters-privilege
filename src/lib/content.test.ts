@@ -24,6 +24,11 @@ const painting: Painting = {
   },
 };
 
+const logo = {
+  light: { src: "/brand/horizontal.png", width: 2971, height: 1189 },
+  dark: { src: "/brand/horizontal-dark.png", width: 2971, height: 1189 },
+};
+
 const section = { title: "Why a jester", paragraphs: ["In every court…"] };
 
 // Valid content, overridden piece by piece to break one rule per test.
@@ -39,7 +44,7 @@ function content(overrides: Partial<Content> = {}): Content {
     },
     paintings: { stanczyk: painting },
     shell,
-    hero: { paragraphs: ["Long ago…"] },
+    hero: { logo, paragraphs: ["Long ago…"] },
     jesters: [{ id: "dan", name: "Dan Collins", role: "Co-host" }],
     gallery: {
       eras: [
@@ -81,7 +86,9 @@ describe("validateContent", () => {
 
   it("refuses an empty string, naming where it is", () => {
     expect(() =>
-      validateContent(content({ hero: { paragraphs: ["Long ago…", "  "] } }))
+      validateContent(
+        content({ hero: { logo, paragraphs: ["Long ago…", "  "] } })
+      )
     ).toThrow("Content hero.paragraphs[1] is empty");
   });
 
@@ -203,11 +210,12 @@ describe("findDrafts", () => {
 });
 
 describe("findImages", () => {
-  const logo = { src: "/brand/logo-draft.png", width: 583, height: 294 };
-
   it("finds every image the site shows, with where it sits", () => {
     const valid = content();
-    expect(findImages(content({ shell: { ...valid.shell, logo } }))).toEqual([
+    const shellLogo = { ...valid.shell.logo, wordmark: logo, icon: logo };
+    expect(
+      findImages(content({ shell: { ...valid.shell, logo: shellLogo } }))
+    ).toEqual([
       {
         contentPath: "paintings.stanczyk",
         src: "/paintings/stanczyk.jpg",
@@ -215,7 +223,8 @@ describe("findImages", () => {
         height: 1785,
         focalPoint: { x: 0.45, y: 0.4 },
       },
-      { contentPath: "shell.logo", ...logo },
+      { contentPath: "shell.logo.wordmark.light", ...logo.light },
+      { contentPath: "shell.logo.wordmark.dark", ...logo.dark },
     ]);
   });
 

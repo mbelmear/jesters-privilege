@@ -17,7 +17,14 @@ const footer = () => screen.getByRole("contentinfo");
 
 describe("SiteFooter", () => {
   it("gives the contact email, privacy note, and copyright", () => {
-    render(<SiteFooter site={bare} copy={shell.footer} year={2026} />);
+    render(
+      <SiteFooter
+        site={bare}
+        copy={shell.footer}
+        logo={shell.logo}
+        year={2026}
+      />
+    );
     expect(
       within(footer()).getByRole("link", {
         name: "hello@jestersprivilegepodcast.com",
@@ -35,6 +42,7 @@ describe("SiteFooter", () => {
           social: { instagram: "https://www.instagram.com/jestersprivilege" },
         }}
         copy={shell.footer}
+        logo={shell.logo}
         year={2026}
       />
     );
@@ -47,7 +55,14 @@ describe("SiteFooter", () => {
   });
 
   it("leaves out the social list and RSS link until they exist", () => {
-    render(<SiteFooter site={bare} copy={shell.footer} year={2026} />);
+    render(
+      <SiteFooter
+        site={bare}
+        copy={shell.footer}
+        logo={shell.logo}
+        year={2026}
+      />
+    );
     expect(
       screen.queryByRole("list", { name: "Follow the show" })
     ).not.toBeInTheDocument();
@@ -64,6 +79,7 @@ describe("SiteFooter", () => {
           listen: { rss: "https://www.spreaker.com/show/1/episodes/feed" },
         }}
         copy={shell.footer}
+        logo={shell.logo}
         year={2026}
       />
     );
@@ -82,6 +98,7 @@ describe("SiteFooter", () => {
           social: { instagram: "https://www.instagram.com/jestersprivilege" },
         }}
         copy={shell.footer}
+        logo={shell.logo}
         year={2026}
       />
     );

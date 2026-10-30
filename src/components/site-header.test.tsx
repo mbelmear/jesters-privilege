@@ -19,7 +19,9 @@ describe("SiteHeader", () => {
     render(<SiteHeader shell={shell} episodeCount={3} />);
     const home = screen.getByRole("link", { name: "Jester's Privilege, home" });
     expect(home).toHaveAttribute("href", "/");
-    expect(within(home).getByRole("img")).toBeInTheDocument();
+    expect(
+      within(home).getAllByRole("img", { name: "Jester's Privilege" })
+    ).not.toHaveLength(0);
   });
 
   it("lists every main section once Episodes are published", () => {

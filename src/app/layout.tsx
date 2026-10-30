@@ -9,7 +9,12 @@ import { fontVariables } from "./fonts";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: content.site.name,
+  // Resolves the Open Graph image (opengraph-image.png) to an absolute URL.
+  metadataBase: new URL("https://jestersprivilegepodcast.com"),
+  title: {
+    default: content.site.name,
+    template: `%s | ${content.site.name}`,
+  },
   description: content.site.description.text,
 };
 
@@ -47,6 +52,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         <SiteFooter
           site={site}
           copy={shell.footer}
+          logo={shell.logo}
           year={new Date().getFullYear()}
         />
         {/* Reserved for the persistent player (#19). It lives here so audio

@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { HeaderFrame } from "@/components/header-frame";
-import { Logo } from "@/components/logo";
 import { MobileMenu } from "@/components/mobile-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { ThemedLogo } from "@/components/themed-logo";
 import type { Shell } from "@/lib/content";
 
 type Props = {
@@ -18,11 +18,31 @@ export function SiteHeader({ shell, episodeCount }: Props) {
   return (
     <HeaderFrame>
       <div className="mx-auto flex h-full w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
+        {/* Named by the link, as only one of its four images shows. */}
         <Link
           href="/"
-          className="h-full shrink-0 py-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+          aria-label={shell.homeLink}
+          className="flex h-full shrink-0 py-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
         >
-          <Logo image={shell.logo} alt={shell.homeLink} className="h-full" />
+          {/* The icon on phones, the wordmark from md up; at most 56px tall. */}
+          <span className="flex h-full md:hidden">
+            <ThemedLogo
+              logo={shell.logo.icon}
+              alt={shell.logo.alt}
+              sizes="48px"
+              loading="eager"
+              className="h-full w-auto"
+            />
+          </span>
+          <span className="hidden h-full md:flex">
+            <ThemedLogo
+              logo={shell.logo.wordmark}
+              alt={shell.logo.alt}
+              sizes="140px"
+              loading="eager"
+              className="h-full w-auto"
+            />
+          </span>
         </Link>
         <div className="flex items-center gap-1">
           <nav aria-label={shell.navLabel} className="hidden md:block">
