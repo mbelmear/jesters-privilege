@@ -97,8 +97,8 @@ test.describe("Reduced motion", () => {
     await first.evaluate((el) => el.setAttribute("data-swept", ""));
 
     await replay.click();
-    // Replaying mounts a new bar. The clock starts when it appears, not at
-    // the click: on CI the click's own handling can take half a second.
+    // Replaying mounts a new bar; the clock starts when it appears. CI's
+    // WebKit has intermittently left that bar unmoved past the window (#60).
     const replayed = replay
       .locator("xpath=..")
       .locator("div > div:not([data-swept])")
