@@ -19,12 +19,11 @@ fi
 pr=$1
 
 head=$(gh pr view "$pr" --json headRefOid --jq .headRefOid)
-if ! status=$("$(dirname "$0")/pr-status.sh" "$pr"); then
-  echo "$status"
-  echo "Refusing to label #$pr: it needs every check green and a clean merge with main." >&2
+# The report streams to the terminal as it waits, and is kept for the checks below.
+if ! status=$("$(dirname "$0")/pr-status.sh" "$pr" | tee /dev/stderr); then
+  echo "Refusing to label #$pr: pr-status didn't pass (see above)." >&2
   exit 1
 fi
-echo "$status"
 if ! grep -q '^Preview: https://' <<<"$status"; then
   echo "Refusing to label #$pr: no preview built from its head yet." >&2
   exit 1
