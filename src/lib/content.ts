@@ -194,6 +194,8 @@ export type PlayerCopy = {
   readonly resume: string;
   readonly resumeFrom: string;
   readonly startOver: string;
+  // Declines the dock's offer to resume, for this visit.
+  readonly dismiss: string;
   readonly loading: string;
   readonly skipBack: string;
   readonly skipForward: string;

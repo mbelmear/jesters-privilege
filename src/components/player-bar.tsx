@@ -3,6 +3,7 @@
 import {
   ChevronDown,
   ChevronUp,
+  X,
   LoaderCircle,
   Pause,
   Play,
@@ -21,7 +22,7 @@ import {
   SKIP_FORWARD_SECONDS,
   SPEEDS,
   type Player,
-  type PlayerState,
+  type LoadedState,
   type Speed,
 } from "@/lib/player";
 import { cn } from "@/lib/utils";
@@ -35,8 +36,6 @@ type Props = {
   copy: PlayerCopy;
   labels: EpisodeLabels;
 };
-
-type Loaded = Exclude<PlayerState, { mode: "empty" }>;
 
 /**
  * The persistent player, docked at the foot of every page once an Episode is
@@ -141,11 +140,65 @@ export function PlayerBar({ copy, labels }: Props) {
         <p role="status" className="sr-only">
           {buffering ? copy.loading : ""}
         </p>
-        {state.mode === "failed" && (
-          <p role="alert" className="pb-3 text-sm text-destructive">
-            {copy.failed.text}
-          </p>
-        )}
+        <p role="alert" className="text-sm text-destructive empty:hidden pb-3">
+          {state.mode === "failed" ? copy.failed.text : ""}
+        </p>
+      </div>
+    </section>
+  );
+}
+
+/**
+ * The dock's offer, on a return visit, to resume the Episode last left
+ * partly heard on this device.
+ */
+export function ResumeOffer({
+  offer,
+  onDismiss,
+  copy,
+  labels,
+}: {
+  offer: NonNullable<ReturnType<Player["resumeOffer"]>>;
+  onDismiss: () => void;
+  copy: PlayerCopy;
+  labels: EpisodeLabels;
+}) {
+  const player = usePlayer();
+  const { episode, position } = offer;
+  const label = episodeLabel(episode, labels).text;
+  const resume = `${copy.resume} ${copy.resumeFrom} ${formatDuration(position)}`;
+  return (
+    <section
+      aria-label={copy.label}
+      className="border-t border-border bg-card pb-[env(safe-area-inset-bottom)] text-card-foreground shadow-dock"
+    >
+      <div className="mx-auto flex w-full max-w-3xl items-center gap-3 px-4 py-2 sm:px-6">
+        <Button
+          type="button"
+          variant="brand"
+          size="icon"
+          className="rounded-full"
+          onClick={() =>
+            player?.play(episode, { at: position }).catch(reportPlayerError)
+          }
+        >
+          <Play aria-hidden="true" className="size-5 fill-current" />
+          <span className="sr-only">
+            {resume} {label}
+          </span>
+        </Button>
+        <p className="flex min-w-0 flex-1 flex-col">
+          <span className="font-ui text-xs font-semibold tracking-widest text-brand-ink uppercase">
+            {label} · {resume}
+          </span>
+          <span className="truncate font-display text-lg leading-snug">
+            {episode.title}
+          </span>
+        </p>
+        <Button type="button" variant="ghost" size="icon" onClick={onDismiss}>
+          <X aria-hidden="true" className="size-6" />
+          <span className="sr-only">{copy.dismiss}</span>
+        </Button>
       </div>
     </section>
   );
@@ -158,7 +211,7 @@ function PlayPause({
   large = false,
 }: {
   player: Player;
-  state: Loaded;
+  state: LoadedState;
   copy: PlayerCopy;
   large?: boolean;
 }) {
@@ -196,7 +249,7 @@ function Scrub({
   copy,
 }: {
   player: Player;
-  state: Loaded;
+  state: LoadedState;
   length: number;
   copy: PlayerCopy;
 }) {

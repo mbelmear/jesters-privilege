@@ -122,6 +122,8 @@ describe("PlayerBar", () => {
   it("explains a failure, and carries on from there when Play is pressed", async () => {
     const { audio, player, user } = setup();
     await playing(audio, player);
+    // Present and empty beforehand, so screen readers announce the message.
+    expect(screen.getByRole("alert")).toHaveTextContent("");
     act(() => audio.fail());
     expect(screen.getByRole("alert")).toHaveTextContent(
       content.shell.player.failed.text
@@ -129,7 +131,7 @@ describe("PlayerBar", () => {
     await user.click(screen.getByRole("button", { name: "Play" }));
     expect(audio.playing).toBe(true);
     expect(audio.position).toBe(754);
-    expect(screen.queryByRole("alert")).toBeNull();
+    expect(screen.getByRole("alert")).toHaveTextContent("");
   });
 
   it("has no accessibility violations, collapsed or expanded", async () => {

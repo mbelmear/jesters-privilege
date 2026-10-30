@@ -2,12 +2,13 @@ import Link from "next/link";
 import { useId } from "react";
 import { PlayEpisodeButton } from "@/components/play-episode-button";
 import type { Copy, Home, PlayerCopy } from "@/lib/content";
-import { episodePath, playableEpisode, type Episode } from "@/lib/feed";
+import { episodePath, type Episode } from "@/lib/feed";
 import {
   episodeLabel,
   formatListeningTime,
   formatPublishDate,
 } from "@/lib/format-episode";
+import { playableEpisode } from "@/lib/player";
 
 type Props = {
   // The newest Episode, or none before Episode 1 is published.

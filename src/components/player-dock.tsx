@@ -1,14 +1,19 @@
 "use client";
 
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useState } from "react";
 import type { PlayerCopy } from "@/lib/content";
 import type { EpisodeLabels } from "@/lib/format-episode";
 import { usePlayer, usePlayerState } from "./player-provider";
 
-// The bar, with its controls and icons, is its own chunk: fetched when an
-// Episode first plays, so every page ships only this empty dock.
+// The bar and the resume offer, with their controls and icons, are their own
+// chunk: fetched when there is something to show, so every page ships only
+// this empty dock.
+const loadBar = () => import("./player-bar");
 const PlayerBar = lazy(() =>
-  import("./player-bar").then((module) => ({ default: module.PlayerBar }))
+  loadBar().then((module) => ({ default: module.PlayerBar }))
+);
+const ResumeOffer = lazy(() =>
+  loadBar().then((module) => ({ default: module.ResumeOffer }))
 );
 
 type Props = {
@@ -16,10 +21,29 @@ type Props = {
   labels: EpisodeLabels;
 };
 
-/** Where the player bar docks, empty until an Episode is played. */
+/**
+ * Where the player docks: the bar once an Episode plays, and before that, on
+ * a return visit, an offer to resume the Episode last left partly heard.
+ */
 export function PlayerDock({ copy, labels }: Props) {
-  const state = usePlayerState(usePlayer());
-  if (!state || state.mode === "empty") return null;
+  const player = usePlayer();
+  const state = usePlayerState(player);
+  const [declined, setDeclined] = useState(false);
+  if (!player || !state) return null;
+  if (state.mode === "empty") {
+    const offer = declined ? null : player.resumeOffer();
+    if (!offer) return null;
+    return (
+      <Suspense fallback={null}>
+        <ResumeOffer
+          offer={offer}
+          onDismiss={() => setDeclined(true)}
+          copy={copy}
+          labels={labels}
+        />
+      </Suspense>
+    );
+  }
   return (
     <Suspense fallback={null}>
       <PlayerBar copy={copy} labels={labels} />

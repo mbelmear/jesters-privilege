@@ -5,6 +5,15 @@
 
 import type { PlayableEpisode } from "./feed";
 
+/** Only what playing an Episode needs, from the Feed's Episode or a fuller one. */
+export function playableEpisode(episode: PlayableEpisode): PlayableEpisode {
+  const { guid, title, durationSeconds, audioUrl, artworkUrl } = episode;
+  const details = { guid, title, durationSeconds, audioUrl, artworkUrl };
+  return episode.type === "full"
+    ? { ...details, type: episode.type, number: episode.number }
+    : { ...details, type: episode.type, slug: episode.slug };
+}
+
 export const SPEEDS = [1, 1.25, 1.5, 2] as const;
 export type Speed = (typeof SPEEDS)[number];
 
@@ -95,7 +104,7 @@ export type PlayerState = {
   | ({ mode: "failed" } & LoadedEpisode)
 );
 
-type LoadedState = Exclude<PlayerState, { mode: "empty" }>;
+export type LoadedState = Exclude<PlayerState, { mode: "empty" }>;
 
 function playing(state: LoadedState): LoadedState {
   const { speed, finished, episode, position, duration } = state;
@@ -142,7 +151,7 @@ export type Player = {
   /** Where a partly heard Episode was left on this device, or null. */
   savedPosition: (guid: string) => number | null;
   /** The Episode last played on this device, if it was left partly heard. */
-  resumeOffer: () => { guid: string; position: number } | null;
+  resumeOffer: () => { episode: PlayableEpisode; position: number } | null;
 };
 
 export function createPlayer({
@@ -230,9 +239,7 @@ export function createPlayer({
     if (state.mode === "empty") return;
     if (heardToEnd) seek(0);
     if (state.mode === "failed") {
-      audio.load(state.episode.audioUrl);
-      audio.setRate(state.speed);
-      durationKnown = false;
+      loadAudio(state.episode);
       seek(state.position);
     }
     const load = loadCount;
@@ -250,6 +257,15 @@ export function createPlayer({
         { cause: error }
       );
     }
+  }
+
+  // Gives the audio an Episode's file from the start, at the chosen speed.
+  function loadAudio(episode: PlayableEpisode) {
+    loadCount += 1;
+    durationKnown = false;
+    heardToEnd = false;
+    audio.load(episode.audioUrl);
+    audio.setRate(state.speed);
   }
 
   function seek(seconds: number) {
@@ -270,12 +286,8 @@ export function createPlayer({
     },
     async play(episode, { at } = {}) {
       if (state.mode === "empty" || state.episode.guid !== episode.guid) {
-        loadCount += 1;
-        durationKnown = false;
-        heardToEnd = false;
-        audio.load(episode.audioUrl);
-        audio.setRate(state.speed);
-        history.markLastPlayed(episode.guid);
+        loadAudio(episode);
+        history.markLastPlayed(playableEpisode(episode));
         // Subscribers hear of the load once it is playing, not as a pause.
         state = {
           mode: "paused",
@@ -313,9 +325,9 @@ export function createPlayer({
     },
     savedPosition: history.position,
     resumeOffer() {
-      const guid = history.lastPlayed();
-      const position = guid === null ? null : history.position(guid);
-      return guid === null || position === null ? null : { guid, position };
+      const episode = history.lastPlayed();
+      const position = episode && history.position(episode.guid);
+      return episode && position !== null ? { episode, position } : null;
     },
   };
 
@@ -385,7 +397,8 @@ function answerMediaAction(
 type Saved = {
   positions: Record<string, number>;
   finished: string[];
-  lastPlayed: string | null;
+  // Whole, so a return visit can offer to resume it from any page.
+  lastPlayed: PlayableEpisode | null;
 };
 
 // Keeps the listening history in memory and mirrors it to storage. Storage
@@ -412,8 +425,8 @@ function createHistory(storage: DeviceStorage | null) {
         ? position
         : null;
     },
-    markLastPlayed(guid: string) {
-      saved.lastPlayed = guid;
+    markLastPlayed(episode: PlayableEpisode) {
+      saved.lastPlayed = episode;
       write();
     },
     savePosition(guid: string, position: number, { now = false } = {}) {
@@ -456,12 +469,44 @@ function parseSaved(value: unknown): Saved | null {
   if (!Array.isArray(finished)) return null;
   const guids: unknown[] = finished;
   if (!guids.every((guid) => typeof guid === "string")) return null;
-  if (lastPlayed !== null && typeof lastPlayed !== "string") return null;
   return {
     positions: Object.fromEntries(entries),
     finished: guids,
-    lastPlayed,
+    // One stored by an older version, or damaged, costs only the offer.
+    lastPlayed: parsePlayableEpisode(lastPlayed),
   };
+}
+
+function parsePlayableEpisode(value: unknown): PlayableEpisode | null {
+  if (typeof value !== "object" || value === null) return null;
+  const entries: [string, unknown][] = Object.entries(value);
+  const fields = new Map(entries);
+  const field = (name: string) => fields.get(name);
+  const [guid, title, audioUrl, artworkUrl] = [
+    field("guid"),
+    field("title"),
+    field("audioUrl"),
+    field("artworkUrl"),
+  ];
+  const durationSeconds = field("durationSeconds");
+  if (
+    typeof guid !== "string" ||
+    typeof title !== "string" ||
+    typeof audioUrl !== "string" ||
+    typeof artworkUrl !== "string" ||
+    typeof durationSeconds !== "number" ||
+    !Number.isFinite(durationSeconds)
+  )
+    return null;
+  const details = { guid, title, audioUrl, artworkUrl, durationSeconds };
+  const type = field("type");
+  const number = field("number");
+  const slug = field("slug");
+  if (type === "full" && typeof number === "number")
+    return { ...details, type, number };
+  if ((type === "bonus" || type === "trailer") && typeof slug === "string")
+    return { ...details, type, slug };
+  return null;
 }
 
 function isSavedPosition(entry: [string, unknown]): entry is [string, number] {

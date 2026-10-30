@@ -5,12 +5,7 @@ import { FleuronRule } from "@/components/fleuron-rule";
 import { PlayEpisodeButton } from "@/components/play-episode-button";
 import { ShareButton } from "@/components/share-button";
 import type { EpisodePage, PlayerCopy } from "@/lib/content";
-import {
-  episodePath,
-  playableEpisode,
-  type Episode,
-  type EpisodeInSequence,
-} from "@/lib/feed";
+import { episodePath, type Episode, type EpisodeInSequence } from "@/lib/feed";
 import {
   episodeLabel,
   episodeTitle,
@@ -18,6 +13,7 @@ import {
   formatPublishDate,
   publishDateAttribute,
 } from "@/lib/format-episode";
+import { playableEpisode } from "@/lib/player";
 import { cn } from "@/lib/utils";
 
 type Props = {

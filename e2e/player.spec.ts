@@ -133,6 +133,36 @@ test.describe("Persistent player", () => {
     await expectPlaying(page);
   });
 
+  test("offers to resume from any page on a return visit", async ({ page }) => {
+    // This device heard Episode 2 to 0:30 on an earlier visit.
+    await page.addInitScript(() => {
+      const guid = "https://api.spreaker.com/episode/70000003";
+      localStorage.setItem(
+        "player",
+        JSON.stringify({
+          positions: { [guid]: 30 },
+          finished: [],
+          lastPlayed: {
+            type: "full",
+            number: 2,
+            guid,
+            title: "The Holy Fool",
+            durationSeconds: 2280,
+            audioUrl: "https://example.com/jesters_privilege_2.mp3",
+            artworkUrl: "https://example.com/art.jpg",
+          },
+        })
+      );
+    });
+    await page.goto("/gallery");
+    await expect(player(page)).toContainText("The Holy Fool");
+    await start(page, "Resume from 0:30 Episode 2");
+    await expect
+      .poll(async () => (await audio(page)).time, { timeout: 5000 })
+      .toBeGreaterThanOrEqual(30);
+    await expectPlaying(page);
+  });
+
   test("works by keyboard, with every control named", async ({ page }) => {
     await page.goto("/episodes/2");
     await start(page, "Play Episode 2", { keyboard: true });

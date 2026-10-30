@@ -8,7 +8,12 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import type { Player, PlayerState } from "@/lib/player";
+import { createPlayer, type Player, type PlayerState } from "@/lib/player";
+import {
+  audioElementAdapter,
+  browserMediaSession,
+  deviceStorage,
+} from "@/lib/player-browser";
 
 /** The site's one player store, or null until it starts in the browser. */
 export const PlayerContext = createContext<Player | null>(null);
@@ -19,11 +24,6 @@ type Props = {
   children: React.ReactNode;
 };
 
-// The store and its browser adapters are their own chunk, fetched once the
-// page is running, so they never hold up its first paint.
-const loadPlayer = () =>
-  Promise.all([import("@/lib/player"), import("@/lib/player-browser")]);
-
 /**
  * Starts the player store once the page is running, over an <audio> element
  * that lives as long as the root layout, so playback carries on across
@@ -32,23 +32,16 @@ const loadPlayer = () =>
 export function PlayerProvider({ showName, children }: Props) {
   const audio = useRef<HTMLAudioElement>(null);
   const [player, setPlayer] = useState<Player | null>(null);
+  // Started as soon as the page hydrates, so the first tap on Play counts.
   useEffect(() => {
-    let cancelled = false;
-    loadPlayer()
-      .then(([{ createPlayer }, browser]) => {
-        if (cancelled || !audio.current) return;
-        setPlayer(
-          createPlayer({
-            audio: browser.audioElementAdapter(audio.current),
-            storage: browser.deviceStorage(),
-            mediaSession: browser.browserMediaSession(showName),
-          })
-        );
+    if (!audio.current) return;
+    setPlayer(
+      createPlayer({
+        audio: audioElementAdapter(audio.current),
+        storage: deviceStorage(),
+        mediaSession: browserMediaSession(showName),
       })
-      .catch(reportPlayerError);
-    return () => {
-      cancelled = true;
-    };
+    );
   }, [showName]);
   return (
     <PlayerContext value={player}>

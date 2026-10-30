@@ -64,14 +64,6 @@ export type PlayableEpisode = Episode extends infer E
     : never
   : never;
 
-export function playableEpisode(episode: Episode): PlayableEpisode {
-  const { guid, title, durationSeconds, audioUrl, artworkUrl } = episode;
-  const details = { guid, title, durationSeconds, audioUrl, artworkUrl };
-  return episode.type === "full"
-    ? { ...details, type: episode.type, number: episode.number }
-    : { ...details, type: episode.type, slug: episode.slug };
-}
-
 // The Episode's page on the site.
 export function episodePath(episode: PlayableEpisode): string {
   return ["/episodes", ...episodeAddress(episode)].join("/");

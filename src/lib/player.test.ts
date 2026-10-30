@@ -370,14 +370,28 @@ describe("player", () => {
       const { storage } = await listenTo(1234);
       const { player } = setup({ storage });
       expect(player.savedPosition("ep-1")).toBe(1234);
-      expect(player.resumeOffer()).toEqual({ guid: "ep-1", position: 1234 });
+      // Only what playing it needs, so any page can offer it.
+      expect(player.resumeOffer()).toEqual({
+        episode: {
+          type: "full",
+          number: 1,
+          guid: "ep-1",
+          title: "Celebrity Pastors",
+          durationSeconds: 3000,
+          audioUrl: "https://example.com/ep-1.mp3",
+          artworkUrl: "https://example.com/ep-1.jpg",
+        },
+        position: 1234,
+      });
     });
 
     it("resumes from the offered position", async () => {
       const { storage } = await listenTo(1234);
       const { audio, player } = setup({ storage });
       const offer = player.resumeOffer();
-      await player.play(episode(), { at: offer?.position });
+      if (!offer) throw new Error("No resume offer");
+      await player.play(offer.episode, { at: offer.position });
+      expect(audio.src).toBe("https://example.com/ep-1.mp3");
       expect(audio.position).toBe(1234);
     });
 
@@ -402,7 +416,10 @@ describe("player", () => {
       const later = setup({ storage }).player;
       expect(later.savedPosition("ep-1")).toBe(1234);
       expect(later.savedPosition("ep-2")).toBe(300);
-      expect(later.resumeOffer()).toEqual({ guid: "ep-2", position: 300 });
+      expect(later.resumeOffer()).toMatchObject({
+        episode: { guid: "ep-2", title: "Holy Fools" },
+        position: 300,
+      });
     });
 
     it("keeps the exact place of an Episode switched away from mid-play", async () => {
@@ -468,6 +485,21 @@ describe("player", () => {
       expect(audio.playing).toBe(true);
       expect(player.resumeOffer()).toBeNull();
     });
+
+    // As stored before the last Episode was remembered whole, or damaged.
+    it.each(['"ep-1"', '{"guid":"ep-1"}'])(
+      "keeps each place, offering nothing, when the last Episode reads %s",
+      (lastPlayed) => {
+        const storage = memoryStorage();
+        storage.setItem(
+          "player",
+          `{"positions":{"ep-1":1234},"finished":[],"lastPlayed":${lastPlayed}}`
+        );
+        const { player } = setup({ storage });
+        expect(player.savedPosition("ep-1")).toBe(1234);
+        expect(player.resumeOffer()).toBeNull();
+      }
+    );
 
     it.each([
       "not json",

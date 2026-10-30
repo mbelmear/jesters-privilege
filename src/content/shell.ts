@@ -33,6 +33,7 @@ export const shell = {
     resume: "Resume",
     resumeFrom: "from",
     startOver: "Start over",
+    dismiss: "Not now",
     loading: "Loading",
     skipBack: "Back 15 seconds",
     skipForward: "Forward 30 seconds",
