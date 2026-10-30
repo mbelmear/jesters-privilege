@@ -9,7 +9,9 @@
 //   the feed.
 //
 // Each half declares the unicode-range it covers, so the browser picks the
-// file by the letters on the page. next/font reads only literal options, so
+// file by the letters on the page. Both halves share one family: a second
+// family stacked behind the first (Google's, say) gets fetched while the first
+// is still loading, which cost 17.5 KB before first paint when measured (#57). next/font reads only literal options, so
 // this writes the font definitions in src/app/fonts.ts, plus
 // src/fonts/glyphs.json for the content test to check the subsets against.
 // Run it after adding text with a new accented letter; that test says when.

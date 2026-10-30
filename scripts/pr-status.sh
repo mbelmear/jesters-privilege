@@ -13,8 +13,15 @@ if [[ "$state" != OPEN ]]; then
   echo "#$pr is $state; nothing to wait for."
   exit 1
 fi
-head=$(gh pr view "$pr" --json headRefOid --jq .headRefOid)
+head=$("$(dirname "$0")/wait-pushed-head.sh" "$pr")
 echo "#$pr at ${head:0:7}"
+
+# A PR that already conflicts would only be refused after the checks, so say
+# so now. Main can still move during the wait, so it's checked again at the end.
+if [[ $("$(dirname "$0")/wait-mergeable.sh" "$pr") == CONFLICTING ]]; then
+  echo "Merges cleanly with main: no (CONFLICTING); merge origin/main in and push first."
+  exit 1
+fi
 
 # Checks appear a few seconds after a push.
 for _ in $(seq 1 30); do
