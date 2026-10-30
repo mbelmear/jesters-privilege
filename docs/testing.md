@@ -96,7 +96,7 @@ The budget lives in `lighthouserc.json`. Each figure is asserted on its median a
 
 The Largest Contentful Paint budget was 2.5 s until the site shell (#12) arrived. Lighthouse simulates a throttled load from every byte requested before the first paint, and the header's script plus the UI typeface on every page put the bare home page at a steady 2.75 s (it paints in about 40 ms unthrottled). Menu code, a smaller logo, and a single UI weight didn't move that figure, so the budget moved to 3.0 s.
 
-It rose to 3.2 s with the painting pipeline (#13). A page whose largest paint is an image waits behind the same early bytes, plus the image's own request: the paintings page (`/styleguide/paintings`, a band on the first screen and framed paintings below) simulates at 3.05 s, and still at 2.9 s with its band swapped for a 2 KB file, so the floor comes from the shell, not the painting. Every Fools' Gallery page has that shape. Text-led pages sit lower (the 404 page is at 2.6 s). The home page rose from 2.6 s to 2.98 s when its largest paint became the logo above the intro (#55). The home page mockup (#14, `/styleguide/home`) is over the budget: 2.72, 3.49, and 3.50 s in CI with the reveal hero, and locally a median of 3.43 s with the simple hero and 3.73 s with the reveal, against 2.9 s for the bare home page. Two things cost it:
+It rose to 3.2 s with the painting pipeline (#13). A page whose largest paint is an image waits behind the same early bytes, plus the image's own request: the paintings page (`/styleguide/paintings`, a band on the first screen and framed paintings below) simulates at 3.05 s, and still at 2.9 s with its band swapped for a 2 KB file, so the floor comes from the shell, not the painting. Every Fools' Gallery page has that shape. Text-led pages sit lower (the 404 page is at 2.6 s). The home page rose from 2.6 s to 2.98 s when its largest paint became the logo above the intro (#55). The home page mockup (#14, `/styleguide/home`) was over the budget: 2.72, 3.49, and 3.50 s in CI with the reveal hero, and locally a median of 3.43 s with the simple hero and 3.73 s with the reveal, against 2.9 s for the bare home page. Two things cost it:
 
 - **Extended-Latin fonts (#57).** "Stańczyk" in the Gallery teaser and on his placard pulled in Google's latin-ext files of the body face (41 KB) and the UI face (10 KB): fonts went from 83 KB to 135 KB, and first paint from 1.05 s to 1.5 s. The fonts are now self-hosted subsets that carry the ń (see Fonts below). Measured locally against main, medians of three runs:
 
@@ -108,9 +108,9 @@ It rose to 3.2 s with the painting pipeline (#13). A page whose largest paint is
   | `/`                                | 2.90 s, fonts 85 KB  | 2.90 s, fonts 79 KB |
   | `/404`                             | 2.60 s, fonts 85 KB  | 2.52 s, fonts 79 KB |
 
-  The simple mockup is back in `lighthouserc.json`. The reveal hero is still over the budget, by Motion alone.
+  The simple mockup is back in `lighthouserc.json`. That left the reveal hero over the budget by Motion alone, until #20 (below).
 
-- **Motion, for the reveal hero (52 KB of script, about 0.3 s).** The home page (#20) uses the reveal, so `HeroReveal` draws the story hidden without Motion and loads Motion in its own chunk once React is running, after the first paint. That took `/` from 3.35 s to 3.06 s locally (median of three), with early script from 212 KB to 161 KB. The preview pages share `HeroReveal`, so `/styleguide/home` gains the same.
+- **Motion, for the reveal hero (52 KB of script, about 0.3 s).** The home page (#20) uses the reveal, so `HeroReveal` draws the story hidden without Motion and loads Motion in its own chunk once React is running, after the first paint. That took `/` from 3.35 s to between 2.56 s and 3.06 s locally (medians of three, across runs), with early script from 212 KB to 161 KB. The preview pages share `HeroReveal`, so `/styleguide/home` gains the same.
 
 Before pushing a change to the header, the footer, the root layout, or the first screen of a page, compare it with main: everything those fetch counts against every page's largest paint.
 

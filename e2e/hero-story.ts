@@ -28,3 +28,29 @@ export async function scrollThrough(page: Page) {
     await page.waitForTimeout(50);
   }
 }
+
+// Waits until Motion has taken over the story, so a test times Motion
+// rather than its download: the waiting paragraphs carry the fallback.
+export async function motionLoaded(page: Page) {
+  await expect(storyParagraphs(page).first()).toBeAttached();
+  await expect(page.locator(".animate-story-fallback")).toHaveCount(0);
+}
+
+// Scrolls a story paragraph into view and records how far it sits below its
+// place, in pixels, on each frame until it has fully faded in.
+export function offsetsAsItAppears(paragraph: Locator): Promise<number[]> {
+  return paragraph.evaluate(
+    (el) =>
+      new Promise<number[]>((resolve) => {
+        const offsets: number[] = [];
+        el.scrollIntoView({ block: "center" });
+        const frame = () => {
+          const style = getComputedStyle(el);
+          offsets.push(new DOMMatrix(style.transform).f);
+          if (Number(style.opacity) === 1) resolve(offsets);
+          else requestAnimationFrame(frame);
+        };
+        requestAnimationFrame(frame);
+      })
+  );
+}

@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
-import { reveal, storyParagraphs } from "./hero-story";
+import { scrollThrough } from "./hero-story";
 
 // The site before Episode 1 is published. These run only against a build
 // from the empty feed (`npm run test:e2e:empty-feed`, docs/testing.md);
@@ -61,9 +61,7 @@ test.describe("Coming soon", { tag: "@empty-feed" }, () => {
       await page.emulateMedia({ colorScheme });
       await page.goto("/");
       // axe samples colors mid-fade, so let the story's reveal finish first.
-      for (const paragraph of await storyParagraphs(page).all()) {
-        await reveal(paragraph);
-      }
+      await scrollThrough(page);
       const results = await new AxeBuilder({ page }).analyze();
       expect(results.violations).toEqual([]);
     });

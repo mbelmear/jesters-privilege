@@ -1,6 +1,12 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
-import { closingLine, reveal, scrollThrough } from "./hero-story";
+import {
+  closingLine,
+  motionLoaded,
+  offsetsAsItAppears,
+  reveal,
+  scrollThrough,
+} from "./hero-story";
 
 // A transform animated to none computes as the identity matrix.
 const UNMOVED = /^(none|matrix\(1, 0, 0, 1, 0, 0\))$/;
@@ -24,6 +30,13 @@ test.describe("Home", () => {
     ]) {
       await expect(page.getByRole("region", { name })).toBeAttached();
     }
+  });
+
+  // The coming-soon build's absence check (coming-soon.spec.ts) finds it here.
+  test("lists Episodes in the navigation", async ({ page, isMobile }) => {
+    if (isMobile) await page.getByRole("button", { name: "Open menu" }).click();
+    const nav = page.getByRole("navigation", { name: "Main" });
+    await expect(nav.getByRole("link", { name: "Episodes" })).toBeVisible();
   });
 
   test("leads from the latest Episode to its page", async ({ page }) => {
@@ -60,15 +73,32 @@ test.describe("Home", () => {
   }
 });
 
-test.describe("Home with reduced motion", () => {
-  test.use({ reducedMotion: "reduce" });
+// Between lowered (24 px) and in place, the story passes through every
+// offset as it rises; with reduced motion it only jumps from one to the
+// other while it fades.
+const between = (offsets: number[]) =>
+  offsets.filter((offset) => offset > 0.5 && offset < 23.5);
 
-  test("the story fades in without moving", async ({ page }) => {
-    await page.goto("/");
-    await reveal(closingLine(page));
-    await expect(closingLine(page)).toHaveCSS("transform", "none");
+for (const reducedMotion of ["reduce", "no-preference"] as const) {
+  test.describe(`Home with reducedMotion: ${reducedMotion}`, () => {
+    test.use({ reducedMotion });
+
+    // With motion on, the same check finds the story moving.
+    test(
+      reducedMotion === "reduce"
+        ? "the story fades in without moving"
+        : "the story rises as it fades in",
+      async ({ page }) => {
+        await page.goto("/");
+        await motionLoaded(page);
+        const offsets = await offsetsAsItAppears(closingLine(page));
+        if (reducedMotion === "reduce") expect(between(offsets)).toEqual([]);
+        else expect(between(offsets).length).toBeGreaterThan(0);
+        expect(offsets.at(-1)).toBeCloseTo(0);
+      }
+    );
   });
-});
+}
 
 // The story renders hidden until Motion reveals it, so without Motion it
 // must show anyway.
