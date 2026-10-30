@@ -11,6 +11,7 @@ These are non-negotiable, and a commit or pull request that breaks them is refus
 - **Formatting.** Prettier, checked in CI.
 - **Colors and fonts come from design tokens.** ESLint rejects literal colors (hex, `rgb()`/`hsl()`/`oklch()` and friends), Tailwind's built-in palette (`bg-black`, `text-red-500`), Tailwind arbitrary color and font-family values, and inline `font`/`fontFamily` styles anywhere in `src/` outside tests. It also rejects `text-brand`: orange text uses `text-brand-display` (large) or `text-brand-ink` (small). Tokens live in `src/app/globals.css`.
 - **Browser tests poll for at least a second.** ESLint rejects a sub-second `expect.poll` timeout in `e2e/`.
+- **No invisible whitespace.** ESLint rejects a literal byte order mark, no-break space, or other irregular whitespace anywhere in a file, strings, regexes, and comments included. In code, write it as an escape (`\uFEFF`, `\u00a0`).
 
 Reviewers skip these; the rules below are the ones that need judgement.
 

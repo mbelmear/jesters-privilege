@@ -57,6 +57,17 @@ const eslintConfig = defineConfig([
       ],
     },
   },
+  // An invisible character (a byte order mark, a no-break space) in a string
+  // or regex changes what code matches with nothing to see in review; write it
+  // as an escape such as `\uFEFF` (#16).
+  {
+    rules: {
+      "no-irregular-whitespace": [
+        "error",
+        { skipStrings: false, skipRegExps: false, skipTemplates: false },
+      ],
+    },
+  },
   // Colors and fonts come from the design tokens in `src/app/globals.css`, so
   // dark mode and a rebrand stay one-file changes. Applies to everything in
   // `src/` except tests.

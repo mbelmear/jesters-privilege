@@ -25,13 +25,13 @@ const stanczyk = {
               "https://commons.wikimedia.org/wiki/File:Jan_Matejko,_Sta%C5%84czyk.jpg",
             extmetadata: {
               ObjectName: {
-                value: `<div class="fn"><div><i>Stańczyk ${edit}</i></div><div style="display: none;">label QS:Len,"Stańczyk (Stańczyk during a ball)"</div></div>`,
+                value: `<div class="fn"><div><i>Stańczyk\u00a0${edit}</i></div><div style="display: none;">label QS:Len,"Stańczyk (Stańczyk during a ball)"</div></div>`,
               },
               Artist: {
                 value:
                   '<bdi><a href="https://en.wikipedia.org/wiki/en:Jan_Matejko"><span title="Polish painter (1838–1893)">Jan Matejko</span></a></bdi>',
               },
-              DateTimeOriginal: { value: `1862 ${edit}` },
+              DateTimeOriginal: { value: `1862\u00a0${edit}` },
               LicenseShortName: { value: "Public domain" },
             },
           },
