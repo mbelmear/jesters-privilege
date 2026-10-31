@@ -2,13 +2,19 @@
 // change: phone and desktop, light and dark, each the full page after
 // scrolling through it (so reveals and lazy images have run), plus the
 // phone's first screen, where most visitors land from Instagram.
-// Build first. Usage: npm run screenshots -- <page path> [folder]
+// Build first. Usage: npm run screenshots -- <page path> [folder] [--click <button>]...
 //   npm run screenshots -- /styleguide/home .screenshots/home
+// Each --click presses the button of that name, in order, then shoots the
+// screen as it stands (<size>-<scheme>-clicked.png), for a state that shows
+// only after interaction: the player once an Episode plays, a sent form.
+//   npm run screenshots -- /episodes/2 --click "Play Episode 2" --click "Show player controls"
+// Episode audio is served as silence (e2e/player.ts), so Play really plays.
 import { spawn } from "node:child_process";
 import { mkdir } from "node:fs/promises";
 import { createServer } from "node:net";
 import { join } from "node:path";
 import { chromium, type Page } from "@playwright/test";
+import { serveEpisodeAudio } from "../e2e/player";
 
 const SIZES = {
   phone: { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 },
@@ -17,10 +23,11 @@ const SIZES = {
 const SCHEMES = ["light", "dark"] as const;
 
 async function main() {
-  const [page, folder = ".screenshots"] = process.argv.slice(2);
+  const { positional, clicks } = parseArgs(process.argv.slice(2));
+  const [page, folder = ".screenshots"] = positional;
   if (!page?.startsWith("/")) {
     throw new Error(
-      "Usage: npm run screenshots -- <page path such as /about> [folder]"
+      'Usage: npm run screenshots -- <page path such as /about> [folder] [--click "<button name>"]...'
     );
   }
   await mkdir(folder, { recursive: true });
@@ -58,6 +65,7 @@ async function main() {
     for (const [size, options] of Object.entries(SIZES)) {
       for (const colorScheme of SCHEMES) {
         const tab = await browser.newPage({ ...options, colorScheme });
+        await serveEpisodeAudio(tab);
         await tab.goto(url);
         // Lazily loaded code (Motion, for an on-scroll reveal) arrives
         // before the scroll that should trigger it.
@@ -73,6 +81,16 @@ async function main() {
         const path = join(folder, `${size}-${colorScheme}.png`);
         await tab.screenshot({ path, fullPage: true });
         console.log(path);
+        if (clicks.length > 0) {
+          for (const name of clicks) {
+            await tab.getByRole("button", { name, exact: true }).click();
+            // Lazily loaded UI (the player bar) arrives and settles.
+            await tab.waitForTimeout(1500);
+          }
+          const clicked = join(folder, `${size}-${colorScheme}-clicked.png`);
+          await tab.screenshot({ path: clicked });
+          console.log(clicked);
+        }
         await tab.close();
       }
     }
@@ -81,6 +99,24 @@ async function main() {
     server.kill();
     await browser.close();
   }
+}
+
+// Splits the arguments into positional ones and the --click button names.
+function parseArgs(args: string[]) {
+  const positional: string[] = [];
+  const clicks: string[] = [];
+  for (let i = 0; i < args.length; i += 1) {
+    const arg = args[i];
+    if (arg !== "--click") {
+      positional.push(arg);
+      continue;
+    }
+    const name = args[i + 1];
+    if (!name) throw new Error("--click needs a button name");
+    clicks.push(name);
+    i += 1;
+  }
+  return { positional, clicks };
 }
 
 // Each step pauses long enough for an on-scroll reveal to start.

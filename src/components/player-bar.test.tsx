@@ -116,7 +116,7 @@ describe("PlayerBar", () => {
     act(() => audio.stall());
     expect(screen.getByRole("status")).toHaveTextContent("Loading");
     act(() => audio.carryOn());
-    expect(screen.getByRole("status")).toHaveTextContent("");
+    expect(screen.getByRole("status")).toBeEmptyDOMElement();
   });
 
   it("explains a failure, and carries on from there when Play is pressed", async () => {
