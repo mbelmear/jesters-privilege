@@ -70,6 +70,8 @@ Playwright's actions (`click`, `scrollIntoViewIfNeeded`) wait for an element to 
 
 To test a page whose scripts fail to load, abort only the scripts (`page.route(/\/_next\/static\/chunks\/.*\.js/, …)`): Next serves the stylesheet from the same folder, so blocking the whole folder also takes away the CSS.
 
+A test that plays an Episode uses the helpers in `e2e/player.ts`: its audio route serves byte ranges, without which Chromium ignores a seek.
+
 Sessions on this machine build and test in parallel. Each worktree serves its build on its own port (derived from its path in `playwright.config.ts`), and a run fails if that port is taken rather than testing whatever already listens there; stop the stray server (`lsof -nP -iTCP:<port> -sTCP:LISTEN`) and rerun. When tests a change didn't touch time out locally, check `uptime` before suspecting the code: a load average far above the core count slows every browser.
 
 When a run fails in CI, the HTML report is attached to the workflow run as `playwright-report`. A failure that won't reproduce locally is usually timing: `gh run download <run-id> -n playwright-report` and open the failing test's trace (`npx playwright show-trace <trace>.zip`) to see what loaded around the failing step.
@@ -125,6 +127,8 @@ npm run lighthouse:compare              # or: -- <base-ref>
 It prints each page's simulated and observed LCP and FCP beside the base, with the bytes of each resource type requested before the observed paint. Those bytes are what the simulated figures track: a page that really paints in 40 ms still scores its LCP from everything it fetched by then, so trim early bytes rather than chase the paint. It also names each font file fetched before the paint, so an unexpected one shows by name rather than hiding in the total, and each page's LCP element: an image paints only after its own request on top of those bytes, so an image-led page sits higher than a text-led one with the same early bytes.
 
 Locally, a page's simulated LCP varies by up to half a second between runs of the same build as the machine's load changes, while its early bytes don't: `/` measured 3.06 s and then 2.56 s from identical bytes in #20. Judge a change with `lighthouse:compare`, which measures both checkouts under the same load, and read its early bytes before its simulated times.
+
+A simulated time moves in steps of about one round trip (roughly 150 ms), not smoothly, so a page just under its budget can cross it on a single extra KB, and the same bytes then fail on every run. To find which bytes tipped it, read which early type grew (document or script) in `lighthouse:compare`, then build once without the suspect component and measure that page alone (`npm run lighthouse -- <page>`). In #19, the player dock in the root layout was handed the whole Episode-page copy for three labels: 1 KB more document on every page took the simple home mockup from 3.05 s to 3.20 s.
 
 After the run, `npm run lighthouse` prints each page's median figures: simulated and observed LCP and FCP, the bytes of each type fetched before the paint, each early font file by name, and the LCP element (`scripts/lighthouse-summary.ts`). Reports are written to `.lighthouseci/reports/` and attached to each CI run as `lighthouse-reports`. They are not uploaded anywhere public. To read CI's figures, download them and summarise them in the same way:
 

@@ -134,8 +134,25 @@ const eslintConfig = defineConfig([
       "@typescript-eslint/consistent-type-assertions": "off",
     },
   },
+  // Every text contains the empty string, so these pass whatever the element
+  // holds; a test of absence must be able to fail (CODING_STANDARDS.md).
+  {
+    files: ["**/*.test.{ts,tsx}"],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector:
+            "CallExpression[callee.property.name='toHaveTextContent'][arguments.0.value='']",
+          message:
+            'toHaveTextContent("") always passes. Use toBeEmptyDOMElement() to check that an element is empty.',
+        },
+      ],
+    },
+  },
   // A sub-second poll times wall-clock milliseconds, which CI's WebKit can
-  // spend rendering no frames at all (#60).
+  // spend rendering no frames at all (#60). An empty toContainText matches
+  // any element, as an empty toHaveTextContent does in Jest.
   {
     files: ["e2e/**"],
     rules: {
@@ -146,6 +163,12 @@ const eslintConfig = defineConfig([
             "CallExpression[callee.object.name='expect'][callee.property.name='poll'] > ObjectExpression > Property:matches([key.name='timeout'], [key.value='timeout'])[value.value<1000]",
           message:
             "Sub-second expect.poll timeout. Count rendered frames instead: await two requestAnimationFrames inside evaluate, then measure once (docs/testing.md, Browser tests (Playwright)).",
+        },
+        {
+          selector:
+            "CallExpression[callee.property.name='toContainText'][arguments.0.value='']",
+          message:
+            'toContainText("") always passes. Use toBeEmpty() to check that an element is empty.',
         },
       ],
     },
@@ -162,6 +185,8 @@ const eslintConfig = defineConfig([
     "playwright-report/**",
     "test-results/**",
     ".lighthouseci/**",
+    // Screenshots and any one-off script that takes them:
+    ".screenshots/**",
   ]),
 ]);
 
