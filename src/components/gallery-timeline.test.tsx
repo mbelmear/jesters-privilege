@@ -92,14 +92,4 @@ describe("GalleryTimeline", () => {
     );
     expect(await axe(container)).toHaveNoViolations();
   });
-
-  it("opens an era with no painting yet under a plain heading", () => {
-    const eras = gallery.eras.map((era) => ({ ...era, band: undefined }));
-    render(<GalleryTimeline gallery={{ ...gallery, eras, fools: [] }} />);
-    const era = screen.getByRole("region", { name: "Holy Fools" });
-    expect(within(era).queryByRole("img")).not.toBeInTheDocument();
-    expect(
-      within(era).getByRole("heading", { level: 2, name: "Holy Fools" })
-    ).toBeVisible();
-  });
 });

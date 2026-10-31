@@ -7,7 +7,7 @@ const eras = [
   {
     id: "holy-fools",
     title: "Holy Fools",
-    period: "1st–16th centuries",
+    period: "1st–17th centuries",
     band: paintings["boyarynya-morozova"],
     intro: {
       title: "Fools for Christ",
@@ -49,7 +49,7 @@ const eras = [
   {
     id: "reformation",
     title: "The Reformation",
-    period: "1517–1650",
+    period: "1517–1660",
     band: paintings["las-meninas"],
     intro: {
       title: "The last of the court fools",
@@ -67,12 +67,12 @@ const fools = [
     slug: "paul",
     name: "Saint Paul",
     era: "holy-fools",
-    lived: "Died c. 64",
+    lived: "Died c. 64–67",
     story: {
       title: "A fool for Christ's sake",
       paragraphs: [
         'Paul was a learned man, trained in the law at the feet of Gamaliel, and he knew exactly how the gospel sounded to learned ears. A crucified Messiah was a stumbling block to Jews, he wrote, and foolishness to Greeks. He didn\'t soften it. "The foolishness of God is wiser than men," he told the Corinthians, and God had chosen the foolish things of the world to confound the wise.',
-        'The church at Corinth grew proud of its wisdom, and Paul answered with an irony any court jester would envy: "We are fools for Christ\'s sake, but ye are wise in Christ; we are weak, but ye are strong." Later, made to defend himself against rivals who boasted of their credentials, he played the fool on purpose. He boasted of beatings, shipwrecks, and being let down the wall of Damascus in a basket. "I am become a fool in glorying," he wrote; "ye have compelled me."',
+        'The church at Corinth grew proud of its wisdom, and Paul answered with an irony any court fool would envy: "We are fools for Christ\'s sake, but ye are wise in Christ; we are weak, but ye are strong." Later, made to defend himself against rivals who boasted of their credentials, he played the fool on purpose. He boasted of beatings, shipwrecks, and being let down the wall of Damascus in a basket. "I am become a fool in glorying," he wrote; "ye have compelled me."',
         "Valentin de Boulogne painted him at his desk, pen in hand, with a letter half written. Every holy fool after him took Paul's phrase as a calling: to look foolish to the world for the sake of a truth the world couldn't see.",
       ],
       draft: true,
@@ -99,12 +99,12 @@ const fools = [
     slug: "yurodivy",
     name: "The yurodivy",
     era: "holy-fools",
-    lived: "16th–17th centuries",
+    lived: "15th–17th centuries",
     story: {
       title: "Barefoot in the snow",
       paragraphs: [
         "In Russia the holy fool became an institution. The yurodivy went barefoot through the winter in rags or chains, slept in church porches, and spoke in riddles. People feared and honored him in equal measure, because his madness was understood as a disguise. A man who had given up everything, even his good name, had nothing left to lose by telling the truth.",
-        "Basil the Blessed walked naked through Moscow's winters, and the cathedral on Red Square where he was buried still bears his name. When Ivan the Terrible came to Pskov in 1570, fresh from slaughtering the people of Novgorod, the holy fool Nikola offered him a slab of raw meat. Ivan protested that it was Lent and he was a Christian. Nikola asked why, then, he drank Christian blood. Pskov was spared.",
+        "Basil the Blessed walked naked through Moscow's winters, and the cathedral on Red Square where he was buried still bears his name. When Ivan the Terrible came to Pskov in 1570, fresh from slaughtering the people of Novgorod, the story goes that the holy fool Nikola offered him a slab of raw meat. Ivan protested that it was Lent and he was a Christian. Nikola asked why, then, he drank Christian blood. Ivan left Pskov largely unharmed.",
         "Vasily Surikov's yurodivy sits barefoot in the snow as the Old Believer noblewoman Morozova is carted off to prison, raising two fingers in the old sign of the cross to answer hers. Surikov found his model selling cucumbers in a Moscow market, and painted him sitting in real snow.",
       ],
       draft: true,
@@ -136,8 +136,8 @@ const fools = [
       title: "A quarter of an hour before",
       paragraphs: [
         'Triboulet served two kings of France, Louis XII and Francis I, and his jokes had a way of finding the most powerful person in the room. The best-known story says a nobleman he had mocked swore to kill him. Triboulet ran to the king, who promised that anyone who murdered his fool would hang a quarter of an hour later. "Sire," said Triboulet, "might he hang a quarter of an hour before?"',
-        "Rabelais put him in the Third Book of Pantagruel. Panurge can't decide whether to marry, and after consulting a theologian, a physician, a lawyer, and a philosopher, he is sent at last to the fool Triboulet, on the theory that a fool might see what the wise had missed.",
-        "Three centuries later Victor Hugo made him the hero of Le roi s'amuse, a play so hard on the king that it was banned after one night. Verdi set the story to music, and Triboulet became Rigoletto. This drawing, from the circle of the court painter Jean Clouet, is the nearest we have to his face.",
+        "Rabelais put him in the Third Book of Pantagruel. Panurge can't decide whether to marry, and after consulting a theologian, a physician, and a philosopher, he is sent at last to the fool Triboulet, on the theory that a fool might see what the wise had missed.",
+        "Three centuries later Victor Hugo made him the hero of Le roi s'amuse, a play so hard on the king that it was banned after one night. Verdi set the story to music, and Triboulet became Rigoletto. This chalk drawing at Chantilly has long carried his name, though it was made around 1545, after his death, so no one can be sure the face is his.",
       ],
       draft: true,
     },
@@ -169,7 +169,7 @@ const fools = [
       paragraphs: [
         "Erasmus wrote In Praise of Folly in 1509 while staying with his friend Thomas More in London, and he said it took him only a few days. The Greek title, Moriae Encomium, puns on More's name. Folly herself climbs into the pulpit and preaches a sermon in her own praise, and along the way she mocks everyone who thinks himself wise: theologians splitting hairs, monks counting their fasts, popes and kings living in luxury.",
         "Then the joke turns. In her last pages Folly quotes Paul: the foolishness of God is wiser than men, and Christians must be fools for Christ's sake. The book that laughed at the church's pride ended by commending the folly of the cross, and it was read across Europe on the eve of the Reformation.",
-        "In 1515 a Basel schoolmaster, Oswald Myconius, let the young Hans Holbein and his brother Ambrosius fill the margins of his copy with 82 pen drawings. The first shows Folly, in her fool's cap, climbing into the pulpit. When Erasmus saw the sketch of himself at his desk, he is said to have remarked that if he still looked like that, he would take a wife.",
+        "In 1515 a Basel schoolmaster, Oswald Myconius, let the young Hans Holbein and his brother Ambrosius fill the margins of his copy with 82 pen drawings. The first shows Folly, in her fool's cap, preaching from the pulpit. When Erasmus saw the sketch of himself at his desk, he is said to have remarked that if he still looked like that, he would take a wife.",
       ],
       draft: true,
     },
@@ -217,11 +217,26 @@ const fools = [
       paragraphs: [
         "Pablo de Valladolid served at the court of Philip IV of Spain from 1632 until his death, one of the hombres de placer, the men of pleasure kept to amuse the king. Almost nothing else is known of him: not his jokes, not his history, not what he thought of his master.",
         "What survives is his portrait by Velázquez. He stands in black on a ground with no floor, no wall, and no horizon, one arm flung out as if in the middle of a speech. When Édouard Manet saw it in the Prado in 1865, he called it perhaps the most astonishing piece of painting ever done: the background disappears, he wrote, and air surrounds the man.",
-        "Velázquez painted the fools and dwarfs of Philip's court as he painted the king himself, as people who look back at us. In Las Meninas, two of them stand beside the princess among her maids of honor. The court kept them as curiosities; the painter gave them their dignity.",
+        "In Las Meninas, two of the court's dwarfs stand beside the princess among her maids of honor. The court kept such people as curiosities; Velázquez painted them as he painted the king himself, as people who look back at us.",
       ],
       draft: true,
     },
     painting: paintings["pablo-de-valladolid"],
+  },
+  {
+    slug: "calabacillas",
+    name: "Calabacillas",
+    era: "reformation",
+    lived: "Died 1639",
+    story: {
+      title: "Between two gourds",
+      paragraphs: [
+        "Juan Martín Martín, known at court as Calabacillas, came to Philip IV's household from the service of the king's brother, the Cardinal-Infante Ferdinand, and stayed until his death in 1639. Where Pablo de Valladolid seems to have been kept for his wit, Calabacillas seems to have been kept for his simplicity: one of the fools the court laughed at rather than with.",
+        "Velázquez painted him sitting on the floor between two gourds, calabazas, a pun on his nickname and the old Spanish emblem of an empty head. He squints and grins, and the painter's loose, quick brush refuses to make a joke of him. For centuries the canvas was misnamed The Simpleton of Coria, as if the man in it didn't need a name of his own.",
+      ],
+      draft: true,
+    },
+    painting: paintings.calabacillas,
   },
 ] as const satisfies readonly Fool[];
 

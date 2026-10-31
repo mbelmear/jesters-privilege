@@ -115,8 +115,8 @@ export type Era = {
   readonly title: string;
   readonly period: string;
   readonly intro: Section;
-  // The painting band that opens the era, once one is sourced.
-  readonly band?: Painting;
+  // The painting band that opens the era.
+  readonly band: Painting;
 };
 
 export type Fool = {
@@ -364,7 +364,7 @@ export function validateContent<C extends Content>(content: C): C {
   }
   const { eras, fools } = content.gallery;
   for (const era of eras) {
-    if (era.band) assertPainting(`gallery.eras[${era.id}].band`, era.band);
+    assertPainting(`gallery.eras[${era.id}].band`, era.band);
   }
   for (const fool of fools) {
     const path = `gallery.fools[${fool.slug}]`;

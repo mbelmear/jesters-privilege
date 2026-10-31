@@ -7,7 +7,7 @@ type Props = { gallery: Gallery };
 
 /**
  * The Fools' Gallery as a timeline: each era in turn, opening with its
- * painting band once one is sourced, then why this show wears the motley.
+ * painting band, then why this show wears the motley.
  * Within an era, a rail marked with the era's dates runs down beside its
  * introduction and its Fools.
  */
@@ -44,15 +44,7 @@ function EraSection({ era, fools }: { era: Era; fools: readonly Fool[] }) {
   const { title, period, intro, band } = era;
   return (
     <section aria-label={title} className="flex flex-col gap-10">
-      {band ? (
-        <PaintingBand painting={band} title={title} />
-      ) : (
-        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
-          <h2 className="border-b border-border pb-4 font-display text-4xl sm:text-5xl lg:text-6xl">
-            {title}
-          </h2>
-        </div>
-      )}
+      <PaintingBand painting={band} title={title} />
       <div className="mx-auto grid w-full max-w-7xl gap-4 px-4 sm:px-6 md:grid-cols-[9rem_minmax(0,1fr)] md:gap-10">
         <p className="font-ui text-sm font-semibold tracking-wider text-brand-ink uppercase md:sticky md:top-24 md:self-start md:text-right">
           {period}
