@@ -21,7 +21,8 @@ import {
   parseCommonsFile,
   parseDetail,
 } from "@/lib/commons";
-import { ENCODING, PHONE_BYTES, PHONE_WIDTHS, cropAround } from "@/lib/images";
+import { cropAround } from "@/lib/images";
+import { ENCODING, PHONE_BYTES, PHONE_WIDTHS } from "@/lib/phone-budget";
 
 const API = "https://commons.wikimedia.org/w/api.php";
 // Wikimedia asks every client to name itself and give a contact.

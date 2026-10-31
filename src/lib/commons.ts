@@ -1,5 +1,6 @@
 import { isTag, isText, type ChildNode } from "domhandler";
 import { parseDocument } from "htmlparser2";
+import type { Rect, Size } from "./images";
 
 // A painting's file on Wikimedia Commons, read from the API's image info
 // (action=query, prop=imageinfo, iiprop=url|size|extmetadata, formatversion=2,
@@ -124,17 +125,16 @@ export function parseDetail(arg: string): Detail {
   return { left, top, width, height };
 }
 
-// The detail's region of a file of `size`, in whole pixels.
-export function detailRect(
-  size: { width: number; height: number },
-  detail: Detail
-): { left: number; top: number; width: number; height: number } {
-  return {
-    left: Math.round(size.width * detail.left),
-    top: Math.round(size.height * detail.top),
-    width: Math.round(size.width * detail.width),
-    height: Math.round(size.height * detail.height),
+// The detail's region of a file of `size`, in whole pixels. Each edge is
+// rounded on its own, so a region reaching the file's edge stays inside it.
+export function detailRect(size: Size, detail: Detail): Rect {
+  const span = (length: number, start: number, extent: number) => {
+    const from = Math.round(length * start);
+    return [from, Math.round(length * (start + extent)) - from] as const;
   };
+  const [left, width] = span(size.width, detail.left, detail.width);
+  const [top, height] = span(size.height, detail.top, detail.height);
+  return { left, top, width, height };
 }
 
 /**
@@ -147,14 +147,14 @@ export function detailRect(
 export function paintingEntry(
   slug: string,
   file: CommonsFile,
-  size: { width: number; height: number },
-  detail?: string
+  size: Size,
+  detailArg?: string
 ): string {
   const key = /^[A-Za-z_$][\w$]*$/.test(slug) ? slug : JSON.stringify(slug);
   const text = (value?: string) => JSON.stringify(value ?? "");
   return [
-    ...(detail
-      ? [`  // A detail of the Commons file, cut with --detail ${detail}.`]
+    ...(detailArg
+      ? [`  // A detail of the Commons file, cut with --detail ${detailArg}.`]
       : []),
     `  ${key}: {`,
     `    src: ${text(`/paintings/${slug}.jpg`)},`,

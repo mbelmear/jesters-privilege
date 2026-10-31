@@ -243,4 +243,13 @@ describe("detailRect", () => {
       )
     ).toEqual({ left: 0, top: 0, width: 1136, height: 937 });
   });
+
+  it("keeps a region that reaches the edge inside the file", () => {
+    expect(
+      detailRect(
+        { width: 5, height: 5 },
+        { left: 0.3, top: 0.3, width: 0.7, height: 0.7 }
+      )
+    ).toEqual({ left: 2, top: 2, width: 3, height: 3 });
+  });
 });
