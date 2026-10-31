@@ -106,9 +106,16 @@ test.describe("Fools' Gallery", () => {
 test.describe("Fools' Gallery with reduced motion", () => {
   test.use({ reducedMotion: "reduce" });
 
+  // Reduced motion gives every transition 0.01ms (globals.css), so a style
+  // change can leave one briefly running; only the zoom's keyframes count.
   test("the band holds still", async ({ page }) => {
     await page.goto(PAGE);
     const img = await band(page);
-    expect(await img.evaluate((el) => el.getAnimations().length)).toBe(0);
+    expect(
+      await img.evaluate(
+        (el) =>
+          el.getAnimations().filter((a) => a instanceof CSSAnimation).length
+      )
+    ).toBe(0);
   });
 });

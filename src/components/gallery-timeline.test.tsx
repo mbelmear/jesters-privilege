@@ -94,7 +94,8 @@ describe("GalleryTimeline", () => {
   });
 
   it("opens an era with no painting yet under a plain heading", () => {
-    render(<GalleryTimeline gallery={gallery} />);
+    const eras = gallery.eras.map((era) => ({ ...era, band: undefined }));
+    render(<GalleryTimeline gallery={{ ...gallery, eras, fools: [] }} />);
     const era = screen.getByRole("region", { name: "Holy Fools" });
     expect(within(era).queryByRole("img")).not.toBeInTheDocument();
     expect(
