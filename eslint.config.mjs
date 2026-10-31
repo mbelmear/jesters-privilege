@@ -151,7 +151,8 @@ const eslintConfig = defineConfig([
     },
   },
   // A sub-second poll times wall-clock milliseconds, which CI's WebKit can
-  // spend rendering no frames at all (#60).
+  // spend rendering no frames at all (#60). An empty toContainText matches
+  // any element, as an empty toHaveTextContent does in Jest.
   {
     files: ["e2e/**"],
     rules: {

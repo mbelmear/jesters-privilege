@@ -51,7 +51,7 @@ export async function serveEpisodeAudio(page: Page) {
   });
 }
 
-/** The docked player bar, or its offer to resume. */
+/** The player dock: the bar, or its offer to resume. */
 export const playerBar = (page: Page) =>
   page.getByRole("region", { name: "Player" });
 
