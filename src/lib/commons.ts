@@ -134,6 +134,11 @@ export function detailRect(size: Size, detail: Detail): Rect {
   };
   const [left, width] = span(size.width, detail.left, detail.width);
   const [top, height] = span(size.height, detail.top, detail.height);
+  if (width < 1 || height < 1) {
+    throw new Error(
+      `--detail keeps no pixels of a ${size.width}×${size.height} file; widen the region`
+    );
+  }
   return { left, top, width, height };
 }
 

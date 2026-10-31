@@ -37,7 +37,7 @@ async function main() {
   if (overBudget.length > 0) {
     throw new Error(
       [
-        `A phone should download at most ${PHONE_BYTES / 1000} KB of one painting. Fine detail costs bytes: choose a calmer painting or scan, cut a detail (npm run add-painting -- … --detail), or, for a portrait- file, move the painting's focalPoint so a band's phone crop takes in a calmer part. Lowering ENCODING.avif.quality in src/lib/phone-budget.ts would re-encode every painting at the lower quality.`,
+        `A phone should download at most ${PHONE_BYTES / 1000} KB of one painting. Fine detail costs bytes: choose a calmer painting or scan, or cut a detail (npm run add-painting -- … --detail). Lowering ENCODING.avif.quality in src/lib/phone-budget.ts would re-encode every painting at the lower quality.`,
         ...overBudget,
       ].join("\n  ")
     );
@@ -90,7 +90,7 @@ async function makeSet(
   const heaviest = image.focalPoint && heaviestOverPhoneBudget(made);
   if (heaviest) {
     return {
-      overBudget: `${heaviest.variant.url}: ${Math.round(heaviest.bytes / 1000)} KB (content ${image.contentPath})`,
+      overBudget: `${heaviest.variant.url}: ${Math.round(heaviest.bytes / 1000)} KB (content ${image.contentPath})${heaviest.variant.crop ? "; or move its focalPoint so a band's phone crop takes in a calmer part" : ""}`,
     };
   }
   await writeFile(stampFile, stamp);

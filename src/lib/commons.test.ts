@@ -252,4 +252,13 @@ describe("detailRect", () => {
       )
     ).toEqual({ left: 2, top: 2, width: 3, height: 3 });
   });
+
+  it("refuses a detail too small to keep a pixel of the file", () => {
+    expect(() =>
+      detailRect(
+        { width: 100, height: 100 },
+        { left: 0.5, top: 0, width: 0.001, height: 1 }
+      )
+    ).toThrow("--detail keeps no pixels of a 100×100 file; widen the region");
+  });
 });

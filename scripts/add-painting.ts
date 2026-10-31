@@ -21,7 +21,7 @@ import {
   parseCommonsFile,
   parseDetail,
 } from "@/lib/commons";
-import { cropAround } from "@/lib/images";
+import { cropAround, type Size } from "@/lib/images";
 import { ENCODING, PHONE_BYTES, PHONE_WIDTHS } from "@/lib/phone-budget";
 
 const API = "https://commons.wikimedia.org/w/api.php";
@@ -149,10 +149,7 @@ async function writeGrid(slug: string, data: Buffer): Promise<string> {
 
 // What a phone would download of the painting, whole and as a band's portrait
 // crop around its centre, against the budget `npm run images` enforces.
-async function phoneEstimates(
-  data: Buffer,
-  size: { width: number; height: number }
-): Promise<string[]> {
+async function phoneEstimates(data: Buffer, size: Size): Promise<string[]> {
   const avif = async (image: Sharp, width: number) =>
     (await image.resize({ width }).avif(ENCODING.avif).toBuffer()).length;
   const whole = await avif(
