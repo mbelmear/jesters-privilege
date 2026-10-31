@@ -100,20 +100,62 @@ export function assertPublicDomain(file: CommonsFile): void {
   }
 }
 
+// A region of a file to keep, as fractions of its width and height: a detail
+// such as one drawing on a sheet, for a painting whose whole file is too busy
+// for a phone's image budget.
+export type Detail = {
+  readonly left: number;
+  readonly top: number;
+  readonly width: number;
+  readonly height: number;
+};
+
+// A detail from add-painting's --detail argument, "left,top,width,height".
+export function parseDetail(arg: string): Detail {
+  const parts = arg.split(",").map(Number);
+  const [left = NaN, top = NaN, width = NaN, height = NaN] = parts;
+  const inside = (start: number, length: number) =>
+    start >= 0 && length > 0 && start + length <= 1;
+  if (parts.length !== 4 || !inside(left, width) || !inside(top, height)) {
+    throw new Error(
+      `--detail is left,top,width,height as fractions of the file, inside it, such as 0,0,0.6,0.33, not "${arg}"`
+    );
+  }
+  return { left, top, width, height };
+}
+
+// The detail's region of a file of `size`, in whole pixels.
+export function detailRect(
+  size: { width: number; height: number },
+  detail: Detail
+): { left: number; top: number; width: number; height: number } {
+  return {
+    left: Math.round(size.width * detail.left),
+    top: Math.round(size.height * detail.top),
+    width: Math.round(size.width * detail.width),
+    height: Math.round(size.height * detail.height),
+  };
+}
+
 /**
  * A src/content/paintings.ts entry for the file, saved at `size`. What a
  * person must supply fails the build until it's written: alt text, medium,
  * and collection are empty, which content validation refuses, and the focal
- * point is left commented out, which the type check refuses.
+ * point is left commented out, which the type check refuses. A detail's
+ * entry says how it was cut.
  */
 export function paintingEntry(
   slug: string,
   file: CommonsFile,
-  size: { width: number; height: number }
+  size: { width: number; height: number },
+  detail?: string
 ): string {
   const key = /^[A-Za-z_$][\w$]*$/.test(slug) ? slug : JSON.stringify(slug);
   const text = (value?: string) => JSON.stringify(value ?? "");
   return [
+    ...(detail
+      ? [`  // A detail of the Commons file, cut with --detail ${detail}.`]
+      : []),
     `  ${key}: {`,
     `    src: ${text(`/paintings/${slug}.jpg`)},`,
     `    width: ${size.width},`,

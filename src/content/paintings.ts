@@ -179,7 +179,7 @@ export const paintings = {
       collection: "British Library, London",
     },
   },
-  // A detail: the top of the Commons sheet, cut from its original. The whole
+  // A detail of the Commons file, cut with --detail 0,0,0.6,0.333: the whole
   // sheet's paper grain and print put a phone past its image budget.
   "folly-in-the-pulpit": {
     src: "/paintings/folly-in-the-pulpit.jpg",
@@ -213,8 +213,7 @@ export const paintings = {
       collection: "National Library of Wales",
     },
   },
-  // A detail: the top of the Commons etching, without its verses. The whole
-  // print's hatching puts a phone past its image budget.
+  // A detail of the Commons file, cut with --detail 0.1,0.02,0.8,0.58.
   "archibald-armstrong": {
     src: "/paintings/archibald-armstrong.jpg",
     width: 600,
