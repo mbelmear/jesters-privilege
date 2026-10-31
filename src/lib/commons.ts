@@ -1,5 +1,6 @@
 import { isTag, isText, type ChildNode } from "domhandler";
 import { parseDocument } from "htmlparser2";
+import type { Rect, Size } from "./images";
 
 // A painting's file on Wikimedia Commons, read from the API's image info
 // (action=query, prop=imageinfo, iiprop=url|size|extmetadata, formatversion=2,
@@ -100,20 +101,66 @@ export function assertPublicDomain(file: CommonsFile): void {
   }
 }
 
+// A region of a file to keep, as fractions of its width and height: a detail
+// such as one drawing on a sheet, for a painting whose whole file is too busy
+// for a phone's image budget.
+export type Detail = {
+  readonly left: number;
+  readonly top: number;
+  readonly width: number;
+  readonly height: number;
+};
+
+// A detail from add-painting's --detail argument, "left,top,width,height".
+export function parseDetail(arg: string): Detail {
+  const parts = arg.split(",").map(Number);
+  const [left = NaN, top = NaN, width = NaN, height = NaN] = parts;
+  const inside = (start: number, length: number) =>
+    start >= 0 && length > 0 && start + length <= 1;
+  if (parts.length !== 4 || !inside(left, width) || !inside(top, height)) {
+    throw new Error(
+      `--detail is left,top,width,height as fractions of the file, inside it, such as 0,0,0.6,0.33, not "${arg}"`
+    );
+  }
+  return { left, top, width, height };
+}
+
+// The detail's region of a file of `size`, in whole pixels. Each edge is
+// rounded on its own, so a region reaching the file's edge stays inside it.
+export function detailRect(size: Size, detail: Detail): Rect {
+  const span = (length: number, start: number, extent: number) => {
+    const from = Math.round(length * start);
+    return [from, Math.round(length * (start + extent)) - from] as const;
+  };
+  const [left, width] = span(size.width, detail.left, detail.width);
+  const [top, height] = span(size.height, detail.top, detail.height);
+  if (width < 1 || height < 1) {
+    throw new Error(
+      `--detail keeps no pixels of a ${size.width}×${size.height} file; widen the region`
+    );
+  }
+  return { left, top, width, height };
+}
+
 /**
  * A src/content/paintings.ts entry for the file, saved at `size`. What a
  * person must supply fails the build until it's written: alt text, medium,
  * and collection are empty, which content validation refuses, and the focal
- * point is left commented out, which the type check refuses.
+ * point is left commented out, which the type check refuses. A detail's
+ * entry says how it was cut.
  */
 export function paintingEntry(
   slug: string,
   file: CommonsFile,
-  size: { width: number; height: number }
+  size: Size,
+  detailArg?: string
 ): string {
   const key = /^[A-Za-z_$][\w$]*$/.test(slug) ? slug : JSON.stringify(slug);
   const text = (value?: string) => JSON.stringify(value ?? "");
   return [
+    ...(detailArg
+      ? [`  // A detail of the Commons file, cut with --detail ${detailArg}.`]
+      : []),
     `  ${key}: {`,
     `    src: ${text(`/paintings/${slug}.jpg`)},`,
     `    width: ${size.width},`,

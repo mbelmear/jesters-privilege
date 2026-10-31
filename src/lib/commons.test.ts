@@ -2,8 +2,10 @@ import {
   assertPublicDomain,
   assertSlug,
   commonsTitle,
+  detailRect,
   paintingEntry,
   parseCommonsFile,
+  parseDetail,
 } from "./commons";
 
 const edit =
@@ -157,6 +159,20 @@ describe("paintingEntry", () => {
     );
   });
 
+  it("says how a detail was cut, so it can be cut again", () => {
+    const file = parseCommonsFile(stanczyk);
+    expect(
+      paintingEntry(
+        "stanczyk",
+        file,
+        { width: 1136, height: 937 },
+        "0,0,0.6,0.333"
+      )
+    ).toMatch(
+      /^ {2}\/\/ A detail of the Commons file, cut with --detail 0,0,0\.6,0\.333\.\n {2}stanczyk: \{/
+    );
+  });
+
   it("quotes a slug that isn't a plain identifier", () => {
     const file = parseCommonsFile(stanczyk);
     expect(
@@ -196,4 +212,53 @@ describe("assertSlug", () => {
       );
     }
   );
+});
+
+describe("parseDetail", () => {
+  it("reads left, top, width, and height as fractions of the file", () => {
+    expect(parseDetail("0,0,0.6,0.333")).toEqual({
+      left: 0,
+      top: 0,
+      width: 0.6,
+      height: 0.333,
+    });
+  });
+
+  it.each(["0,0,0.6", "0,0,1.2,0.5", "0.5,0,0.6,0.5", "a,b,c,d"])(
+    "refuses a region that isn't four fractions inside the file: %s",
+    (arg) => {
+      expect(() => parseDetail(arg)).toThrow(
+        `--detail is left,top,width,height as fractions of the file, inside it, such as 0,0,0.6,0.33, not "${arg}"`
+      );
+    }
+  );
+});
+
+describe("detailRect", () => {
+  it("cuts the region in whole pixels", () => {
+    expect(
+      detailRect(
+        { width: 1894, height: 2815 },
+        { left: 0, top: 0, width: 0.6, height: 0.333 }
+      )
+    ).toEqual({ left: 0, top: 0, width: 1136, height: 937 });
+  });
+
+  it("keeps a region that reaches the edge inside the file", () => {
+    expect(
+      detailRect(
+        { width: 5, height: 5 },
+        { left: 0.3, top: 0.3, width: 0.7, height: 0.7 }
+      )
+    ).toEqual({ left: 2, top: 2, width: 3, height: 3 });
+  });
+
+  it("refuses a detail too small to keep a pixel of the file", () => {
+    expect(() =>
+      detailRect(
+        { width: 100, height: 100 },
+        { left: 0.5, top: 0, width: 0.001, height: 1 }
+      )
+    ).toThrow("--detail keeps no pixels of a 100×100 file; widen the region");
+  });
 });

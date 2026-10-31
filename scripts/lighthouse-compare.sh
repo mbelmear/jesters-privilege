@@ -9,6 +9,10 @@
 set -euo pipefail
 
 base="${1:-origin/main}"
+if [[ "$base" == /* ]]; then
+  echo "lighthouse:compare takes a base ref, not a page; every page in lighthouserc.json is measured. To measure one page alone: npm run lighthouse -- $base" >&2
+  exit 1
+fi
 root=$(git rev-parse --show-toplevel)
 scratch=$(mktemp -d)
 cleanup() {

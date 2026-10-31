@@ -11,50 +11,36 @@ import path from "node:path";
 import sharp from "sharp";
 import { content } from "@/content";
 import { findImages, type FoundImage } from "@/lib/content";
+import { IMAGE_ROOT, imageFolder, planImage, type Variant } from "@/lib/images";
 import {
-  IMAGE_ROOT,
-  IMAGE_SIZES,
-  imageFolder,
-  planImage,
-  type Variant,
-} from "@/lib/images";
+  ENCODING,
+  PHONE_BYTES,
+  heaviestOverPhoneBudget,
+} from "@/lib/phone-budget";
 
 const PUBLIC = "public";
 const OUT = path.join(PUBLIC, IMAGE_ROOT);
-
-// What a phone downloads of a painting must stay near 150 KB (#13,
-// docs/testing.md), or the build fails; the limit leaves headroom for a busy
-// canvas. "Phone" means one held upright, up to 430 CSS px at 3×: there a band
-// spans the screen with its portrait crop, and a framed painting shows whole
-// at no more than 90vw (the sizes in painting-band.tsx and
-// framed-painting.tsx). Each takes the first srcset width that covers it.
-// A phone turned sideways, at 48rem or wider, gets the desktop layout and its
-// larger files, which this doesn't check.
-const PHONE_BYTES = 180_000;
-const PHONE_PIXELS = 430 * 3;
-const phoneWidth = (fraction: number) =>
-  IMAGE_SIZES.deviceSizes.find((width) => width >= PHONE_PIXELS * fraction) ??
-  failNoPhoneWidth(fraction);
-function failNoPhoneWidth(fraction: number): never {
-  throw new Error(
-    `No deviceSizes width in src/lib/images.ts covers a ${PHONE_PIXELS}px phone at ${fraction * 100}vw; add one`
-  );
-}
-const PHONE_WIDTHS = { crop: phoneWidth(1), whole: phoneWidth(0.9) };
-
-const ENCODING = {
-  avif: { quality: 45, effort: 6 },
-  webp: { quality: 72, effort: 4 },
-} as const;
 
 async function main() {
   const images = findImages(content);
   const folders = new Set<string>();
   let made = 0;
+  const overBudget: string[] = [];
   for (const image of images) {
     const folder = path.join(PUBLIC, imageFolder(image.src));
     folders.add(folder);
-    if (await makeSet(image, folder)) made += 1;
+    const result = await makeSet(image, folder);
+    if (result !== "unchanged") made += 1;
+    if (typeof result === "object") overBudget.push(result.overBudget);
+  }
+  // Every painting over budget at once, so one run shows all there is to fix.
+  if (overBudget.length > 0) {
+    throw new Error(
+      [
+        `A phone should download at most ${PHONE_BYTES / 1000} KB of one painting. Fine detail costs bytes: choose a calmer painting or scan, or cut a detail (npm run add-painting -- … --detail). Lowering ENCODING.avif.quality in src/lib/phone-budget.ts would re-encode every painting at the lower quality.`,
+        ...overBudget,
+      ].join("\n  ")
+    );
   }
   const removed = await removeStale(OUT, folders);
   console.log(
@@ -62,8 +48,12 @@ async function main() {
   );
 }
 
-// Returns whether the set had to be made.
-async function makeSet(image: FoundImage, folder: string): Promise<boolean> {
+// Makes the set unless its stamp shows it unchanged. A painting over the phone
+// budget gets no stamp, so the next run checks it again.
+async function makeSet(
+  image: FoundImage,
+  folder: string
+): Promise<"unchanged" | "made" | { overBudget: string }> {
   const file = path.join(PUBLIC, image.src);
   const source = await readFile(file).catch(() => {
     throw new Error(
@@ -83,7 +73,7 @@ async function makeSet(image: FoundImage, folder: string): Promise<boolean> {
     .digest("hex");
   const stampFile = path.join(folder, "stamp");
   if ((await readFile(stampFile, "utf8").catch(() => "")) === stamp) {
-    return false;
+    return "unchanged";
   }
   await rm(folder, { recursive: true, force: true });
   await mkdir(folder, { recursive: true });
@@ -93,35 +83,18 @@ async function makeSet(image: FoundImage, folder: string): Promise<boolean> {
       bytes: await encode(source, variant),
     }))
   );
-  // Only paintings carry a focal point (the Painting type requires one).
-  if (image.focalPoint) assertPhoneSizes(image, made);
-  await writeFile(stampFile, stamp);
-  return true;
-}
-
-// Fails when a file a phone would download of this painting is too heavy.
-function assertPhoneSizes(
-  image: FoundImage,
-  made: { variant: Variant; bytes: number }[]
-): void {
-  for (const { variant, bytes } of made) {
-    const widest = variant.crop ? PHONE_WIDTHS.crop : PHONE_WIDTHS.whole;
-    if (
-      variant.format === "avif" &&
-      variant.width <= widest &&
-      bytes > PHONE_BYTES
-    ) {
-      // A dense painting, such as Bruegel's Netherlandish Proverbs, can pass
-      // the budget alone; the fix is usually that painting, not the encoding
-      // every painting shares (#24).
-      const focalPointAdvice = variant.crop
-        ? ", or move its focalPoint so the phone crop takes in a calmer part"
-        : "";
-      throw new Error(
-        `Image ${variant.url} is ${Math.round(bytes / 1000)} KB, over the ${PHONE_BYTES / 1000} KB a phone should download for one painting (content ${image.contentPath}). Fine detail costs bytes: choose a calmer painting or scan${focalPointAdvice}. Lowering ENCODING.avif.quality in scripts/images.ts would re-encode every painting at the lower quality.`
-      );
-    }
+  // Only paintings carry a focal point (the Painting type requires one). A
+  // dense painting, such as Bruegel's Netherlandish Proverbs, can pass the
+  // budget alone; the fix is usually that painting, not the encoding every
+  // painting shares (#24).
+  const heaviest = image.focalPoint && heaviestOverPhoneBudget(made);
+  if (heaviest) {
+    return {
+      overBudget: `${heaviest.variant.url}: ${Math.round(heaviest.bytes / 1000)} KB (content ${image.contentPath})${heaviest.variant.crop ? "; or move its focalPoint so a band's phone crop takes in a calmer part" : ""}`,
+    };
   }
+  await writeFile(stampFile, stamp);
+  return "made";
 }
 
 // Returns the file's size in bytes.

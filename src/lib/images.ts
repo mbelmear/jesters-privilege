@@ -22,7 +22,7 @@ export const IMAGE_WIDTHS = [
   ...IMAGE_SIZES.deviceSizes,
 ] as const;
 
-type Size = { readonly width: number; readonly height: number };
+export type Size = { readonly width: number; readonly height: number };
 
 // Crops the build cuts around an image's focal point. Painting bands show the
 // portrait one on phones.

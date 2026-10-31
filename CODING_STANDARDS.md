@@ -47,6 +47,7 @@ Reviewers skip these; the rules below are the ones that need judgement.
 
 ## Content
 
+- **History is told as the sources tell it.** A Fool's dates, placard (artist, title, year, medium, collection), and story agree with the painting's Commons page and the collection holding it; where those disagree or attribute loosely, the placard says so ("Attributed to", "School of", "c."). An anecdote the sources give as legend is told as one ("the story goes", "is said to"), and a quotation is one the sources print. #25's review found a drawing dated after its sitter's death shown as his face, a consultant Rabelais never wrote, and a painting credited to the museum that shows it rather than the foundation that owns it.
 - **Copy shown on more than one page lives once**, in a content record each page reads, such as the Episode labels and length units. A page that needs copy another page already has moves it into a shared record, in place of a second copy.
 
 ## Browser tests
