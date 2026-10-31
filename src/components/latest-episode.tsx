@@ -1,29 +1,35 @@
-import { Play } from "lucide-react";
 import Link from "next/link";
 import { useId } from "react";
-import { Button } from "@/components/ui/button";
-import type { Copy, Home } from "@/lib/content";
+import { PlayEpisodeButton } from "@/components/play-episode-button";
+import type { Copy, Home, PlayerCopy } from "@/lib/content";
 import { episodePath, type Episode } from "@/lib/feed";
 import {
   episodeLabel,
   formatListeningTime,
   formatPublishDate,
 } from "@/lib/format-episode";
+import { playableEpisode } from "@/lib/player";
 
 type Props = {
   // The newest Episode, or none before Episode 1 is published.
   episode: Episode | undefined;
   copy: Home["latestEpisode"];
   comingSoon: Copy;
+  playerCopy: PlayerCopy;
 };
 
 /**
  * The newest Episode, set like a hymn board: its number large in the display
  * face beside the title, date, length, and excerpt, with a button to play
- * it. Bonus and trailer Episodes carry an orange label in place of a number.
+ * it in the player. Bonus and trailer Episodes carry an orange label in place of a number.
  * Before any Episode is published, it says one is on its way.
  */
-export function LatestEpisode({ episode, copy, comingSoon }: Props) {
+export function LatestEpisode({
+  episode,
+  copy,
+  comingSoon,
+  playerCopy,
+}: Props) {
   const headingId = useId();
   return (
     <section
@@ -37,7 +43,7 @@ export function LatestEpisode({ episode, copy, comingSoon }: Props) {
         {copy.title}
       </h2>
       {episode ? (
-        <EpisodeCard episode={episode} copy={copy} />
+        <EpisodeCard episode={episode} copy={copy} playerCopy={playerCopy} />
       ) : (
         <p className="border-l-2 border-brand py-2 pl-4 text-lg">
           {comingSoon.text}
@@ -50,9 +56,11 @@ export function LatestEpisode({ episode, copy, comingSoon }: Props) {
 function EpisodeCard({
   episode,
   copy,
+  playerCopy,
 }: {
   episode: Episode;
   copy: Home["latestEpisode"];
+  playerCopy: PlayerCopy;
 }) {
   const href = episodePath(episode);
   const label = episodeLabel(episode, copy);
@@ -86,16 +94,13 @@ function EpisodeCard({
           {formatListeningTime(episode.durationSeconds, copy.units)}
         </p>
         <p className="line-clamp-3">{episode.excerpt}</p>
-        <Button asChild variant="brand" size="lg" className="mt-2 self-start">
-          <Link href={href}>
-            <Play aria-hidden="true" className="fill-current" />
-            {copy.play}
-            <span className="sr-only">
-              {" "}
-              {label.kind === "labelled" ? episode.title : label.text}
-            </span>
-          </Link>
-        </Button>
+        <div className="mt-2">
+          <PlayEpisodeButton
+            episode={playableEpisode(episode)}
+            name={label.kind === "labelled" ? episode.title : label.text}
+            copy={playerCopy}
+          />
+        </div>
       </div>
     </article>
   );

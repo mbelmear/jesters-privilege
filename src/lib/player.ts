@@ -3,7 +3,16 @@
 // commands and render its state. It drives the <audio> element only through
 // an injected AudioAdapter, so it runs in tests without real audio.
 
-import type { Episode } from "./feed";
+import type { PlayableEpisode } from "./feed";
+
+/** Only what playing an Episode needs; the Feed's Episodes carry more. */
+export function playableEpisode(episode: PlayableEpisode): PlayableEpisode {
+  const { guid, title, durationSeconds, audioUrl, artworkUrl } = episode;
+  const details = { guid, title, durationSeconds, audioUrl, artworkUrl };
+  return episode.type === "full"
+    ? { ...details, type: episode.type, number: episode.number }
+    : { ...details, type: episode.type, slug: episode.slug };
+}
 
 export const SPEEDS = [1, 1.25, 1.5, 2] as const;
 export type Speed = (typeof SPEEDS)[number];
@@ -12,8 +21,13 @@ export type Speed = (typeof SPEEDS)[number];
 export type AudioEvent =
   | { type: "play" }
   | { type: "pause" }
+  // Playback stops to wait for the network, then carries on.
+  | { type: "waiting" }
+  | { type: "playing" }
   | { type: "time"; position: number }
   | { type: "duration"; duration: number }
+  // The audio can't go on: its file is missing, or the network failed.
+  | { type: "error" }
   | { type: "ended" };
 
 export type AudioAdapter = {
@@ -62,6 +76,9 @@ export type DeviceStorage = {
   setItem: (key: string, value: string) => void;
 };
 
+// An Episode left partly heard, and where.
+export type PartlyHeard = { episode: PlayableEpisode; position: number };
+
 export type PlayerDeps = {
   audio: AudioAdapter;
   storage?: DeviceStorage | null;
@@ -71,19 +88,45 @@ export type PlayerDeps = {
   onError?: (error: Error) => void;
 };
 
+type LoadedEpisode = {
+  episode: PlayableEpisode;
+  position: number;
+  duration: number;
+};
+
 export type PlayerState = {
   speed: Speed;
   // The guids of Episodes heard to the end on this device.
   finished: ReadonlySet<string>;
 } & (
   | { mode: "empty" }
-  | {
-      mode: "playing" | "paused";
-      episode: Episode;
-      position: number;
-      duration: number;
-    }
+  // Buffering: playing, but waiting for the network to send more audio.
+  | ({ mode: "playing"; buffering: boolean } & LoadedEpisode)
+  | ({ mode: "paused" } & LoadedEpisode)
+  // The audio broke off; playing again reloads it and carries on from here.
+  | ({ mode: "failed" } & LoadedEpisode)
 );
+
+export type LoadedState = Exclude<PlayerState, { mode: "empty" }>;
+
+function playing(state: LoadedState): LoadedState {
+  const { speed, finished, episode, position, duration } = state;
+  const buffering = state.mode === "playing" && state.buffering;
+  return {
+    mode: "playing",
+    buffering,
+    speed,
+    finished,
+    episode,
+    position,
+    duration,
+  };
+}
+
+function stopped(state: LoadedState, mode: "paused" | "failed"): LoadedState {
+  const { speed, finished, episode, position, duration } = state;
+  return { mode, speed, finished, episode, position, duration };
+}
 
 export const SKIP_BACK_SECONDS = 15;
 export const SKIP_FORWARD_SECONDS = 30;
@@ -100,7 +143,7 @@ export type Player = {
   getState: () => PlayerState;
   subscribe: (listener: () => void) => () => void;
   /** Plays an Episode, from `at` seconds if given. The loaded Episode carries on where it is. */
-  play: (episode: Episode, options?: { at?: number }) => Promise<void>;
+  play: (episode: PlayableEpisode, options?: { at?: number }) => Promise<void>;
   pause: () => void;
   resume: () => Promise<void>;
   toggle: () => Promise<void>;
@@ -111,7 +154,7 @@ export type Player = {
   /** Where a partly heard Episode was left on this device, or null. */
   savedPosition: (guid: string) => number | null;
   /** The Episode last played on this device, if it was left partly heard. */
-  resumeOffer: () => { guid: string; position: number } | null;
+  resumeOffer: () => PartlyHeard | null;
 };
 
 export function createPlayer({
@@ -140,7 +183,7 @@ export function createPlayer({
   const listeners = new Set<() => void>();
 
   // The Episode the lock screen shows, so its artwork is sent once per load.
-  let lockScreenEpisode: Episode | null = null;
+  let lockScreenEpisode: PlayableEpisode | null = null;
 
   function setState(next: PlayerState) {
     state = next;
@@ -159,13 +202,20 @@ export function createPlayer({
     if (state.mode === "empty") return;
     switch (event.type) {
       case "play":
-        return setState({ ...state, mode: "playing" });
+        return setState(playing(state));
       case "pause":
         history.savePosition(state.episode.guid, state.position, { now: true });
-        return setState({ ...state, mode: "paused" });
+        return setState(stopped(state, "paused"));
+      case "waiting":
+      case "playing":
+        if (state.mode !== "playing") return;
+        return setState({ ...state, buffering: event.type === "waiting" });
       case "time":
         history.savePosition(state.episode.guid, event.position);
         return setState({ ...state, position: event.position });
+      case "error":
+        history.savePosition(state.episode.guid, state.position, { now: true });
+        return setState(stopped(state, "failed"));
       case "duration":
         durationKnown = true;
         return setState({ ...state, duration: event.duration });
@@ -173,8 +223,7 @@ export function createPlayer({
         heardToEnd = true;
         history.finish(state.episode.guid);
         return setState({
-          ...state,
-          mode: "paused",
+          ...stopped(state, "paused"),
           finished: history.finished(),
         });
       default: {
@@ -192,19 +241,34 @@ export function createPlayer({
   async function startAudio() {
     if (state.mode === "empty") return;
     if (heardToEnd) seek(0);
+    if (state.mode === "failed") {
+      loadAudio(state.episode);
+      seek(state.position);
+    }
     const load = loadCount;
-    setState({ ...state, mode: "playing" });
+    setState(playing(state));
     try {
       await audio.play();
     } catch (error: unknown) {
-      if (load === loadCount) setState({ ...state, mode: "paused" });
-      if (isRefusal(error)) return;
+      const refused = isRefusal(error);
+      if (load === loadCount)
+        setState(stopped(state, refused ? "paused" : "failed"));
+      if (refused) return;
       const reason = error instanceof Error ? error.message : String(error);
       throw new Error(
         `Can't play Episode "${state.episode.title}" from ${state.episode.audioUrl}: ${reason}`,
         { cause: error }
       );
     }
+  }
+
+  // Gives the audio an Episode's file from the start, at the chosen speed.
+  function loadAudio(episode: PlayableEpisode) {
+    loadCount += 1;
+    durationKnown = false;
+    heardToEnd = false;
+    audio.load(episode.audioUrl);
+    audio.setRate(state.speed);
   }
 
   function seek(seconds: number) {
@@ -225,12 +289,8 @@ export function createPlayer({
     },
     async play(episode, { at } = {}) {
       if (state.mode === "empty" || state.episode.guid !== episode.guid) {
-        loadCount += 1;
-        durationKnown = false;
-        heardToEnd = false;
-        audio.load(episode.audioUrl);
-        audio.setRate(state.speed);
-        history.markLastPlayed(episode.guid);
+        loadAudio(episode);
+        history.markLastPlayed(playableEpisode(episode));
         // Subscribers hear of the load once it is playing, not as a pause.
         state = {
           mode: "paused",
@@ -268,9 +328,9 @@ export function createPlayer({
     },
     savedPosition: history.position,
     resumeOffer() {
-      const guid = history.lastPlayed();
-      const position = guid === null ? null : history.position(guid);
-      return guid === null || position === null ? null : { guid, position };
+      const episode = history.lastPlayed();
+      const position = episode && history.position(episode.guid);
+      return episode && position !== null ? { episode, position } : null;
     },
   };
 
@@ -295,7 +355,7 @@ function showOnLockScreen(
       artworkUrl: next.episode.artworkUrl,
     });
   }
-  session.setPlaybackState(next.mode);
+  session.setPlaybackState(next.mode === "playing" ? "playing" : "paused");
   // The system rejects a position without a known, positive duration.
   if (Number.isFinite(next.duration) && next.duration > 0) {
     session.setPositionState({
@@ -340,7 +400,8 @@ function answerMediaAction(
 type Saved = {
   positions: Record<string, number>;
   finished: string[];
-  lastPlayed: string | null;
+  // Whole, so a return visit can offer to resume it from any page.
+  lastPlayed: PlayableEpisode | null;
 };
 
 // Keeps the listening history in memory and mirrors it to storage. Storage
@@ -367,8 +428,8 @@ function createHistory(storage: DeviceStorage | null) {
         ? position
         : null;
     },
-    markLastPlayed(guid: string) {
-      saved.lastPlayed = guid;
+    markLastPlayed(episode: PlayableEpisode) {
+      saved.lastPlayed = episode;
       write();
     },
     savePosition(guid: string, position: number, { now = false } = {}) {
@@ -411,12 +472,44 @@ function parseSaved(value: unknown): Saved | null {
   if (!Array.isArray(finished)) return null;
   const guids: unknown[] = finished;
   if (!guids.every((guid) => typeof guid === "string")) return null;
-  if (lastPlayed !== null && typeof lastPlayed !== "string") return null;
   return {
     positions: Object.fromEntries(entries),
     finished: guids,
-    lastPlayed,
+    // One stored by an older version, or damaged, costs only the offer.
+    lastPlayed: parsePlayableEpisode(lastPlayed),
   };
+}
+
+function parsePlayableEpisode(value: unknown): PlayableEpisode | null {
+  if (typeof value !== "object" || value === null) return null;
+  const entries: [string, unknown][] = Object.entries(value);
+  const fields = new Map(entries);
+  const field = (name: string) => fields.get(name);
+  const [guid, title, audioUrl, artworkUrl] = [
+    field("guid"),
+    field("title"),
+    field("audioUrl"),
+    field("artworkUrl"),
+  ];
+  const durationSeconds = field("durationSeconds");
+  if (
+    typeof guid !== "string" ||
+    typeof title !== "string" ||
+    typeof audioUrl !== "string" ||
+    typeof artworkUrl !== "string" ||
+    typeof durationSeconds !== "number" ||
+    !Number.isFinite(durationSeconds)
+  )
+    return null;
+  const details = { guid, title, audioUrl, artworkUrl, durationSeconds };
+  const type = field("type");
+  const number = field("number");
+  const slug = field("slug");
+  if (type === "full" && typeof number === "number")
+    return { ...details, type, number };
+  if ((type === "bonus" || type === "trailer") && typeof slug === "string")
+    return { ...details, type, slug };
+  return null;
 }
 
 function isSavedPosition(entry: [string, unknown]): entry is [string, number] {

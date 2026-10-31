@@ -38,11 +38,11 @@ export default async function Home() {
         newToPodcasts={microcopy.newToPodcasts}
       />
       <FleuronRule className="mx-auto w-full max-w-xs px-4" />
-      {/* Play leads to the Episode page until the player arrives (#19). */}
       <LatestEpisode
         episode={latest}
         copy={home.latestEpisode}
         comingSoon={microcopy.comingSoon}
+        playerCopy={shell.player}
       />
       <GalleryTeaser
         painting={paintings.stanczyk}

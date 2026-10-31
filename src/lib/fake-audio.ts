@@ -76,6 +76,19 @@ export class FakeAudio implements AudioAdapter {
     this.position = seconds;
     this.emit({ type: "time", position: seconds });
   }
+  /** Playback stops to wait for more audio from the network. */
+  stall() {
+    this.emit({ type: "waiting" });
+  }
+  /** Enough audio has arrived for playback to carry on. */
+  carryOn() {
+    this.emit({ type: "playing" });
+  }
+  /** The audio can't go on, as when the network fails mid-Episode. */
+  fail() {
+    this.playing = false;
+    this.emit({ type: "error" });
+  }
   /** Playback reaches the end, at the real duration once it is known. */
   end() {
     this.playTo(this.duration ?? this.position);

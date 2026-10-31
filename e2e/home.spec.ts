@@ -43,7 +43,7 @@ test.describe("Home", () => {
 
   test("leads from the latest Episode to its page", async ({ page }) => {
     const latest = page.getByRole("region", { name: "Latest Episode" });
-    await latest.getByRole("link", { name: /^Play/ }).click();
+    await latest.getByRole("link", { name: "Is Humor a Virtue?" }).click();
     await expect(page).toHaveURL(/\/episodes\/\d+$/);
   });
 

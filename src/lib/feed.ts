@@ -55,14 +55,23 @@ function assertUniqueAddresses(episodes: Episode[]): void {
   }
 }
 
+// What the player needs of an Episode, to play it and to name and link it
+// while it plays. It leaves out the Show notes, so a Play button sends the
+// browser little.
+export type PlayableEpisode = Episode extends infer E
+  ? E extends Episode
+    ? Omit<E, "publishedAt" | "showNotesHtml" | "excerpt" | "transcriptUrl">
+    : never
+  : never;
+
 // The Episode's page on the site.
-export function episodePath(episode: Episode): string {
+export function episodePath(episode: PlayableEpisode): string {
   return ["/episodes", ...episodeAddress(episode)].join("/");
 }
 
 // The segments of the Episode's page under /episodes: ["4"], or ["bonus",
 // "<slug>"] for an unnumbered Episode.
-export function episodeAddress(episode: Episode): string[] {
+export function episodeAddress(episode: PlayableEpisode): string[] {
   switch (episode.type) {
     case "full":
       return [String(episode.number)];

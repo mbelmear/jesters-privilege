@@ -93,6 +93,7 @@ export async function HomePreview({ heroOption, story }: Props) {
         episode={latest}
         copy={home.latestEpisode}
         comingSoon={microcopy.comingSoon}
+        playerCopy={shell.player}
       />
       <GalleryTeaser
         painting={paintings.stanczyk}

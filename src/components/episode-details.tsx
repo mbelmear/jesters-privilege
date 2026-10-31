@@ -1,10 +1,10 @@
-import { ArrowLeft, ArrowRight, Play } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useId } from "react";
 import { FleuronRule } from "@/components/fleuron-rule";
+import { PlayEpisodeButton } from "@/components/play-episode-button";
 import { ShareButton } from "@/components/share-button";
-import { Button } from "@/components/ui/button";
-import type { EpisodePage } from "@/lib/content";
+import type { EpisodePage, PlayerCopy } from "@/lib/content";
 import { episodePath, type Episode, type EpisodeInSequence } from "@/lib/feed";
 import {
   episodeLabel,
@@ -13,11 +13,13 @@ import {
   formatPublishDate,
   publishDateAttribute,
 } from "@/lib/format-episode";
+import { playableEpisode } from "@/lib/player";
 import { cn } from "@/lib/utils";
 
 type Props = {
   sequence: EpisodeInSequence;
   copy: EpisodePage;
+  playerCopy: PlayerCopy;
 };
 
 /**
@@ -25,7 +27,7 @@ type Props = {
  * with Play and Share; then its Show notes; then the Episodes published just
  * before and after it.
  */
-export function EpisodeDetails({ sequence, copy }: Props) {
+export function EpisodeDetails({ sequence, copy, playerCopy }: Props) {
   const { episode, previous, next } = sequence;
   const label = episodeLabel(episode, copy);
   const notesId = useId();
@@ -59,16 +61,11 @@ export function EpisodeDetails({ sequence, copy }: Props) {
           </span>
         </p>
         <div className="mt-2 flex flex-wrap items-start gap-3">
-          {/* Not wired yet: the persistent player (#19) starts the Episode
-              from here. */}
-          <Button type="button" variant="brand" size="lg">
-            <Play aria-hidden="true" className="fill-current" />
-            {copy.play}
-            <span className="sr-only">
-              {" "}
-              {label.kind === "labelled" ? episode.title : label.text}
-            </span>
-          </Button>
+          <PlayEpisodeButton
+            episode={playableEpisode(episode)}
+            name={label.kind === "labelled" ? episode.title : label.text}
+            copy={playerCopy}
+          />
           <ShareButton
             title={episodeTitle(episode, copy)}
             path={episodePath(episode)}

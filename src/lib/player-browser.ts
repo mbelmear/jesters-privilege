@@ -27,6 +27,8 @@ export function audioElementAdapter(element: HTMLAudioElement): AudioAdapter {
       const report: Record<string, () => AudioEvent | null> = {
         play: () => ({ type: "play" }),
         pause: () => ({ type: "pause" }),
+        waiting: () => ({ type: "waiting" }),
+        playing: () => ({ type: "playing" }),
         timeupdate: () => ({ type: "time", position: element.currentTime }),
         // NaN before the metadata loads, Infinity for a live stream.
         durationchange: () =>
@@ -34,6 +36,7 @@ export function audioElementAdapter(element: HTMLAudioElement): AudioAdapter {
             ? { type: "duration", duration: element.duration }
             : null,
         ended: () => ({ type: "ended" }),
+        error: () => ({ type: "error" }),
       };
       const handlers = Object.entries(report).map(
         ([name, toEvent]) =>

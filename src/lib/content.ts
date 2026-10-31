@@ -173,6 +173,7 @@ export type Shell = {
     readonly title: string;
   };
   readonly themeToggle: string;
+  readonly player: PlayerCopy;
   readonly footer: {
     readonly social: { readonly [N in SocialNetwork]: string };
     readonly socialLabel: string;
@@ -180,6 +181,33 @@ export type Shell = {
     readonly rss: string;
     readonly privacyNote: Copy;
   };
+};
+
+// The persistent player's words, and those of the Play buttons that drive it.
+export type PlayerCopy = {
+  // Names the docked player for screen readers.
+  readonly label: string;
+  readonly play: string;
+  readonly pause: string;
+  // A partly heard Episode offers to carry on, "Resume from 12:34", or to
+  // start over.
+  readonly resume: string;
+  readonly resumeFrom: string;
+  readonly startOver: string;
+  // Declines the dock's offer to resume, for this visit.
+  readonly dismiss: string;
+  readonly loading: string;
+  readonly skipBack: string;
+  readonly skipForward: string;
+  readonly speed: string;
+  readonly position: string;
+  // "12:34 of 45:00", read out for the scrub bar.
+  readonly of: string;
+  readonly elapsed: string;
+  readonly remaining: string;
+  readonly expand: string;
+  readonly collapse: string;
+  readonly failed: Copy;
 };
 
 // The home page's own copy; the hero, Jesters, and microcopy it also shows
@@ -194,7 +222,6 @@ export type Home = {
     readonly episode: string;
     readonly bonus: string;
     readonly trailer: string;
-    readonly play: string;
     // How an Episode's length reads: "43 min", "1 hr 5 min".
     readonly units: { readonly hours: string; readonly minutes: string };
   };
@@ -213,7 +240,6 @@ export type Home = {
 export type EpisodePage = EpisodeLabels & {
   // How an Episode's length reads: "43 min", "1 hr 5 min".
   readonly units: TimeUnits;
-  readonly play: string;
   readonly showNotes: string;
   readonly sequence: {
     readonly label: string;

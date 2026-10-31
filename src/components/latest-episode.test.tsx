@@ -29,6 +29,7 @@ const renderLatest = (episode: Episode | undefined) =>
       episode={episode}
       copy={content.home.latestEpisode}
       comingSoon={content.microcopy.comingSoon}
+      playerCopy={content.shell.player}
     />
   );
 
@@ -49,14 +50,14 @@ describe("LatestEpisode", () => {
     );
   });
 
-  it("leads to the Episode's page", () => {
+  it("leads to the Episode's page, and offers to play it here", () => {
     renderLatest(full);
     expect(
       screen.getByRole("link", { name: "Is Humor a Virtue?" })
     ).toHaveAttribute("href", "/episodes/4");
     expect(
-      screen.getByRole("link", { name: "Play Episode 4" })
-    ).toHaveAttribute("href", "/episodes/4");
+      screen.getByRole("button", { name: "Play Episode 4" })
+    ).toBeInTheDocument();
   });
 
   it("labels a bonus Episode in place of a number", () => {
@@ -65,13 +66,10 @@ describe("LatestEpisode", () => {
       /^Latest EpisodeBonus/
     );
     expect(
-      screen.getByRole("link", {
+      screen.getByRole("button", {
         name: "Play Listener Confessions: Christmas Edition",
       })
-    ).toHaveAttribute(
-      "href",
-      "/episodes/bonus/listener-confessions-christmas-edition"
-    );
+    ).toBeInTheDocument();
   });
 
   it("says Episode 1 is on its way before any is published", () => {
