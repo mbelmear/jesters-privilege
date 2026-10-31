@@ -1,5 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 // The Fools' Gallery: eras in turn, the Renaissance opening with a painting
 // band, Stańczyk framed beside his story, and the closing section.
@@ -17,6 +17,13 @@ const band = async (page: Page) => {
   await img.evaluate((el) => el.scrollIntoView());
   return img;
 };
+// The band's zooms: its keyframe animations. Reduced motion gives every
+// transition 0.01ms (globals.css), so a style change can leave one briefly
+// running beside them, and it doesn't count.
+const zooms = (img: Locator) =>
+  img.evaluate(
+    (el) => el.getAnimations().filter((a) => a instanceof CSSAnimation).length
+  );
 const isWide = (page: Page, min: number) =>
   (page.viewportSize()?.width ?? 0) >= min;
 
@@ -78,9 +85,7 @@ test.describe("Fools' Gallery", () => {
   test("the band slowly zooms on desktops only", async ({ page }) => {
     await page.goto(PAGE);
     const img = await band(page);
-    expect(await img.evaluate((el) => el.getAnimations().length)).toBe(
-      isWide(page, 1024) ? 1 : 0
-    );
+    expect(await zooms(img)).toBe(isWide(page, 1024) ? 1 : 0);
   });
 
   test("has no horizontal scroll", async ({ page }) => {
@@ -109,6 +114,6 @@ test.describe("Fools' Gallery with reduced motion", () => {
   test("the band holds still", async ({ page }) => {
     await page.goto(PAGE);
     const img = await band(page);
-    expect(await img.evaluate((el) => el.getAnimations().length)).toBe(0);
+    expect(await zooms(img)).toBe(0);
   });
 });

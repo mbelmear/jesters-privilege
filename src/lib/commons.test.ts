@@ -125,6 +125,13 @@ describe("assertPublicDomain", () => {
       'File:Jan Matejko, Stańczyk.jpg is licensed "CC BY-SA 4.0", not public domain'
     );
   });
+
+  // The British Library dedicates its scans, such as the Psalter of Henry
+  // VIII, to the public domain with CC0.
+  it("passes a file dedicated to the public domain with CC0", () => {
+    const file = parseCommonsFile(stanczyk);
+    expect(() => assertPublicDomain({ ...file, license: "CC0" })).not.toThrow();
+  });
 });
 
 describe("paintingEntry", () => {

@@ -90,9 +90,10 @@ export function assertSlug(slug: string): void {
   }
 }
 
-// The site shows only public-domain paintings (docs/spec.md, Paintings).
+// The site shows only public-domain paintings (docs/spec.md, Paintings). CC0
+// dedicates a file to the public domain.
 export function assertPublicDomain(file: CommonsFile): void {
-  if (!/^public domain$/i.test(file.license)) {
+  if (!/^(public domain|cc0)$/i.test(file.license)) {
     throw new Error(
       `${file.fileTitle} is licensed "${file.license}", not public domain`
     );

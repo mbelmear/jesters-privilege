@@ -60,6 +60,7 @@ function content(overrides: Partial<Content> = {}): Content {
           title: "The Renaissance",
           period: "1400–1600",
           intro: section,
+          band: painting,
         },
       ],
       fools: [
