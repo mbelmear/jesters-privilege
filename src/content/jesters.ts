@@ -1,8 +1,7 @@
 import type { Jester } from "@/lib/content";
 
 // Equal billing, in the order the Jesters asked for. Bios are their own words,
-// as given on #6; summaries are condensed from them for the home page. Michael
-// has no headshot yet, so he shows the monogram shield.
+// as given on #6; summaries are condensed from them for the home page.
 export const jesters = [
   {
     id: "michael",
@@ -20,6 +19,12 @@ export const jesters = [
           " in college, until both of his co-hosts moved away. He’s choosing not to take it personally. He also named this show after a 160-year-old painting of a sulking court jester, which tells you most of what you need to know about him.",
         ],
       ],
+    },
+    photo: {
+      src: "/jesters/michael-belmear.jpg",
+      width: 380,
+      height: 380,
+      alt: "Michael Belmear smiling in front of snowy mountains, with swept-back fair hair, a white shirt, and a navy tie",
     },
   },
   {

@@ -1,6 +1,11 @@
 import type { About } from "@/lib/content";
 
 export const about = {
+  title: "About",
+  intro: {
+    text: "Three Jesters from Redeemer Church in Bozeman, a weekly podcast about the church and her King, and why we wear the motley to make it.",
+    draft: true,
+  },
   whyAJester: {
     title: "Why a jester?",
     paragraphs: [
@@ -9,6 +14,7 @@ export const about = {
     ],
     draft: true,
   },
+  jestersTitle: "The Jesters",
   whatWeBelieve: {
     title: "What we believe",
     paragraphs: [

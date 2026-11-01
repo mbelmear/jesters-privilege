@@ -24,13 +24,19 @@ describe("MeetTheJesters", () => {
   });
 
   it("shows the photos that exist and a shield for the rest", () => {
-    renderStrip();
+    const [michael, ...others] = content.jesters;
+    const { id, name, role, summary } = michael;
+    renderStrip([{ id, name, role, summary }, ...others]);
     expect(
       screen.getAllByRole("img").map((img) => img.getAttribute("alt"))
     ).toEqual([
       expect.stringMatching(/^Dan Collins/),
       expect.stringMatching(/^Aaron Canen/),
     ]);
+    // The shield is decoration; Michael's name sits beside it.
+    expect(screen.getAllByRole("listitem")[0]).toHaveTextContent(
+      /Michael Belmear/
+    );
   });
 
   it("shows name and role alone for a Jester without a summary", () => {

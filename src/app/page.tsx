@@ -12,7 +12,8 @@ import { feedSource, getEpisodes } from "@/content/feed";
 // The home page as the Jesters approved it at the mockup gate (#14), with the
 // jester story revealed a paragraph at a time as the visitor scrolls (#58).
 export default async function Home() {
-  const { site, shell, hero, home, jesters, microcopy, paintings } = content;
+  const { site, shell, hero, home, jesters, listen, microcopy, paintings } =
+    content;
   const [latest] = await getEpisodes();
   return (
     <div className="flex flex-col gap-16 pb-20 sm:gap-20">
@@ -22,6 +23,7 @@ export default async function Home() {
           site,
           hero,
           home,
+          listen,
           jesters,
           microcopy.newToPodcasts,
           microcopy.comingSoon,
@@ -34,7 +36,7 @@ export default async function Home() {
       </Hero>
       <ListenButtons
         links={site.listen}
-        copy={home.listen}
+        copy={listen}
         newToPodcasts={microcopy.newToPodcasts}
       />
       <FleuronRule className="mx-auto w-full max-w-xs px-4" />
