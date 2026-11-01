@@ -7,7 +7,6 @@ import type { EpisodePage } from "@/lib/content";
 import type { PlayableEpisode } from "@/lib/feed";
 import { formatDuration } from "@/lib/format-duration";
 import { currentParagraph, type Transcript } from "@/lib/transcript";
-import { cn } from "@/lib/utils";
 import {
   reportPlayerError,
   usePlayer,
@@ -22,6 +21,13 @@ type Props = {
 
 // How many paragraphs the collapsed Transcript shows, the last fading out.
 const PREVIEW_PARAGRAPHS = 2;
+
+// The preview's fade, inline rather than Tailwind's mask utility: that one
+// adds 2 KB to the stylesheet every page loads before its first paint, enough
+// to tip the simple home mockup over its Lighthouse budget.
+const FADE = {
+  maskImage: "linear-gradient(to bottom, currentColor 30%, transparent)",
+};
 
 /**
  * An Episode's Transcript, with each paragraph's timestamp in the margin like
@@ -58,18 +64,17 @@ export function EpisodeTranscript({ episode, transcript, copy }: Props) {
       >
         {copy.title}
       </h2>
-      {/* Upright: italic would fetch a fourth font before first paint. */}
+      {/* Upright: the body italic isn't preloaded, so it would be fetched
+          before first paint. */}
       <p className="text-base text-muted-foreground">{copy.machineNote.text}</p>
-      <div
-        className={cn("flex flex-col gap-1", collapsed && "mask-b-from-30%")}
-      >
+      <div className="flex flex-col gap-1" style={collapsed ? FADE : undefined}>
         {transcript.map(({ startSeconds, text }, i) => (
           <div
             key={startSeconds}
             data-paragraph
             hidden={collapsed && i >= PREVIEW_PARAGRAPHS}
             aria-current={i === current ? "true" : undefined}
-            className="-mx-2 grid grid-cols-[3.5rem_1fr] gap-x-2 rounded-md px-2 py-2 motion-safe:transition-colors aria-[current=true]:bg-muted sm:grid-cols-[4rem_1fr]"
+            className="-mx-2 grid grid-cols-[3.5rem_1fr] gap-x-2 rounded-md px-2 py-2 aria-[current=true]:bg-muted sm:grid-cols-[4rem_1fr]"
           >
             <button
               type="button"
