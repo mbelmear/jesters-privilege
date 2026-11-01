@@ -5,8 +5,9 @@
 #     adds it only to a reviewed head, but a push after labelling goes
 #     unchecked here), or
 #   - a logic/infra PR whose "Code review: passed at <sha>" names its final head.
-# GitHub Free can't block a merge that skips npm run merge, so this runs after
-# every push to main and fails loudly instead; a failed run emails the owner.
+# main's ruleset requires passing checks but can't require the review comment,
+# so a merge that skips npm run merge can still land; this runs after every
+# push to main and fails loudly instead; a failed run emails the owner.
 # Usage: scripts/audit-merge.sh <commit-sha>
 set -euo pipefail
 

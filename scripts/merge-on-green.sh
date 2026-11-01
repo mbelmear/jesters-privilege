@@ -2,8 +2,9 @@
 # Merge a pull request only once its head commit has passed review and every
 # check.
 #
-# GitHub Free doesn't enforce branch protection on this private repo, so this
-# script is the enforcement. It refuses to merge unless:
+# main's ruleset requires a pull request and passing checks, but nothing on
+# GitHub requires the review comment, so this script is that enforcement. It
+# refuses to merge unless:
 #   1. the newest "Code review: passed at <sha>" comment names the PR's head
 #      (require-review.sh),
 #   2. the PR has at least one check, and

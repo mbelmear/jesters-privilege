@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # Mark a visual pull request ready for a Jester's review by adding the
-# `ready-for-human` label; it changes nothing but the label. First it waits on
+# `ready-for-human` label; it changes nothing but the label. A Jester judges
+# the preview, not the code, so first it refuses a head without a passed
+# /code-review, as a merge does (require-review.sh). Then it waits on
 # pr-status.sh and labels only when every check passes, the preview is built
 # from the head, and the PR merges cleanly with main, so a Jester never
 # reviews a preview that can't merge. A push during that wait is refused, as
-# its head was never checked. A Jester judges the preview, not the code, so
-# the head must also carry a passed /code-review, as for a merge
-# (require-review.sh).
+# its head was never checked.
 #
 # It takes exactly one argument, a PR number, and passes no other flags to gh.
 #
