@@ -1,15 +1,13 @@
-@import "tailwindcss";
+/*
+ * Tailwind compiles every class name it finds in the files it scans,
+ * comments and strings included, into the stylesheet every page loads. It
+ * scans src/ alone: the docs, scripts, tests, and lint config name utilities
+ * as examples (the colours CODING_STANDARDS.md bans), and those reached every
+ * page when the whole repo was scanned (#26).
+ */
+@import "tailwindcss" source("../");
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-
-/*
- * Tailwind compiles every class name it finds in the repo, Markdown included,
- * into the stylesheet every page loads. The docs and the lint config name
- * utilities as examples (the colours CODING_STANDARDS.md bans, the rule a
- * stylesheet diff shows), so they are left out of the scan.
- */
-@source not "../../**/*.md";
-@source not "../../eslint.config.mjs";
 
 /*
  * Design tokens: the one place every color, font, radius, and shadow is
