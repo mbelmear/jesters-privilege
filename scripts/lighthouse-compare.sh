@@ -69,7 +69,9 @@ page_file() {
 # lighthouserc.json's when none were named). lhci stops at a missing page, so
 # one the build lacks is left out, and its column shows "–".
 measure() {
-  (cd "$1" && npm run build >/dev/null)
+  # From a clean .next: Turbopack caches what Tailwind scanned, so a change
+  # to globals.css's sources could otherwise build a stale stylesheet (#26).
+  (cd "$1" && rm -rf .next && npm run build >/dev/null)
   local urls=() page
   if $named; then
     for page in "${pages[@]}"; do
