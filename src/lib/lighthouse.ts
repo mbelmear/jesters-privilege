@@ -54,6 +54,7 @@ export function readReport(file: string, json: unknown): Report {
     "node",
     "selector",
   ]);
+  // Read before the requests, so a report missing a figure says which.
   const times = {
     simulatedLcp: numberAt(
       "audits",
@@ -158,8 +159,8 @@ function earlyFiles(reports: Report[]): Map<string, number> {
 // The last part of a file's address, or its whole path for a page at a
 // folder's address, such as the home page's "/".
 function fileName(url: string): string {
-  const path = url.replace(/^[a-z]+:\/\/[^/]*/, "");
-  return path.split("/").pop() || path || url;
+  const path = URL.canParse(url) ? new URL(url).pathname : url;
+  return path.split("/").pop() || path;
 }
 
 function median(numbers: number[]): number {
@@ -192,7 +193,7 @@ const line = (cells: string[]) =>
 type Side = {
   label: string;
   runs: Report[];
-  figures: Record<string, number>;
+  medianFigures: Record<string, number>;
   files: Map<string, number>;
 };
 
@@ -211,7 +212,7 @@ export function summarise(
       return {
         label,
         runs,
-        figures: medians(runs),
+        medianFigures: medians(runs),
         files: earlyFiles(runs),
       };
     });
@@ -241,14 +242,16 @@ export function summarise(
 
 // A row per figure, a cell per side.
 function figureRows(sides: Side[]): string[] {
-  const keys = new Set(sides.flatMap(({ figures }) => Object.keys(figures)));
+  const keys = new Set(
+    sides.flatMap(({ medianFigures }) => Object.keys(medianFigures))
+  );
   return [
     line(["", ...sides.map(({ label }) => label)]),
     ...[...keys].sort().map((key) =>
       line([
         key,
-        ...sides.map(({ figures }) => {
-          const value = figures[key];
+        ...sides.map(({ medianFigures }) => {
+          const value = medianFigures[key];
           return value === undefined ? "–" : format(key, value);
         }),
       ])

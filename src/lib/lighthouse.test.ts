@@ -312,7 +312,7 @@ describe("readReport", () => {
     );
   });
 
-  it("names the file a report without its page comes from", () => {
+  it("names the file whose report has no page URL", () => {
     expect(() => readReport("lhr-1.json", { audits: {} })).toThrow(
       "lhr-1.json has no page URL"
     );
