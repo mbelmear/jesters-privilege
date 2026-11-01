@@ -39,6 +39,7 @@ export function EpisodeDetails({
 }: Props) {
   const { episode, previous, next } = sequence;
   const label = episodeLabel(episode, copy);
+  const playable = playableEpisode(episode);
   const notesId = useId();
   return (
     <article className="mx-auto flex w-full max-w-3xl flex-col gap-10 px-4 py-12 sm:px-6 sm:py-16">
@@ -71,7 +72,7 @@ export function EpisodeDetails({
         </p>
         <div className="mt-2 flex flex-wrap items-start gap-3">
           <PlayEpisodeButton
-            episode={playableEpisode(episode)}
+            episode={playable}
             name={label.kind === "labelled" ? episode.title : label.text}
             copy={playerCopy}
           />
@@ -101,7 +102,7 @@ export function EpisodeDetails({
 
       {transcript && (
         <EpisodeTranscript
-          episode={playableEpisode(episode)}
+          episode={playable}
           transcript={transcript}
           copy={copy.transcript}
         />

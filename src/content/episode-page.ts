@@ -14,7 +14,7 @@ export const episodePage = {
     expand: "Read the full transcript",
     playFrom: "Play from",
     machineNote: {
-      text: "A machine wrote this Transcript from the audio, so expect the odd misheard word, most of all in names, Scripture references, and whatever Latin we attempt. Tap a timestamp to hear that moment.",
+      text: "A machine wrote this Transcript from the audio, so expect the odd misheard word, most of all in names, Scripture references, and whatever Latin we attempt. Choose a timestamp to hear that moment.",
       draft: true,
     },
   },

@@ -58,9 +58,8 @@ export function EpisodeTranscript({ episode, transcript, copy }: Props) {
       >
         {copy.title}
       </h2>
-      <p className="text-base text-muted-foreground italic">
-        {copy.machineNote.text}
-      </p>
+      {/* Upright: italic would fetch a fourth font before first paint. */}
+      <p className="text-base text-muted-foreground">{copy.machineNote.text}</p>
       <div
         className={cn("flex flex-col gap-1", collapsed && "mask-b-from-30%")}
       >
