@@ -60,7 +60,7 @@ export default function About() {
 
 // The three Jesters with equal billing, each in an arched portrait with their
 // full bio: the portrait above the name on phones, beside it from the sm
-// breakpoint. Only flex and width utilities the site already uses, so About
+// breakpoint. Only utilities the site already compiles, so About
 // adds nothing to every page's stylesheet (CODING_STANDARDS.md, Performance).
 function JestersSection({
   title,
@@ -86,7 +86,7 @@ function JestersSection({
               sizes="12rem"
               className="w-48 shrink-0 self-start"
             />
-            <div className="flex flex-col gap-4">
+            <div className="flex min-w-0 flex-col gap-4">
               <div className="flex flex-col gap-1">
                 <h3 className="font-display text-3xl">{jester.name}</h3>
                 <p className="font-ui text-sm font-semibold tracking-wider text-brand-ink uppercase">
