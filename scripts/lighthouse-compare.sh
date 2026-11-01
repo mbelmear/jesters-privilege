@@ -4,15 +4,25 @@
 # paint, which drive the simulated figure (docs/testing.md, Lighthouse).
 # Builds the base in a throwaway worktree. This branch is measured as it
 # stands in this checkout (uncommitted changes included), replacing its out/
-# and .lighthouseci/, so run it from your own ticket worktree. Usage:
-#   npm run lighthouse:compare [-- <base-ref>]
+# and .lighthouseci/, so run it from your own ticket worktree. Given pages,
+# measures only those; otherwise every page in lighthouserc.json. Usage:
+#   npm run lighthouse:compare [-- [<base-ref>] [<page>...]]
+#   npm run lighthouse:compare -- /styleguide/home/simple.html /episodes/1.html
 set -euo pipefail
 
-base="${1:-origin/main}"
-if [[ "$base" == /* ]]; then
-  echo "lighthouse:compare takes a base ref, not a page; every page in lighthouserc.json is measured. To measure one page alone: npm run lighthouse -- $base" >&2
-  exit 1
+base="origin/main"
+if [[ $# -gt 0 && "$1" != /* ]]; then
+  base="$1"
+  shift
 fi
+urls=()
+for page in "$@"; do
+  if [[ "$page" != /* ]]; then
+    echo "Expected a page path starting with /, such as /404.html, not \"$page\"" >&2
+    exit 1
+  fi
+  urls+=("--collect.url=http://localhost${page}")
+done
 root=$(git rev-parse --show-toplevel)
 scratch=$(mktemp -d)
 cleanup() {
@@ -26,7 +36,7 @@ git worktree add --quiet --detach "$scratch/base" "$base"
 
 measure() {
   (cd "$1" && npm run build >/dev/null &&
-    rm -rf .lighthouseci && npx lhci collect >/dev/null &&
+    rm -rf .lighthouseci && npx lhci collect ${urls[@]+"${urls[@]}"} >/dev/null &&
     mkdir -p "$2" && cp .lighthouseci/lhr-*.json "$2/")
 }
 

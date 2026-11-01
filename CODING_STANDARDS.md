@@ -45,6 +45,7 @@ Reviewers skip these; the rules below are the ones that need judgement.
 ## Performance
 
 - **A change to the first screen shows its cost.** A diff that touches the header, the footer, the root layout, or what a page fetches before its first paint comes with `npm run lighthouse:compare` output against main, for each page it affects (`docs/testing.md`, Performance). Without that output, it is a finding. Early bytes that grew need a reason. A single `npm run lighthouse` run isn't enough, since its simulated times shift by up to half a second with the machine's load.
+- **One page's styling stays out of every page's stylesheet.** Tailwind compiles every utility the site uses into one stylesheet that every page loads before its first paint. A utility family new to the site (mask, gradient, transition, filter) brings its rules and custom properties with it, a few hundred bytes gzipped, paid by every page for an effect one section shows. A one-section effect goes in an inline `style` on that section, which only its pages carry, unless the site already uses that family. #23's Transcript fade (Tailwind's mask, 2 KB raw) tipped the simple home mockup over its budget until it moved inline.
 
 ## Content
 
