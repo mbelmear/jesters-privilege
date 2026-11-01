@@ -3,10 +3,10 @@
 # `ready-for-human` label; it changes nothing but the label. First it waits on
 # pr-status.sh and labels only when every check passes, the preview is built
 # from the head, and the PR merges cleanly with main, so a Jester never
-# reviews a preview that can't merge. A Jester judges the preview, not the
-# code, so the head must also carry a passed /code-review, as for a merge
-# (require-review.sh). A push during that wait is refused,
-# as its head was never checked.
+# reviews a preview that can't merge. A push during that wait is refused, as
+# its head was never checked. A Jester judges the preview, not the code, so
+# the head must also carry a passed /code-review, as for a merge
+# (require-review.sh).
 #
 # It takes exactly one argument, a PR number, and passes no other flags to gh.
 #

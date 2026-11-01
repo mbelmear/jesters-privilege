@@ -3,12 +3,14 @@
 # names the given head; otherwise say which commits still need a review and
 # exit 1. Shared by `npm run merge` and `npm run mark-ready`, so both refuse
 # an unreviewed head the same way.
-# Usage: scripts/require-review.sh <pr-number> <head sha> <what is refused>
+# Usage: scripts/require-review.sh <pr-number> <head-sha> <action>
 set -euo pipefail
 
-pr="${1:?Usage: scripts/require-review.sh <pr-number> <head sha> <action>}"
-head="${2:?Usage: scripts/require-review.sh <pr-number> <head sha> <action>}"
-action="${3:?Usage: scripts/require-review.sh <pr-number> <head sha> <action>}"
+usage="Usage: scripts/require-review.sh <pr-number> <head-sha> <action>"
+
+pr="${1:?$usage}"
+head="${2:?$usage}"
+action="${3:?$usage}"
 
 reviewed=$("$(dirname "$0")/last-reviewed-sha.sh" "$pr")
 if [[ "$reviewed" != "$head" ]]; then

@@ -4,7 +4,8 @@
 #
 # GitHub Free doesn't enforce branch protection on this private repo, so this
 # script is the enforcement. It refuses to merge unless:
-#   1. the newest "Code review: passed at <sha>" comment names the PR's head,
+#   1. the newest "Code review: passed at <sha>" comment names the PR's head
+#      (require-review.sh),
 #   2. the PR has at least one check, and
 #   3. every check passes (it waits for pending ones, stops at the first failure).
 # The merge is pinned to the reviewed commit, so a push during the wait fails it.
