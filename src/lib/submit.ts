@@ -31,14 +31,17 @@ const NAME_MAX_LENGTH = 100;
 const EMAIL_MAX_LENGTH = 254;
 const BODY_MAX_BYTES = 32 * 1024;
 
-type SubmissionField = "type" | "message" | "name" | "email" | "consent";
+export type SubmissionField = "type" | "message" | "name" | "email" | "consent";
+
+// Why the endpoint refused a Submission.
+export const SUBMIT_ERRORS = ["invalid", "verification", "delivery"] as const;
+export type SubmitError = (typeof SUBMIT_ERRORS)[number];
 
 // What the page reads to show success or explain a failure.
 export type SubmitResult =
   | { ok: true }
   | { ok: false; error: "invalid"; field?: SubmissionField }
-  | { ok: false; error: "verification" }
-  | { ok: false; error: "delivery" };
+  | { ok: false; error: Exclude<SubmitError, "invalid"> };
 
 type Parsed =
   | { kind: "submission"; submission: Submission; token: string | null }
@@ -115,38 +118,84 @@ function parseFields(fields: Record<string, unknown>): Parsed {
   if (fields.website !== undefined && fields.website !== "") {
     return { kind: "honeypot" };
   }
+  const checked = checkSubmission(fields);
+  if (!checked.ok) {
+    return { kind: "invalid", field: PROBLEM_FIELDS[checked.problems[0]] };
+  }
+  const token = optionalText(fields.turnstileToken, () => true);
+  return {
+    kind: "submission",
+    submission: checked.submission,
+    token: token.valid ? token.text : null,
+  };
+}
+
+// Each rule a Submission's fields can break. The form shows the listener one
+// message for each, and the endpoint names the field.
+export const SUBMISSION_PROBLEMS = [
+  "type-unknown",
+  "message-missing",
+  "message-too-long",
+  "name-invalid",
+  "email-invalid",
+  "consent-missing",
+] as const;
+
+export type SubmissionProblem = (typeof SUBMISSION_PROBLEMS)[number];
+
+export const PROBLEM_FIELDS: Record<SubmissionProblem, SubmissionField> = {
+  "type-unknown": "type",
+  "message-missing": "message",
+  "message-too-long": "message",
+  "name-invalid": "name",
+  "email-invalid": "email",
+  "consent-missing": "consent",
+};
+
+export type SubmissionCheck =
+  | { ok: true; submission: Submission }
+  | { ok: false; problems: readonly SubmissionProblem[] };
+
+/**
+ * The endpoint's rules for a Submission's fields, which the form also runs
+ * before sending: every rule broken, in the form's order, or the Submission.
+ */
+export function checkSubmission(
+  fields: Record<string, unknown>
+): SubmissionCheck {
+  const problems: SubmissionProblem[] = [];
 
   const type = SUBMISSION_TYPES.find((t) => t === fields.type);
-  if (type === undefined) return { kind: "invalid", field: "type" };
+  if (type === undefined) problems.push("type-unknown");
 
   const message =
     typeof fields.message === "string" ? fields.message.trim() : "";
-  if (message === "" || message.length > MESSAGE_MAX_LENGTH) {
-    return { kind: "invalid", field: "message" };
-  }
+  if (message === "") problems.push("message-missing");
+  if (message.length > MESSAGE_MAX_LENGTH) problems.push("message-too-long");
 
   // One line only: the name lands in the email's subject.
   const name = optionalText(
     fields.name,
     (text) => text.length <= NAME_MAX_LENGTH && !/\p{Cc}/u.test(text)
   );
-  if (!name.valid) return { kind: "invalid", field: "name" };
+  if (!name.valid) problems.push("name-invalid");
 
   const email = optionalText(
     fields.email,
     (text) =>
       text.length <= EMAIL_MAX_LENGTH && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(text)
   );
-  if (!email.valid) return { kind: "invalid", field: "email" };
+  if (!email.valid) problems.push("email-invalid");
 
   // The listener must tick "You can mention this on the show."
-  if (fields.consent !== true) return { kind: "invalid", field: "consent" };
+  if (fields.consent !== true) problems.push("consent-missing");
 
-  const token = optionalText(fields.turnstileToken, () => true);
+  if (type === undefined || !name.valid || !email.valid || problems.length) {
+    return { ok: false, problems };
+  }
   return {
-    kind: "submission",
+    ok: true,
     submission: { type, message, name: name.text, email: email.text },
-    token: token.valid ? token.text : null,
   };
 }
 
@@ -190,3 +239,50 @@ const TYPE_LABELS: Record<SubmissionType, string> = {
   "topic-idea": "Topic idea",
   other: "Other",
 };
+
+// What the form sends: its fields as the listener left them, the honeypot,
+// and the Turnstile widget's token.
+export type SubmitRequestBody = {
+  type: SubmissionType;
+  message: string;
+  name: string;
+  email: string;
+  consent: boolean;
+  website: string;
+  turnstileToken: string;
+};
+
+// Why a Submission wasn't sent: the endpoint's refusal, or "unreachable" when
+// no answer came back from it (a dropped connection, or a reply that isn't the
+// endpoint's JSON).
+export type SendFailure = SubmitError | "unreachable";
+
+export type SendOutcome = { ok: true } | { ok: false; error: SendFailure };
+
+type Fetch = (url: string, init: RequestInit) => Promise<Response>;
+
+/** Posts a Submission to the endpoint and reads its answer. */
+export async function postSubmission(
+  body: SubmitRequestBody,
+  fetch: Fetch
+): Promise<SendOutcome> {
+  let answer: unknown;
+  try {
+    const response = await fetch("/api/submit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    answer = await response.json();
+  } catch {
+    return { ok: false, error: "unreachable" };
+  }
+  return readSubmitResult(answer);
+}
+
+function readSubmitResult(answer: unknown): SendOutcome {
+  if (!isRecord(answer)) return { ok: false, error: "unreachable" };
+  if (answer.ok === true) return { ok: true };
+  const error = SUBMIT_ERRORS.find((e) => e === answer.error);
+  return { ok: false, error: error ?? "unreachable" };
+}

@@ -1,4 +1,5 @@
 import type { EpisodeLabels, TimeUnits } from "./format-episode";
+import type { SendFailure, SubmissionProblem, SubmissionType } from "./submit";
 
 // Plain data a content file can hold: what findDrafts and validateContent walk.
 export type ContentValue =
@@ -253,6 +254,38 @@ export type EpisodePage = EpisodeLabels & {
   };
 };
 
+// The Submit page: the form's labels, the message for each rule a field can
+// break, and what the listener reads once it's sent or if sending fails.
+export type SubmitPage = {
+  readonly title: string;
+  readonly intro: Copy;
+  readonly form: {
+    readonly label: string;
+    readonly type: {
+      readonly label: string;
+      readonly options: { readonly [T in SubmissionType]: string };
+    };
+    readonly message: { readonly label: string };
+    readonly name: { readonly label: string; readonly hint: string };
+    readonly email: { readonly label: string; readonly hint: string };
+    readonly consent: string;
+    // The honeypot's label, read by no one but a bot.
+    readonly honeypot: string;
+    readonly send: string;
+    readonly sending: string;
+  };
+  readonly problems: {
+    readonly [P in SubmissionProblem | "unverified"]: Copy;
+  };
+  readonly failed: { readonly [F in SendFailure]: Copy };
+  readonly sent: {
+    readonly title: string;
+    readonly text: Copy;
+    readonly again: string;
+  };
+  readonly privacyNote: Copy;
+};
+
 export type Content = {
   readonly site: Site;
   // Every painting sourced for the site, by id; the Gallery and other pages
@@ -269,6 +302,7 @@ export type Content = {
   readonly jesters: readonly Jester[];
   readonly gallery: Gallery;
   readonly about: About;
+  readonly submit: SubmitPage;
   readonly microcopy: { readonly [key: string]: Copy };
 };
 

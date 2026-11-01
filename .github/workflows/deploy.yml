@@ -33,6 +33,8 @@ jobs:
           BUILD_COMMIT: ${{ github.event.pull_request.head.sha }}
           # Marks pages that use draft content with the DRAFT ribbon.
           SITE_ENV: preview
+          # The Submit page's Turnstile widget (src/lib/turnstile.ts).
+          TURNSTILE_SITE_KEY: ${{ secrets.TURNSTILE_SITE_KEY }}
       # A preview version can only be uploaded to a Worker that exists. Before the
       # first production deploy it doesn't, so create it once with a blank
       # placeholder page on workers.dev only: no custom domains, no PR content.
@@ -114,6 +116,7 @@ jobs:
       - run: npm run build
         env:
           BUILD_COMMIT: ${{ github.sha }}
+          TURNSTILE_SITE_KEY: ${{ secrets.TURNSTILE_SITE_KEY }}
       - run: |
           jq -n '{TURNSTILE_SECRET_KEY: env.TURNSTILE_SECRET_KEY}' > "$RUNNER_TEMP/secrets.json"
           npx wrangler deploy --message "${GITHUB_SHA::7}" \

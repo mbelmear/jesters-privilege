@@ -61,7 +61,7 @@ To try it locally, put Turnstile's always-pass test secret in `.dev.vars` (`TURN
 
 ## Credentials
 
-GitHub secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. `TURNSTILE_SECRET_KEY` is uploaded as a Worker secret with every deploy and preview version (`--secrets-file`). The token needs **Account › Workers Scripts: Edit** and, for the custom domains, **Zone › Workers Routes: Edit** and **Zone › DNS: Edit** on `jestersprivilegepodcast.com`.
+GitHub secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. `TURNSTILE_SITE_KEY` goes into the Submit page as it is built; every other build (CI, local) uses Turnstile's always-pass test key, and a deploy whose secret is missing fails its build (`src/lib/turnstile.ts`). The widget's hostnames in the Turnstile dashboard must include `jestersprivilegepodcast.com` and `workers.dev`, or previews can't pass it. `TURNSTILE_SECRET_KEY` is uploaded as a Worker secret with every deploy and preview version (`--secrets-file`). The token needs **Account › Workers Scripts: Edit** and, for the custom domains, **Zone › Workers Routes: Edit** and **Zone › DNS: Edit** on `jestersprivilegepodcast.com`.
 
 ## Rolling back
 
