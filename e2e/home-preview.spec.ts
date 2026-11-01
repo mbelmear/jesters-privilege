@@ -45,7 +45,7 @@ for (const option of OPTIONS) {
       ).toHaveAttribute("aria-current", "page");
     });
 
-    test("shows Dan's and Aaron's headshots", async ({ page }) => {
+    test("shows every Jester's headshot", async ({ page }) => {
       const jesters = page.getByRole("region", { name: "Meet the Jesters" });
       await jesters.evaluate((el) => el.scrollIntoView());
       for (const image of await jesters.getByRole("img").all()) {
@@ -57,7 +57,7 @@ for (const option of OPTIONS) {
           )
           .toBeGreaterThan(0);
       }
-      await expect(jesters.getByRole("img")).toHaveCount(2);
+      await expect(jesters.getByRole("img")).toHaveCount(3);
     });
 
     test("has no horizontal scroll", async ({ page }) => {
