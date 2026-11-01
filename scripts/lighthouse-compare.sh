@@ -3,10 +3,11 @@
 # simulated and observed LCP/FCP, and the bytes requested before the observed
 # paint, which drive the simulated figure (docs/testing.md, Lighthouse).
 # Builds the base in a throwaway worktree. This branch is measured as it
-# stands in this checkout (uncommitted changes included), replacing its out/
-# and .lighthouseci/, so run it from your own ticket worktree. Given pages,
-# measures only those; otherwise every page in lighthouserc.json. A page one
-# build lacks, such as a new one, shows "–" on that side. After the figures,
+# stands in this checkout (uncommitted changes included), replacing its
+# .next/, out/, and .lighthouseci/, so run it from your own ticket worktree
+# with no `next dev` running there. Given pages, measures only those;
+# otherwise every page in lighthouserc.json. A page one build lacks, such as
+# a new one, shows "–" on that side. After the figures,
 # it prints the CSS rules that changed in each page's early stylesheets, so a
 # utility new to every page's stylesheet shows by name
 # (CODING_STANDARDS.md, Performance). Usage:
