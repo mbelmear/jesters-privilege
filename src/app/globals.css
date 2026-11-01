@@ -3,6 +3,15 @@
 @import "shadcn/tailwind.css";
 
 /*
+ * Tailwind compiles every class name it finds in the repo, Markdown included,
+ * into the stylesheet every page loads. The docs and the lint config name
+ * utilities as examples (the colours CODING_STANDARDS.md bans, the rule a
+ * stylesheet diff shows), so they are left out of the scan.
+ */
+@source not "../../**/*.md";
+@source not "../../eslint.config.mjs";
+
+/*
  * Design tokens: the one place every color, font, radius, and shadow is
  * defined (motion presets live in src/lib/motion.ts; see below). A rebrand is
  * a change to this file.

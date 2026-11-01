@@ -91,12 +91,13 @@ measure() {
 # changed files. The page must be in the build; one that links no stylesheet
 # gives an empty file.
 stylesheets() {
-  local css links status=0
+  local css links status=0 html
+  html=$(page_file "$1" "$2")
   # grep exits 1 for no match and 2 on trouble. Bash 3.2 (macOS) doesn't stop
   # on a failed [[ ]] after ||, so the status is checked with if.
-  links=$(grep -o '/_next/static/[^"]*\.css' "$(page_file "$1" "$2")") || status=$?
+  links=$(grep -o '/_next/static/[^"]*\.css' "$html") || status=$?
   if [ "$status" -gt 1 ]; then
-    echo "Couldn't read $(page_file "$1" "$2")" >&2
+    echo "Couldn't read $html" >&2
     exit 1
   fi
   : >"$3.raw"
@@ -121,7 +122,8 @@ npx tsx "$root/scripts/lighthouse-summary.ts" \
 echo
 echo "Stylesheet rules changed (${base} → HEAD), on pages both builds have:"
 changed=false
-for page in "${pages[@]}"; do
+# Guarded: bash 3.2 calls an empty array unbound under set -u.
+for page in ${pages[@]+"${pages[@]}"}; do
   [[ -f "$(page_file "$scratch/base" "$page")" ]] || continue
   [[ -f "$(page_file "$root" "$page")" ]] || continue
   stylesheets "$scratch/base" "$page" "$scratch/base.css"
