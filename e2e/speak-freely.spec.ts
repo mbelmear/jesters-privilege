@@ -151,6 +151,23 @@ test.describe("Speak Freely", () => {
     expect(bodies).toEqual([]);
   });
 
+  test("stays disabled until its script runs, so nothing typed is lost", async ({
+    page,
+  }) => {
+    // With the scripts blocked the page never hydrates, the state a slow
+    // phone shows for a moment. The other tests type into the same fields once
+    // it has, so this check can tell the two apart.
+    let aborted = 0;
+    await page.route(/\/_next\/static\/chunks\/.*\.js/, (route) => {
+      aborted += 1;
+      return route.abort();
+    });
+    await page.goto(PAGE);
+    expect(aborted).toBeGreaterThan(0);
+    await expect(page.getByRole("textbox", { name: "Message" })).toBeDisabled();
+    await expect(send(page)).toBeDisabled();
+  });
+
   test("has no horizontal scroll", async ({ page }) => {
     await page.goto(PAGE);
     await passTurnstile(page);

@@ -19,18 +19,14 @@ describe("Gallery", () => {
   });
 
   it("marks its draft copy with the DRAFT ribbon on a preview", () => {
-    // DraftRibbon reads SITE_ENV as it loads, so the page loads afresh.
     const before = process.env.SITE_ENV;
     process.env.SITE_ENV = "preview";
     try {
-      jest.isolateModules(() => {
-        const { default: PreviewGallery }: { default: typeof Gallery } =
-          jest.requireActual("./page");
-        render(<PreviewGallery />);
-      });
+      render(<Gallery />);
       expect(screen.getByRole("note")).toHaveTextContent("Draft");
     } finally {
-      process.env.SITE_ENV = before;
+      if (before === undefined) delete process.env.SITE_ENV;
+      else process.env.SITE_ENV = before;
     }
   });
 

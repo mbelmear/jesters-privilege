@@ -70,6 +70,12 @@ To test that reduced motion keeps an element from moving, wait until Motion has 
 
 Playwright's actions (`click`, `scrollIntoViewIfNeeded`) wait for an element to hold still, so one that animates without end, such as a painting band's slow zoom, stalls them until the test times out; scroll it with `locator.evaluate((el) => el.scrollIntoView())`.
 
+Playwright can act before React has hydrated a page, when a field shows but its handlers aren't attached yet; a loaded machine widens that window. Forms are disabled until hydration (`CODING_STANDARDS.md`, React), and Playwright waits for a field to be enabled before it types, so their tests need nothing more. To test that guard, abort the page's scripts so it never hydrates, check a script was in fact aborted, and expect the fields disabled, as "stays disabled until its script runs" in `e2e/speak-freely.spec.ts` does. A Play button waits for the player instead: `startEpisode()` in `e2e/player.ts`.
+
+Next renders its route announcer as `role="alert"` on every page, so `page.getByRole("alert")` finds two elements; scope it to the component (`page.getByRole("form").getByRole("alert")`).
+
+Desktop WebKit's Tab moves only between text fields, as Safari does by default, skipping buttons, Radix's checkbox and select triggers included; a keyboard test `focus()`es the control, then presses keys.
+
 To test a page whose scripts fail to load, abort only the scripts (`page.route(/\/_next\/static\/chunks\/.*\.js/, …)`): Next serves the stylesheet from the same folder, so blocking the whole folder also takes away the CSS.
 
 A test that plays an Episode uses the helpers in `e2e/player.ts`: its audio route serves byte ranges, without which Chromium ignores a seek.
@@ -183,12 +189,12 @@ The pre-commit hook formats staged files with Prettier, so `format:check` only f
 
 Two more run on every push to `main`:
 
-- **Merge audit** (`merge-audit.yml`, `scripts/audit-merge.sh`) fails when the commit came from a PR with neither a `Code review: passed at <head>` comment nor the `ready-for-human` label. GitHub Free can't block such a merge, so this makes it loud after the fact.
+- **Merge audit** (`merge-audit.yml`, `scripts/audit-merge.sh`) fails when the commit came from a PR with neither a `Code review: passed at <head>` comment nor the `ready-for-human` label. Nothing on GitHub requires the review comment, so this makes a merge without one loud after the fact.
 - **Conflict watch** (`conflict-watch.yml`, `scripts/flag-conflicts.sh`) comments on each open `ready-for-human` PR that no longer merges cleanly with main, and removes the comment once a push to that PR resolves it. GitHub skips pull-request runs while a PR conflicts, so only pushes to `main` can add the comment.
 
 ## Merging
 
-Merge with the helper. It merges only a head commit that has passed review and every check:
+Every pull request is reviewed before it merges or goes to a Jester (`AGENTS.md`, Merging). Merge with the helper. It merges only a head commit that has passed review and every check:
 
 ```bash
 npm run review-passed -- <pr-number> <reviewed full SHA>   # after /code-review finds nothing serious
@@ -197,4 +203,4 @@ npm run merge -- <pr-number>
 
 It waits for pending checks, stops at the first failure, and refuses a pull request with no checks or whose latest passed review names an older commit. Each push after a review needs its own review first (`AGENTS.md`, Merging). `scripts/merge-on-green.sh` has the details.
 
-Visual pull requests also need a Jester's approval of the preview first; see `AGENTS.md`.
+Visual pull requests go to a Jester instead: `npm run mark-ready -- <pr-number>` refuses a head without a passed review, as `merge` does (`scripts/require-review.sh`), then labels it once its checks and preview pass. See `AGENTS.md`.

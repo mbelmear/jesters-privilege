@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 # Mark a visual pull request ready for a Jester's review by adding the
-# `ready-for-human` label; it changes nothing but the label. First it waits on
+# `ready-for-human` label; it changes nothing but the label. A Jester judges
+# the preview, not the code, so first it refuses a head without a passed
+# /code-review, as a merge does (require-review.sh). Then it waits on
 # pr-status.sh and labels only when every check passes, the preview is built
 # from the head, and the PR merges cleanly with main, so a Jester never
-# reviews a preview that can't merge. A push during that wait is refused,
-# as its head was never checked.
+# reviews a preview that can't merge. A push during that wait is refused, as
+# its head was never checked.
 #
 # It takes exactly one argument, a PR number, and passes no other flags to gh.
 #
@@ -22,6 +24,8 @@ if ! head=$("$(dirname "$0")/wait-pushed-head.sh" "$pr"); then
   echo "Refusing to label #$pr: GitHub doesn't show this checkout's commit (see above)." >&2
   exit 1
 fi
+# Checked before the wait, so a missing review fails in seconds, not minutes.
+"$(dirname "$0")/require-review.sh" "$pr" "$head" label
 # The report streams to the terminal as it waits, and is kept for the checks below.
 if ! status=$("$(dirname "$0")/pr-status.sh" "$pr" | tee /dev/stderr); then
   echo "Refusing to label #$pr: pr-status didn't pass (see above)." >&2
