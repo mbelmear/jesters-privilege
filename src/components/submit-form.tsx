@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { SubmitPage } from "@/lib/content";
+import type { SpeakFreelyPage } from "@/lib/content";
 import {
   checkSubmission,
   postSubmission,
@@ -30,7 +30,7 @@ import {
 import { TurnstileWidget } from "./turnstile-widget";
 
 type Props = {
-  copy: SubmitPage;
+  copy: SpeakFreelyPage;
   siteKey: string;
 };
 
@@ -68,7 +68,7 @@ const inputClasses =
   "w-full rounded-md border border-input bg-card px-3 py-2.5 font-body text-base text-foreground transition-colors duration-(--motion-courtly-duration) ease-courtly hover:border-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring aria-invalid:border-destructive";
 
 /**
- * The Submit form: a listener's Submission, checked with the endpoint's own
+ * The Speak Freely form: a listener's Submission, checked with the endpoint's own
  * rules before it goes, then a confirmation or an explanation of what failed.
  */
 export function SubmitForm({ copy, siteKey }: Props) {
@@ -330,7 +330,7 @@ function Sent({
   copy,
   onAgain,
 }: {
-  copy: SubmitPage["sent"];
+  copy: SpeakFreelyPage["sent"];
   onAgain: () => void;
 }) {
   const heading = useRef<HTMLHeadingElement>(null);

@@ -6,7 +6,7 @@ import { content } from "@/content";
 import { SubmitForm } from "./submit-form";
 import { fakeTurnstile } from "@/lib/fake-turnstile";
 
-const copy = content.submit;
+const copy = content.speakFreely;
 const SITE_KEY = "1x00000000000000000000AA";
 
 type Answer = { status: number; body: unknown } | "unreachable";

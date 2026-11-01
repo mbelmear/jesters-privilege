@@ -254,9 +254,9 @@ export type EpisodePage = EpisodeLabels & {
   };
 };
 
-// The Submit page: the form's labels, the message for each rule a field can
+// Speak Freely: the form's labels, the message for each rule a field can
 // break, and what the listener reads once it's sent or if sending fails.
-export type SubmitPage = {
+export type SpeakFreelyPage = {
   readonly title: string;
   readonly intro: Copy;
   readonly form: {
@@ -302,7 +302,7 @@ export type Content = {
   readonly jesters: readonly Jester[];
   readonly gallery: Gallery;
   readonly about: About;
-  readonly submit: SubmitPage;
+  readonly speakFreely: SpeakFreelyPage;
   readonly microcopy: { readonly [key: string]: Copy };
 };
 

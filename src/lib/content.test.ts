@@ -9,7 +9,7 @@ import {
 import { episodePage } from "@/content/episode-page";
 import { home } from "@/content/home";
 import { shell } from "@/content/shell";
-import { submit } from "@/content/submit";
+import { speakFreely } from "@/content/speak-freely";
 
 const painting: Painting = {
   src: "/paintings/stanczyk.jpg",
@@ -51,7 +51,7 @@ function content(overrides: Partial<Content> = {}): Content {
     hero: { logo, paragraphs: ["Long ago…"] },
     home,
     episodePage,
-    submit,
+    speakFreely,
     jesters: [{ id: "dan", name: "Dan Collins", role: "Co-host" }],
     gallery: {
       title: "The Fools' Gallery",

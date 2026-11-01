@@ -50,6 +50,10 @@ The point in a painting to keep in view when it is cropped, such as Stańczyk's 
 
 ## Listener submissions
 
+**Speak Freely**:
+The page where a listener sends the Jesters a Submission, at `/speak-freely`. Its name is the jester's privilege itself: the license to speak freely before the king. The endpoint behind it keeps its plain name, `POST /api/submit`.
+_Avoid_: Submit (as the page's name), contact form, mailbag
+
 **Submission**:
 Anything a listener sends the show through the site, whatever its type.
 _Avoid_: Confession (as the umbrella term), entry, message, form response

@@ -1,9 +1,9 @@
-import type { SubmitPage } from "@/lib/content";
+import type { SpeakFreelyPage } from "@/lib/content";
 
-// The Submit page. The field labels, the consent line, and the name and email
+// Speak Freely, where listeners send the Jesters a Submission. The field labels, the consent line, and the name and email
 // hints are the spec's words; the rest awaits the Jesters'.
-export const submit = {
-  title: "Submit",
+export const speakFreely = {
+  title: "Speak Freely",
   intro: {
     text: "Send the Jesters a Question to answer on the show, a Confession of your own folly for us to laugh about with you, a Topic idea for a future Episode, or anything else on your mind. Michael, Dan, and Aaron read every Submission.",
     draft: true,
@@ -90,4 +90,4 @@ export const submit = {
     text: "Your Submission goes to the Jesters' inbox as one email, and is stored nowhere else. We use your email address only to reply to you, and never add it to a list.",
     draft: true,
   },
-} as const satisfies SubmitPage;
+} as const satisfies SpeakFreelyPage;

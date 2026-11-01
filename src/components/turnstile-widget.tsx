@@ -43,7 +43,7 @@ export function TurnstileWidget({ siteKey, onToken }: Props) {
     if (loaded) mount(loaded);
     else
       loadTurnstile().then(mount, (error: unknown) =>
-        console.error("Submit: Turnstile's script didn't load", error)
+        console.error("Speak Freely: Turnstile's script didn't load", error)
       );
     return () => {
       removed = true;
