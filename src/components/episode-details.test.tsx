@@ -4,18 +4,23 @@ import { render, screen, within } from "@testing-library/react";
 import { axe } from "jest-axe";
 import { content } from "@/content";
 import { findEpisode, parseFeed } from "@/lib/feed";
+import type { Transcript } from "@/lib/transcript";
 import { EpisodeDetails } from "./episode-details";
 
 const episodes = parseFeed(
   readFileSync(join(process.cwd(), "src/content/feed-fixture.xml"), "utf8")
 );
 
-function renderEpisode(address: string[]) {
+function renderEpisode(
+  address: string[],
+  { transcript = null }: { transcript?: Transcript | null } = {}
+) {
   const sequence = findEpisode(episodes, address);
   if (!sequence) throw new Error(`The fixture has no Episode at ${address}`);
   return render(
     <EpisodeDetails
       sequence={sequence}
+      transcript={transcript}
       copy={content.episodePage}
       playerCopy={content.shell.player}
     />
@@ -94,6 +99,28 @@ describe("EpisodeDetails", () => {
     expect(within(sequenceNav()).getByRole("link")).toHaveAccessibleName(
       "Previous Episode Listener Confessions: Christmas Edition"
     );
+  });
+
+  it("follows the Show notes with the Episode's Transcript", () => {
+    renderEpisode(["1"], {
+      transcript: [
+        { startSeconds: 8.457, text: "Welcome to Jester's Privilege." },
+      ],
+    });
+    const transcript = screen.getByRole("region", { name: "Transcript" });
+    expect(transcript).toHaveTextContent(/Welcome to Jester's Privilege\.$/);
+    expect(
+      screen
+        .getByRole("region", { name: "Show notes" })
+        .compareDocumentPosition(transcript)
+    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+
+  it("has no Transcript section for an Episode without one", () => {
+    renderEpisode(["1"]);
+    expect(
+      screen.queryByRole("region", { name: "Transcript" })
+    ).not.toBeInTheDocument();
   });
 
   it.each([

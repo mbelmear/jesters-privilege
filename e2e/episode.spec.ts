@@ -27,7 +27,9 @@ test.describe("Episode page", () => {
       await expect(
         page.getByRole("heading", { level: 1, name: title })
       ).toBeVisible();
-      await expect(page.getByRole("button", { name: /^Play/ })).toBeVisible();
+      await expect(
+        page.locator("article > header").getByRole("button", { name: /^Play/ })
+      ).toBeVisible();
     });
   }
 

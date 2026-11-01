@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { DraftRibbon } from "@/components/draft-ribbon";
 import { EpisodeDetails } from "@/components/episode-details";
 import { content } from "@/content";
-import { feedSource, getEpisodes } from "@/content/feed";
+import { feedSource, getEpisodes, getTranscript } from "@/content/feed";
 import { episodeAddress, findEpisode } from "@/lib/feed";
 import { episodeTitle } from "@/lib/format-episode";
 
@@ -39,12 +39,14 @@ export default async function EpisodePage({
   params,
 }: PageProps<"/episodes/[...address]">) {
   const sequence = await episodeAt((await params).address);
+  const transcript = await getTranscript(sequence.episode);
   const { shell, site, episodePage } = content;
   return (
     <>
       <DraftRibbon uses={[shell, site.name, episodePage, feedSource]} />
       <EpisodeDetails
         sequence={sequence}
+        transcript={transcript}
         copy={episodePage}
         playerCopy={shell.player}
       />
