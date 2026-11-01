@@ -1,8 +1,10 @@
 import { content } from "@/content";
 import { findDrafts, type ContentValue } from "@/lib/content";
 
-// Previews and `next dev` mark drafts; production builds never do.
-const isPreviewBuild =
+// Previews and `next dev` mark drafts; production builds never do. Read as
+// each page renders (at build time, in a static export), so a test sets
+// SITE_ENV before rendering a page rather than reloading its modules.
+const isPreviewBuild = () =>
   process.env.SITE_ENV === "preview" || process.env.NODE_ENV === "development";
 
 type Props = {
@@ -11,7 +13,7 @@ type Props = {
   preview?: boolean;
 };
 
-export function DraftRibbon({ uses, preview = isPreviewBuild }: Props) {
+export function DraftRibbon({ uses, preview = isPreviewBuild() }: Props) {
   if (!preview || findDrafts(uses).length === 0) return null;
   return (
     <p

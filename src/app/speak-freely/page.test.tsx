@@ -46,6 +46,17 @@ describe("Speak Freely", () => {
     ).toBeVisible();
   });
 
+  it("marks its draft copy with the DRAFT ribbon on a preview", () => {
+    const before = process.env.SITE_ENV;
+    process.env.SITE_ENV = "preview";
+    try {
+      render(<SpeakFreely />);
+      expect(screen.getByRole("note")).toHaveTextContent("Draft");
+    } finally {
+      process.env.SITE_ENV = before;
+    }
+  });
+
   it("has no detectable accessibility violations", async () => {
     const { container } = render(<SpeakFreely />);
     expect(await axe(container)).toHaveNoViolations();

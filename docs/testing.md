@@ -70,6 +70,10 @@ To test that reduced motion keeps an element from moving, wait until Motion has 
 
 Playwright's actions (`click`, `scrollIntoViewIfNeeded`) wait for an element to hold still, so one that animates without end, such as a painting band's slow zoom, stalls them until the test times out; scroll it with `locator.evaluate((el) => el.scrollIntoView())`.
 
+Playwright can act before React has hydrated a page, when a field shows but its handlers aren't attached yet; a loaded machine widens that window. Forms are disabled until hydration (`CODING_STANDARDS.md`, React), and Playwright waits for a field to be enabled before it types, so a test gets this for free; other controls, such as a Play button, need a test to wait for a sign the page's script has run.
+
+Next renders its route announcer as `role="alert"` on every page, so `page.getByRole("alert")` finds two elements; scope it to the component (`page.getByRole("form").getByRole("alert")`). Desktop WebKit's Tab moves only between text fields, as Safari does by default, skipping buttons, Radix's checkbox and select triggers included; a keyboard test `focus()`es the control, then presses keys.
+
 To test a page whose scripts fail to load, abort only the scripts (`page.route(/\/_next\/static\/chunks\/.*\.js/, …)`): Next serves the stylesheet from the same folder, so blocking the whole folder also takes away the CSS.
 
 A test that plays an Episode uses the helpers in `e2e/player.ts`: its audio route serves byte ranges, without which Chromium ignores a seek.
