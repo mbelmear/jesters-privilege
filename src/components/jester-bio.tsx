@@ -1,6 +1,6 @@
 import type { Inline, Paragraph } from "@/lib/content";
 
-const text = (run: Inline) => (typeof run === "string" ? run : run.em);
+const plainText = (run: Inline) => (typeof run === "string" ? run : run.em);
 
 /** A Jester's full bio as they wrote it, with show titles in italics. */
 export function JesterBio({
@@ -9,7 +9,7 @@ export function JesterBio({
   paragraphs: readonly Paragraph[];
 }) {
   return paragraphs.map((paragraph) => (
-    <p key={paragraph.map(text).join("")}>
+    <p key={paragraph.map(plainText).join("")}>
       {paragraph.map((run) =>
         typeof run === "string" ? run : <em key={run.em}>{run.em}</em>
       )}

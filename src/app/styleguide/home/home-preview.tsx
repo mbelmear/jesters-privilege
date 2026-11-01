@@ -42,6 +42,7 @@ export async function HomePreview({ heroOption, story }: Props) {
           site,
           hero,
           home,
+          content.listen,
           jesters,
           microcopy.newToPodcasts,
           microcopy.comingSoon,
@@ -85,7 +86,7 @@ export async function HomePreview({ heroOption, story }: Props) {
       </div>
       <ListenButtons
         links={copy.listen}
-        copy={home.listen}
+        copy={content.listen}
         newToPodcasts={microcopy.newToPodcasts}
       />
       <FleuronRule className="mx-auto w-full max-w-xs px-4" />

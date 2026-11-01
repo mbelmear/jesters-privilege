@@ -4,14 +4,14 @@ import { Button } from "@/components/ui/button";
 import {
   LISTEN_PLATFORMS,
   type Copy,
-  type Home,
+  type ListenCopy,
   type ListenPlatform,
   type Site,
 } from "@/lib/content";
 
 type Props = {
   links: Site["listen"];
-  copy: Home["listen"];
+  copy: ListenCopy;
   newToPodcasts: Copy;
   // The heading's level: a section of its own on the home page, a part of
   // "How to listen" on About.

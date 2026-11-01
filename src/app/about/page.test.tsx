@@ -1,7 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
 import { axe } from "jest-axe";
 import { content } from "@/content";
-import type { Site } from "@/lib/content";
+import type { Jester, Site } from "@/lib/content";
 import About, { metadata } from "./page";
 
 describe("About", () => {
@@ -60,6 +60,25 @@ describe("About", () => {
     // Show titles are set in italics, as the Jesters wrote them.
     expect(jesters.getByText("The Perfect Lens").tagName).toBe("EM");
     expect(jesters.getByText("Polemical").tagName).toBe("EM");
+  });
+
+  it("shows a Jester's name and role alone, under the shield, until their photo and bio arrive", () => {
+    const newcomer: Jester = {
+      id: "michael",
+      name: "Michael Belmear",
+      role: "Co-host",
+    };
+    jest.replaceProperty<{ jesters: readonly Jester[] }, "jesters">(
+      content,
+      "jesters",
+      [newcomer]
+    );
+    render(<About />);
+    const jesters = screen.getByRole("region", { name: "The Jesters" });
+    expect(within(jesters).queryByRole("img")).not.toBeInTheDocument();
+    expect(within(jesters).getByRole("listitem")).toHaveTextContent(
+      /^M?Michael BelmearCo-host$/
+    );
   });
 
   it("shows every Jester's headshot", () => {

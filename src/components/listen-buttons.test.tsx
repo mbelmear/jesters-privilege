@@ -15,7 +15,7 @@ const renderButtons = (links: Site["listen"]) =>
   render(
     <ListenButtons
       links={links}
-      copy={content.home.listen}
+      copy={content.listen}
       newToPodcasts={content.microcopy.newToPodcasts}
     />
   );

@@ -218,11 +218,13 @@ export type PlayerCopy = {
 
 // The home page's own copy; the hero, Jesters, and microcopy it also shows
 // live in their own files.
+// The "Listen on" buttons' copy, on the home page and About.
+export type ListenCopy = {
+  readonly title: string;
+  readonly platforms: { readonly [P in ListenPlatform]: string };
+};
+
 export type Home = {
-  readonly listen: {
-    readonly title: string;
-    readonly platforms: { readonly [P in ListenPlatform]: string };
-  };
   readonly latestEpisode: {
     readonly title: string;
     readonly episode: string;
@@ -312,6 +314,7 @@ export type Content = {
     readonly paragraphs: readonly string[];
   };
   readonly home: Home;
+  readonly listen: ListenCopy;
   readonly episodePage: EpisodePage;
   readonly jesters: readonly Jester[];
   readonly gallery: Gallery;

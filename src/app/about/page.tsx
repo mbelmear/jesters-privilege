@@ -8,7 +8,7 @@ import { ListenButtons } from "@/components/listen-buttons";
 import { content } from "@/content";
 import type { Jester, Section } from "@/lib/content";
 
-const { about, home, jesters, microcopy, shell, site } = content;
+const { about } = content;
 
 export const metadata: Metadata = {
   title: about.title,
@@ -18,10 +18,20 @@ export const metadata: Metadata = {
 // About: why a jester, the three Jesters and their bios, what the show
 // believes, Redeemer Church, and how to listen.
 export default function About() {
+  const { jesters, listen, microcopy, shell, site } = content;
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-16 px-4 pt-12 pb-24 sm:px-6 sm:pt-16">
       <DraftRibbon
-        uses={[shell, site.name, about, jesters, microcopy.newToPodcasts]}
+        uses={[
+          shell,
+          site.name,
+          about,
+          // Their bios; the summaries are the home page's.
+          jesters.map((jester) => jester.bio),
+          site.listen,
+          listen,
+          microcopy.newToPodcasts,
+        ]}
       />
       <div className="flex flex-col gap-4">
         <h1 className="font-display text-5xl leading-tight sm:text-6xl">
@@ -38,7 +48,7 @@ export default function About() {
       <ProseSection section={about.howToListen}>
         <ListenButtons
           links={site.listen}
-          copy={home.listen}
+          copy={listen}
           newToPodcasts={microcopy.newToPodcasts}
           headingLevel={3}
         />

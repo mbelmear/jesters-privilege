@@ -5,6 +5,7 @@ import { gallery } from "./gallery";
 import { hero } from "./hero";
 import { home } from "./home";
 import { jesters } from "./jesters";
+import { listen } from "./listen";
 import { microcopy } from "./microcopy";
 import { paintings } from "./paintings";
 import { shell } from "./shell";
@@ -19,6 +20,7 @@ export const content = validateContent({
   shell,
   hero,
   home,
+  listen,
   episodePage,
   jesters,
   gallery,

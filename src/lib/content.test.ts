@@ -8,6 +8,7 @@ import {
 } from "./content";
 import { episodePage } from "@/content/episode-page";
 import { home } from "@/content/home";
+import { listen } from "@/content/listen";
 import { shell } from "@/content/shell";
 import { speakFreely } from "@/content/speak-freely";
 
@@ -50,6 +51,7 @@ function content(overrides: Partial<Content> = {}): Content {
     shell,
     hero: { logo, paragraphs: ["Long ago…"] },
     home,
+    listen,
     episodePage,
     speakFreely,
     jesters: [{ id: "dan", name: "Dan Collins", role: "Co-host" }],

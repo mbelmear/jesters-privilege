@@ -2,18 +2,9 @@ import type { Home } from "@/lib/content";
 import { gallery } from "./gallery";
 
 // The home page's section copy. The hero copy (hero.ts), the Jesters'
-// summaries (jesters.ts), and "New to podcasts?" and coming-soon
-// (microcopy.ts) live with the rest of their kind.
+// summaries (jesters.ts), the Listen buttons (listen.ts), and "New to
+// podcasts?" and coming-soon (microcopy.ts) live with the rest of their kind.
 export const home = {
-  listen: {
-    title: "Listen on",
-    platforms: {
-      "apple-podcasts": "Apple Podcasts",
-      spotify: "Spotify",
-      youtube: "YouTube",
-      rss: "RSS",
-    },
-  },
   latestEpisode: {
     title: "Latest Episode",
     episode: "Episode",
