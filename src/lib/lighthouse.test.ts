@@ -145,6 +145,41 @@ describe("summarise, early files", () => {
     expect(summary).not.toContain("late.js");
   });
 
+  it("names an early file whose bytes changed under the same name", () => {
+    // The page's own document keeps its name as it grows (#19).
+    const document = (bytes: number) => ({
+      url: "styleguide/home/simple.html",
+      type: "Document",
+      bytes,
+    });
+    const summary = summarise(
+      [
+        { label: "origin/main", reports: [run(page, 2640, [document(14473)])] },
+        { label: "HEAD", reports: [run(page, 2640, [document(15512)])] },
+      ],
+      budget
+    );
+    expect(summary).toContain(
+      "    early files changed: simple.html 14,473 → 15,512"
+    );
+  });
+
+  it("names the home page's document by its path", () => {
+    const summary = summarise(
+      [
+        { label: "origin/main", reports: [run(page, 2640, [])] },
+        {
+          label: "HEAD",
+          reports: [
+            run(page, 2640, [{ url: "", type: "Document", bytes: 12000 }]),
+          ],
+        },
+      ],
+      budget
+    );
+    expect(summary).toContain("    early files only in HEAD: / 12,000");
+  });
+
   it("lists no files for a single checkout", () => {
     const [first] = columns;
     expect(summarise(first ? [first] : [], budget)).not.toContain(
@@ -254,7 +289,30 @@ describe("readReport", () => {
     );
   });
 
-  it("names the file and the figure a report lacks", () => {
+  it("names the file whose report lists no requests", () => {
+    const json = {
+      finalDisplayedUrl: "http://localhost/",
+      audits: {
+        "largest-contentful-paint": { numericValue: 2675 },
+        "first-contentful-paint": { numericValue: 1052 },
+        metrics: {
+          details: {
+            items: [
+              {
+                observedLargestContentfulPaint: 42,
+                observedFirstContentfulPaint: 41,
+              },
+            ],
+          },
+        },
+      },
+    };
+    expect(() => readReport("lhr-3.json", json)).toThrow(
+      "lhr-3.json has no network requests"
+    );
+  });
+
+  it("names the file a report without its page comes from", () => {
     expect(() => readReport("lhr-1.json", { audits: {} })).toThrow(
       "lhr-1.json has no page URL"
     );

@@ -54,9 +54,7 @@ export function readReport(file: string, json: unknown): Report {
     "node",
     "selector",
   ]);
-  const requests: unknown[] = Array.isArray(items) ? items : [];
-  return {
-    path: new URL(url).pathname,
+  const times = {
     simulatedLcp: numberAt(
       "audits",
       "largest-contentful-paint",
@@ -65,6 +63,12 @@ export function readReport(file: string, json: unknown): Report {
     simulatedFcp: numberAt("audits", "first-contentful-paint", "numericValue"),
     observedLcp: metric("observedLargestContentfulPaint"),
     observedFcp: metric("observedFirstContentfulPaint"),
+  };
+  if (!Array.isArray(items)) throw new Error(`${file} has no network requests`);
+  const requests: unknown[] = items;
+  return {
+    path: new URL(url).pathname,
+    ...times,
     lcpElement: typeof element === "string" ? element : "unknown",
     requests: requests.map((request) => {
       const url = dig(request, ["url"]);
@@ -151,8 +155,11 @@ function earlyFiles(reports: Report[]): Map<string, number> {
   return files;
 }
 
+// The last part of a file's address, or its whole path for a page at a
+// folder's address, such as the home page's "/".
 function fileName(url: string): string {
-  return url.split("/").pop() ?? url;
+  const path = url.replace(/^[a-z]+:\/\/[^/]*/, "");
+  return path.split("/").pop() || path || url;
 }
 
 function median(numbers: number[]): number {
@@ -169,97 +176,110 @@ function format(key: string, value: number): string {
   return key.endsWith(BYTES) ? thousands(value) : value.toFixed(0);
 }
 
-// Per page: the median of each figure across a column's runs.
-function medians(reports: Report[]): Map<string, Record<string, number>> {
-  const runs = new Map<string, Record<string, number>[]>();
-  for (const report of reports) {
-    runs.set(report.path, [...(runs.get(report.path) ?? []), figures(report)]);
-  }
-  const pages = new Map<string, Record<string, number>>();
-  for (const [path, rows] of runs) {
-    const keys = new Set(rows.flatMap((row) => Object.keys(row)));
-    pages.set(
-      path,
-      Object.fromEntries(
-        [...keys].map((key) => [key, median(rows.map((row) => row[key] ?? 0))])
-      )
-    );
-  }
-  return pages;
+// The median of each figure across one page's runs.
+function medians(runs: Report[]): Record<string, number> {
+  const rows = runs.map(figures);
+  const keys = new Set(rows.flatMap((row) => Object.keys(row)));
+  return Object.fromEntries(
+    [...keys].map((key) => [key, median(rows.map((row) => row[key] ?? 0))])
+  );
 }
 
 const line = (cells: string[]) =>
   cells.map((cell) => cell.padStart(22)).join("");
+
+// One label's runs of one page, with the figures shown for them.
+type Side = {
+  label: string;
+  runs: Report[];
+  figures: Record<string, number>;
+  files: Map<string, number>;
+};
 
 /** The summary as printed: each page's figures, one column per label. */
 export function summarise(
   columns: Column[],
   { lcpBudget }: { lcpBudget: number }
 ): string {
-  const measured = columns.map(({ label, reports }) => ({
-    label,
-    reports,
-    pages: medians(reports),
-  }));
   const paths = new Set(
-    columns.flatMap(({ reports }) => reports.map((r) => r.path))
+    columns.flatMap(({ reports }) => reports.map((report) => report.path))
   );
   const out: string[] = [];
   for (const path of paths) {
-    out.push("", path);
-    out.push(line(["", ...measured.map(({ label }) => label)]));
-    const keys = new Set(
-      measured.flatMap(({ pages }) => Object.keys(pages.get(path) ?? {}))
-    );
-    for (const key of [...keys].sort()) {
-      const cells = measured.map(({ pages }) => {
-        const value = pages.get(path)?.[key];
-        return value === undefined ? "–" : format(key, value);
-      });
-      out.push(line([key, ...cells]));
+    const sides: Side[] = columns.map(({ label, reports }) => {
+      const runs = reports.filter((report) => report.path === path);
+      return {
+        label,
+        runs,
+        figures: medians(runs),
+        files: earlyFiles(runs),
+      };
+    });
+    out.push("", path, ...figureRows(sides));
+    for (const { label, runs } of sides) {
+      out.push(`    LCP element (${label}): ${runs[0]?.lcpElement ?? "–"}`);
     }
-    for (const { label, reports } of measured) {
-      const page = reports.find((report) => report.path === path);
-      out.push(`    LCP element (${label}): ${page?.lcpElement ?? "–"}`);
-    }
-    for (const { label, reports } of measured) {
-      const fonts = new Map<string, number>();
-      for (const report of reports.filter((r) => r.path === path)) {
-        for (const [name, kb] of earlyFonts(report)) fonts.set(name, kb);
-      }
-      const files = [...fonts].map(
+    for (const { label, runs } of sides) {
+      const fonts = new Map(runs.flatMap(earlyFonts));
+      const list = [...fonts].map(
         ([name, kb]) => `${name} ${kb.toFixed(0)} KB`
       );
-      out.push(`    early fonts (${label}): ${files.join(", ") || "–"}`);
+      out.push(`    early fonts (${label}): ${list.join(", ") || "–"}`);
     }
-    for (const { label, reports } of measured) {
-      const lcps = reports
-        .filter((report) => report.path === path)
-        .map((report) => report.simulatedLcp);
+    for (const { label, runs } of sides) {
+      const lcps = runs.map((report) => report.simulatedLcp);
       if (lcps.some((lcp) => lcp >= lcpBudget - STEP_MS)) {
-        const list = lcps.map(thousands).join(", ");
         out.push(
-          `    near the LCP budget (${label}): runs of ${list} ms against ${thousands(lcpBudget)}`
+          `    near the LCP budget (${label}): runs of ${lcps.map(thousands).join(", ")} ms against ${thousands(lcpBudget)}`
         );
       }
     }
-    // Which early bytes changed, by file: a bundler renames a file whose
-    // contents change, so each side lists its own and the reader pairs them.
-    if (measured.length > 1) {
-      const sides = measured.map(({ label, reports }) => ({
-        label,
-        files: earlyFiles(reports.filter((report) => report.path === path)),
-      }));
-      for (const { label, files } of sides) {
-        const others = sides.filter((side) => side.label !== label);
-        const only = [...files].filter(([name]) =>
-          others.every((side) => !side.files.has(name))
-        );
-        if (only.length === 0) continue;
-        const list = only.map(([name, bytes]) => `${name} ${thousands(bytes)}`);
-        out.push(`    early files only in ${label}: ${list.join(", ")}`);
-      }
-    }
+    if (sides.length > 1) out.push(...fileChanges(sides));
   }
   return out.join("\n");
+}
+
+// A row per figure, a cell per side.
+function figureRows(sides: Side[]): string[] {
+  const keys = new Set(sides.flatMap(({ figures }) => Object.keys(figures)));
+  return [
+    line(["", ...sides.map(({ label }) => label)]),
+    ...[...keys].sort().map((key) =>
+      line([
+        key,
+        ...sides.map(({ figures }) => {
+          const value = figures[key];
+          return value === undefined ? "–" : format(key, value);
+        }),
+      ])
+    ),
+  ];
+}
+
+// Which early files changed between the sides. A bundler renames a file whose
+// contents change, so each side lists the files only it fetched and the
+// reader pairs them; a file that keeps its name, such as the page's own
+// document, shows its bytes on each side.
+function fileChanges(sides: Side[]): string[] {
+  const out: string[] = [];
+  const names = new Set(sides.flatMap(({ files }) => [...files.keys()]));
+  const changed = [...names].flatMap((name) => {
+    const sizes = sides.map(({ files }) => files.get(name));
+    const known = sizes.filter((bytes) => bytes !== undefined);
+    if (known.length < sizes.length || new Set(known).size === 1) return [];
+    return [`${name} ${known.map(thousands).join(" → ")}`];
+  });
+  if (changed.length > 0) {
+    out.push(`    early files changed: ${changed.join(", ")}`);
+  }
+  for (const { label, files } of sides) {
+    const others = sides.filter((side) => side.label !== label);
+    const only = [...files].filter(([name]) =>
+      others.every((side) => !side.files.has(name))
+    );
+    if (only.length === 0) continue;
+    const list = only.map(([name, bytes]) => `${name} ${thousands(bytes)}`);
+    out.push(`    early files only in ${label}: ${list.join(", ")}`);
+  }
+  return out;
 }
