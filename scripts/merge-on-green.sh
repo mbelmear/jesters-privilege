@@ -16,17 +16,7 @@ pr="${1:?Usage: npm run merge -- <pr-number>}"
 
 head=$(gh pr view "$pr" --json headRefOid --jq .headRefOid)
 
-reviewed=$("$(dirname "$0")/last-reviewed-sha.sh" "$pr")
-if [[ "$reviewed" != "$head" ]]; then
-  echo "Refusing to merge #$pr: head is $head, but the last passed review is at ${reviewed:-no commit}." >&2
-  # Review only the new commits, unless a rebase dropped the reviewed one.
-  since=origin/main
-  if [[ -n "$reviewed" ]] && git merge-base --is-ancestor "$reviewed" "$head" 2>/dev/null; then
-    since=$reviewed
-  fi
-  echo "Run /code-review with $since as the fixed point, then: npm run review-passed -- $pr $head" >&2
-  exit 1
-fi
+"$(dirname "$0")/require-review.sh" "$pr" "$head" merge
 
 checks=$(gh pr view "$pr" --json statusCheckRollup --jq '.statusCheckRollup | length')
 if [[ "$checks" -eq 0 ]]; then

@@ -25,7 +25,8 @@ describe("Gallery", () => {
       render(<Gallery />);
       expect(screen.getByRole("note")).toHaveTextContent("Draft");
     } finally {
-      process.env.SITE_ENV = before;
+      if (before === undefined) delete process.env.SITE_ENV;
+      else process.env.SITE_ENV = before;
     }
   });
 

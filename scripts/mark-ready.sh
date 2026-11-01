@@ -4,7 +4,8 @@
 # pr-status.sh and labels only when every check passes, the preview is built
 # from the head, and the PR merges cleanly with main, so a Jester never
 # reviews a preview that can't merge. A Jester judges the preview, not the
-# code, so the head must also carry a passed /code-review, as for a merge. A push during that wait is refused,
+# code, so the head must also carry a passed /code-review, as for a merge
+# (require-review.sh). A push during that wait is refused,
 # as its head was never checked.
 #
 # It takes exactly one argument, a PR number, and passes no other flags to gh.
@@ -24,12 +25,7 @@ if ! head=$("$(dirname "$0")/wait-pushed-head.sh" "$pr"); then
   exit 1
 fi
 # Checked before the wait, so a missing review fails in seconds, not minutes.
-reviewed=$("$(dirname "$0")/last-reviewed-sha.sh" "$pr")
-if [[ "$reviewed" != "$head" ]]; then
-  echo "Refusing to label #$pr: head is $head, but the last passed review is at ${reviewed:-no commit}." >&2
-  echo "Run /code-review, then: npm run review-passed -- $pr $head" >&2
-  exit 1
-fi
+"$(dirname "$0")/require-review.sh" "$pr" "$head" label
 # The report streams to the terminal as it waits, and is kept for the checks below.
 if ! status=$("$(dirname "$0")/pr-status.sh" "$pr" | tee /dev/stderr); then
   echo "Refusing to label #$pr: pr-status didn't pass (see above)." >&2

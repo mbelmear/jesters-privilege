@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Record that /code-review passed on a pull request's head commit, as the
-# "Code review: passed at <sha>" comment that `npm run merge` requires.
+# "Code review: passed at <sha>" comment that `npm run merge` and
+# `npm run mark-ready` require.
 #
 # It takes exactly two arguments, passes no other flags to gh, and refuses
 # unless the reviewed commit is still the PR's head: a push after the review
