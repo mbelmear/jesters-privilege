@@ -42,4 +42,4 @@ const columns: Column[] = process.argv.slice(2).map((arg) => {
   };
 });
 
-console.log(summarise(columns, { lcpBudget: lcpBudgets() }));
+console.log(summarise(columns, { lcpBudgetFor: lcpBudgets() }));

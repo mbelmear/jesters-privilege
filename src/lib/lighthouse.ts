@@ -221,7 +221,7 @@ type Side = {
 /** The summary as printed: each page's figures, one column per label. */
 export function summarise(
   columns: Column[],
-  { lcpBudget }: { lcpBudget: (path: string) => number }
+  { lcpBudgetFor }: { lcpBudgetFor: (path: string) => number }
 ): string {
   const paths = new Set(
     columns.flatMap(({ reports }) => reports.map((report) => report.path))
@@ -248,7 +248,7 @@ export function summarise(
       );
       out.push(`    early fonts (${label}): ${list.join(", ") || "–"}`);
     }
-    const budget = lcpBudget(path);
+    const budget = lcpBudgetFor(path);
     for (const { label, runs } of sides) {
       const lcps = runs.map((report) => report.simulatedLcp);
       if (lcps.some((lcp) => lcp >= budget - STEP_MS)) {

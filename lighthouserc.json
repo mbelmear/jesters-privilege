@@ -70,7 +70,7 @@
           }
         },
         {
-          "matchingUrlPattern": "localhost(:\\d+)?/(gallery\\.html|styleguide/paintings\\.html|styleguide/home/simple\\.html)?$",
+          "matchingUrlPattern": "localhost(:\\d+)?/(gallery\\.html|styleguide/paintings\\.html|styleguide/home/simple\\.html)$",
           "aggregationMethod": "median",
           "assertions": {
             "largest-contentful-paint": [
@@ -82,7 +82,7 @@
           }
         },
         {
-          "matchingUrlPattern": "^(?!.*localhost(:\\d+)?/(gallery\\.html|styleguide/paintings\\.html|styleguide/home/simple\\.html)?$)",
+          "matchingUrlPattern": "^(?!.*localhost(:\\d+)?/(gallery\\.html|styleguide/paintings\\.html|styleguide/home/simple\\.html)$)",
           "aggregationMethod": "median",
           "assertions": {
             "largest-contentful-paint": [
