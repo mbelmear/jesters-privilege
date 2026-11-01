@@ -1,11 +1,12 @@
 // Prints a summary of Lighthouse reports, one column per label, for
 // scripts/lighthouse.sh, scripts/lighthouse-compare.sh, and CI's downloaded
 // lighthouse-reports (src/lib/lighthouse.ts). Each argument is
-// <label>=<folder of reports>. The LCP budget comes from lighthouserc.json.
+// <label>=<folder of reports>. Each page's LCP budget comes from
+// lighthouserc.json.
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
-  readLcpBudget,
+  readLcpBudgets,
   readReport,
   summarise,
   type Column,
@@ -18,10 +19,10 @@ function isReport(file: string): boolean {
   return /^lhr-.*\.json$/.test(file) || file.endsWith(".report.json");
 }
 
-function lcpBudget(): number {
+function lcpBudgets(): (path: string) => number {
   const file = join(import.meta.dirname, "..", "lighthouserc.json");
   const json: unknown = JSON.parse(readFileSync(file, "utf8"));
-  return readLcpBudget(file, json);
+  return readLcpBudgets(file, json);
 }
 
 const columns: Column[] = process.argv.slice(2).map((arg) => {
@@ -41,4 +42,4 @@ const columns: Column[] = process.argv.slice(2).map((arg) => {
   };
 });
 
-console.log(summarise(columns, { lcpBudget: lcpBudget() }));
+console.log(summarise(columns, { lcpBudget: lcpBudgets() }));
