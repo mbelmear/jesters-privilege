@@ -31,14 +31,17 @@ const NAME_MAX_LENGTH = 100;
 const EMAIL_MAX_LENGTH = 254;
 const BODY_MAX_BYTES = 32 * 1024;
 
-type SubmissionField = "type" | "message" | "name" | "email" | "consent";
+export type SubmissionField = "type" | "message" | "name" | "email" | "consent";
+
+// Why the endpoint refused a Submission.
+export const SUBMIT_ERRORS = ["invalid", "verification", "delivery"] as const;
+export type SubmitError = (typeof SUBMIT_ERRORS)[number];
 
 // What the page reads to show success or explain a failure.
 export type SubmitResult =
   | { ok: true }
   | { ok: false; error: "invalid"; field?: SubmissionField }
-  | { ok: false; error: "verification" }
-  | { ok: false; error: "delivery" };
+  | { ok: false; error: Exclude<SubmitError, "invalid"> };
 
 type Parsed =
   | { kind: "submission"; submission: Submission; token: string | null }
@@ -140,7 +143,7 @@ export const SUBMISSION_PROBLEMS = [
 
 export type SubmissionProblem = (typeof SUBMISSION_PROBLEMS)[number];
 
-const PROBLEM_FIELDS: Record<SubmissionProblem, SubmissionField> = {
+export const PROBLEM_FIELDS: Record<SubmissionProblem, SubmissionField> = {
   "type-unknown": "type",
   "message-missing": "message",
   "message-too-long": "message",
@@ -249,9 +252,12 @@ export type SubmitRequestBody = {
   turnstileToken: string;
 };
 
-// The endpoint's answer, or "unreachable" when no answer came back from it:
-// a dropped connection, or a reply that isn't the endpoint's JSON.
-export type SendOutcome = SubmitResult | { ok: false; error: "unreachable" };
+// Why a Submission wasn't sent: the endpoint's refusal, or "unreachable" when
+// no answer came back from it (a dropped connection, or a reply that isn't the
+// endpoint's JSON).
+export type SendFailure = SubmitError | "unreachable";
+
+export type SendOutcome = { ok: true } | { ok: false; error: SendFailure };
 
 type Fetch = (url: string, init: RequestInit) => Promise<Response>;
 
@@ -273,8 +279,6 @@ export async function postSubmission(
   }
   return readSubmitResult(answer);
 }
-
-const SUBMIT_ERRORS = ["invalid", "verification", "delivery"] as const;
 
 function readSubmitResult(answer: unknown): SendOutcome {
   if (!isRecord(answer)) return { ok: false, error: "unreachable" };

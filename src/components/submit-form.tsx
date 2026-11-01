@@ -20,8 +20,10 @@ import type { SubmitPage } from "@/lib/content";
 import {
   checkSubmission,
   postSubmission,
+  PROBLEM_FIELDS,
   SUBMISSION_TYPES,
-  type SendOutcome,
+  type SendFailure,
+  type SubmissionField,
   type SubmissionProblem,
   type SubmissionType,
 } from "@/lib/submit";
@@ -51,28 +53,16 @@ const EMPTY: Fields = {
   website: "",
 };
 
-type SendFailure = Exclude<SendOutcome, { ok: true }>["error"];
-
-// Problems show only once the listener has tried to send; from then on they
-// follow the fields as they change.
+// Problems show only once the listener has tried to send ("checked"); from
+// then on, a failed send included, they follow the fields as they change.
 type FormState =
-  | { status: "editing"; attempted: boolean }
+  | { status: "editing" }
+  | { status: "checked" }
   | { status: "sending" }
   | { status: "failed"; error: SendFailure }
   | { status: "sent" };
 
 type Problem = SubmissionProblem | "unverified";
-
-type Field = "type" | "message" | "name" | "email" | "consent";
-
-const PROBLEM_FIELDS: Record<SubmissionProblem, Field> = {
-  "type-unknown": "type",
-  "message-missing": "message",
-  "message-too-long": "message",
-  "name-invalid": "name",
-  "email-invalid": "email",
-  "consent-missing": "consent",
-};
 
 const inputClasses =
   "w-full rounded-md border border-input bg-card px-3 py-2.5 font-body text-base text-foreground transition-colors duration-(--motion-courtly-duration) ease-courtly hover:border-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring aria-invalid:border-destructive";
@@ -86,19 +76,16 @@ export function SubmitForm({ copy, siteKey }: Props) {
   const [token, setToken] = useState<string | null>(null);
   // A token passes one Submission; each send remounts the widget for another.
   const [attempt, setAttempt] = useState(0);
-  const [state, setState] = useState<FormState>({
-    status: "editing",
-    attempted: false,
-  });
+  const [state, setState] = useState<FormState>({ status: "editing" });
   const id = useId();
   const ready = useHydrated();
-  const fieldId = (field: Field | "website") => `${id}-${field}`;
+  const fieldId = (field: SubmissionField | "website") => `${id}-${field}`;
 
   const problems =
-    state.status === "editing" && state.attempted
+    state.status === "checked" || state.status === "failed"
       ? problemsOf(fields, token)
       : [];
-  const problemFor = (field: Field) =>
+  const problemFor = (field: SubmissionField) =>
     problems.find(
       (p): p is SubmissionProblem =>
         p !== "unverified" && PROBLEM_FIELDS[p] === field
@@ -113,7 +100,7 @@ export function SubmitForm({ copy, siteKey }: Props) {
     if (state.status === "sending") return;
     const found = problemsOf(fields, token);
     if (found.length > 0 || token === null) {
-      setState({ status: "editing", attempted: true });
+      setState({ status: "checked" });
       const first = found.find((p) => p !== "unverified");
       if (first)
         document.getElementById(fieldId(PROBLEM_FIELDS[first]))?.focus();
@@ -136,14 +123,14 @@ export function SubmitForm({ copy, siteKey }: Props) {
 
   function startOver() {
     setFields(EMPTY);
-    setState({ status: "editing", attempted: false });
+    setState({ status: "editing" });
   }
 
   if (state.status === "sent") {
     return <Sent copy={copy.sent} onAgain={startOver} />;
   }
 
-  const describedBy = (field: Field, hint?: boolean) =>
+  const describedBy = (field: SubmissionField, hint?: boolean) =>
     [
       hint && `${fieldId(field)}-hint`,
       problemFor(field) && `${fieldId(field)}-problem`,
@@ -151,7 +138,7 @@ export function SubmitForm({ copy, siteKey }: Props) {
       .filter(Boolean)
       .join(" ") || undefined;
 
-  const problemText = (field: Field) => {
+  const problemText = (field: SubmissionField) => {
     const problem = problemFor(field);
     return problem ? (
       <p

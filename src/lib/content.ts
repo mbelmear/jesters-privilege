@@ -1,5 +1,5 @@
 import type { EpisodeLabels, TimeUnits } from "./format-episode";
-import type { SubmissionProblem, SubmissionType } from "./submit";
+import type { SendFailure, SubmissionProblem, SubmissionType } from "./submit";
 
 // Plain data a content file can hold: what findDrafts and validateContent walk.
 export type ContentValue =
@@ -277,12 +277,7 @@ export type SubmitPage = {
   readonly problems: {
     readonly [P in SubmissionProblem | "unverified"]: Copy;
   };
-  readonly failed: {
-    readonly verification: Copy;
-    readonly delivery: Copy;
-    readonly invalid: Copy;
-    readonly unreachable: Copy;
-  };
+  readonly failed: { readonly [F in SendFailure]: Copy };
   readonly sent: {
     readonly title: string;
     readonly text: Copy;

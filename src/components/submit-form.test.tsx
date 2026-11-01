@@ -226,6 +226,24 @@ describe("SubmitForm", () => {
     }
   );
 
+  it("shows a problem made after a failed send at once", async () => {
+    const user = userEvent.setup();
+    stubEndpoint({ status: 502, body: { ok: false, error: "delivery" } });
+    renderForm();
+    turnstile.pass("token-1");
+    await fillIn(user);
+    await user.click(send());
+    await screen.findByText(copy.failed.delivery.text);
+
+    const message = screen.getByRole("textbox", {
+      name: copy.form.message.label,
+    });
+    await user.clear(message);
+    expect(message).toHaveAccessibleDescription(
+      copy.problems["message-missing"].text
+    );
+  });
+
   it("asks Turnstile for a fresh token after each send, since a token passes once", async () => {
     const user = userEvent.setup();
     const bodies = stubEndpoint({
@@ -307,6 +325,10 @@ describe("SubmitForm", () => {
     expect(
       screen.queryByRole("textbox", { name: copy.form.honeypot })
     ).not.toBeInTheDocument();
+    // The same query finds it once hidden elements count, so it's there.
+    expect(
+      screen.getByRole("textbox", { name: copy.form.honeypot, hidden: true })
+    ).toBeInTheDocument();
   });
 
   it("has no detectable accessibility violations while showing problems", async () => {

@@ -84,6 +84,49 @@ test.describe("Submit", () => {
     );
   });
 
+  test("explains a Submission Turnstile refused", async ({ page }) => {
+    await answerSubmit(page, 403, { ok: false, error: "verification" });
+    await page.goto(PAGE);
+    await fillIn(page);
+    await passTurnstile(page);
+    await send(page).click();
+
+    await expect(alert(page)).toContainText(
+      "couldn't confirm this came from a person"
+    );
+  });
+
+  test("sends a Confession from the keyboard alone", async ({ page }) => {
+    const bodies = await answerSubmit(page, 200, { ok: true });
+    await page.goto(PAGE);
+    await passTurnstile(page);
+    const type = page.getByRole("combobox", { name: "Type" });
+    await type.focus();
+    await page.keyboard.press("Enter");
+    await page.getByRole("option", { name: "Confession" }).focus();
+    await page.keyboard.press("Enter");
+    await expect(type).toHaveText("Confession");
+    await expect(type).toBeFocused();
+
+    await page.getByRole("textbox", { name: "Message" }).focus();
+    await page.keyboard.type("I skipped the sermon for brunch.");
+    const consent = page.getByRole("checkbox", {
+      name: "You can mention this on the show.",
+    });
+    await consent.focus();
+    await page.keyboard.press("Space");
+    await page.getByRole("textbox", { name: "Email" }).focus();
+    await page.keyboard.press("Enter");
+
+    await expect(page.getByRole("heading", { name: "Received" })).toBeFocused();
+    expect(bodies).toEqual([
+      expect.objectContaining({
+        type: "confession",
+        message: "I skipped the sermon for brunch.",
+      }),
+    ]);
+  });
+
   test("names what's missing, from the keyboard alone", async ({ page }) => {
     const bodies = await answerSubmit(page, 200, { ok: true });
     await page.goto(PAGE);
