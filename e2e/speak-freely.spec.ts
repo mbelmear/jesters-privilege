@@ -1,10 +1,10 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page, type Route } from "@playwright/test";
 
-// The Submit form against Turnstile's real widget, which the build gives the
+// The Speak Freely page's form against Turnstile's real widget, which the build gives the
 // always-pass test key (src/lib/turnstile.ts). The static server has no
 // Worker, so each test answers POST /api/submit itself.
-const PAGE = "/submit";
+const PAGE = "/speak-freely";
 
 // The widget's hidden input holds its token once the challenge has passed.
 async function passTurnstile(page: Page) {
@@ -47,7 +47,7 @@ async function answerSubmit(
   return bodies;
 }
 
-test.describe("Submit", () => {
+test.describe("Speak Freely", () => {
   test("sends a Submission with Turnstile's token and confirms it", async ({
     page,
   }) => {

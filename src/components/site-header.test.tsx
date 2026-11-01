@@ -33,7 +33,7 @@ describe("SiteHeader", () => {
       ["Episodes", "/episodes"],
       ["Fools' Gallery", "/gallery"],
       ["About", "/about"],
-      ["Submit", "/submit"],
+      ["Speak Freely", "/speak-freely"],
     ]);
   });
 
@@ -43,7 +43,7 @@ describe("SiteHeader", () => {
       within(mainNav())
         .getAllByRole("link")
         .map((link) => link.textContent)
-    ).toEqual(["Fools' Gallery", "About", "Submit"]);
+    ).toEqual(["Fools' Gallery", "About", "Speak Freely"]);
   });
 
   it("offers the theme toggle and the mobile menu", () => {

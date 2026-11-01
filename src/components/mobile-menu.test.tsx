@@ -29,7 +29,7 @@ describe("MobileMenu", () => {
       within(within(menu).getByRole("navigation", { name: "Main" }))
         .getAllByRole("link")
         .map((link) => link.textContent)
-    ).toEqual(["Fools' Gallery", "About", "Submit"]);
+    ).toEqual(["Fools' Gallery", "About", "Speak Freely"]);
   });
 
   it("keeps focus inside while open", async () => {

@@ -22,7 +22,7 @@ export const shell = {
     { href: "/episodes", label: "Episodes", onlyWithEpisodes: true },
     { href: "/gallery", label: "Fools' Gallery" },
     { href: "/about", label: "About" },
-    { href: "/submit", label: "Submit" },
+    { href: "/speak-freely", label: "Speak Freely" },
   ],
   menu: { open: "Open menu", close: "Close menu", title: "Menu" },
   themeToggle: "Dark theme",
@@ -60,7 +60,7 @@ export const shell = {
     contact: "Write to the Jesters",
     rss: "RSS feed",
     privacyNote: {
-      text: "No cookies and no tracking. We count visits with Cloudflare's privacy-first analytics, and anything you send through Submit goes only to the Jesters' inbox.",
+      text: "No cookies and no tracking. We count visits with Cloudflare's privacy-first analytics, and anything you send through Speak Freely goes only to the Jesters' inbox.",
       draft: true,
     },
   },

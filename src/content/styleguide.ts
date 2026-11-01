@@ -87,7 +87,7 @@ export const styleguide = {
       name: "Barlow Semi Condensed",
       role: "Interface: navigation, buttons, labels, metadata",
       utility: "font-ui",
-      sample: "Episodes · Fools' Gallery · About · Submit",
+      sample: "Episodes · Fools' Gallery · About · Speak Freely",
     },
   ],
   typeScale: {
@@ -157,7 +157,7 @@ export const styleguide = {
       heading: "Menu",
       open: "Open menu",
       label: "The court",
-      items: ["Episodes", "Fools' Gallery", "About", "Submit"],
+      items: ["Episodes", "Fools' Gallery", "About", "Speak Freely"],
     },
   },
 } as const;

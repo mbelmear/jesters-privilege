@@ -17,7 +17,7 @@ A fast, static, mobile-first website at `jestersprivilegepodcast.com` that is bo
 - **Episode pages** carry the player, Show notes, and an interactive Transcript.
 - **The Fools' Gallery** tells the history of court jesters and holy fools as a timeline, each Fool shown with their public-domain painting.
 - **About** explains why a jester, introduces the Jesters, and states what the show believes.
-- **Submit** lets listeners send Questions, Confessions, and Topic ideas.
+- **Speak Freely** lets listeners send Questions, Confessions, and Topic ideas.
 - A **persistent player** docked at the bottom keeps playing while visitors browse.
 
 Episodes come from the Spreaker podcast feed and appear automatically. The visual language follows one principle: **modern construction, deliberate historical callbacks**. The structure is clean and contemporary, and history appears in a few chosen places: decree-style headlines, an illuminated drop cap, fleuron rules, arched portrait frames, heraldic shapes, and museum-placard captions. It never appears as texture or costume.
@@ -87,7 +87,7 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
 47. As a visitor, I want to know what the show believes, so that I can trust its theology.
 48. As a visitor, I want to know the Jesters serve at Redeemer Church in Bozeman, so that I know where they come from.
 
-### Submit
+### Speak Freely
 
 49. As a listener, I want to send the Jesters a Question, Confession, Topic idea, or something else, so that I can take part in the show.
 50. As a listener, I want my name to be optional and labeled as how it would be said on the show, so that I can stay anonymous if I want.
@@ -216,7 +216,7 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
   - v1 Fools, each depending on finding a suitable public-domain painting: Paul's "fools for Christ" and the holy fools (St. Francis's _jongleurs de Dieu_, the Russian _yurodivy_), Stańczyk (Matejko, 1862), Triboulet, Will Somers, Archibald Armstrong, Richard Tarlton, the Spanish court fools painted by Velázquez, and Erasmus's _In Praise of Folly_ with Holbein's marginal drawings.
   - It ends with why this show wears the motley.
 - **About**: why a jester; the three Jesters with equal billing, each under the label they chose (Co-host; Aaron is Producer & Co-host) and with their full bio; what we believe; Redeemer Church; how to listen.
-- **Submit**
+- **Speak Freely** (`/speak-freely`; renamed from Submit in #85)
   - Type: Question (the default), Confession, Topic idea, or Other.
   - Message: required.
   - Name: optional, labeled "How should we say your name on the show? (Leave blank to stay anonymous.)"
@@ -318,7 +318,7 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
   - Transcript timestamps seek the player
   - the theme toggle persists, with no flash
   - the mobile menu's focus handling
-  - the Submit form succeeds and fails gracefully, using Turnstile's test keys
+  - the Speak Freely form succeeds and fails gracefully, using Turnstile's test keys
   - the 404 page
   - the coming-soon state with an empty-feed fixture
 - **Prior art**: none yet; this is a new repo. The first tests of each layer set the patterns.

@@ -7,7 +7,7 @@ export const site = {
   description: {
     text: "A weekly theology-and-humor podcast from three Jesters who serve the King.",
   },
-  // The show's inbox: Email Routing forwards it to the Jesters, and Submit
+  // The show's inbox: Email Routing forwards it to the Jesters, and Submission
   // emails land here (wrangler.jsonc pins the email binding to it too).
   contactEmail: "hello@jestersprivilegepodcast.com",
   listen: {},
