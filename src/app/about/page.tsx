@@ -59,8 +59,9 @@ export default function About() {
 }
 
 // The three Jesters with equal billing, each in an arched portrait with their
-// full bio. On phones the bio runs beneath the portrait and name; from the sm
-// breakpoint it sits beside them.
+// full bio: the portrait above the name on phones, beside it from the sm
+// breakpoint. Only flex and width utilities the site already uses, so About
+// adds nothing to every page's stylesheet (CODING_STANDARDS.md, Performance).
 function JestersSection({
   title,
   jesters,
@@ -78,24 +79,26 @@ function JestersSection({
         {jesters.map((jester) => (
           <li
             key={jester.id}
-            className="grid grid-cols-[6rem_1fr] items-center gap-x-5 gap-y-4 sm:grid-cols-[11rem_1fr] sm:items-start sm:gap-x-8"
+            className="flex flex-col gap-5 sm:flex-row sm:gap-6"
           >
             <JesterPortrait
               jester={jester}
-              sizes="(width >= 40rem) 11rem, 6rem"
-              className="sm:row-span-2"
+              sizes="12rem"
+              className="w-48 shrink-0 self-start"
             />
-            <div className="flex flex-col gap-1.5">
-              <h3 className="font-display text-3xl">{jester.name}</h3>
-              <p className="font-ui text-sm font-semibold tracking-wider text-brand-ink uppercase">
-                {jester.role}
-              </p>
-            </div>
-            {jester.bio && (
-              <div className="col-span-2 flex flex-col gap-4 text-lg sm:col-span-1 sm:col-start-2">
-                <JesterBio paragraphs={jester.bio.paragraphs} />
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1">
+                <h3 className="font-display text-3xl">{jester.name}</h3>
+                <p className="font-ui text-sm font-semibold tracking-wider text-brand-ink uppercase">
+                  {jester.role}
+                </p>
               </div>
-            )}
+              {jester.bio && (
+                <div className="flex flex-col gap-4 text-lg">
+                  <JesterBio paragraphs={jester.bio.paragraphs} />
+                </div>
+              )}
+            </div>
           </li>
         ))}
       </ul>
