@@ -21,6 +21,17 @@ if (typeof window !== "undefined") {
     writable: true,
     value: StillIntersectionObserver,
   });
+  // Radix's checkbox measures itself with a ResizeObserver, which jsdom
+  // lacks; jsdom lays nothing out, so there is never a size to report.
+  Object.defineProperty(window, "ResizeObserver", {
+    writable: true,
+    value: StillIntersectionObserver,
+  });
+  // Radix's select captures the pointer and scrolls its chosen item into
+  // view, neither of which jsdom implements.
+  Element.prototype.hasPointerCapture ??= () => false;
+  Element.prototype.releasePointerCapture ??= () => {};
+  Element.prototype.scrollIntoView ??= () => {};
 }
 
 // A test that writes to console.error or console.warn fails, naming what was
