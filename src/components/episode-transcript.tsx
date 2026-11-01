@@ -23,9 +23,10 @@ type Props = {
 const PREVIEW_PARAGRAPHS = 2;
 
 // The preview's fade, inline rather than Tailwind's mask utility: that one
-// adds 2 KB to the stylesheet every page loads before its first paint, enough
-// to tip the simple home mockup over its Lighthouse budget.
-const FADE = {
+// adds 2 KB (about 300 bytes gzipped) to the stylesheet every page loads before
+// its first paint, enough to tip the simple home mockup over its Lighthouse
+// budget (#23).
+const PREVIEW_FADE = {
   maskImage: "linear-gradient(to bottom, currentColor 30%, transparent)",
 };
 
@@ -67,7 +68,10 @@ export function EpisodeTranscript({ episode, transcript, copy }: Props) {
       {/* Upright: the body italic isn't preloaded, so it would be fetched
           before first paint. */}
       <p className="text-base text-muted-foreground">{copy.machineNote.text}</p>
-      <div className="flex flex-col gap-1" style={collapsed ? FADE : undefined}>
+      <div
+        className="flex flex-col gap-1"
+        style={collapsed ? PREVIEW_FADE : undefined}
+      >
         {transcript.map(({ startSeconds, text }, i) => (
           <div
             key={startSeconds}
