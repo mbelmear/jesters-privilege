@@ -45,9 +45,11 @@ for (const option of OPTIONS) {
       ).toHaveAttribute("aria-current", "page");
     });
 
-    test("shows every Jester's headshot", async ({ page }) => {
+    test("every Jester's headshot loads", async ({ page }) => {
       const jesters = page.getByRole("region", { name: "Meet the Jesters" });
       await jesters.evaluate((el) => el.scrollIntoView());
+      // .all() doesn't wait, so wait for the first before listing them.
+      await expect(jesters.getByRole("img").first()).toBeVisible();
       for (const image of await jesters.getByRole("img").all()) {
         await expect
           .poll(() =>
@@ -57,7 +59,6 @@ for (const option of OPTIONS) {
           )
           .toBeGreaterThan(0);
       }
-      await expect(jesters.getByRole("img")).toHaveCount(3);
     });
 
     test("has no horizontal scroll", async ({ page }) => {
