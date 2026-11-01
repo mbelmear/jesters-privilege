@@ -140,7 +140,12 @@ export type Gallery = {
 };
 
 export type About = {
+  readonly title: string;
+  // Under the title, and in link previews.
+  readonly intro: Copy;
   readonly whyAJester: Section;
+  // Over the Jesters' portraits and full bios.
+  readonly jestersTitle: string;
   readonly whatWeBelieve: Section;
   readonly church: Section;
   readonly howToListen: Section;

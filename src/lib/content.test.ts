@@ -78,7 +78,10 @@ function content(overrides: Partial<Content> = {}): Content {
       closing: section,
     },
     about: {
+      title: "About",
+      intro: { text: "Three Jesters and a podcast." },
       whyAJester: section,
+      jestersTitle: "The Jesters",
       whatWeBelieve: section,
       church: section,
       howToListen: section,

@@ -74,12 +74,12 @@ describe("content", () => {
     expect(jester?.bio?.paragraphs[0]).toContainEqual({ em: title });
   });
 
-  it("has headshots of Dan and Aaron, and none yet of Michael", () => {
+  it("has a described headshot of every Jester", () => {
     const jesters: readonly Jester[] = content.jesters;
     expect(
       jesters.map(({ id, photo }) => [id, photo?.src, Boolean(photo?.alt)])
     ).toEqual([
-      ["michael", undefined, false],
+      ["michael", "/jesters/michael-belmear.jpg", true],
       ["dan", "/jesters/dan-collins.jpg", true],
       ["aaron", "/jesters/aaron-canen.jpg", true],
     ]);
