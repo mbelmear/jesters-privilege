@@ -17,7 +17,8 @@ test.describe("Paintings", () => {
   test("every painting loads from the build's image set", async ({ page }) => {
     await page.goto(PAGE);
     const images = page.getByRole("main").getByRole("img");
-    await expect(images).toHaveCount(3);
+    // .all() doesn't wait, so wait for the first before listing them.
+    await expect(images.first()).toBeVisible();
     for (const image of await images.all()) {
       // Playwright's own scroll waits for the element to hold still, which
       // the zooming band never does.

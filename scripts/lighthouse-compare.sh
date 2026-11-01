@@ -21,8 +21,10 @@ if [[ $# -gt 0 && "$1" != /* ]]; then
 fi
 pages=()
 for page in "$@"; do
-  if [[ "$page" != /* ]]; then
-    echo "Expected a page path starting with /, such as /404.html, not \"$page\"" >&2
+  # As the build names it, so a page missing from one build can be told
+  # from a mistyped one: /about.html, or / for index.html.
+  if [[ "$page" != /* || ( "$page" != */ && "$page" != *.html ) ]]; then
+    echo "Expected a page path starting with / and ending in .html or /, such as /404.html, not \"$page\"" >&2
     exit 1
   fi
   pages+=("$page")
@@ -30,10 +32,12 @@ done
 root=$(git rev-parse --show-toplevel)
 if [[ ${#pages[@]} -eq 0 ]]; then
   # Every budgeted page, for the stylesheet diff; lhci reads the list itself.
-  while IFS= read -r page; do pages+=("$page"); done < <(node -e '
+  # A command substitution, so a failure here stops the script.
+  budgeted=$(node -e '
     const { ci } = require(process.argv[1]);
     for (const url of ci.collect.url) console.log(new URL(url).pathname);
   ' "$root/lighthouserc.json")
+  while IFS= read -r page; do pages+=("$page"); done <<<"$budgeted"
   named=false
 else
   named=true
@@ -64,7 +68,7 @@ page_file() {
 # one the build lacks is left out, and its column shows "–".
 measure() {
   (cd "$1" && npm run build >/dev/null)
-  local urls=()
+  local urls=() page
   if $named; then
     for page in "${pages[@]}"; do
       if [[ -f "$(page_file "$1" "$page")" ]]; then
@@ -80,16 +84,17 @@ measure() {
     mkdir -p "$2" && cp .lighthouseci/lhr-*.json "$2/")
 }
 
-# A page's stylesheets as the build links them, one formatted file, so two
-# builds compare rule by rule even though the bundler renames changed files.
+# Writes a page's stylesheets, as the build links them, to one formatted file
+# ($3), so two builds compare rule by rule even though the bundler renames
+# changed files. A page that links none gives an empty file.
 stylesheets() {
-  local html
-  html=$(page_file "$1" "$2")
-  [[ -f "$html" ]] || return 0
-  grep -o '/_next/static/[^"]*\.css' "$html" | sort -u | while read -r css; do
-    cat "$1/out$css"
-    echo
-  done | npx prettier --parser css
+  local css
+  : >"$3.raw"
+  for css in $(grep -o '/_next/static/[^"]*\.css' "$(page_file "$1" "$2")" | sort -u || true); do
+    cat "$1/out$css" >>"$3.raw"
+    echo >>"$3.raw"
+  done
+  npx prettier --parser css <"$3.raw" >"$3"
 }
 
 echo "Building and measuring ${base}..."
@@ -109,8 +114,11 @@ changed=false
 for page in "${pages[@]}"; do
   [[ -f "$(page_file "$scratch/base" "$page")" ]] || continue
   [[ -f "$(page_file "$root" "$page")" ]] || continue
+  stylesheets "$scratch/base" "$page" "$scratch/base.css"
+  stylesheets "$root" "$page" "$scratch/head.css"
+  # diff exits 1 when the files differ and 2 on trouble, which stops the script.
   diff=$(diff -u --label "$base" --label HEAD \
-    <(stylesheets "$scratch/base" "$page") <(stylesheets "$root" "$page") || true)
+    "$scratch/base.css" "$scratch/head.css") || [[ $? -eq 1 ]]
   [[ -n "$diff" ]] || continue
   changed=true
   # Bash 3.2 (macOS) has no associative arrays: one file per distinct diff,
