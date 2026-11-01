@@ -216,14 +216,14 @@ export type PlayerCopy = {
   readonly failed: Copy;
 };
 
-// The home page's own copy; the hero, Jesters, and microcopy it also shows
-// live in their own files.
 // The "Listen on" buttons' copy, on the home page and About.
 export type ListenCopy = {
   readonly title: string;
   readonly platforms: { readonly [P in ListenPlatform]: string };
 };
 
+// The home page's own copy; the hero, Jesters, Listen buttons, and microcopy
+// it also shows live in their own files.
 export type Home = {
   readonly latestEpisode: {
     readonly title: string;

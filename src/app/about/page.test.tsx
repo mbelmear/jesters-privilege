@@ -77,7 +77,8 @@ describe("About", () => {
     const jesters = screen.getByRole("region", { name: "The Jesters" });
     expect(within(jesters).queryByRole("img")).not.toBeInTheDocument();
     expect(within(jesters).getByRole("listitem")).toHaveTextContent(
-      /^M?Michael BelmearCo-host$/
+      // The shield bears his initial; the name and role follow it, and no bio.
+      /^MMichael BelmearCo-host$/
     );
   });
 

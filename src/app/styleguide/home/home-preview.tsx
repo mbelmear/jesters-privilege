@@ -32,7 +32,8 @@ type Props = {
  * two hero options, each at its own address.
  */
 export async function HomePreview({ heroOption, story }: Props) {
-  const { site, shell, hero, home, jesters, microcopy, paintings } = content;
+  const { site, shell, hero, home, jesters, listen, microcopy, paintings } =
+    content;
   const [latest] = await getEpisodes();
   return (
     <div className="flex flex-col gap-16 pb-20 sm:gap-20">
@@ -42,7 +43,7 @@ export async function HomePreview({ heroOption, story }: Props) {
           site,
           hero,
           home,
-          content.listen,
+          listen,
           jesters,
           microcopy.newToPodcasts,
           microcopy.comingSoon,
@@ -86,7 +87,7 @@ export async function HomePreview({ heroOption, story }: Props) {
       </div>
       <ListenButtons
         links={copy.listen}
-        copy={content.listen}
+        copy={listen}
         newToPodcasts={microcopy.newToPodcasts}
       />
       <FleuronRule className="mx-auto w-full max-w-xs px-4" />

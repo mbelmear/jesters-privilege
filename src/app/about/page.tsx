@@ -18,6 +18,7 @@ export const metadata: Metadata = {
 // About: why a jester, the three Jesters and their bios, what the show
 // believes, Redeemer Church, and how to listen.
 export default function About() {
+  // Read as the page renders, so a test can swap in other content.
   const { jesters, listen, microcopy, shell, site } = content;
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-16 px-4 pt-12 pb-24 sm:px-6 sm:pt-16">
