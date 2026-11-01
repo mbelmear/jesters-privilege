@@ -32,7 +32,8 @@ cleanup() {
 trap cleanup EXIT
 
 git fetch --quiet origin
-# After the fetch, so a branch only on the remote counts.
+# After the fetch, so a branch only on the remote counts, named as
+# origin/<branch>.
 if ! git rev-parse --quiet --verify "${base}^{commit}" >/dev/null; then
   echo "\"$base\" is not a commit. Pages start with /, such as /404.html; a base ref comes before them." >&2
   exit 1

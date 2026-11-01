@@ -156,11 +156,12 @@ function earlyFiles(reports: Report[]): Map<string, number> {
   return files;
 }
 
-// The last part of a file's address, or its whole path for a page at a
-// folder's address, such as the home page's "/".
+// The last part of a file's address with its query, or its whole path for a
+// page at a folder's address, such as the home page's "/".
 function fileName(url: string): string {
-  const path = URL.canParse(url) ? new URL(url).pathname : url;
-  return path.split("/").pop() || path;
+  if (!URL.canParse(url)) return url;
+  const { pathname, search } = new URL(url);
+  return (pathname.split("/").pop() || pathname) + search;
 }
 
 function median(numbers: number[]): number {

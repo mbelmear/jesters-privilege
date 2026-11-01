@@ -180,6 +180,27 @@ describe("summarise, early files", () => {
     expect(summary).toContain("    early files only in HEAD: / 12,000");
   });
 
+  it("tells apart early files that differ only by query", () => {
+    const summary = summarise(
+      [
+        { label: "origin/main", reports: [run(page, 2640, [])] },
+        {
+          label: "HEAD",
+          reports: [
+            run(page, 2640, [
+              { url: "image?w=640", type: "Image", bytes: 32000 },
+              { url: "image?w=1280", type: "Image", bytes: 90000 },
+            ]),
+          ],
+        },
+      ],
+      budget
+    );
+    expect(summary).toContain(
+      "    early files only in HEAD: image?w=640 32,000, image?w=1280 90,000"
+    );
+  });
+
   it("lists no files for a single checkout", () => {
     const [first] = columns;
     expect(summarise(first ? [first] : [], budget)).not.toContain(
