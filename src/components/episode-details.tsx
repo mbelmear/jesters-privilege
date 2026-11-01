@@ -1,6 +1,7 @@
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useId } from "react";
+import { EpisodeTranscript } from "@/components/episode-transcript";
 import { FleuronRule } from "@/components/fleuron-rule";
 import { PlayEpisodeButton } from "@/components/play-episode-button";
 import { ShareButton } from "@/components/share-button";
@@ -14,20 +15,28 @@ import {
   publishDateAttribute,
 } from "@/lib/format-episode";
 import { playableEpisode } from "@/lib/player";
+import type { Transcript } from "@/lib/transcript";
 import { cn } from "@/lib/utils";
 
 type Props = {
   sequence: EpisodeInSequence;
+  // Null for an Episode without one, which then has no Transcript section.
+  transcript: Transcript | null;
   copy: EpisodePage;
   playerCopy: PlayerCopy;
 };
 
 /**
  * One Episode's page: its number (or bonus label), title, date, and length,
- * with Play and Share; then its Show notes; then the Episodes published just
- * before and after it.
+ * with Play and Share; then its Show notes and Transcript; then the Episodes
+ * published just before and after it.
  */
-export function EpisodeDetails({ sequence, copy, playerCopy }: Props) {
+export function EpisodeDetails({
+  sequence,
+  transcript,
+  copy,
+  playerCopy,
+}: Props) {
   const { episode, previous, next } = sequence;
   const label = episodeLabel(episode, copy);
   const notesId = useId();
@@ -89,6 +98,14 @@ export function EpisodeDetails({ sequence, copy, playerCopy }: Props) {
           dangerouslySetInnerHTML={{ __html: episode.showNotesHtml }}
         />
       </section>
+
+      {transcript && (
+        <EpisodeTranscript
+          episode={playableEpisode(episode)}
+          transcript={transcript}
+          copy={copy.transcript}
+        />
+      )}
 
       <nav
         aria-label={copy.sequence.label}

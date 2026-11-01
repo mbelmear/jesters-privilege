@@ -8,6 +8,16 @@ export const episodePage = {
   trailer: "Trailer",
   units: { hours: "hr", minutes: "min" },
   showNotes: "Show notes",
+  transcript: {
+    title: "Transcript",
+    // Quoted in docs/spec.md.
+    expand: "Read the full transcript",
+    playFrom: "Play from",
+    machineNote: {
+      text: "A machine wrote this Transcript from the audio, so expect the odd misheard word, most of all in names, Scripture references, and whatever Latin we attempt. Tap a timestamp to hear that moment.",
+      draft: true,
+    },
+  },
   sequence: {
     label: "More Episodes",
     previous: "Previous Episode",

@@ -27,7 +27,10 @@ test.describe("Episode page", () => {
       await expect(
         page.getByRole("heading", { level: 1, name: title })
       ).toBeVisible();
-      await expect(page.getByRole("button", { name: /^Play/ })).toBeVisible();
+      // Its Play button, not a Transcript timestamp ("Play from 0:20").
+      await expect(
+        page.getByRole("button", { name: /^Play (?!from )/ })
+      ).toBeVisible();
     });
   }
 

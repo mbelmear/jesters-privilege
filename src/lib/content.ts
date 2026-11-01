@@ -242,6 +242,15 @@ export type EpisodePage = EpisodeLabels & {
   // How an Episode's length reads: "43 min", "1 hr 5 min".
   readonly units: TimeUnits;
   readonly showNotes: string;
+  // The Transcript section: its heading, the button that opens the collapsed
+  // preview, the words read before a timestamp ("Play from 4:05"), and the
+  // note that a machine wrote it.
+  readonly transcript: {
+    readonly title: string;
+    readonly expand: string;
+    readonly playFrom: string;
+    readonly machineNote: Copy;
+  };
   readonly sequence: {
     readonly label: string;
     readonly previous: string;

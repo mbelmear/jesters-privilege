@@ -10,6 +10,19 @@ export type Transcript = TranscriptParagraph[];
 
 type Cue = { startSeconds: number; endSeconds: number; text: string };
 
+// Which paragraph is being spoken `position` seconds in: the last one to have
+// started. Before the first paragraph's words begin, it's the first.
+export function currentParagraph(
+  transcript: Transcript,
+  position: number
+): number {
+  const next = transcript.findIndex(
+    (paragraph) => paragraph.startSeconds > position
+  );
+  if (next === -1) return transcript.length - 1;
+  return Math.max(next - 1, 0);
+}
+
 // A paragraph ends at the first sentence end or pause after this many words,
 // so a one-line exchange ("Amen.") stays with what follows.
 const MIN_WORDS = 40;

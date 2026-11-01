@@ -139,7 +139,10 @@ test.describe("Persistent player", () => {
           }),
         { timeout: 2000 }
       )
-      .toBeGreaterThanOrEqual(0);
+      // WebKit scrolls by whole pixels over a page of fractional height (a
+      // Transcript's 29.25px lines), so the bottom can stop short by less
+      // than one: rounding, not the bar covering the footer.
+      .toBeGreaterThan(-1);
 
     await playerBar(page)
       .getByRole("button", { name: "Show player controls" })

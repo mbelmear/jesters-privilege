@@ -1,4 +1,5 @@
 import {
+  currentParagraph,
   loadTranscript,
   parseTranscript,
   type TranscriptIO,
@@ -247,5 +248,27 @@ describe("loadTranscript", () => {
     expect(warnings).toEqual([
       `Episode "Celebrity Pastors" left without its Transcript: Transcript isn't WebVTT: it doesn't start with WEBVTT`,
     ]);
+  });
+});
+
+describe("currentParagraph", () => {
+  const transcript = [
+    { startSeconds: 2.5, text: "Welcome to Jester's Privilege." },
+    { startSeconds: 30, text: "Celebrity pastors." },
+    { startSeconds: 95.2, text: "Amen." },
+  ];
+
+  it("finds the paragraph being spoken at a moment", () => {
+    expect(currentParagraph(transcript, 31)).toBe(1);
+    expect(currentParagraph(transcript, 3600)).toBe(2);
+  });
+
+  it("moves on to a paragraph the moment it starts", () => {
+    expect(currentParagraph(transcript, 29.99)).toBe(0);
+    expect(currentParagraph(transcript, 30)).toBe(1);
+  });
+
+  it("gives the first paragraph before its words begin", () => {
+    expect(currentParagraph(transcript, 0)).toBe(0);
   });
 });
