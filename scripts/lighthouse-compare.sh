@@ -37,7 +37,9 @@ if [[ ${#pages[@]} -eq 0 ]]; then
     const { ci } = require(process.argv[1]);
     for (const url of ci.collect.url) console.log(new URL(url).pathname);
   ' "$root/lighthouserc.json")
-  while IFS= read -r page; do pages+=("$page"); done <<<"$budgeted"
+  if [[ -n "$budgeted" ]]; then
+    while IFS= read -r page; do pages+=("$page"); done <<<"$budgeted"
+  fi
   named=false
 else
   named=true
@@ -53,7 +55,7 @@ git fetch --quiet origin
 # After the fetch, so a branch only on the remote counts, named as
 # origin/<branch>.
 if ! git rev-parse --quiet --verify "${base}^{commit}" >/dev/null; then
-  echo "\"$base\" is not a commit. Pages start with /, such as /404.html; a base ref comes before them." >&2
+  echo "\"$base\" is not a commit. Pages start with / and end in .html or /, such as /404.html; a base ref comes before them." >&2
   exit 1
 fi
 git worktree add --quiet --detach "$scratch/base" "$base"
@@ -86,11 +88,19 @@ measure() {
 
 # Writes a page's stylesheets, as the build links them, to one formatted file
 # ($3), so two builds compare rule by rule even though the bundler renames
-# changed files. A page that links none gives an empty file.
+# changed files. The page must be in the build; one that links no stylesheet
+# gives an empty file.
 stylesheets() {
-  local css
+  local css links status=0
+  # grep exits 1 for no match and 2 on trouble. Bash 3.2 (macOS) doesn't stop
+  # on a failed [[ ]] after ||, so the status is checked with if.
+  links=$(grep -o '/_next/static/[^"]*\.css' "$(page_file "$1" "$2")") || status=$?
+  if [ "$status" -gt 1 ]; then
+    echo "Couldn't read $(page_file "$1" "$2")" >&2
+    exit 1
+  fi
   : >"$3.raw"
-  for css in $(grep -o '/_next/static/[^"]*\.css' "$(page_file "$1" "$2")" | sort -u || true); do
+  for css in $(printf '%s\n' "$links" | sort -u); do
     cat "$1/out$css" >>"$3.raw"
     echo >>"$3.raw"
   done
@@ -117,8 +127,13 @@ for page in "${pages[@]}"; do
   stylesheets "$scratch/base" "$page" "$scratch/base.css"
   stylesheets "$root" "$page" "$scratch/head.css"
   # diff exits 1 when the files differ and 2 on trouble, which stops the script.
+  status=0
   diff=$(diff -u --label "$base" --label HEAD \
-    "$scratch/base.css" "$scratch/head.css") || [[ $? -eq 1 ]]
+    "$scratch/base.css" "$scratch/head.css") || status=$?
+  if [ "$status" -gt 1 ]; then
+    echo "Couldn't compare the stylesheets of $page" >&2
+    exit 1
+  fi
   [[ -n "$diff" ]] || continue
   changed=true
   # Bash 3.2 (macOS) has no associative arrays: one file per distinct diff,
