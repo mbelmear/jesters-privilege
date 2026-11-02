@@ -11,6 +11,8 @@ export type Report = {
   // What the largest paint was, such as "img.size-full" or "p.max-w-prose":
   // an image waits on its own request as well as the early bytes.
   lcpElement: string;
+  // The image the largest paint waited on, when it is one.
+  lcpFile?: string;
   requests: { url: string; startTime: number; type: string; bytes: number }[];
 };
 
@@ -54,6 +56,15 @@ export function readReport(file: string, json: unknown): Report {
     "node",
     "selector",
   ]);
+  const lcpFile = dig(json, [
+    "audits",
+    "prioritize-lcp-image",
+    "details",
+    "debugData",
+    "initiatorPath",
+    0,
+    "url",
+  ]);
   // Read before the requests, so a report missing a figure says which.
   const times = {
     simulatedLcp: numberAt(
@@ -71,6 +82,7 @@ export function readReport(file: string, json: unknown): Report {
     path: new URL(url).pathname,
     ...times,
     lcpElement: typeof element === "string" ? element : "unknown",
+    ...(typeof lcpFile === "string" && { lcpFile }),
     requests: requests.map((request) => {
       const url = dig(request, ["url"]);
       const type = dig(request, ["resourceType"]);
@@ -239,7 +251,11 @@ export function summarise(
     });
     out.push("", path, ...figureRows(sides));
     for (const { label, runs } of sides) {
-      out.push(`    LCP element (${label}): ${runs[0]?.lcpElement ?? "–"}`);
+      const [first] = runs;
+      const file = first?.lcpFile && `, ${new URL(first.lcpFile).pathname}`;
+      out.push(
+        `    LCP element (${label}): ${first?.lcpElement ?? "–"}${file || ""}`
+      );
     }
     for (const { label, runs } of sides) {
       const fonts = new Map(runs.flatMap(earlyFonts));
@@ -260,6 +276,51 @@ export function summarise(
     if (sides.length > 1) out.push(...fileChanges(sides));
   }
   return out.join("\n");
+}
+
+/**
+ * How far each page's figures moved across CI runs, one column per run: the
+ * spread a budget has to hold (#89). Early bytes show beside the times, so a
+ * swing on changed bytes reads as a change, not noise.
+ */
+export function spread(
+  columns: Column[],
+  { lcpBudgetFor }: { lcpBudgetFor: (path: string) => number }
+): string {
+  const paths = new Set(
+    columns.flatMap(({ reports }) => reports.map((report) => report.path))
+  );
+  const out: string[] = [];
+  for (const path of paths) {
+    const measured = columns
+      .map(({ reports }) => reports.filter((report) => report.path === path))
+      .filter((runs) => runs.length > 0);
+    const lcps = measured.flat().map((report) => report.simulatedLcp);
+    const medianLcps = measured.map((runs) =>
+      median(runs.map((report) => report.simulatedLcp))
+    );
+    const earlyBytes = measured.map((runs) =>
+      median(runs.map((report) => earlyTotal(report)))
+    );
+    const range = (values: number[]) =>
+      `${thousands(Math.min(...values))} – ${thousands(Math.max(...values))}`;
+    const count = `${measured.length} CI run${measured.length === 1 ? "" : "s"}`;
+    out.push(
+      "",
+      `${path} (${count}, LCP budget ${thousands(lcpBudgetFor(path))} ms)`,
+      `    median LCP     ${range(medianLcps)} ms`,
+      `    single runs    ${range(lcps)} ms`,
+      `    early bytes    ${range(earlyBytes)}`
+    );
+  }
+  return out.join("\n");
+}
+
+// Every byte fetched before the paint.
+function earlyTotal(report: Report): number {
+  return report.requests
+    .filter((request) => isEarly(request, report))
+    .reduce((sum, request) => sum + request.bytes, 0);
 }
 
 // A row per figure, a cell per side.

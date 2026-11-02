@@ -2,12 +2,14 @@
 // scripts/lighthouse.sh, scripts/lighthouse-compare.sh, and CI's downloaded
 // lighthouse-reports (src/lib/lighthouse.ts). Each argument is
 // <label>=<folder of reports>. Each page's LCP budget comes from
-// lighthouserc.json.
+// lighthouserc.json. With --spread first, as scripts/lighthouse-spread.sh
+// passes it, it prints how far each page moved across the columns instead.
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   readLcpBudgets,
   readReport,
+  spread,
   summarise,
   type Column,
 } from "@/lib/lighthouse";
@@ -25,7 +27,11 @@ function lcpBudgets(): (path: string) => number {
   return readLcpBudgets(file, json);
 }
 
-const columns: Column[] = process.argv.slice(2).map((arg) => {
+const [mode, ...rest] = process.argv.slice(2);
+const spreading = mode === "--spread";
+const args = spreading ? rest : process.argv.slice(2);
+
+const columns: Column[] = args.map((arg) => {
   const split = arg.indexOf("=");
   if (split < 1) throw new Error(`Expected <label>=<folder>, not "${arg}"`);
   const folder = arg.slice(split + 1);
@@ -42,4 +48,5 @@ const columns: Column[] = process.argv.slice(2).map((arg) => {
   };
 });
 
-console.log(summarise(columns, { lcpBudgetFor: lcpBudgets() }));
+const budgets = { lcpBudgetFor: lcpBudgets() };
+console.log(spreading ? spread(columns, budgets) : summarise(columns, budgets));

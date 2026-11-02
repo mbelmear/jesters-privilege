@@ -21,6 +21,7 @@
     "test:e2e:empty-feed": "FEED=empty playwright test --project='chromium-*' --project='webkit-*'",
     "lighthouse": "scripts/lighthouse.sh",
     "lighthouse:compare": "scripts/lighthouse-compare.sh",
+    "lighthouse:spread": "scripts/lighthouse-spread.sh",
     "screenshots": "tsx scripts/screenshots.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

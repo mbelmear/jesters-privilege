@@ -15,10 +15,11 @@ export function GalleryTimeline({ gallery }: Props) {
   const { eras, fools, closing } = gallery;
   return (
     <>
-      {eras.map((era) => (
+      {eras.map((era, index) => (
         <EraSection
           key={era.id}
           era={era}
+          first={index === 0}
           fools={fools.filter((fool) => fool.era === era.id)}
         />
       ))}
@@ -40,11 +41,25 @@ export function GalleryTimeline({ gallery }: Props) {
   );
 }
 
-function EraSection({ era, fools }: { era: Era; fools: readonly Fool[] }) {
+// The first era's band is the page's largest paint, so it loads first; the
+// rest wait until they near the screen.
+function EraSection({
+  era,
+  fools,
+  first,
+}: {
+  era: Era;
+  fools: readonly Fool[];
+  first: boolean;
+}) {
   const { title, period, intro, band } = era;
   return (
     <section aria-label={title} className="flex flex-col gap-10">
-      <PaintingBand painting={band} title={title} />
+      <PaintingBand
+        painting={band}
+        title={title}
+        loading={first ? "largest-paint" : "lazy"}
+      />
       <div className="mx-auto grid w-full max-w-7xl gap-4 px-4 sm:px-6 md:grid-cols-[9rem_minmax(0,1fr)] md:gap-10">
         <p className="font-ui text-sm font-semibold tracking-wider text-brand-ink uppercase md:sticky md:top-24 md:self-start md:text-right">
           {period}

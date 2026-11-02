@@ -43,6 +43,12 @@
                 "maxNumericValue": 200
               }
             ],
+            "lcp-discovery-insight": [
+              "error",
+              {
+                "minScore": 1
+              }
+            ],
             "resource-summary:script:size": [
               "error",
               {

@@ -3,6 +3,7 @@ import { join } from "node:path";
 import {
   readLcpBudgets,
   readReport,
+  spread,
   summarise,
   type Report,
 } from "./lighthouse";
@@ -102,6 +103,24 @@ describe("summarise, each page's figures", () => {
     );
     expect(summary).toContain(
       "    early fonts (this checkout): gloock-s.p.433jmqvrjurwa.woff2 17 KB"
+    );
+  });
+
+  // So a check that pads it, or a change that swaps it, reaches the right
+  // file: #89 padded the gallery's icon, its first early image, by mistake.
+  it("names the file an image's largest paint waited on", () => {
+    const page = "/gallery.html";
+    const painted = {
+      ...run(page, 3020, []),
+      lcpFile:
+        "http://localhost/images/paintings/boyarynya-morozova/portrait-828.avif",
+    };
+    const summary = summarise(
+      [{ label: "CI", reports: [painted, painted, painted] }],
+      budget
+    );
+    expect(summary).toContain(
+      "    LCP element (CI): section.flex > h1.w-64 > picture > img.h-auto, /images/paintings/boyarynya-morozova/portrait-828.avif"
     );
   });
 });
@@ -316,6 +335,44 @@ describe("readReport", () => {
     });
   });
 
+  it("reads the file an image's largest paint waited on", () => {
+    const json = {
+      finalDisplayedUrl: "http://localhost:4173/gallery.html",
+      audits: {
+        "largest-contentful-paint": { numericValue: 3020 },
+        "first-contentful-paint": { numericValue: 1050 },
+        metrics: {
+          details: {
+            items: [
+              {
+                observedLargestContentfulPaint: 160,
+                observedFirstContentfulPaint: 40,
+              },
+            ],
+          },
+        },
+        "network-requests": { details: { items: [] } },
+        // Lighthouse names the request in this audit's debug data, from the
+        // image back to the document that asked for it.
+        "prioritize-lcp-image": {
+          details: {
+            debugData: {
+              initiatorPath: [
+                {
+                  url: "http://localhost:4173/images/paintings/boyarynya-morozova/portrait-828.avif",
+                },
+                { url: "http://localhost:4173/gallery.html" },
+              ],
+            },
+          },
+        },
+      },
+    };
+    expect(readReport("lhr-3.json", json).lcpFile).toBe(
+      "http://localhost:4173/images/paintings/boyarynya-morozova/portrait-828.avif"
+    );
+  });
+
   it("names the file and the figure a report lacks", () => {
     expect(() =>
       readReport("lhr-2.json", { finalDisplayedUrl: "http://localhost/" })
@@ -351,6 +408,53 @@ describe("readReport", () => {
     expect(() => readReport("lhr-1.json", { audits: {} })).toThrow(
       "lhr-1.json has no page URL"
     );
+  });
+});
+
+describe("spread", () => {
+  const page = "/styleguide/home/simple.html";
+  const logo = { url: "images/brand/stacked-tagline/640.avif", type: "Image" };
+  // One CI run: three runs of the page, its logo at the bytes given.
+  const ciRun = (label: string, lcps: number[], bytes = 32539) => ({
+    label,
+    reports: lcps.map((lcp) => run(page, lcp, [{ ...logo, bytes }])),
+  });
+
+  it("shows how far one page's medians and single runs moved across CI runs", () => {
+    const text = spread(
+      [
+        ciRun("41355086850", [3318, 2787, 2636]),
+        ciRun("41346998484", [2793, 2787, 3321]),
+        ciRun("41342653098", [2861, 2786, 2636]),
+      ],
+      budget
+    );
+    expect(text.split("\n")).toEqual([
+      "",
+      "/styleguide/home/simple.html (3 CI runs, LCP budget 3,200 ms)",
+      "    median LCP     2,786 – 2,793 ms",
+      "    single runs    2,636 – 3,321 ms",
+      "    early bytes    32,539 – 32,539",
+    ]);
+  });
+
+  it("shows early bytes that moved, so a swing on changed bytes isn't read as noise", () => {
+    const text = spread(
+      [
+        ciRun("1", [2600, 2600, 2600], 32539),
+        ciRun("2", [2800, 2800, 2800], 33539),
+      ],
+      budget
+    );
+    expect(text).toContain("    early bytes    32,539 – 33,539");
+  });
+
+  it("counts a page only in the CI runs that measured it", () => {
+    const text = spread(
+      [ciRun("1", [2600, 2600, 2600]), { label: "2", reports: [] }],
+      budget
+    );
+    expect(text).toContain("(1 CI run, LCP budget 3,200 ms)");
   });
 });
 
