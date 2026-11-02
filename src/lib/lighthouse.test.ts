@@ -522,7 +522,9 @@ describe("lighthouserc.json", () => {
   ).ci.collect.url.map((url) => new URL(url).pathname);
 
   // CI's runs of these swing about 700 ms on unchanged bytes (#89).
+  // `/` is measured first, so one of its three runs is always cold (#97).
   const budgets: Record<string, number> = {
+    "/": 3600,
     "/gallery.html": 3600,
     "/styleguide/paintings.html": 3600,
     "/styleguide/home/simple.html": 3600,
