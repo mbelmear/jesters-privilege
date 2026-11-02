@@ -521,10 +521,9 @@ describe("lighthouserc.json", () => {
     json as { ci: { collect: { url: string[] } } }
   ).ci.collect.url.map((url) => new URL(url).pathname);
 
-  // CI's runs of these swing about 700 ms on unchanged bytes (#89); the
-  // gallery's first painting then joined its early load (#89's retro).
+  // CI's runs of these swing about 700 ms on unchanged bytes (#89).
   const budgets: Record<string, number> = {
-    "/gallery.html": 3850,
+    "/gallery.html": 3600,
     "/styleguide/paintings.html": 3600,
     "/styleguide/home/simple.html": 3600,
   };

@@ -76,19 +76,7 @@
           }
         },
         {
-          "matchingUrlPattern": "localhost(:\\d+)?/gallery\\.html$",
-          "aggregationMethod": "median",
-          "assertions": {
-            "largest-contentful-paint": [
-              "error",
-              {
-                "maxNumericValue": 3850
-              }
-            ]
-          }
-        },
-        {
-          "matchingUrlPattern": "localhost(:\\d+)?/(styleguide/paintings\\.html|styleguide/home/simple\\.html)$",
+          "matchingUrlPattern": "localhost(:\\d+)?/(gallery\\.html|styleguide/paintings\\.html|styleguide/home/simple\\.html)$",
           "aggregationMethod": "median",
           "assertions": {
             "largest-contentful-paint": [
