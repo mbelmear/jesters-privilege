@@ -43,6 +43,12 @@
                 "maxNumericValue": 200
               }
             ],
+            "lcp-discovery-insight": [
+              "error",
+              {
+                "minScore": 1
+              }
+            ],
             "resource-summary:script:size": [
               "error",
               {
@@ -70,7 +76,7 @@
           }
         },
         {
-          "matchingUrlPattern": "localhost(:\\d+)?/(gallery\\.html|styleguide/paintings\\.html|styleguide/home/simple\\.html)$",
+          "matchingUrlPattern": "localhost(:\\d+)?/(gallery\\.html|styleguide/paintings\\.html|styleguide/home/simple\\.html)?$",
           "aggregationMethod": "median",
           "assertions": {
             "largest-contentful-paint": [
@@ -82,7 +88,7 @@
           }
         },
         {
-          "matchingUrlPattern": "^(?!.*localhost(:\\d+)?/(gallery\\.html|styleguide/paintings\\.html|styleguide/home/simple\\.html)$)",
+          "matchingUrlPattern": "^(?!.*localhost(:\\d+)?/(gallery\\.html|styleguide/paintings\\.html|styleguide/home/simple\\.html)?$)",
           "aggregationMethod": "median",
           "assertions": {
             "largest-contentful-paint": [

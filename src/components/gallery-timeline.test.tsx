@@ -33,6 +33,27 @@ describe("GalleryTimeline", () => {
     ).toBeVisible();
   });
 
+  // The first band is the page's largest paint: Lighthouse's LCP discovery
+  // check (lcp-discovery-insight) failed while it loaded lazily (#89's retro).
+  it("loads the first era's band first, and the later bands lazily", () => {
+    render(<GalleryTimeline gallery={gallery} />);
+    const bands = screen
+      .getAllByRole("region")
+      .filter((region) =>
+        gallery.eras.some((era) => era.title === region.ariaLabel)
+      )
+      // Each era opens with its band, so its first image is the band's.
+      .map((era) => within(era).getAllByRole("img")[0]);
+    const [first, ...rest] = bands;
+    expect(first).toHaveAttribute("loading", "eager");
+    expect(first).toHaveAttribute("fetchpriority", "high");
+    for (const band of rest) {
+      expect(band).toHaveAttribute("loading", "lazy");
+      expect(band).not.toHaveAttribute("fetchpriority");
+    }
+    expect(rest).toHaveLength(gallery.eras.length - 1);
+  });
+
   it("dates each era and introduces it", () => {
     render(<GalleryTimeline gallery={gallery} />);
     const era = screen.getByRole("region", { name: "The Medieval Court" });
