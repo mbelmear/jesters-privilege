@@ -86,20 +86,40 @@ export function readReport(file: string, json: unknown): Report {
   };
 }
 
-// The largest-paint budget a Lighthouse CI config (lighthouserc.json) asserts.
-export function readLcpBudget(file: string, json: unknown): number {
-  const budget = dig(json, [
-    "ci",
-    "assert",
-    "assertions",
-    "largest-contentful-paint",
-    1,
-    "maxNumericValue",
-  ]);
-  if (typeof budget !== "number") {
-    throw new Error(`${file} sets no largest-contentful-paint maxNumericValue`);
+// Each page's largest-paint budget, as a Lighthouse CI config
+// (lighthouserc.json) asserts it: every entry of its assertion matrix that
+// sets one and whose URL pattern matches the page, which must be exactly one.
+export function readLcpBudgets(
+  file: string,
+  json: unknown
+): (path: string) => number {
+  const matrix = dig(json, ["ci", "assert", "assertMatrix"]);
+  if (!Array.isArray(matrix)) {
+    throw new Error(`${file} has no ci.assert.assertMatrix`);
   }
-  return budget;
+  const entries: unknown[] = matrix;
+  const budgets = entries.flatMap((entry) => {
+    const budget = dig(entry, [
+      "assertions",
+      "largest-contentful-paint",
+      1,
+      "maxNumericValue",
+    ]);
+    if (typeof budget !== "number") return [];
+    const pattern = dig(entry, ["matchingUrlPattern"]);
+    const matches = (url: string) =>
+      typeof pattern !== "string" || new RegExp(pattern).test(url);
+    return [{ budget, matches }];
+  });
+  return (path) => {
+    // Lighthouse CI matches the page's whole address, port and all.
+    const url = `http://localhost${path}`;
+    const found = budgets.filter(({ matches }) => matches(url));
+    const [only] = found;
+    if (only && found.length === 1) return only.budget;
+    if (!only) throw new Error(`${file} sets no LCP budget for ${path}`);
+    throw new Error(`${file} sets ${found.length} LCP budgets for ${path}`);
+  };
 }
 
 // A request fetched before the observed paint: what the simulated paint times
@@ -201,7 +221,7 @@ type Side = {
 /** The summary as printed: each page's figures, one column per label. */
 export function summarise(
   columns: Column[],
-  { lcpBudget }: { lcpBudget: number }
+  { lcpBudgetFor }: { lcpBudgetFor: (path: string) => number }
 ): string {
   const paths = new Set(
     columns.flatMap(({ reports }) => reports.map((report) => report.path))
@@ -228,11 +248,12 @@ export function summarise(
       );
       out.push(`    early fonts (${label}): ${list.join(", ") || "–"}`);
     }
+    const budget = lcpBudgetFor(path);
     for (const { label, runs } of sides) {
       const lcps = runs.map((report) => report.simulatedLcp);
-      if (lcps.some((lcp) => lcp >= lcpBudget - STEP_MS)) {
+      if (lcps.some((lcp) => lcp >= budget - STEP_MS)) {
         out.push(
-          `    near the LCP budget (${label}): runs of ${lcps.map(thousands).join(", ")} ms against ${thousands(lcpBudget)}`
+          `    near the LCP budget (${label}): runs of ${lcps.map(thousands).join(", ")} ms against ${thousands(budget)}`
         );
       }
     }

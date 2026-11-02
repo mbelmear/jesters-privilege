@@ -15,63 +15,85 @@
       "numberOfRuns": 3
     },
     "assert": {
-      "aggregationMethod": "median",
-      "assertions": {
-        "categories:performance": [
-          "error",
-          {
-            "minScore": 0.9
+      "assertMatrix": [
+        {
+          "aggregationMethod": "median",
+          "assertions": {
+            "categories:performance": [
+              "error",
+              {
+                "minScore": 0.9
+              }
+            ],
+            "categories:accessibility": [
+              "error",
+              {
+                "minScore": 0.95
+              }
+            ],
+            "cumulative-layout-shift": [
+              "error",
+              {
+                "maxNumericValue": 0.1
+              }
+            ],
+            "total-blocking-time": [
+              "error",
+              {
+                "maxNumericValue": 200
+              }
+            ],
+            "resource-summary:script:size": [
+              "error",
+              {
+                "maxNumericValue": 250000
+              }
+            ],
+            "resource-summary:image:size": [
+              "error",
+              {
+                "maxNumericValue": 300000
+              }
+            ],
+            "resource-summary:font:size": [
+              "error",
+              {
+                "maxNumericValue": 150000
+              }
+            ],
+            "resource-summary:total:size": [
+              "error",
+              {
+                "maxNumericValue": 800000
+              }
+            ]
           }
-        ],
-        "categories:accessibility": [
-          "error",
-          {
-            "minScore": 0.95
+        },
+        {
+          "matchingUrlPattern": "localhost(:\\d+)?/(gallery\\.html|styleguide/paintings\\.html|styleguide/home/simple\\.html)$",
+          "aggregationMethod": "median",
+          "assertions": {
+            "largest-contentful-paint": [
+              "error",
+              {
+                "maxNumericValue": 3600
+              }
+            ]
           }
-        ],
-        "largest-contentful-paint": [
-          "error",
-          {
-            "maxNumericValue": 3200
+        },
+        {
+          "matchingUrlPattern": "^(?!.*localhost(:\\d+)?/(gallery\\.html|styleguide/paintings\\.html|styleguide/home/simple\\.html)$)",
+          "aggregationMethod": "median",
+          "assertions": {
+            "largest-contentful-paint": [
+              "error",
+              {
+                "maxNumericValue": 3200
+              }
+            ]
           }
-        ],
-        "cumulative-layout-shift": [
-          "error",
-          {
-            "maxNumericValue": 0.1
-          }
-        ],
-        "total-blocking-time": [
-          "error",
-          {
-            "maxNumericValue": 200
-          }
-        ],
-        "resource-summary:script:size": [
-          "error",
-          {
-            "maxNumericValue": 250000
-          }
-        ],
-        "resource-summary:image:size": [
-          "error",
-          {
-            "maxNumericValue": 300000
-          }
-        ],
-        "resource-summary:font:size": [
-          "error",
-          {
-            "maxNumericValue": 150000
-          }
-        ],
-        "resource-summary:total:size": [
-          "error",
-          {
-            "maxNumericValue": 800000
-          }
-        ]
-      }
+        }
+      ]
     },
     "upload": {
       "target": "filesystem",

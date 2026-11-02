@@ -1,5 +1,7 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import {
-  readLcpBudget,
+  readLcpBudgets,
   readReport,
   summarise,
   type Report,
@@ -27,7 +29,7 @@ function run(
   };
 }
 
-const budget = { lcpBudget: 3200 };
+const budget = { lcpBudgetFor: () => 3200 };
 
 // The printed row for a figure, its cells split out.
 function row(summary: string, figure: string): string[] {
@@ -238,6 +240,18 @@ describe("summarise, LCP budget", () => {
       "near the LCP budget"
     );
   });
+
+  it("judges each page against its own budget", () => {
+    const perPage = {
+      lcpBudgetFor: (path: string) => (path === page ? 3600 : 3200),
+    };
+    expect(summarise(runs(2634, 3303, 2639), perPage)).not.toContain(
+      "near the LCP budget"
+    );
+    expect(summarise(runs(2634, 3451, 2639), perPage)).toContain(
+      "runs of 2,634, 3,451, 2,639 ms against 3,600"
+    );
+  });
 });
 
 describe("readReport", () => {
@@ -340,23 +354,85 @@ describe("readReport", () => {
   });
 });
 
-describe("readLcpBudget", () => {
-  it("reads the LCP budget from the Lighthouse CI config", () => {
-    const config = {
-      ci: {
-        assert: {
-          assertions: {
-            "largest-contentful-paint": ["error", { maxNumericValue: 3200 }],
-          },
-        },
+describe("readLcpBudgets", () => {
+  // Shaped like lighthouserc.json: assertions every page shares, then one LCP
+  // budget for the pages CI's runs swing on and one for every other page.
+  const swinging = "localhost(:\\d+)?/gallery\\.html$";
+  const lcp = (maxNumericValue: number) => ({
+    "largest-contentful-paint": ["error", { maxNumericValue }],
+  });
+  const config = {
+    ci: {
+      assert: {
+        assertMatrix: [
+          { assertions: { "categories:performance": ["error", {}] } },
+          { matchingUrlPattern: swinging, assertions: lcp(3600) },
+          { matchingUrlPattern: `^(?!.*${swinging})`, assertions: lcp(3200) },
+        ],
       },
-    };
-    expect(readLcpBudget("lighthouserc.json", config)).toBe(3200);
+    },
+  };
+
+  it("reads each page's LCP budget from the Lighthouse CI config", () => {
+    const budgetFor = readLcpBudgets("lighthouserc.json", config);
+    expect(budgetFor("/gallery.html")).toBe(3600);
+    expect(budgetFor("/")).toBe(3200);
+    expect(budgetFor("/404.html")).toBe(3200);
+    expect(budgetFor("/styleguide/gallery.html")).toBe(3200);
   });
 
-  it("names the config that sets none", () => {
-    expect(() => readLcpBudget("lighthouserc.json", { ci: {} })).toThrow(
-      "lighthouserc.json sets no largest-contentful-paint maxNumericValue"
+  it("names a page no budget matches", () => {
+    const [shared, swingingBudget] = config.ci.assert.assertMatrix;
+    const budgetFor = readLcpBudgets("lighthouserc.json", {
+      ci: { assert: { assertMatrix: [shared, swingingBudget] } },
+    });
+    expect(() => budgetFor("/404.html")).toThrow(
+      "lighthouserc.json sets no LCP budget for /404.html"
     );
+  });
+
+  it("names a page two budgets match", () => {
+    const [shared, swingingBudget] = config.ci.assert.assertMatrix;
+    const everyPage = { assertions: lcp(3200) };
+    const budgetFor = readLcpBudgets("lighthouserc.json", {
+      ci: { assert: { assertMatrix: [shared, swingingBudget, everyPage] } },
+    });
+    expect(() => budgetFor("/gallery.html")).toThrow(
+      "lighthouserc.json sets 2 LCP budgets for /gallery.html"
+    );
+  });
+
+  it("names the config with no assertion matrix", () => {
+    expect(() => readLcpBudgets("lighthouserc.json", { ci: {} })).toThrow(
+      "lighthouserc.json has no ci.assert.assertMatrix"
+    );
+  });
+});
+
+describe("lighthouserc.json", () => {
+  const file = join(__dirname, "..", "..", "lighthouserc.json");
+  const json: unknown = JSON.parse(readFileSync(file, "utf8"));
+  const budgetFor = readLcpBudgets(file, json);
+  const pages = (
+    json as { ci: { collect: { url: string[] } } }
+  ).ci.collect.url.map((url) => new URL(url).pathname);
+
+  // CI's runs of these swing about 700 ms on unchanged bytes (#89).
+  const swinging = [
+    "/gallery.html",
+    "/styleguide/paintings.html",
+    "/styleguide/home/simple.html",
+  ];
+
+  it("gives the pages CI's runs swing on 3.6 s, and every other page 3.2 s", () => {
+    for (const page of new Set([
+      ...swinging,
+      ...pages,
+      "/a-page-not-yet-built.html",
+      "/styleguide/gallery.html",
+    ])) {
+      const expected = swinging.includes(page) ? 3600 : 3200;
+      expect([page, budgetFor(page)]).toEqual([page, expected]);
+    }
   });
 });

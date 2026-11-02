@@ -96,17 +96,17 @@ npm run lighthouse -- /styleguide/paintings.html   # only the pages named
 
 The budget lives in `lighthouserc.json`. Each figure is asserted on its median across the three runs (`aggregationMethod: "median"`), and the run fails if any of these is exceeded. Lighthouse CI's default asserts on the best run, which let #14's preview pass with two of its three runs over budget.
 
-| Measure                  | Budget   |
-| ------------------------ | -------- |
-| Performance score        | ≥ 0.90   |
-| Accessibility score      | ≥ 0.95   |
-| Largest Contentful Paint | ≤ 3.2 s  |
-| Cumulative Layout Shift  | ≤ 0.1    |
-| Total Blocking Time      | ≤ 200 ms |
-| JavaScript               | ≤ 250 KB |
-| Images                   | ≤ 300 KB |
-| Fonts                    | ≤ 150 KB |
-| Everything               | ≤ 800 KB |
+| Measure                  | Budget                                     |
+| ------------------------ | ------------------------------------------ |
+| Performance score        | ≥ 0.90                                     |
+| Accessibility score      | ≥ 0.95                                     |
+| Largest Contentful Paint | ≤ 3.2 s, or ≤ 3.6 s on three pages (below) |
+| Cumulative Layout Shift  | ≤ 0.1                                      |
+| Total Blocking Time      | ≤ 200 ms                                   |
+| JavaScript               | ≤ 250 KB                                   |
+| Images                   | ≤ 300 KB                                   |
+| Fonts                    | ≤ 150 KB                                   |
+| Everything               | ≤ 800 KB                                   |
 
 The Largest Contentful Paint budget was 2.5 s until the site shell (#12) arrived. Lighthouse simulates a throttled load from every byte requested before the first paint, and the header's script plus the UI typeface on every page put the bare home page at a steady 2.75 s (it paints in about 40 ms unthrottled). Menu code, a smaller logo, and a single UI weight didn't move that figure, so the budget moved to 3.0 s.
 
@@ -125,6 +125,16 @@ It rose to 3.2 s with the painting pipeline (#13). A page whose largest paint is
   The simple mockup is back in `lighthouserc.json`. That left the reveal hero over the budget by Motion alone, until #20 (below).
 
 - **Motion, for the reveal hero (52 KB of script, about 0.3 s).** The home page (#20) uses the reveal, so `HeroReveal` draws the story hidden without Motion and loads Motion in its own chunk once React is running, after the first paint. That took `/` from 3.35 s to between 2.56 s and 3.06 s locally (medians of three, across runs), with early script from 212 KB to 161 KB. The preview pages share `HeroReveal`, so `/styleguide/home` gains the same.
+
+It rose to 3.6 s on the three pages CI's runs swing on (#89): `/gallery.html`, `/styleguide/paintings.html`, and `/styleguide/home/simple.html`. On those pages the runner, not the bytes, decides which step a run lands on. From the gallery's first painting growing on main (02:00 UTC on 31 October) to the end of 1 November, 17 CI runs on main and on PRs moved those pages' bytes by no more than 3 KB. Across them, the simple mockup's median of three landed between 2.63 and 3.28 s (single runs 2.41 to 3.32 s), the paintings page's between 2.34 and 3.02 s (runs up to 3.17 s), and the gallery's between 2.95 and 3.03 s. #90, which changed no byte the site serves, then measured medians of 3.31 s on the gallery and the simple mockup, with a run at 3.37 s, and failed against 3.2 s. Trimming a step (about 150 ms) of early bytes can't clear a swing of 700 ms. The performance score held at 0.92 or above on every one of those runs, so only the LCP budget failed on noise.
+
+Every other page keeps 3.2 s. Text-led pages hold lower and steadier, with no median above 2.78 s and no run above 3.10 s. `/` paints the same logo as the simple mockup from much the same bytes, yet its median stayed between 2.42 and 2.79 s. It is the first page each CI run measures, and that first run is often cold (up to 4.6 s), but a median of three outvotes one run. Locally, three runs of `/` on main's build on 1 November each measured 3,203 ms, over 3.2 s by a few milliseconds, as before this change. The budget follows CI, so judge a local change to `/` with `lighthouse:compare`.
+
+3.6 s is the highest median CI has produced on unchanged bytes (3.31 s) plus two steps, so noise alone would have to land a page two steps above anything seen so far. A real regression of early bytes still fails, as the simulated paint grows by about 1 s for every 200 KB fetched before it. Padding the simple mockup's logo with 100, 200, and 300 KB of incompressible bytes moved its local median from 3.20 s to 3.68, 4.20, and 4.65 s, and about 270 KB more in the gallery's largest early script moved the gallery's from 2.90 to 4.34 s. From the gallery's medians (2.95 s and up), 200 KB more clears 3.6 s. From the simple mockup's fastest medians it lands on the edge: about 3.63 s from 2.63 s, and about 3.56 s from the 2.56 s that runs just before 31 October, 02:00 UTC, measured on the same bytes. 300 KB clears it from any of them. Images have their own byte budget of 300 KB, which catches 200 KB more on the simple mockup and the paintings page (115 and 109 KB of images now), but on the gallery (80 KB) only past 220 KB more. On the gallery that budget is the only guard against a heavier painting: its LCP didn't move when its first painting grew by 300 KB, at 3.2 s as at 3.6 s.
+
+Five runs instead of three were the other way to steady the median. Resampling the same runs, they halve how often the simple mockup's median crosses 3.2 s (from about one CI run in ten to one in twenty) without ending it, and add about 2.5 minutes to every CI run.
+
+`lighthouserc.json` sets the two budgets in its `assertMatrix`. One entry carries every other assertion for every page. The two LCP entries share one URL pattern, the second negated, so a page added later takes 3.2 s unless it joins the pattern. A unit test (`src/lib/lighthouse.test.ts`) fails if any page matches both LCP entries or neither, and the summary's "near the LCP budget" mark measures each page against its own budget.
 
 Before pushing a change to the header, the footer, the root layout, or the first screen of a page, compare it with main: everything those fetch counts against every page's largest paint.
 
@@ -149,7 +159,7 @@ gh run download <run-id> -n lighthouse-reports -D /tmp/lh
 npx tsx scripts/lighthouse-summary.ts "CI=/tmp/lh"
 ```
 
-When a page is added, add its URL to `ci.collect.url` in `lighthouserc.json`.
+When a page is added, add its URL to `ci.collect.url` in `lighthouserc.json`. If CI's runs of it then swing across 3.2 s on unchanged bytes, as the three pages above did, add its path to their pattern in both LCP entries and to the list in the unit test.
 
 ## Images
 
