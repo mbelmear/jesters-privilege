@@ -521,22 +521,22 @@ describe("lighthouserc.json", () => {
     json as { ci: { collect: { url: string[] } } }
   ).ci.collect.url.map((url) => new URL(url).pathname);
 
-  // CI's runs of these swing about 700 ms on unchanged bytes (#89).
-  const swinging = [
-    "/gallery.html",
-    "/styleguide/paintings.html",
-    "/styleguide/home/simple.html",
-  ];
+  // CI's runs of these swing about 700 ms on unchanged bytes (#89); the
+  // gallery's first painting then joined its early load (#89's retro).
+  const budgets: Record<string, number> = {
+    "/gallery.html": 3850,
+    "/styleguide/paintings.html": 3600,
+    "/styleguide/home/simple.html": 3600,
+  };
 
-  it("gives the pages CI's runs swing on 3.6 s, and every other page 3.2 s", () => {
+  it("gives the pages CI's runs swing on their own budgets, and every other page 3.2 s", () => {
     for (const page of new Set([
-      ...swinging,
+      ...Object.keys(budgets),
       ...pages,
       "/a-page-not-yet-built.html",
       "/styleguide/gallery.html",
     ])) {
-      const expected = swinging.includes(page) ? 3600 : 3200;
-      expect([page, budgetFor(page)]).toEqual([page, expected]);
+      expect([page, budgetFor(page)]).toEqual([page, budgets[page] ?? 3200]);
     }
   });
 });
