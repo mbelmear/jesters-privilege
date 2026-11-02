@@ -33,8 +33,8 @@ describe("GalleryTimeline", () => {
     ).toBeVisible();
   });
 
-  // The first band is the page's largest paint: Lighthouse's lcp-lazy-loaded
-  // audit failed while it waited on lazy loading (#89's retro).
+  // The first band is the page's largest paint: Lighthouse's LCP discovery
+  // check (lcp-discovery-insight) failed while it loaded lazily (#89's retro).
   it("loads the first era's band first, and the later bands lazily", () => {
     render(<GalleryTimeline gallery={gallery} />);
     const bands = screen

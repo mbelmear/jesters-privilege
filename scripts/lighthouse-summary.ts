@@ -27,9 +27,9 @@ function lcpBudgets(): (path: string) => number {
   return readLcpBudgets(file, json);
 }
 
-const [mode, ...rest] = process.argv.slice(2);
-const spreading = mode === "--spread";
-const args = spreading ? rest : process.argv.slice(2);
+const argv = process.argv.slice(2);
+const spreading = argv[0] === "--spread";
+const args = spreading ? argv.slice(1) : argv;
 
 const columns: Column[] = args.map((arg) => {
   const split = arg.indexOf("=");
