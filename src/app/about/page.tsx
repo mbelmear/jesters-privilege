@@ -17,7 +17,7 @@ export const metadata: Metadata = pageMetadata(content.site, {
   description: about.intro.text,
 });
 
-// About: why a jester, the three Jesters and their bios, what the show
+// About: why the show is called "Jester's Privilege", the three Jesters and their bios, what the show
 // believes, Redeemer Church, and how to listen.
 export default function About() {
   // Read as the page renders, so a test can swap in other content.

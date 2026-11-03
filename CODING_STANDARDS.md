@@ -51,6 +51,8 @@ Reviewers skip these; the rules below are the ones that need judgement.
 ## Content
 
 - **History is told as the sources tell it.** A Fool's dates, placard (artist, title, year, medium, collection), and story agree with the painting's Commons page and the collection holding it; where those disagree or attribute loosely, the placard says so ("Attributed to", "School of", "c."). An anecdote the sources give as legend is told as one ("the story goes", "is said to"), and a quotation is one the sources print. #25's review found a drawing dated after its sitter's death shown as his face, a consultant Rabelais never wrote, and a painting credited to the museum that shows it rather than the foundation that owns it.
+- **Copy expands the landing page.** Draft copy uses the landing page's metaphor and vocabulary (the King who needs no jester, the church dearly loved yet able to wander, her courtiers, fools for Christ, the motley), and never contradicts it or approved copy: the copy principle in `docs/spec.md`, Content. Approved About copy says the jester "sought no office", so #103 took "office" out of the Gallery's account of him.
+- **A copy change updates every place `docs/spec.md` quotes or names the old copy.** Copy the spec quotes counts as final (`AGENTS.md`, Content), so a stale quote reads as final wording that no longer exists. #103 changed the About heading and the 404 page, and the spec's summary still said "About explains why a jester".
 - **Copy shown on more than one page lives once**, in a content record each page reads, such as the Episode labels and length units. A page that needs copy another page already has moves it into a shared record, in place of a second copy.
 
 ## Browser tests

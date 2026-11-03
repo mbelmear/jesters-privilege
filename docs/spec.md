@@ -16,7 +16,7 @@ A fast, static, mobile-first website at `jestersprivilegepodcast.com` that is bo
 - **Episodes** is a "hymnal index" archive of every Episode, playable in place.
 - **Episode pages** carry the player, Show notes, and an interactive Transcript.
 - **The Fools' Gallery** tells the history of court jesters and holy fools as a timeline, each Fool shown with their public-domain painting.
-- **About** explains why a jester, introduces the Jesters, and states what the show believes.
+- **About** explains why the show is called "Jester's Privilege", introduces the Jesters, and states what the show believes.
 - **Speak Freely** lets listeners send Questions, Confessions, and Topic ideas.
 - A **persistent player** docked at the bottom keeps playing while visitors browse.
 

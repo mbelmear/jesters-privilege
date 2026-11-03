@@ -1,7 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
-// About: why a jester, the three Jesters' portraits and bios, belief, church,
+// About: why the show is called "Jester's Privilege", the three Jesters' portraits and bios, belief, church,
 // and how to listen.
 const PAGE = "/about";
 
