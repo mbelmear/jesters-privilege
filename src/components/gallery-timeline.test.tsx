@@ -100,9 +100,9 @@ describe("GalleryTimeline", () => {
     const closing = screen.getByRole("region", {
       name: "Why this show wears the motley",
     });
-    expect(
-      within(closing).getByText(/^So we put on the motley\./)
-    ).toBeVisible();
+    for (const paragraph of gallery.closing.paragraphs) {
+      expect(within(closing).getByText(paragraph)).toBeVisible();
+    }
   });
 
   it("has no accessibility violations", async () => {

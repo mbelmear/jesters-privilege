@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
+import { microcopy } from "../src/content/microcopy";
 import { scrollThrough } from "./hero-story";
 
 // The site before Episode 1 is published. These run only against a build
@@ -33,7 +34,7 @@ test.describe("Coming soon", { tag: "@empty-feed" }, () => {
     await expect(
       page.getByRole("heading", {
         level: 1,
-        name: "You've wandered from the court",
+        name: microcopy.notFoundTitle.text,
       })
     ).toBeVisible();
     await expect(page.locator('meta[name="robots"]')).toHaveAttribute(

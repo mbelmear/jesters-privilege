@@ -15,12 +15,11 @@ export const microcopy = {
     text: "New to podcasts? Open the podcast app already on your phone (Apple Podcasts on an iPhone, Spotify or YouTube elsewhere), search for Jester's Privilege, and tap Follow. New Episodes will arrive on their own.",
     draft: true,
   },
-  notFoundTitle: { text: "You've wandered from the court" },
+  notFoundTitle: { text: "A fool's errand" },
   notFoundBody: {
-    text: "This page isn't here. Perhaps a Fool hid it, or perhaps it never existed.",
-    draft: true,
+    text: "You've gone looking for a page that doesn't exist. We'd know a fool's errand when we see one.",
   },
-  notFoundLink: { text: "Return to the court", draft: true },
+  notFoundLink: { text: "Return to the great hall" },
   readFullTranscript: { text: "Read the full transcript" },
   transcriptNote: {
     text: "This Transcript is machine-generated, so forgive the odd spelling.",

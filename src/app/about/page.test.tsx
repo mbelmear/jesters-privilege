@@ -32,12 +32,12 @@ describe("About", () => {
     expect(metadata.title).toBe("About");
   });
 
-  it("explains why a jester, then the Jesters, belief, church, and listening, in that order", () => {
+  it("explains the show's name, then the Jesters, belief, church, and listening, in that order", () => {
     render(<About />);
     expect(
       screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent)
     ).toEqual([
-      "Why a jester?",
+      content.about.whyAJester.title,
       "The Jesters",
       "What we believe",
       "Redeemer Church, Bozeman",
