@@ -31,7 +31,7 @@ npx jest src/lib            # one folder or file
   expect(await axe(container)).toHaveNoViolations();
   ```
 
-A test that writes to `console.error` or `console.warn` fails (`jest.setup.ts`), since React reports bugs such as an update outside `act()` that way. A test that expects an error stubs it with `jest.spyOn(console, "error").mockImplementation(() => {})`. A component that loads something after rendering (Motion's features under `MotionProvider`) needs that to land inside `act()` before the test checks it, as the style guide test does.
+A test that writes to `console.error` or `console.warn` fails (`jest.setup.ts`), since React reports bugs such as an update outside `act()` that way. A test that expects an error stubs it with `jest.spyOn(console, "error").mockImplementation(() => {})`. A component that loads something after rendering (Motion's features under `MotionProvider`) needs that to land inside `act()` before the test checks it, as the style guide test does. A component that renders a `<script>` the browser would run, such as `WebAnalytics`, is tested as built HTML, `renderToStaticMarkup` into a container, as `src/components/web-analytics.test.tsx` does: React warns when the client creates one. A data block (`type="application/ld+json"`, as `JsonLd` renders) draws no warning.
 
 `npm run check` runs ESLint, the type check, and the whole Jest suite. The pre-commit and pre-merge-commit hooks run it, so a commit or merge with a lint error, type error, or failing test is refused, and the pre-push hook refuses a branch missing commits from `origin/main`. Each hook in `.husky/` says why.
 

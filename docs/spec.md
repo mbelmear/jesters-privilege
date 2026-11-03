@@ -77,7 +77,7 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
 40. As a visitor, I want a museum-placard caption on every painting (artist, title, year, medium, collection), so that I know what I'm looking at.
 41. As a visitor on a phone, I want paintings cropped so the important figure stays in view, so that I see Stańczyk's face and not an empty corner.
 42. As a visitor, I want the Gallery to end by explaining why this show wears the motley, so that the history connects back to the podcast.
-43. As a visitor, I want to share a specific Fool, with a preview showing their painting, so that I can pass along a story I enjoyed.
+43. As a visitor, I want to share a specific Fool, with a preview showing their painting, so that I can pass along a story I enjoyed. _(Deferred: in v1 a Fool link shows the Gallery's card; see `LATER.md`.)_
 44. As a visitor who prefers less motion, I want painting animations turned off, so that the page doesn't make me uncomfortable.
 
 ### About
