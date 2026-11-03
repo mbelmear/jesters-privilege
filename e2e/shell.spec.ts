@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Locator, type Page } from "@playwright/test";
+import { microcopy } from "../src/content/microcopy";
 
 // Axe samples colors as rendered, so let an opening animation finish first.
 const settled = (locator: Locator) =>
@@ -188,15 +189,15 @@ test.describe("Not found", () => {
     const response = await page.goto("/no-such-page");
     expect(response?.status()).toBe(404);
     await expect(page).toHaveTitle(
-      "You've wandered from the court | Jester's Privilege"
+      `${microcopy.notFoundTitle.text} | Jester's Privilege`
     );
     await expect(
       page.getByRole("heading", {
         level: 1,
-        name: "You've wandered from the court",
+        name: microcopy.notFoundTitle.text,
       })
     ).toBeVisible();
-    await page.getByRole("link", { name: "Return to the court" }).click();
+    await page.getByRole("link", { name: microcopy.notFoundLink.text }).click();
     await expect(page).toHaveURL("/");
   });
 

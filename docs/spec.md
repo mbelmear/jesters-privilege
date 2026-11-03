@@ -105,7 +105,7 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
 59. As a visitor, I want dark mode that follows my phone's setting, plus a toggle that remembers my choice, so that the site is comfortable at night.
 60. As a visitor, I want no flash of the wrong theme when a page loads, so that the site feels polished.
 61. As a visitor, I want a footer with social links, the contact email, the RSS link, the privacy note, and copyright, so that I can reach the show.
-62. As a visitor who follows a broken link, I want a themed "you've wandered from the court" page with a way back, so that I'm not stuck.
+62. As a visitor who follows a broken link, I want a themed "a fool's errand" page with a way back, so that I'm not stuck.
 63. As a visitor relying on assistive technology, I want real contrast, alt text, visible focus, and keyboard access everywhere, so that the site works for me.
 64. As someone searching Google for the show or an Episode topic, I want to find the site with accurate titles and descriptions, so that I land in the right place.
 
@@ -215,7 +215,7 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
   - Each era opens with a painting band, and each Fool gets a framed painting and their story.
   - v1 Fools, each depending on finding a suitable public-domain painting: Paul's "fools for Christ" and the holy fools (St. Francis's _jongleurs de Dieu_, the Russian _yurodivy_), Stańczyk (Matejko, 1862), Triboulet, Will Somers, Archibald Armstrong, Richard Tarlton, the Spanish court fools painted by Velázquez, and Erasmus's _In Praise of Folly_ with Holbein's marginal drawings.
   - It ends with why this show wears the motley.
-- **About**: why a jester; the three Jesters with equal billing, each under the label they chose (Co-host; Aaron is Producer & Co-host) and with their full bio; what we believe; Redeemer Church; how to listen.
+- **About**: why the show is called "Jester's Privilege"; the three Jesters with equal billing, each under the label they chose (Co-host; Aaron is Producer & Co-host) and with their full bio; what we believe; Redeemer Church; how to listen.
 - **Speak Freely** (`/speak-freely`; renamed from Submit in #85)
   - Type: Question (the default), Confession, Topic idea, or Other.
   - Message: required.
@@ -223,7 +223,7 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
   - Email: optional, labeled "Only if you're OK with us following up."
   - A required checkbox: "You can mention this on the show."
   - A privacy note, then success and failure states.
-- **404**: themed "You've wandered from the court," with a way home.
+- **404**: themed "A fool's errand," with a way back to the great hall.
 - **Style guide**: every token, typeface, and component in light and dark. It's excluded from the sitemap and search indexing.
 
 ### Submit endpoint
@@ -283,6 +283,14 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
   - Previews show a **DRAFT** ribbon on pages that use draft content.
   - The live site never shows it.
   - A launch check fails if draft content would go live.
+- **Copy principle: the landing page is the thesis.** The landing page says what the show is, why it exists (the metaphor), and what visitors can find on the site. Every other page expands one part of it in more detail:
+  - **About:** who we are, and why the show is called "Jester's Privilege"
+  - **Fools' Gallery:** the history behind the metaphor
+  - **Episodes:** the show itself
+  - **Speak Freely:** how visitors talk back
+
+  The pages don't need to match the landing page word for word, but each one should use its metaphor and vocabulary (the King who needs no jester, the church who is dearly loved yet can wander, her courtiers, fools for Christ, the motley), never contradict it, and point back to it where that comes naturally. The landing-page text itself is final and doesn't change. Before approving any draft copy, check it against this principle. (Set by the Jesters on #6, 2026-11-02.)
+
 - Jester bios: the Jesters supplied their full bios (on #6), used word for word on About, in the order Michael, Dan, Aaron. The home page shows a two-line summary of each, condensed from them.
 
 ### SEO and sharing

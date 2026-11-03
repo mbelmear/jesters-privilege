@@ -26,7 +26,7 @@ const eras = [
     intro: {
       title: "The licensed fool",
       paragraphs: [
-        "In the great households of medieval Europe, the fool held a strange office. He wore the motley and the cap with its bells, he ate at the lord's table, and he alone could mock the lord without losing his head.",
+        "In the great households of medieval Europe, the fool held a strange place at court. He wore the motley and the cap with its bells, he ate at the lord's table, and he alone could mock the lord without losing his head.",
         "Some fools were simple, kept for the laughter they couldn't help. Others were sharp as knives, and their jokes carried warnings a wise king would heed and a foolish one would not.",
       ],
       draft: true,
@@ -251,9 +251,9 @@ export const gallery = {
   closing: {
     title: "Why this show wears the motley",
     paragraphs: [
-      "The fools in this gallery served earthly kings, and the best of them loved their kings enough to tell them the truth. We serve a better King, one who needs no jester, but who has given his church a voice and asked her to use it.",
-      "So we put on the motley. We laugh at church culture, at its fads and its celebrities and its strange habits, and we laugh at ourselves first. Then we open the Scriptures, because the point of the jest was always that the king would listen.",
+      "The fools in this gallery served earthly kings. The best of them loved their kings enough to risk a jest that told the truth, when every courtier around the throne would only flatter. The laugh was never the point. The point of the jest was always that the king would listen.",
+      "Our King needs no such service. He is never deceived and never wrong. But his church can wander, and she has flatterers of her own: fads, celebrities, and voices that tell her only what she wants to hear.",
+      "So, as fools for Christ, we put on the motley. We laugh at church culture, and at ourselves first. Then we open the Scriptures, so that while the church laughs, she listens to her King.",
     ],
-    draft: true,
   },
 } as const satisfies Gallery;
