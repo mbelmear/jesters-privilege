@@ -31,6 +31,8 @@ If the build fails, the workflow stops before `wrangler deploy`, so the last goo
 
 The build reads the feed from `feedSource` in `src/content/feed.ts`: a fixture (`src/content/feed-fixture.xml`) until Episode 1 is published, then the Spreaker feed URL. If the feed can't be reached, answers with an error, or breaks a rule (two full Episodes share a number, a full Episode has none, a required field is missing), the build fails with a message naming the Episode and the rule, and the last good deploy stays live.
 
+Before setting `feedSource` to a feed, run `npm run try-feed -- <feed url>`: it reads the feed by the build's rules and lists the page each Episode would get, or names the Episode and rule that would fail the build. Spreaker leaves an Episode's number out of the feed until it is set on the Episode's edit page, so every full Episode needs its **Episode number** set there; bonuses and trailers need none.
+
 ## Draft content
 
 Copy awaiting the Jesters' words is marked `draft: true` in `src/content/`. Preview builds set `SITE_ENV=preview`, so a page that uses draft content shows a DRAFT ribbon there (and under `next dev`); production builds never show it.

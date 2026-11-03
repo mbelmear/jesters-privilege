@@ -225,7 +225,7 @@ function episodeNumber(item: Element, episodeLabel: string): number {
   const value = childText(item, "itunes:episode");
   if (!value) {
     throw new Error(
-      `Feed Episode ${episodeLabel} is a full Episode with no number`
+      `Feed Episode ${episodeLabel} is a full Episode with no number; set its Episode number in Spreaker, or make it a bonus or trailer`
     );
   }
   if (!/^\d+$/.test(value)) {
