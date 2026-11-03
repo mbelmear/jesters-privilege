@@ -9,10 +9,7 @@ import {
   type FeedSource,
 } from "@/lib/feed-source";
 import { loadTranscript, type Transcript } from "@/lib/transcript";
-
-// The show's feed on Spreaker. Every full Episode needs its Episode number set
-// there (docs/deploy.md); check a feed with `npm run try-feed -- <url>`.
-const LIVE_FEED_URL = "https://www.spreaker.com/show/7523831/episodes/feed";
+import { LIVE_FEED_URL } from "./site";
 
 // Deploys read the live feed (FEED=live); every other build reads a fixture
 // shaped like it, whose Episodes are draft copy, so tests never depend on

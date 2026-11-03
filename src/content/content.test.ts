@@ -10,11 +10,12 @@ describe("content", () => {
 
   // The show's pages as the Jesters gave them (#6), without share-tracking
   // query strings.
-  it("links to the show on Apple Podcasts and Spotify", () => {
+  it("links to the show on Apple Podcasts, Spotify, and its RSS feed", () => {
     expect(content.site.listen).toEqual({
       "apple-podcasts":
         "https://podcasts.apple.com/us/podcast/jesters-privilege/id6830338936",
       spotify: "https://open.spotify.com/show/6a7KnKe6ohzrMGZwJDc5Ti",
+      rss: "https://www.spreaker.com/show/7523831/episodes/feed",
     });
   });
 
