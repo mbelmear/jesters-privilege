@@ -44,6 +44,7 @@ function content(overrides: Partial<Content> = {}): Content {
       name: "Jester's Privilege",
       tagline: "Theology in the Motley.",
       description: { text: "A weekly theology-and-humor podcast." },
+      url: "https://jestersprivilegepodcast.com",
       contactEmail: "hello@jestersprivilegepodcast.com",
       listen: { spotify: "https://open.spotify.com/show/abc" },
       social: {},

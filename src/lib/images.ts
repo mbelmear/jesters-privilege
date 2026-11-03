@@ -36,16 +36,18 @@ export const CROP_SHAPES: Record<CropName, Size> = {
 export type Rect = Size & { readonly left: number; readonly top: number };
 
 /**
- * The largest region of an image with the crop's shape, centred on the focal
- * point (fractions of the width and height) as nearly as the edges allow, so
- * the subject stays in view.
+ * The largest region of an image with the crop's shape (a named crop, or any
+ * width:height), centred on the focal point (fractions of the width and
+ * height) as nearly as the edges allow, so the subject stays in view.
  */
 export function cropAround(
   image: Size,
   focalPoint: FocalPoint,
-  crop: CropName
+  crop: CropName | Size
 ): Rect {
-  const shape = CROP_SHAPES[crop].width / CROP_SHAPES[crop].height;
+  const { width: across, height: down } =
+    typeof crop === "string" ? CROP_SHAPES[crop] : crop;
+  const shape = across / down;
   const width = Math.min(image.width, Math.round(image.height * shape));
   const height = Math.min(image.height, Math.round(image.width / shape));
   const offset = (length: number, cut: number, fraction: number) =>

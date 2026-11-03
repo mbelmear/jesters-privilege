@@ -6,13 +6,15 @@ import { LatestEpisode } from "@/components/latest-episode";
 import { content } from "@/content";
 import { feedSource, getEpisodes } from "@/content/feed";
 import { archiveOf } from "@/lib/archive";
+import { pageMetadata } from "@/lib/seo";
 
 const { episodes } = content;
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata(content.site, {
+  path: "/episodes",
   title: episodes.title,
   description: episodes.intro.text,
-};
+});
 
 // The Episodes archive, the hymnal index: the newest Episode featured as the
 // only large card, then the rest by year, each playable in place. Before

@@ -28,6 +28,11 @@ home_page_serves() {
   curl -fsS "$site/" | grep -q "<h1"
 }
 
+# Production alone loads Web Analytics' beacon (src/lib/analytics.ts).
+home_page_counts_visits() {
+  curl -fsS "$site/" | grep -q 'static.cloudflareinsights.com/beacon.min.js'
+}
+
 www_redirects_to_apex() {
   [ "$(curl -sS -o /dev/null -w '%{http_code} %{redirect_url}' \
     "https://www.$domain/about?x=1")" = "301 $site/about?x=1" ]
@@ -35,5 +40,6 @@ www_redirects_to_apex() {
 
 retry manifest_has_commit
 retry home_page_serves
+retry home_page_counts_visits
 retry www_redirects_to_apex
 echo "Production is serving $commit"

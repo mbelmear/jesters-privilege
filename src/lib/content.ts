@@ -43,6 +43,9 @@ export type SocialNetwork = (typeof SOCIAL_NETWORKS)[number];
 // Every link is optional: each appears on the site as soon as it's filled in.
 export type Site = {
   readonly name: string;
+  // The live site's origin: canonical addresses, the sitemap, and link
+  // previews are built on it.
+  readonly url: string;
   readonly tagline: string;
   readonly description: Copy;
   readonly contactEmail: string;

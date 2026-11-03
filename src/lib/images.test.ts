@@ -69,6 +69,12 @@ describe("cropAround", () => {
     });
   });
 
+  it("cuts any shape asked for, such as a link-preview card's painting", () => {
+    expect(
+      cropAround(stanczyk, { x: 0.52, y: 0.3 }, { width: 540, height: 630 })
+    ).toEqual({ left: 483, top: 0, width: 1530, height: 1785 });
+  });
+
   it("slides the crop back inside the image near an edge", () => {
     expect(cropAround(stanczyk, { x: 0.05, y: 0.4 }, "portrait").left).toBe(0);
     expect(cropAround(stanczyk, { x: 0.98, y: 0.4 }, "portrait").left).toBe(

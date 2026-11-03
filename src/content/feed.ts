@@ -15,6 +15,7 @@ const configuredSource: FeedSource = {
   kind: "fixture",
   path: "src/content/feed-fixture.xml",
   transcripts: "src/content/transcripts",
+  standsInFor: "https://www.spreaker.com/show/6900001/episodes/feed",
   draft: true,
 };
 
@@ -26,6 +27,7 @@ export const feedSource: FeedSource =
         kind: "fixture",
         path: "src/content/feed-fixture-empty.xml",
         transcripts: "src/content/transcripts",
+        standsInFor: "https://www.spreaker.com/show/6900001/episodes/feed",
         draft: true,
       }
     : configuredSource;

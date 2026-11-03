@@ -2,10 +2,13 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { DraftRibbon } from "@/components/draft-ribbon";
 import { EpisodeDetails } from "@/components/episode-details";
+import { JsonLd } from "@/components/json-ld";
 import { content } from "@/content";
 import { feedSource, getEpisodes, getTranscript } from "@/content/feed";
-import { episodeAddress, findEpisode } from "@/lib/feed";
+import { series } from "@/content/series";
+import { episodeAddress, episodePath, findEpisode } from "@/lib/feed";
 import { episodeTitle } from "@/lib/format-episode";
+import { episodeCardPath, episodeJsonLd, pageMetadata } from "@/lib/seo";
 
 // One page per Episode: /episodes/<number>, or /episodes/bonus/<slug> for one
 // without a number (ADR 0002). Only the Feed's Episodes are built.
@@ -29,10 +32,13 @@ export async function generateMetadata({
   params,
 }: PageProps<"/episodes/[...address]">): Promise<Metadata> {
   const { episode } = await episodeAt((await params).address);
-  return {
-    title: episodeTitle(episode, content.episodePage),
+  const title = episodeTitle(episode, content.episodePage);
+  return pageMetadata(content.site, {
+    path: episodePath(episode),
+    title,
     description: episode.excerpt,
-  };
+    card: { path: episodeCardPath(episode), alt: title },
+  });
 }
 
 export default async function EpisodePage({
@@ -44,6 +50,7 @@ export default async function EpisodePage({
   return (
     <>
       <DraftRibbon uses={[shell, site.name, episodePage, feedSource]} />
+      <JsonLd data={episodeJsonLd(series, sequence.episode)} />
       <EpisodeDetails
         sequence={sequence}
         transcript={transcript}

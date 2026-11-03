@@ -3,15 +3,36 @@ import { downloadText, type Fetch } from "./download";
 
 // Where the Feed comes from. Until Episode 1 is published, a fixture shaped like
 // the Spreaker feed stands in, with its Transcripts in a folder beside it; its
-// Episodes are draft copy.
+// Episodes are draft copy. `standsInFor` is the feed address it pretends to
+// be, which the page head links to.
 export type FeedSource =
-  | { kind: "fixture"; path: string; transcripts: string; draft: true }
+  | {
+      kind: "fixture";
+      path: string;
+      transcripts: string;
+      standsInFor: string;
+      draft: true;
+    }
   | { kind: "url"; url: string };
 
 export type FeedIO = {
   fetch: Fetch;
   readFile: (path: string) => Promise<string>;
 };
+
+// The feed's public address, which podcast apps subscribe to.
+export function feedUrl(source: FeedSource): string {
+  switch (source.kind) {
+    case "fixture":
+      return source.standsInFor;
+    case "url":
+      return source.url;
+    default: {
+      const unhandled: never = source;
+      return unhandled;
+    }
+  }
+}
 
 // Any failure here fails the build, so the last good deploy stays live (ADR 0001).
 export async function loadFeedText(
