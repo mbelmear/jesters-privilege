@@ -8,6 +8,16 @@ describe("content", () => {
     expect(() => validateContent(content)).not.toThrow();
   });
 
+  // The show's pages as the Jesters gave them (#6), without share-tracking
+  // query strings.
+  it("links to the show on Apple Podcasts and Spotify", () => {
+    expect(content.site.listen).toEqual({
+      "apple-podcasts":
+        "https://podcasts.apple.com/us/podcast/jesters-privilege/id6830338936",
+      spotify: "https://open.spotify.com/show/6a7KnKe6ohzrMGZwJDc5Ti",
+    });
+  });
+
   // A name such as Stańczyk sets its ń from the self-hosted subsets only if
   // `npm run fonts` has added it; otherwise the page also fetches the rest of
   // the typeface, up to 98 KB, before its first paint (#57).
