@@ -135,7 +135,8 @@ const eslintConfig = defineConfig([
     },
   },
   // Every text contains the empty string, so these pass whatever the element
-  // holds; a test of absence must be able to fail (CODING_STANDARDS.md).
+  // holds; a test of absence must be able to fail (CODING_STANDARDS.md). And
+  // module isolation, which breaks React.
   {
     files: ["**/*.test.{ts,tsx}"],
     rules: {
@@ -146,6 +147,14 @@ const eslintConfig = defineConfig([
             "CallExpression[callee.property.name='toHaveTextContent'][arguments.0.value='']",
           message:
             'toHaveTextContent("") always passes. Use toBeEmptyDOMElement() to check that an element is empty.',
+        },
+        // A fresh module registry loads a second React, so every hook in what
+        // it renders fails with "Invalid hook call" (#21).
+        {
+          selector:
+            "CallExpression[callee.object.name='jest'][callee.property.name=/^isolateModules/]",
+          message:
+            "jest.isolateModules loads a second React, which breaks hooks. To swap what a module returns, jest.mock it around the real one, as src/app/episodes/page.test.tsx does with getEpisodes.",
         },
       ],
     },

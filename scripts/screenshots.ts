@@ -2,13 +2,20 @@
 // change: phone and desktop, light and dark, each the full page after
 // scrolling through it (so reveals and lazy images have run), plus the
 // phone's first screen, where most visitors land from Instagram.
-// Build first. Usage: npm run screenshots -- <page path> [folder] [--click <button>]...
+// Build first. Usage:
+//   npm run screenshots -- <page path> [folder] [--click <button>]... [--storage <key>=<json>]...
 //   npm run screenshots -- /styleguide/home .screenshots/home
 // Each --click presses the button of that name, in order, then shoots the
 // screen as it stands (<size>-<scheme>-clicked.png), for a state that shows
 // only after interaction: the player once an Episode plays, a sent form.
 //   npm run screenshots -- /episodes/2 --click "Play Episode 2" --click "Show player controls"
 // Episode audio is served as silence (e2e/player.ts), so Play really plays.
+// Each --storage puts a value in localStorage before the page loads, for a
+// state that comes from this device's history: an Episode heard to the end
+// (its check in the archive), one partly heard (the offer to resume).
+//   npm run screenshots -- /episodes --storage 'player={"positions":{},"finished":["https://api.spreaker.com/episode/70000003"],"lastPlayed":null}'
+// The Preview's audio doesn't load (the fixture's addresses are made up), so
+// these are the Jesters' only view of such a state.
 import { spawn } from "node:child_process";
 import { mkdir } from "node:fs/promises";
 import { createServer } from "node:net";
@@ -23,11 +30,11 @@ const SIZES = {
 const SCHEMES = ["light", "dark"] as const;
 
 async function main() {
-  const { positional, clicks } = parseArgs(process.argv.slice(2));
+  const { positional, clicks, storage } = parseArgs(process.argv.slice(2));
   const [page, folder = ".screenshots"] = positional;
   if (!page?.startsWith("/")) {
     throw new Error(
-      'Usage: npm run screenshots -- <page path such as /about> [folder] [--click "<button name>"]...'
+      'Usage: npm run screenshots -- <page path such as /about> [folder] [--click "<button name>"]... [--storage <key>=<json>]...'
     );
   }
   await mkdir(folder, { recursive: true });
@@ -66,6 +73,9 @@ async function main() {
       for (const colorScheme of SCHEMES) {
         const tab = await browser.newPage({ ...options, colorScheme });
         await serveEpisodeAudio(tab);
+        await tab.addInitScript((entries) => {
+          for (const [key, value] of entries) localStorage.setItem(key, value);
+        }, storage);
         await tab.goto(url);
         // Lazily loaded code (Motion, for an on-scroll reveal) arrives
         // before the scroll that should trigger it.
@@ -101,22 +111,32 @@ async function main() {
   }
 }
 
-// Splits the arguments into positional ones and the --click button names.
+// Splits the arguments into positional ones, the --click button names, and
+// the --storage entries.
 function parseArgs(args: string[]) {
   const positional: string[] = [];
   const clicks: string[] = [];
+  const storage: [string, string][] = [];
   for (let i = 0; i < args.length; i += 1) {
     const arg = args[i];
-    if (arg !== "--click") {
+    if (arg !== "--click" && arg !== "--storage") {
       positional.push(arg);
       continue;
     }
-    const name = args[i + 1];
-    if (!name) throw new Error("--click needs a button name");
-    clicks.push(name);
+    const value = args[i + 1];
+    if (!value) throw new Error(`${arg} needs a value`);
     i += 1;
+    if (arg === "--click") {
+      clicks.push(value);
+      continue;
+    }
+    const split = value.indexOf("=");
+    if (split < 1) {
+      throw new Error(`--storage needs <key>=<value>, not "${value}"`);
+    }
+    storage.push([value.slice(0, split), value.slice(split + 1)]);
   }
-  return { positional, clicks };
+  return { positional, clicks, storage };
 }
 
 // Each step pauses long enough for an on-scroll reveal to start.
