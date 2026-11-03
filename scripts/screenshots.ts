@@ -22,6 +22,7 @@ import { createServer } from "node:net";
 import { join } from "node:path";
 import { chromium, type Page } from "@playwright/test";
 import { serveEpisodeAudio } from "../e2e/player";
+import { waitForServer } from "../src/lib/wait-for-server";
 
 const SIZES = {
   phone: { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 },
@@ -68,7 +69,13 @@ async function main() {
   );
   try {
     const url = `http://localhost:${port}${page}`;
-    await Promise.race([waitForServer(url), exited]);
+    await Promise.race([
+      waitForServer(url, {
+        fetch,
+        sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+      }),
+      exited,
+    ]);
     for (const [size, options] of Object.entries(SIZES)) {
       for (const colorScheme of SCHEMES) {
         const tab = await browser.newPage({ ...options, colorScheme });
@@ -164,20 +171,6 @@ function freePort(): Promise<number> {
       );
     });
   });
-}
-
-async function waitForServer(url: string) {
-  for (let attempt = 0; attempt < 50; attempt += 1) {
-    const ok = await fetch(url).then(
-      (response) => response.ok,
-      () => false
-    );
-    if (ok) return;
-    await new Promise((resolve) => setTimeout(resolve, 200));
-  }
-  throw new Error(
-    `The built site didn't serve ${url}; run npm run build first`
-  );
 }
 
 main().catch((error: unknown) => {
