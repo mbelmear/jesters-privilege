@@ -129,6 +129,35 @@ describe("Episodes", () => {
     expect(
       items.map((item) => within(item).queryByText("Finished") !== null)
     ).toEqual([false, false, true, false, false]);
+    expect(
+      within(
+        screen.getByRole("region", { name: "Latest Episode" })
+      ).queryByText("Finished")
+    ).toBeNull();
+  });
+
+  it("marks the featured Episode once it's heard to the end", async () => {
+    const [latest] = await getEpisodes();
+    const saved = JSON.stringify({
+      positions: {},
+      finished: [latest.guid],
+      lastPlayed: latest.guid,
+    });
+    const player = createPlayer({
+      audio: new FakeAudio(),
+      storage: {
+        getItem: (key) => (key === PLAYER_STORAGE_KEY ? saved : null),
+        setItem: () => {},
+      },
+    });
+    await renderEpisodes((page) => (
+      <PlayerContext value={player}>{page}</PlayerContext>
+    ));
+    expect(
+      within(screen.getByRole("region", { name: "Latest Episode" })).getByText(
+        "Finished"
+      )
+    ).toBeInTheDocument();
   });
 
   it("marks its draft copy with the DRAFT ribbon on a preview", async () => {

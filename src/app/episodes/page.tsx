@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DraftRibbon } from "@/components/draft-ribbon";
 import { EpisodeArchive } from "@/components/episode-archive";
+import { FinishedMark } from "@/components/finished-mark";
 import { LatestEpisode } from "@/components/latest-episode";
 import { content } from "@/content";
 import { feedSource, getEpisodes } from "@/content/feed";
@@ -44,6 +45,14 @@ export default async function Episodes() {
         copy={home.latestEpisode}
         comingSoon={microcopy.comingSoon}
         playerCopy={shell.player}
+        mark={
+          archive && (
+            <FinishedMark
+              guid={archive.latest.guid}
+              label={episodes.finished}
+            />
+          )
+        }
       />
       {archive && (
         <EpisodeArchive
