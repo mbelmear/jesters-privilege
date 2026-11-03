@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { useId } from "react";
+import { useId, type ReactNode } from "react";
 import { PlayEpisodeButton } from "@/components/play-episode-button";
 import type { Copy, Home, PlayerCopy } from "@/lib/content";
 import { episodePath, type Episode } from "@/lib/feed";
@@ -16,6 +16,9 @@ type Props = {
   copy: Home["latestEpisode"];
   comingSoon: Copy;
   playerCopy: PlayerCopy;
+  // Shown after the length, such as the archive's check for an Episode heard
+  // to the end. Passed in, so only the page that shows it ships its code.
+  mark?: ReactNode;
 };
 
 /**
@@ -29,6 +32,7 @@ export function LatestEpisode({
   copy,
   comingSoon,
   playerCopy,
+  mark,
 }: Props) {
   const headingId = useId();
   return (
@@ -43,7 +47,12 @@ export function LatestEpisode({
         {copy.title}
       </h2>
       {episode ? (
-        <EpisodeCard episode={episode} copy={copy} playerCopy={playerCopy} />
+        <EpisodeCard
+          episode={episode}
+          copy={copy}
+          playerCopy={playerCopy}
+          mark={mark}
+        />
       ) : (
         <p className="border-l-2 border-brand py-2 pl-4 text-lg">
           {comingSoon.text}
@@ -57,10 +66,12 @@ function EpisodeCard({
   episode,
   copy,
   playerCopy,
+  mark,
 }: {
   episode: Episode;
   copy: Home["latestEpisode"];
   playerCopy: PlayerCopy;
+  mark: ReactNode;
 }) {
   const href = episodePath(episode);
   const label = episodeLabel(episode, copy);
@@ -92,6 +103,7 @@ function EpisodeCard({
         <p className="font-ui text-sm font-semibold text-muted-foreground">
           {formatPublishDate(episode.publishedAt)} ·{" "}
           {formatListeningTime(episode.durationSeconds, copy.units)}
+          {mark}
         </p>
         <p className="line-clamp-3">{episode.excerpt}</p>
         <div className="mt-2">
