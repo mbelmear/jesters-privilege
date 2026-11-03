@@ -5,6 +5,7 @@
       "url": [
         "http://localhost/",
         "http://localhost/404.html",
+        "http://localhost/episodes.html",
         "http://localhost/episodes/1.html",
         "http://localhost/gallery.html",
         "http://localhost/speak-freely.html",

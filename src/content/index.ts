@@ -1,6 +1,7 @@
 import { validateContent } from "@/lib/content";
 import { about } from "./about";
 import { episodePage } from "./episode-page";
+import { episodes } from "./episodes";
 import { gallery } from "./gallery";
 import { hero } from "./hero";
 import { home } from "./home";
@@ -22,6 +23,7 @@ export const content = validateContent({
   home,
   listen,
   episodePage,
+  episodes,
   jesters,
   gallery,
   about,

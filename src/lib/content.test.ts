@@ -7,6 +7,7 @@ import {
   type Painting,
 } from "./content";
 import { episodePage } from "@/content/episode-page";
+import { episodes } from "@/content/episodes";
 import { home } from "@/content/home";
 import { listen } from "@/content/listen";
 import { shell } from "@/content/shell";
@@ -53,6 +54,7 @@ function content(overrides: Partial<Content> = {}): Content {
     home,
     listen,
     episodePage,
+    episodes,
     speakFreely,
     jesters: [{ id: "dan", name: "Dan Collins", role: "Co-host" }],
     gallery: {

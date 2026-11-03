@@ -270,6 +270,17 @@ export type EpisodePage = EpisodeLabels & {
   };
 };
 
+// The Episodes archive's own copy. Its rows read the Episode labels and
+// length units from the Episode page's copy, and its featured Episode the
+// home page's Latest Episode copy.
+export type EpisodesPage = {
+  readonly title: string;
+  // Under the title, and in link previews.
+  readonly intro: Copy;
+  // Beside an Episode heard to the end on this device.
+  readonly finished: string;
+};
+
 // Speak Freely: the form's labels, the message for each rule a field can
 // break, and what the listener reads once it's sent or if sending fails.
 export type SpeakFreelyPage = {
@@ -316,6 +327,7 @@ export type Content = {
   readonly home: Home;
   readonly listen: ListenCopy;
   readonly episodePage: EpisodePage;
+  readonly episodes: EpisodesPage;
   readonly jesters: readonly Jester[];
   readonly gallery: Gallery;
   readonly about: About;
