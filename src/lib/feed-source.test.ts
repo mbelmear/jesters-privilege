@@ -175,9 +175,15 @@ describe("chooseFeedSource", () => {
     ).toBe(sources.live);
   });
 
+  it("reads the fixture when asked by name", () => {
+    expect(chooseFeedSource({ FEED: "fixture" }, sources)).toBe(
+      sources.fixture
+    );
+  });
+
   it("refuses a FEED it doesn't know rather than quietly using the fixture", () => {
     expect(() => chooseFeedSource({ FEED: "liev" }, sources)).toThrow(
-      'FEED is "liev"; expected live, empty, or unset for the fixture'
+      'FEED is "liev"; expected one of live, fixture, empty (unset means fixture)'
     );
   });
 });

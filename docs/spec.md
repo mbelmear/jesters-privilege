@@ -150,8 +150,8 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
 ### Feed and Episodes
 
 - Source: the Spreaker RSS feed, shaped exactly like the feed of _Polemical with Dan Collins_, which the same producer publishes.
-- Until the real feed exists, builds use a **fixture** with the same structure. Episode 1 in it is "Celebrity Pastors". It also includes multiple years, a bonus Episode, HTML Show notes, and Transcript links.
-- Swapping in the real feed is a one-value configuration change.
+- Deploys (production and pull request previews) read the real feed, `https://www.spreaker.com/show/7523831/episodes/feed`. Every other build, CI's tests included, reads a **fixture** with the same structure, so tests never depend on Spreaker. Episode 1 in it is "Celebrity Pastors". It also includes multiple years, a bonus Episode, HTML Show notes, and Transcript links.
+- Which feed a build reads is one environment value, `FEED` (docs/deploy.md); the real feed's address is one value in `src/content/feed.ts`. A production build that isn't reading the real feed fails.
 - **Feed module** (a deep module with a small interface): takes the raw feed text and returns a validated, ordered list of Episodes or throws a descriptive error. An Episode carries:
   - number (absent for bonus and trailer Episodes) and type (full, bonus, trailer)
   - title, slug (for bonus Episodes), publish date and duration

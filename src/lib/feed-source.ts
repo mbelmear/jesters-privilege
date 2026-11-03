@@ -1,10 +1,11 @@
 import { basename, join } from "node:path";
 import { downloadText, type Fetch } from "./download";
 
-// Where the Feed comes from. Until Episode 1 is published, a fixture shaped like
-// the Spreaker feed stands in, with its Transcripts in a folder beside it; its
-// Episodes are draft copy. `standsInFor` is the feed address it pretends to
-// be, which the page head links to.
+// Where the Feed comes from: the Spreaker feed's address, or a fixture shaped
+// like it, with its Transcripts in a folder beside it, which every build but a
+// deploy reads (chooseFeedSource). A fixture's Episodes are draft copy;
+// `standsInFor` is the feed address it pretends to be, which the page head
+// links to.
 export type FeedSource =
   | {
       kind: "fixture";
@@ -15,47 +16,59 @@ export type FeedSource =
     }
   | { kind: "url"; url: string };
 
-// The feeds a build can read: the live Spreaker feed, and fixtures shaped like
-// it for tests (one with Episodes, one without).
+// The feeds a build can read, named by FEED: the live Spreaker feed, and
+// fixtures shaped like it for tests, one with Episodes and one without.
+export const FEED_NAMES = ["live", "fixture", "empty"] as const;
+export type FeedName = (typeof FEED_NAMES)[number];
+
+type UrlSource = Extract<FeedSource, { kind: "url" }>;
+type FixtureSource = Extract<FeedSource, { kind: "fixture" }>;
 export type FeedSources = {
-  live: Extract<FeedSource, { kind: "url" }>;
-  fixture: FeedSource;
-  empty: FeedSource;
+  live: UrlSource;
+  fixture: FixtureSource;
+  empty: FixtureSource;
 };
 
 // Which feed this build reads, from the environment. Builds read the fixture
 // unless FEED says otherwise, so tests never depend on Spreaker; the deploy
 // sets FEED=live, and a production build without it fails rather than
-// publishing the fixture.
+// publishing a fixture.
 export function chooseFeedSource(
   env: { FEED?: string; SITE_ENV?: string },
   sources: FeedSources
 ): FeedSource {
-  const [chosen, name] = feedNamed(env.FEED, sources);
-  if (env.SITE_ENV === "production" && chosen !== sources.live) {
+  const name = feedName(env.FEED);
+  if (env.SITE_ENV === "production" && name !== "live") {
     throw new Error(
-      `A production build must read the live feed (FEED=live), not ${name}`
+      `A production build must read the live feed (FEED=live), not ${describe(name)}`
     );
   }
-  return chosen;
+  return sources[name];
 }
 
-function feedNamed(
-  feed: string | undefined,
-  sources: FeedSources
-): [FeedSource, string] {
-  switch (feed) {
+function feedName(value: string | undefined): FeedName {
+  if (value === undefined || value === "") return "fixture";
+  const name = FEED_NAMES.find((n) => n === value);
+  if (!name) {
+    throw new Error(
+      `FEED is "${value}"; expected one of ${FEED_NAMES.join(", ")} (unset means fixture)`
+    );
+  }
+  return name;
+}
+
+function describe(name: FeedName): string {
+  switch (name) {
     case "live":
-      return [sources.live, "the live feed"];
+      return "the live feed";
+    case "fixture":
+      return "the fixture";
     case "empty":
-      return [sources.empty, "the empty fixture"];
-    case undefined:
-    case "":
-      return [sources.fixture, "the fixture"];
-    default:
-      throw new Error(
-        `FEED is "${feed}"; expected live, empty, or unset for the fixture`
-      );
+      return "the empty fixture";
+    default: {
+      const unhandled: never = name;
+      return unhandled;
+    }
   }
 }
 
