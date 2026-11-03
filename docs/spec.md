@@ -344,7 +344,6 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
 ## Further Notes
 
 - **Pending inputs** (none block starting):
-  - the real feed URL once Episode 1 is published
   - Apple Podcasts, Spotify, and YouTube links
   - social handles
   - headshots for all three Jesters

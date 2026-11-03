@@ -40,7 +40,7 @@ export function chooseFeedSource(
   const name = feedName(env.FEED);
   if (env.SITE_ENV === "production" && name !== "live") {
     throw new Error(
-      `A production build must read the live feed (FEED=live), not ${describe(name)}`
+      `A production build must read the live feed (FEED=live), not ${feedLabel(name)}`
     );
   }
   return sources[name];
@@ -57,7 +57,7 @@ function feedName(value: string | undefined): FeedName {
   return name;
 }
 
-function describe(name: FeedName): string {
+function feedLabel(name: FeedName): string {
   switch (name) {
     case "live":
       return "the live feed";
