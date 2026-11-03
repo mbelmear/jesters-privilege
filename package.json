@@ -32,6 +32,7 @@
     "worktree": "scripts/new-worktree.sh",
     "worktree-done": "scripts/worktree-done.sh",
     "launch-check": "tsx scripts/launch-check.ts",
+    "feed-check": "tsx scripts/feed-check.ts",
     "pr-status": "scripts/pr-status.sh",
     "fonts": "tsx scripts/fonts.ts"
   },

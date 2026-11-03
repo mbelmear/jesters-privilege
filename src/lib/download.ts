@@ -6,8 +6,8 @@ export type TextResponse = Pick<
 >;
 export type Fetch = (url: string) => Promise<TextResponse>;
 
-// What the build downloads, named in its errors.
-export type Download = "Feed" | "Transcript";
+// What the build and the feed check download, named in their errors.
+export type Download = "Feed" | "Transcript" | "Build manifest";
 
 // The body at `url`, or an error naming `what` was being fetched and why it
 // failed.

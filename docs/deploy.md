@@ -9,7 +9,15 @@ The site is one Cloudflare Worker (`jesters-privilege`) serving the static expor
 | Push to `main`                             | Build, `wrangler deploy` to production, then `scripts/smoke-check.sh`                                                     |
 | **Run workflow** button (Actions → Deploy) | The same as a push to `main`                                                                                              |
 | Pull request                               | Build, `wrangler versions upload --preview-alias pr-<n>`, then post the preview URL as a PR comment, updated on each push |
-| Every 2 hours (feed check, #18)            | Not yet built                                                                                                             |
+| Every 2 hours (feed check)                 | `npm run feed-check`; only when the feed's newest Episode isn't on the live site, the same as a push to `main`            |
+
+The feed check (`scripts/feed-check.ts`, logic in `src/lib/feed-check.ts`) reads the feed exactly as the build does and compares its newest Episode's GUID with `newestEpisodeGuid` in the live `/build-manifest.json`. It takes about a minute, most of it installing dependencies, and sets the job output `rebuild`:
+
+- **Same Episode**: `rebuild=false`, and the deploy job is skipped.
+- **Different Episode**: `rebuild=true`, and the deploy job builds and ships as for a push. The next check finds the new Episode live and stands down, so one new Episode makes one deploy (two, if the build is handed a stale cached copy of the feed; the next check then catches up).
+- **Feed can't be read or breaks a rule, or the live manifest is missing, unreachable, or not valid**: the job fails with an `::error::` naming why, nothing deploys, and the live site stays as it is. A manifest the check can't read doesn't trigger a rebuild, which could repeat every 2 hours unnoticed; once the cause is fixed, the **Run workflow** button redeploys.
+
+Release day doesn't wait for the schedule: the **Run workflow** button deploys whatever the feed holds. GitHub may start a scheduled run some minutes late, and it disables schedules in a public repo after 60 days without a commit; Actions → Deploy shows a banner with a button to turn it back on. A failed scheduled run emails whoever last changed the `cron` line.
 
 Wrangler can't upload a preview version to a Worker that doesn't exist yet. If no Worker exists, the preview job first creates it with a blank placeholder page on workers.dev, with no custom domains. That happens once, before the first production deploy.
 
