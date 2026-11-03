@@ -2,14 +2,19 @@ name: Deploy
 
 # Builds the static export and ships it to Cloudflare with wrangler.
 # Pushes to main and the Run workflow button deploy to production; each pull
-# request gets its own preview URL, posted as a comment. The feed check (#18)
-# joins as a scheduled trigger. See docs/deploy.md.
+# request gets its own preview URL, posted as a comment. Every 2 hours the feed
+# check deploys only when the feed has an Episode the live site lacks. See
+# docs/deploy.md.
 
 on:
   push:
     branches: [main]
   pull_request:
   workflow_dispatch:
+  schedule:
+    # Every 2 hours, off the top of the hour, when GitHub delays and drops the
+    # most scheduled runs.
+    - cron: "17 */2 * * *"
 
 permissions:
   contents: read
@@ -100,10 +105,32 @@ jobs:
             gh pr comment "$PR" --body "$body"
           fi
 
+  feed-check:
+    name: Feed check
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      rebuild: ${{ steps.check.outputs.rebuild }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
+      # Sets rebuild=true only when the feed's newest Episode isn't on the live
+      # site. A feed that can't be read fails this job, so nothing deploys.
+      - id: check
+        run: npm run feed-check
+
   deploy:
     name: Deploy to production
-    # The Run workflow button can pick any branch; only main reaches production.
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: feed-check
+    # Pushes and the Run workflow button always deploy; a scheduled run only
+    # when the feed check asks. The button can pick any branch; only main
+    # reaches production. `!cancelled()` lets this run when the feed check was
+    # skipped, as it is for every trigger but the schedule.
+    if: >-
+      !cancelled() && github.ref == 'refs/heads/main' &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch' ||
+      needs.feed-check.outputs.rebuild == 'true')
     runs-on: ubuntu-latest
     # Queue production deploys; never cancel one partway.
     concurrency:
