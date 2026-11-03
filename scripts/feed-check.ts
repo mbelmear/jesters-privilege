@@ -1,7 +1,7 @@
 // The scheduled feed check (#18): decides whether the Deploy workflow rebuilds,
 // by comparing the feed's newest Episode with the live site's build manifest.
 // The logic is src/lib/feed-check.ts; this wires in the network and the
-// workflow. Usage (in .github/workflows/deploy.yml): npx tsx scripts/feed-check.ts
+// workflow. Usage: npm run feed-check (run by .github/workflows/deploy.yml)
 import { appendFileSync } from "node:fs";
 import { getEpisodes } from "@/content/feed";
 import { site } from "@/content/site";

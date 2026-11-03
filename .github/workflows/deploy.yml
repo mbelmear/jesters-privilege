@@ -12,8 +12,8 @@ on:
   pull_request:
   workflow_dispatch:
   schedule:
-    # Every 2 hours, off the top of the hour, when GitHub delays and drops the
-    # most scheduled runs.
+    # Every 2 hours at 17 past: GitHub delays and drops the most scheduled runs
+    # at the top of the hour.
     - cron: "17 */2 * * *"
 
 permissions:
@@ -116,7 +116,8 @@ jobs:
       - uses: actions/checkout@v5
       - uses: ./.github/actions/setup
       # Sets rebuild=true only when the feed's newest Episode isn't on the live
-      # site. A feed that can't be read fails this job, so nothing deploys.
+      # site. A feed or live manifest that can't be read fails this job, so
+      # nothing deploys.
       - id: check
         run: npm run feed-check
 

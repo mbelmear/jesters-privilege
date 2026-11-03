@@ -18,7 +18,6 @@ export type FeedCheckIO = {
 
 export type FeedCheck = {
   rebuild: boolean;
-  newestEpisodeGuid: string | null;
   reason: string;
 };
 
@@ -27,26 +26,18 @@ export async function checkFeed(
   io: FeedCheckIO
 ): Promise<FeedCheck> {
   const newestEpisodeGuid = await io.newestEpisodeGuid();
-  let manifest: BuildManifest;
-  try {
-    manifest = await readLiveManifest(site, io.fetch);
-  } catch (error: unknown) {
-    return {
-      rebuild: true,
-      newestEpisodeGuid,
-      reason: `The live site's build manifest can't be read (${errorMessage(error)})`,
-    };
-  }
+  // Unreadable, it fails the run rather than rebuilding: a manifest that
+  // GitHub's runners can never read would otherwise deploy every 2 hours
+  // without a word. The Run workflow button rebuilds by hand.
+  const manifest = await readLiveManifest(site, io.fetch);
   if (manifest.newestEpisodeGuid === newestEpisodeGuid) {
     return {
       rebuild: false,
-      newestEpisodeGuid,
       reason: `The live site already has the newest Episode (${newestEpisodeGuid})`,
     };
   }
   return {
     rebuild: true,
-    newestEpisodeGuid,
     reason: `The feed's newest Episode (${newestEpisodeGuid}) isn't on the live site, which has ${manifest.newestEpisodeGuid}`,
   };
 }
@@ -74,9 +65,9 @@ export type FeedCheckEnv = FeedCheckIO & {
 };
 
 // Sets the step output `rebuild` to "true" or "false" and returns the exit
-// code. A feed that can't be read fails the run (1) with no output, so the
-// deploy is skipped, the live site stays as it is, and GitHub emails the repo
-// owner about the failed run.
+// code. A feed or live manifest that can't be read fails the run (1) with no
+// output, so the deploy is skipped, the live site stays as it is, and GitHub
+// emails whoever last changed the workflow's cron line.
 export async function runFeedCheck(
   site: string,
   env: FeedCheckEnv

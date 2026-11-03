@@ -32,7 +32,6 @@ describe("checkFeed", () => {
     });
     expect(result).toEqual({
       rebuild: false,
-      newestEpisodeGuid: EPISODE_1,
       reason: `The live site already has the newest Episode (${EPISODE_1})`,
     });
   });
@@ -44,7 +43,6 @@ describe("checkFeed", () => {
     });
     expect(result).toEqual({
       rebuild: true,
-      newestEpisodeGuid: EPISODE_2,
       reason: `The feed's newest Episode (${EPISODE_2}) isn't on the live site, which has ${EPISODE_1}`,
     });
   });
@@ -73,17 +71,11 @@ describe("checkFeed", () => {
       `Build manifest ${SITE}/build-manifest.json couldn't be reached: getaddrinfo ENOTFOUND`,
     ],
   ])(
-    "rebuilds when the live site's manifest %s, so the site recovers",
+    "fails, naming why, when the live site's manifest %s",
     async (_, fetch, problem) => {
-      const result = await checkFeed(SITE, {
-        fetch,
-        newestEpisodeGuid: async () => EPISODE_1,
-      });
-      expect(result).toEqual({
-        rebuild: true,
-        newestEpisodeGuid: EPISODE_1,
-        reason: `The live site's build manifest can't be read (${problem})`,
-      });
+      await expect(
+        checkFeed(SITE, { fetch, newestEpisodeGuid: async () => EPISODE_1 })
+      ).rejects.toThrow(problem);
     }
   );
 });
@@ -138,6 +130,18 @@ describe("runFeedCheck", () => {
     expect(outputs).toEqual([]);
     expect(log).toEqual([
       "::error::Feed check failed, so the live site stays as it is: Feed https://www.spreaker.com/show/6900001/episodes/feed answered 503 Service Unavailable",
+    ]);
+  });
+
+  it("fails the run, deploying nothing, when the live manifest can't be read", async () => {
+    const { env, outputs, log } = workflow({
+      fetch: liveSite("<!doctype html><h1>Not found</h1>", 404),
+      newestEpisodeGuid: async () => EPISODE_1,
+    });
+    expect(await runFeedCheck(SITE, env)).toBe(1);
+    expect(outputs).toEqual([]);
+    expect(log).toEqual([
+      `::error::Feed check failed, so the live site stays as it is: Build manifest ${SITE}/build-manifest.json answered 404 Not Found`,
     ]);
   });
 });
