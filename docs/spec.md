@@ -291,9 +291,8 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
 - A favicon and app icons from the logo mark.
 - The RSS feed linked in the page head.
 - JSON-LD structured data for the podcast series and each Episode.
-- Open Graph images generated at build time:
+- Open Graph images generated at build time (a link to a Fool, `/gallery#<slug>`, shows the Gallery's card; a card per Fool is in `LATER.md`):
   - **Episode**: a parchment card with a large "Episode N" in Gloock, the title, the logo mark, and a teal band
-  - **Fool**: their painting cropped to the focal point, with a placard strip
   - **Site-wide**: the logo, tagline, and a painting detail
 - A Share button on Episodes and Fools: the native share sheet where available, otherwise copy the link with a confirmation.
 

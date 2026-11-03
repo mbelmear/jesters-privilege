@@ -2,13 +2,15 @@ import type { Metadata } from "next";
 import { DraftRibbon } from "@/components/draft-ribbon";
 import { GalleryTimeline } from "@/components/gallery-timeline";
 import { content } from "@/content";
+import { pageMetadata } from "@/lib/seo";
 
 const { gallery, shell, site } = content;
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata(content.site, {
+  path: "/gallery",
   title: gallery.title,
   description: gallery.intro.text,
-};
+});
 
 // The Fools' Gallery: the history of court jesters and holy fools, era by era.
 export default function Gallery() {

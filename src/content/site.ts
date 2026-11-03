@@ -3,6 +3,7 @@ import type { Site } from "@/lib/content";
 // Each Listen and social link appears on the site as soon as it's filled in.
 export const site = {
   name: "Jester's Privilege",
+  url: "https://jestersprivilegepodcast.com",
   tagline: "Theology in the Motley.",
   description: {
     text: "A weekly theology-and-humor podcast from three Jesters who serve the King.",

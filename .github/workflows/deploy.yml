@@ -116,6 +116,10 @@ jobs:
       - run: npm run build
         env:
           BUILD_COMMIT: ${{ github.sha }}
+          # Only this build counts visits (src/lib/analytics.ts); it fails
+          # without the token.
+          SITE_ENV: production
+          WEB_ANALYTICS_TOKEN: ${{ vars.WEB_ANALYTICS_TOKEN }}
           TURNSTILE_SITE_KEY: ${{ secrets.TURNSTILE_SITE_KEY }}
       - run: |
           jq -n '{TURNSTILE_SECRET_KEY: env.TURNSTILE_SECRET_KEY}' > "$RUNNER_TEMP/secrets.json"

@@ -3,13 +3,15 @@ import { DraftRibbon } from "@/components/draft-ribbon";
 import { SubmitForm } from "@/components/submit-form";
 import { content } from "@/content";
 import { turnstileSiteKey } from "@/lib/turnstile";
+import { pageMetadata } from "@/lib/seo";
 
 const { speakFreely, shell, site } = content;
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata(content.site, {
+  path: "/speak-freely",
   title: speakFreely.title,
   description: speakFreely.intro.text,
-};
+});
 
 // Read as the page is built: the static export bakes it into the HTML.
 const siteKey = turnstileSiteKey({

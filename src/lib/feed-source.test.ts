@@ -1,4 +1,9 @@
-import { loadFeedText, transcriptFetch, type FeedIO } from "./feed-source";
+import {
+  feedUrl,
+  loadFeedText,
+  transcriptFetch,
+  type FeedIO,
+} from "./feed-source";
 
 const url = "https://www.spreaker.com/show/6900001/episodes/feed";
 
@@ -26,6 +31,7 @@ describe("loadFeedText", () => {
         kind: "fixture",
         path: "src/content/feed-fixture.xml",
         transcripts: "src/content/transcripts",
+        standsInFor: url,
         draft: true,
       },
       io({
@@ -75,6 +81,7 @@ describe("transcriptFetch", () => {
         kind: "fixture",
         path: "src/content/feed-fixture.xml",
         transcripts: "src/content/transcripts",
+        standsInFor: url,
         draft: true,
       },
       io({
@@ -97,5 +104,23 @@ describe("transcriptFetch", () => {
       })
     );
     expect(await (await fetch(transcriptUrl)).text()).toBe("WEBVTT");
+  });
+});
+
+describe("feedUrl", () => {
+  it("is the feed the site reads, for podcast apps to subscribe to", () => {
+    expect(feedUrl({ kind: "url", url })).toBe(url);
+  });
+
+  it("is the address the fixture stands in for, until the real feed exists", () => {
+    expect(
+      feedUrl({
+        kind: "fixture",
+        path: "src/content/feed-fixture.xml",
+        transcripts: "src/content/transcripts",
+        standsInFor: "https://www.spreaker.com/show/1/episodes/feed",
+        draft: true,
+      })
+    ).toBe("https://www.spreaker.com/show/1/episodes/feed");
   });
 });

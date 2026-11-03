@@ -1,13 +1,22 @@
+import type { Metadata } from "next";
 import { DraftRibbon } from "@/components/draft-ribbon";
 import { FleuronRule } from "@/components/fleuron-rule";
 import { GalleryTeaser } from "@/components/gallery-teaser";
 import { Hero } from "@/components/hero";
 import { HeroReveal } from "@/components/hero-reveal";
+import { JsonLd } from "@/components/json-ld";
 import { LatestEpisode } from "@/components/latest-episode";
 import { ListenButtons } from "@/components/listen-buttons";
 import { MeetTheJesters } from "@/components/meet-the-jesters";
 import { content, sectionHref } from "@/content";
 import { feedSource, getEpisodes } from "@/content/feed";
+import { series } from "@/content/series";
+import { pageMetadata, seriesJsonLd } from "@/lib/seo";
+
+export const metadata: Metadata = pageMetadata(content.site, {
+  path: "/",
+  description: content.site.description.text,
+});
 
 // The home page as the Jesters approved it at the mockup gate (#14), with the
 // jester story revealed a paragraph at a time as the visitor scrolls (#58).
@@ -31,6 +40,7 @@ export default async function Home() {
           feedSource,
         ]}
       />
+      <JsonLd data={seriesJsonLd(series)} />
       <Hero logo={hero.logo} name={site.name}>
         <HeroReveal paragraphs={hero.paragraphs} />
       </Hero>

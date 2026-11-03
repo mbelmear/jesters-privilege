@@ -3,21 +3,28 @@ import { PlayerDock } from "@/components/player-dock";
 import { PlayerProvider } from "@/components/player-provider";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { WebAnalytics } from "@/components/web-analytics";
 import { content } from "@/content";
-import { getEpisodes } from "@/content/feed";
+import { feedSource, getEpisodes } from "@/content/feed";
+import { analyticsToken } from "@/lib/analytics";
+import { feedUrl } from "@/lib/feed-source";
+import { siteOpenGraph } from "@/lib/seo";
 import { motionCss, motionPresets } from "@/lib/motion";
 import { themeScript } from "@/lib/theme";
 import { fontVariables } from "./fonts";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  // Resolves the Open Graph image (opengraph-image.png) to an absolute URL.
-  metadataBase: new URL("https://jestersprivilegepodcast.com"),
+  // Makes canonical addresses and link-preview images absolute.
+  metadataBase: new URL(content.site.url),
   title: {
     default: content.site.name,
     template: `%s | ${content.site.name}`,
   },
   description: content.site.description.text,
+  // Pages set their own (src/lib/seo.ts); this covers any that don't, such
+  // as the 404 page.
+  openGraph: siteOpenGraph(content.site),
   // The tab icon follows the browser's color scheme, so it stays legible on
   // a dark tab bar. Browsers that ignore `media` fall back to /favicon.ico.
   // Declared here rather than as app/ icon files, which can't take `media`
@@ -61,6 +68,14 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <style dangerouslySetInnerHTML={{ __html: motionCss(motionPresets) }} />
+        {/* Here rather than in metadata.alternates, which a page's canonical
+          address would replace. */}
+        <link
+          rel="alternate"
+          type="application/rss+xml"
+          title={site.name}
+          href={feedUrl(feedSource)}
+        />
       </head>
       <body className="flex min-h-full flex-col">
         <PlayerProvider showName={site.name}>
@@ -96,6 +111,12 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             />
           </div>
         </PlayerProvider>
+        <WebAnalytics
+          token={analyticsToken({
+            SITE_ENV: process.env.SITE_ENV,
+            WEB_ANALYTICS_TOKEN: process.env.WEB_ANALYTICS_TOKEN,
+          })}
+        />
       </body>
     </html>
   );

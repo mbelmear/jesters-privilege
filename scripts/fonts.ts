@@ -28,6 +28,9 @@ import { contentGlyphsBeyondLatin } from "@/content/glyphs";
 import { codePoints, subsetText, unicodeRange } from "@/lib/fonts";
 
 const OUT = path.join("src", "fonts");
+const CARDS = path.join(OUT, "cards");
+// The faces the link-preview cards set, by file name.
+const CARD_FACES = new Set(["gloock", "barlow-semi-condensed-600"]);
 const DEFINITIONS = path.join("src", "app", "fonts.ts");
 const SOURCE =
   "https://raw.githubusercontent.com/google/fonts/6c1dbe27dcf7d817d4b62cec033ba77fa8e2a5ec/ofl/";
@@ -153,6 +156,12 @@ async function split(spec: FaceSpec, subset: Set<number>): Promise<Half[]> {
     );
   }
   const font = Buffer.from(await response.arrayBuffer());
+  if (CARD_FACES.has(spec.file)) {
+    await writeFile(path.join(CARDS, `${spec.file}.ttf`), font);
+    console.log(
+      `cards/${spec.file}.ttf: ${(font.length / 1024).toFixed(1)} KB`
+    );
+  }
   // harfbuzzjs awaits its WebAssembly at the top level, so it can't be
   // required the way tsx loads this script.
   const { Blob, Face } = await import("harfbuzzjs");
@@ -212,7 +221,7 @@ function definition(
 async function main() {
   const beyondLatin = contentGlyphsBeyondLatin();
   const subset = new Set(codePoints(subsetText(beyondLatin)));
-  await mkdir(OUT, { recursive: true });
+  await mkdir(CARDS, { recursive: true });
 
   const definitions = [];
   for (const spec of FACES) {

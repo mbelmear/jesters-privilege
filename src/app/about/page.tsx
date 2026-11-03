@@ -7,13 +7,15 @@ import { JesterPortrait } from "@/components/jester-portrait";
 import { ListenButtons } from "@/components/listen-buttons";
 import { content } from "@/content";
 import type { Jester, Section } from "@/lib/content";
+import { pageMetadata } from "@/lib/seo";
 
 const { about } = content;
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata(content.site, {
+  path: "/about",
   title: about.title,
   description: about.intro.text,
-};
+});
 
 // About: why a jester, the three Jesters and their bios, what the show
 // believes, Redeemer Church, and how to listen.
