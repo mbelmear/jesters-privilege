@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { parseFeed, type Episode } from "@/lib/feed";
 import {
+  chooseFeedSource,
   loadFeedText,
   transcriptFetch,
   type FeedIO,
@@ -9,28 +10,34 @@ import {
 } from "@/lib/feed-source";
 import { loadTranscript, type Transcript } from "@/lib/transcript";
 
-// The one value to change once Episode 1 is published on Spreaker:
-//   { kind: "url", url: "https://www.spreaker.com/show/<id>/episodes/feed" }
-const configuredSource: FeedSource = {
-  kind: "fixture",
-  path: "src/content/feed-fixture.xml",
-  transcripts: "src/content/transcripts",
-  standsInFor: "https://www.spreaker.com/show/6900001/episodes/feed",
-  draft: true,
-};
+// The show's feed on Spreaker. Every full Episode needs its Episode number set
+// there (docs/deploy.md); check a feed with `npm run try-feed -- <url>`.
+const LIVE_FEED_URL = "https://www.spreaker.com/show/7523831/episodes/feed";
 
-// `FEED=empty` builds the site with no Episodes, as before Episode 1, to test
-// the coming-soon state (docs/testing.md).
-export const feedSource: FeedSource =
-  process.env.FEED === "empty"
-    ? {
-        kind: "fixture",
-        path: "src/content/feed-fixture-empty.xml",
-        transcripts: "src/content/transcripts",
-        standsInFor: "https://www.spreaker.com/show/6900001/episodes/feed",
-        draft: true,
-      }
-    : configuredSource;
+// Deploys read the live feed (FEED=live); every other build reads a fixture
+// shaped like it, whose Episodes are draft copy, so tests never depend on
+// Spreaker. `FEED=empty` builds the site with no Episodes, as before Episode 1,
+// to test the coming-soon state (docs/testing.md).
+export const feedSource: FeedSource = chooseFeedSource(
+  { FEED: process.env.FEED, SITE_ENV: process.env.SITE_ENV },
+  {
+    live: { kind: "url", url: LIVE_FEED_URL },
+    fixture: {
+      kind: "fixture",
+      path: "src/content/feed-fixture.xml",
+      transcripts: "src/content/transcripts",
+      standsInFor: LIVE_FEED_URL,
+      draft: true,
+    },
+    empty: {
+      kind: "fixture",
+      path: "src/content/feed-fixture-empty.xml",
+      transcripts: "src/content/transcripts",
+      standsInFor: LIVE_FEED_URL,
+      draft: true,
+    },
+  }
+);
 
 const io: FeedIO = {
   // A hung download fails (or, for a Transcript, skips) rather than stalling

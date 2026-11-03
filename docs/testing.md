@@ -52,7 +52,7 @@ npx playwright test --ui    # interactive runner
 
 Specs live in `e2e/`. Every page should get an axe scan (`@axe-core/playwright`) and a no-horizontal-scroll check at phone width. Project names follow `<browser>-<size>`, so `--project=webkit-phone` runs a single combination.
 
-The site before Episode 1 is published has its own build. `FEED=empty` swaps the Feed for `src/content/feed-fixture-empty.xml`, a channel with no Episodes, and runs only the tests tagged `@empty-feed` (`e2e/coming-soon.spec.ts`), which the normal run leaves out:
+Every build but a deploy reads the fixture feed, `src/content/feed-fixture.xml`, whatever the live feed holds (docs/deploy.md), so tests can count on its Episodes, bonus, trailer, and Transcripts. The site before Episode 1 is published has its own build. `FEED=empty` swaps the Feed for `src/content/feed-fixture-empty.xml`, a channel with no Episodes, and runs only the tests tagged `@empty-feed` (`e2e/coming-soon.spec.ts`), which the normal run leaves out:
 
 ```bash
 npm run build:empty-feed

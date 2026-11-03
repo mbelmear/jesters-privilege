@@ -1,8 +1,10 @@
 import {
+  chooseFeedSource,
   feedUrl,
   loadFeedText,
   transcriptFetch,
   type FeedIO,
+  type FeedSources,
 } from "./feed-source";
 
 const url = "https://www.spreaker.com/show/6900001/episodes/feed";
@@ -122,5 +124,66 @@ describe("feedUrl", () => {
         draft: true,
       })
     ).toBe("https://www.spreaker.com/show/1/episodes/feed");
+  });
+});
+
+describe("chooseFeedSource", () => {
+  const sources: FeedSources = {
+    live: {
+      kind: "url",
+      url: "https://www.spreaker.com/show/7523831/episodes/feed",
+    },
+    fixture: {
+      kind: "fixture",
+      path: "src/content/feed-fixture.xml",
+      transcripts: "src/content/transcripts",
+      standsInFor: "https://www.spreaker.com/show/7523831/episodes/feed",
+      draft: true,
+    },
+    empty: {
+      kind: "fixture",
+      path: "src/content/feed-fixture-empty.xml",
+      transcripts: "src/content/transcripts",
+      standsInFor: "https://www.spreaker.com/show/7523831/episodes/feed",
+      draft: true,
+    },
+  };
+
+  it("builds from the fixture by default, so tests never depend on Spreaker", () => {
+    expect(chooseFeedSource({}, sources)).toBe(sources.fixture);
+  });
+
+  it("builds from Spreaker when the deploy asks for the live feed", () => {
+    expect(chooseFeedSource({ FEED: "live" }, sources)).toBe(sources.live);
+  });
+
+  it("builds with no Episodes to test the coming-soon state", () => {
+    expect(chooseFeedSource({ FEED: "empty" }, sources)).toBe(sources.empty);
+  });
+
+  it("refuses a production build that isn't reading the live feed", () => {
+    expect(() => chooseFeedSource({ SITE_ENV: "production" }, sources)).toThrow(
+      "A production build must read the live feed (FEED=live), not the fixture"
+    );
+    expect(() =>
+      chooseFeedSource({ SITE_ENV: "production", FEED: "empty" }, sources)
+    ).toThrow(
+      "A production build must read the live feed (FEED=live), not the empty fixture"
+    );
+    expect(
+      chooseFeedSource({ SITE_ENV: "production", FEED: "live" }, sources)
+    ).toBe(sources.live);
+  });
+
+  it("reads the fixture when asked by name", () => {
+    expect(chooseFeedSource({ FEED: "fixture" }, sources)).toBe(
+      sources.fixture
+    );
+  });
+
+  it("refuses a FEED it doesn't know rather than quietly using the fixture", () => {
+    expect(() => chooseFeedSource({ FEED: "liev" }, sources)).toThrow(
+      'FEED is "liev"; expected one of live, fixture, empty (unset means fixture)'
+    );
   });
 });
