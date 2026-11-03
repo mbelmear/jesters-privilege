@@ -15,6 +15,50 @@ export type FeedSource =
     }
   | { kind: "url"; url: string };
 
+// The feeds a build can read: the live Spreaker feed, and fixtures shaped like
+// it for tests (one with Episodes, one without).
+export type FeedSources = {
+  live: Extract<FeedSource, { kind: "url" }>;
+  fixture: FeedSource;
+  empty: FeedSource;
+};
+
+// Which feed this build reads, from the environment. Builds read the fixture
+// unless FEED says otherwise, so tests never depend on Spreaker; the deploy
+// sets FEED=live, and a production build without it fails rather than
+// publishing the fixture.
+export function chooseFeedSource(
+  env: { FEED?: string; SITE_ENV?: string },
+  sources: FeedSources
+): FeedSource {
+  const [chosen, name] = feedNamed(env.FEED, sources);
+  if (env.SITE_ENV === "production" && chosen !== sources.live) {
+    throw new Error(
+      `A production build must read the live feed (FEED=live), not ${name}`
+    );
+  }
+  return chosen;
+}
+
+function feedNamed(
+  feed: string | undefined,
+  sources: FeedSources
+): [FeedSource, string] {
+  switch (feed) {
+    case "live":
+      return [sources.live, "the live feed"];
+    case "empty":
+      return [sources.empty, "the empty fixture"];
+    case undefined:
+    case "":
+      return [sources.fixture, "the fixture"];
+    default:
+      throw new Error(
+        `FEED is "${feed}"; expected live, empty, or unset for the fixture`
+      );
+  }
+}
+
 export type FeedIO = {
   fetch: Fetch;
   readFile: (path: string) => Promise<string>;

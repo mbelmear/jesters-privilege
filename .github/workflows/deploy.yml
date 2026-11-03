@@ -36,6 +36,8 @@ jobs:
       - run: npm run build
         env:
           BUILD_COMMIT: ${{ github.event.pull_request.head.sha }}
+          # The Jesters review previews against the real Episodes.
+          FEED: live
           # Marks pages that use draft content with the DRAFT ribbon.
           SITE_ENV: preview
           # The Submit page's Turnstile widget (src/lib/turnstile.ts).
@@ -120,6 +122,8 @@ jobs:
       # nothing deploys.
       - id: check
         run: npm run feed-check
+        env:
+          FEED: live
 
   deploy:
     name: Deploy to production
@@ -144,6 +148,9 @@ jobs:
       - run: npm run build
         env:
           BUILD_COMMIT: ${{ github.sha }}
+          # The build fails without it rather than publish the fixture
+          # (src/lib/feed-source.ts).
+          FEED: live
           # Only this build counts visits (src/lib/analytics.ts); it fails
           # without the token.
           SITE_ENV: production

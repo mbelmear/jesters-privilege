@@ -29,15 +29,15 @@ If the build fails, the workflow stops before `wrangler deploy`, so the last goo
 - `https://www.jestersprivilegepodcast.com/<path>`: a 301 to the apex, keeping path and query. The Worker (`src/worker/index.ts`) does this, which is why `run_worker_first` is on.
 - `/build-manifest.json`: `{ "newestEpisodeGuid": <feed GUID or null>, "commit": <git SHA or null> }`, where `commit` comes from `BUILD_COMMIT` (the PR head on previews). It is written at build time by `src/app/build-manifest.json/route.ts`. The feed check reads it with `parseBuildManifest` (`src/lib/build-manifest.ts`) to decide whether to rebuild. `newestEpisodeGuid` is the newest Episode in the feed (`src/content/feed.ts`), and is null only when the feed has no Episodes.
 
-The build reads the feed from `feedSource` in `src/content/feed.ts`: a fixture (`src/content/feed-fixture.xml`) until Episode 1 is published, then the Spreaker feed URL. If the feed can't be reached, answers with an error, or breaks a rule (two full Episodes share a number, a full Episode has none, a required field is missing), the build fails with a message naming the Episode and the rule, and the last good deploy stays live.
+The build reads the feed `feedSource` in `src/content/feed.ts` picks from `FEED`. Production, previews, and the feed check set `FEED=live`, the Spreaker feed; every other build (CI's tests, `npm run dev`, `npm run build` locally) reads the fixture `src/content/feed-fixture.xml`, so tests never depend on Spreaker, and `FEED=empty` reads one with no Episodes. A production build (`SITE_ENV=production`) that isn't reading the live feed fails, so the fixture can't go live. If the feed can't be reached, answers with an error, or breaks a rule (two full Episodes share a number, a full Episode has none, a required field is missing), the build fails with a message naming the Episode and the rule, and the last good deploy stays live.
 
-Before setting `feedSource` to a feed, run `npm run try-feed -- <feed url>`: it reads the feed by the build's rules and lists the page each Episode would get, or names the Episode and rule that would fail the build. Spreaker leaves an Episode's number out of the feed until it is set on the Episode's edit page, so every full Episode needs its **Episode number** set there; bonuses and trailers need none.
+Before pointing the live feed at a new address, run `npm run try-feed -- <feed url>`: it reads the feed by the build's rules and lists the page each Episode would get, or names the Episode and rule that would fail the build. Spreaker leaves an Episode's number out of the feed until it is set on the Episode's edit page, so every full Episode needs its **Episode number** set there; bonuses and trailers need none.
 
 ## Draft content
 
 Copy awaiting the Jesters' words is marked `draft: true` in `src/content/`. Preview builds set `SITE_ENV=preview`, so a page that uses draft content shows a DRAFT ribbon there (and under `next dev`); production builds never show it.
 
-`npm run launch-check` lists every draft, including the fixture feed, and exits 1 while any remain. It must pass before launch (#30).
+`npm run launch-check` lists every draft that would go live (it reads the live feed, as production does) and exits 1 while any remain. It must pass before launch (#30).
 
 The smoke check confirms the manifest shows the commit just deployed, the home page serves, and `www` redirects.
 

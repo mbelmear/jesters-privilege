@@ -13,7 +13,6 @@ if (drafts.length > 0) {
       ...drafts.map((path) => `  - ${path}`),
       "",
       "Replace each with the Jesters' words and remove its `draft: true` (src/content/).",
-      "`feed` is the fixture: set feedSource in src/content/feed.ts to the Spreaker feed URL.",
     ].join("\n")
   );
   process.exit(1);
