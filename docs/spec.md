@@ -336,7 +336,7 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
 - Player queue, autoplay, sleep timer, downloads, chapters, and share-from-timestamp.
 - Hand-corrected Transcripts.
 - Newsletter, merch, blog, comments, accounts, a CMS, and a database.
-- Forwarding `hello@` to several inboxes.
+- Forwarding `hello@` to several inboxes: everything goes to the show's Gmail.
 - Instant updates through a Spreaker publish webhook, and narrowing the feed-check schedule to a fixed release day.
 - Analytics beyond Cloudflare Web Analytics.
 - The final writing of major pages. The Jesters write it; agents build with marked drafts.

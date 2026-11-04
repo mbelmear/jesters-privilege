@@ -2,7 +2,6 @@
 
 Good ideas deliberately left out of v1.
 
-- **Forward `hello@` to Aaron too.** Change the Email Routing destination, or add a small Email Worker to forward to several inboxes.
 - **Site-only extras on Episode pages.** Scripture passages, the history story, books mentioned: content that lives on the site but not in the Show notes.
 - **Instant episode updates.** If the podcast host supports a publish webhook, use it to trigger the deploy workflow so new Episodes appear within minutes.
 - **Narrow the feed-check schedule.** Once there's a fixed release day, run the 2-hourly check only on that day and the next.
