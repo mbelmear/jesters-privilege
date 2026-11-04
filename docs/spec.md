@@ -89,7 +89,7 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
 49. As a visitor, I want an explanation of why the show uses a jester (the court, the King, 1 Corinthians 4:10), so that I understand the metaphor.
 50. As a visitor, I want full bios of all three Jesters with equal billing, so that I know each of them.
 51. As a visitor, I want to know what the show believes, so that I can trust its theology.
-52. As a visitor, I want to know the Jesters serve at Redeemer Church in Bozeman, so that I know where they come from.
+52. As a visitor, I want to know the show is the Jesters' own project, not a church's, so that I know who speaks for it.
 
 ### Speak Freely
 
@@ -231,7 +231,7 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
   - Fools with no recorded jests (Paul, Francis, Pablo de Valladolid, Calabacillas) keep their stories as written, apart from quoting Scripture in the ESV.
   - v1 Fools, each depending on finding a suitable public-domain painting: Paul's "fools for Christ" and the holy fools (St. Francis's _jongleurs de Dieu_, the Russian _yurodivy_), Stańczyk (Matejko, 1862), Triboulet, Will Somers, Archibald Armstrong, Richard Tarlton, the Spanish court fools painted by Velázquez, and Erasmus's _In Praise of Folly_ with Holbein's marginal drawings.
   - It ends with why this show wears the motley.
-- **About**: why the show is called "Jester's Privilege"; the three Jesters with equal billing, each under the label they chose (Co-host; Aaron is Producer & Co-host) and with their full bio; what we believe; Redeemer Church (the show is ours, not the church's); how to listen, with the show's Listen links and "New to podcasts?".
+- **About**: why the show is called "Jester's Privilege", closing on one line that the show is the Jesters' own and no church stands behind it, naming none (the elders' request on #6); the three Jesters with equal billing, each under the label they chose (Co-host; Aaron is Producer & Co-host) and with their full bio; what we believe; how to listen, with the show's Listen links and "New to podcasts?".
 - **Speak Freely** (`/speak-freely`; renamed from Submit in #85)
   - Type: Question (the default), Confession, Topic idea, or Other.
   - Message: required.
