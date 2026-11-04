@@ -12,7 +12,6 @@ const listen: Site["listen"] = {
   "apple-podcasts":
     "https://podcasts.apple.com/us/podcast/jesters-privilege/id6830338936",
   spotify: "https://open.spotify.com/show/6a7KnKe6ohzrMGZwJDc5Ti",
-  rss: LIVE_FEED_URL,
 };
 
 // Without Instagram's share-tracking query string.
