@@ -12,6 +12,7 @@
     "add-painting": "tsx scripts/add-painting.ts",
     "start": "next start",
     "lint": "next typegen && eslint",
+    "lint:workflows": "scripts/actionlint.sh",
     "prepare": "husky",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "jest",
