@@ -1,0 +1,124 @@
+name: Transcribe
+
+# Spreaker makes no Transcripts, so the site makes its own (ADR 0003): every 2
+# hours, each Episode the feed links no WebVTT Transcript for, and that has
+# none saved, is transcribed once with whisper.cpp and saved as
+# `<episode-guid>.vtt` on the `transcripts` branch, which builds read. The
+# feed check (deploy.yml, at 17 past) then rebuilds the site, since an Episode
+# has gained a Transcript. A pull request that changes the transcriber runs it
+# for real against the live feed and uploads what it made, pushing nothing.
+# See docs/deploy.md.
+
+on:
+  schedule:
+    # Half an hour after the feed check, so a new Episode deploys first and
+    # its Transcript follows.
+    - cron: "47 */2 * * *"
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/transcribe.yml
+      - scripts/transcribe.ts
+      - src/lib/transcribe.ts
+
+permissions:
+  contents: read
+
+env:
+  # https://github.com/ggml-org/whisper.cpp/releases
+  WHISPER_VERSION: v1.9.5
+  WHISPER_MODEL_NAME: small.en
+
+jobs:
+  transcribe:
+    name: Transcribe new Episodes
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    permissions:
+      # Pushes to the transcripts branch, which main's ruleset doesn't cover.
+      contents: write
+    # One run writes to the branch at a time; a pull request's run only reads.
+    concurrency:
+      group: transcribe-${{ github.event_name == 'pull_request' && github.ref || 'transcripts' }}
+      cancel-in-progress: false
+    env:
+      FEED: live
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
+      - name: Check out the transcripts branch
+        run: |
+          dir="$RUNNER_TEMP/transcripts"
+          echo "TRANSCRIPTS_DIR=$dir" >> "$GITHUB_ENV"
+          if git ls-remote --exit-code --heads origin transcripts >/dev/null; then
+            git fetch --depth=1 origin transcripts:refs/remotes/origin/transcripts
+            git worktree add -B transcripts "$dir" origin/transcripts
+          else
+            echo "::notice::No transcripts branch yet; starting one"
+            git worktree add --orphan -b transcripts "$dir"
+            cat > "$dir/README.md" <<'MD'
+          # Transcripts
+
+          The site's own Episode Transcripts, one WebVTT file per Episode, named
+          after its feed GUID (encoded). The Transcribe workflow writes them
+          (.github/workflows/transcribe.yml on main, ADR 0003) and builds read
+          them. An Episode with a file here is never transcribed again, so a
+          hand fix to its file sticks.
+          MD
+          fi
+      - id: plan
+        run: npm run transcribe -- --plan
+      - name: Install ffmpeg
+        if: steps.plan.outputs.needed == 'true'
+        run: command -v ffmpeg || { sudo apt-get update && sudo apt-get install -y ffmpeg; }
+      - id: whisper-cache
+        if: steps.plan.outputs.needed == 'true'
+        uses: actions/cache@v4
+        with:
+          path: ~/whisper
+          key: whisper-${{ runner.os }}-${{ env.WHISPER_VERSION }}-${{ env.WHISPER_MODEL_NAME }}
+      - name: Build whisper.cpp and fetch its model
+        if: steps.plan.outputs.needed == 'true' && steps.whisper-cache.outputs.cache-hit != 'true'
+        run: |
+          src="$RUNNER_TEMP/whisper.cpp"
+          git clone --depth 1 --branch "$WHISPER_VERSION" https://github.com/ggml-org/whisper.cpp "$src"
+          # Portable rather than tuned to this runner's CPU, since the cached
+          # binary may run on another; every GitHub runner has AVX2.
+          cmake -S "$src" -B "$src/build" -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_SHARED_LIBS=OFF -DWHISPER_BUILD_TESTS=OFF \
+            -DGGML_NATIVE=OFF -DGGML_AVX=ON -DGGML_AVX2=ON -DGGML_FMA=ON -DGGML_F16C=ON
+          cmake --build "$src/build" --config Release -j "$(nproc)" --target whisper-cli
+          mkdir -p ~/whisper
+          cp "$src/build/bin/whisper-cli" ~/whisper/
+          curl -fsSL --retry 3 -o ~/whisper/model.bin \
+            "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-$WHISPER_MODEL_NAME.bin"
+      - name: Transcribe
+        if: steps.plan.outputs.needed == 'true'
+        run: |
+          export WHISPER_CLI=~/whisper/whisper-cli WHISPER_MODEL=~/whisper/model.bin
+          npm run transcribe
+      # Pushes whatever was saved, even when another Episode failed.
+      - name: Push to the transcripts branch
+        if: >-
+          !cancelled() && github.event_name != 'pull_request' &&
+          steps.plan.outputs.needed == 'true'
+        run: |
+          cd "$TRANSCRIPTS_DIR"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "::notice::Nothing new to push"
+            exit 0
+          fi
+          git -c user.name="github-actions[bot]" \
+            -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -m "Transcripts from the Transcribe workflow, run $GITHUB_RUN_ID"
+          git push origin transcripts
+      - name: Upload what a pull request made
+        if: >-
+          !cancelled() && github.event_name == 'pull_request' &&
+          steps.plan.outputs.needed == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: transcripts
+          path: ${{ env.TRANSCRIPTS_DIR }}/*.vtt
+          if-no-files-found: warn

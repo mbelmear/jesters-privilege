@@ -1,7 +1,7 @@
 // The build manifest is published at BUILD_MANIFEST_PATH on every deploy. The
 // scheduled feed check reads it from the live site and rebuilds when the
 // feed's newest Episode differs from the one recorded here (ADR 0001), or when
-// an Episode has gained an Episode Listen link since (ADR 0003).
+// an Episode has gained a Transcript or an Episode Listen link since (ADR 0003).
 import {
   EPISODE_LISTEN_APPS,
   type EpisodeListenApp,
@@ -17,6 +17,8 @@ export type BuildManifest = {
   commit: string | null;
   // The Episodes the deploy had Episode Listen links for, by app.
   episodeListenLinks: ListedEpisodes;
+  // The Episodes the deploy had Transcripts for, by feed GUID.
+  transcripts: string[];
 };
 
 export function parseBuildManifest(value: unknown): BuildManifest {
@@ -32,7 +34,10 @@ export function parseBuildManifest(value: unknown): BuildManifest {
   if (!("episodeListenLinks" in value)) {
     throw new Error("Build manifest is missing episodeListenLinks");
   }
-  const { newestEpisodeGuid, commit, episodeListenLinks } = value;
+  if (!("transcripts" in value)) {
+    throw new Error("Build manifest is missing transcripts");
+  }
+  const { newestEpisodeGuid, commit, episodeListenLinks, transcripts } = value;
   if (!isStringOrNull(newestEpisodeGuid)) {
     throw new Error(
       "Build manifest newestEpisodeGuid must be a string or null"
@@ -45,7 +50,18 @@ export function parseBuildManifest(value: unknown): BuildManifest {
     newestEpisodeGuid,
     commit,
     episodeListenLinks: parseListedEpisodes(episodeListenLinks),
+    transcripts: parseGuids(transcripts),
   };
+}
+
+function parseGuids(value: unknown): string[] {
+  const shape = "Build manifest transcripts must be a list of Episode GUIDs";
+  if (!Array.isArray(value)) throw new Error(shape);
+  const list: unknown[] = value;
+  return list.map((guid) => {
+    if (typeof guid !== "string") throw new Error(shape);
+    return guid;
+  });
 }
 
 function parseListedEpisodes(value: unknown): ListedEpisodes {

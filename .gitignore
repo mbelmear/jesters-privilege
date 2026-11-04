@@ -29,6 +29,9 @@
 # Episode lookups made by scripts/lookups.ts
 /.lookups.json
 
+# Transcripts read by scripts/transcripts.ts
+/.transcripts.json
+
 # misc
 .DS_Store
 *.pem

@@ -1,7 +1,7 @@
 import { parseBuildManifest } from "./build-manifest";
 
 describe("parseBuildManifest", () => {
-  it("reads the newest Episode and commit a deploy was built with", () => {
+  it("reads the newest Episode, commit, and Transcripts a deploy was built with", () => {
     expect(
       parseBuildManifest({
         newestEpisodeGuid: "https://www.spreaker.com/episode/61234567",
@@ -9,6 +9,7 @@ describe("parseBuildManifest", () => {
         episodeListenLinks: {
           "apple-podcasts": ["https://www.spreaker.com/episode/61234567"],
         },
+        transcripts: ["https://www.spreaker.com/episode/61234567"],
       })
     ).toEqual({
       newestEpisodeGuid: "https://www.spreaker.com/episode/61234567",
@@ -16,6 +17,7 @@ describe("parseBuildManifest", () => {
       episodeListenLinks: {
         "apple-podcasts": ["https://www.spreaker.com/episode/61234567"],
       },
+      transcripts: ["https://www.spreaker.com/episode/61234567"],
     });
   });
 
@@ -25,11 +27,13 @@ describe("parseBuildManifest", () => {
         newestEpisodeGuid: null,
         commit: null,
         episodeListenLinks: {},
+        transcripts: [],
       })
     ).toEqual({
       newestEpisodeGuid: null,
       commit: null,
       episodeListenLinks: {},
+      transcripts: [],
     });
   });
 
@@ -40,7 +44,7 @@ describe("parseBuildManifest", () => {
   });
 
   it("names the field that is missing", () => {
-    const links = { episodeListenLinks: {} };
+    const links = { episodeListenLinks: {}, transcripts: [] };
     expect(() => parseBuildManifest({ commit: "7c625bc", ...links })).toThrow(
       "Build manifest is missing newestEpisodeGuid"
     );
@@ -48,8 +52,19 @@ describe("parseBuildManifest", () => {
       parseBuildManifest({ newestEpisodeGuid: null, ...links })
     ).toThrow("Build manifest is missing commit");
     expect(() =>
-      parseBuildManifest({ newestEpisodeGuid: null, commit: null })
+      parseBuildManifest({
+        newestEpisodeGuid: null,
+        commit: null,
+        transcripts: [],
+      })
     ).toThrow("Build manifest is missing episodeListenLinks");
+    expect(() =>
+      parseBuildManifest({
+        newestEpisodeGuid: null,
+        commit: null,
+        episodeListenLinks: {},
+      })
+    ).toThrow("Build manifest is missing transcripts");
   });
 
   it("names the field with the wrong type", () => {
@@ -57,6 +72,7 @@ describe("parseBuildManifest", () => {
       newestEpisodeGuid: null,
       commit: null,
       episodeListenLinks: {},
+      transcripts: [],
     };
     expect(() =>
       parseBuildManifest({ ...valid, newestEpisodeGuid: 61234567 })
@@ -77,6 +93,12 @@ describe("parseBuildManifest", () => {
     ).toThrow(
       "Build manifest episodeListenLinks must map apps to lists of Episode GUIDs"
     );
+    expect(() => parseBuildManifest({ ...valid, transcripts: {} })).toThrow(
+      "Build manifest transcripts must be a list of Episode GUIDs"
+    );
+    expect(() =>
+      parseBuildManifest({ ...valid, transcripts: [76161078] })
+    ).toThrow("Build manifest transcripts must be a list of Episode GUIDs");
   });
 
   it("names an app it doesn't know", () => {
@@ -85,6 +107,7 @@ describe("parseBuildManifest", () => {
         newestEpisodeGuid: null,
         commit: null,
         episodeListenLinks: { rss: [] },
+        transcripts: [],
       })
     ).toThrow(
       'Build manifest episodeListenLinks has "rss", which isn\'t an app with Episode Listen links'

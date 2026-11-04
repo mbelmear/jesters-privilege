@@ -1,6 +1,7 @@
 // The scheduled feed check (ADR 0001): every 2 hours, compare the feed's newest
 // Episode with the one the live site was built with, and rebuild only when they
-// differ or when an Episode has gained an Episode Listen link since (ADR 0003).
+// differ or when an Episode has gained an Episode Listen link or a Transcript
+// since (ADR 0003).
 // Run by scripts/feed-check.ts in .github/workflows/deploy.yml.
 import {
   BUILD_MANIFEST_PATH,
@@ -23,6 +24,10 @@ export type FeedCheckIO = {
   // The feed's Episodes each app has a link for now. Never throws: an app
   // whose lookup failed lists none, which never triggers a rebuild.
   episodeListenLinks: () => Promise<ListedEpisodes>;
+  // The feed's Episodes that have a Transcript now, by GUID. Never throws: an
+  // Episode whose Transcript can't be had isn't listed, which never triggers
+  // a rebuild.
+  transcripts: () => Promise<string[]>;
 };
 
 export type FeedCheck = {
@@ -58,9 +63,17 @@ export async function checkFeed(
       reason: `Episodes have gained Episode Listen links since the live site was built: ${named}`,
     };
   }
+  const had = new Set(manifest.transcripts);
+  const transcribed = (await io.transcripts()).filter((guid) => !had.has(guid));
+  if (transcribed.length > 0) {
+    return {
+      rebuild: true,
+      reason: `Episodes have gained Transcripts since the live site was built: ${transcribed.join(", ")}`,
+    };
+  }
   return {
     rebuild: false,
-    reason: `The live site already has the newest Episode (${newestEpisodeGuid}) and every Episode Listen link`,
+    reason: `The live site already has the newest Episode (${newestEpisodeGuid}) and every Episode Listen link and Transcript`,
   };
 }
 

@@ -33,9 +33,6 @@
 <guid isPermaLink="false">https://api.spreaker.com/episode/70000006</guid>
 <pubDate>Thu, 14 Jan 2027 12:00:00 +0000</pubDate>
 <enclosure url="https://dts.podtrac.com/redirect.mp3/api.spreaker.com/download/episode/70000006/jesters_privilege_4.mp3" length="41230512" type="audio/mpeg"/>
-<podcast:transcript url="https://transcription.spreaker.com/starship/6a1f0c4e-0004-4c4d-9e10-000000000004/6a1f0c4e-0004-4c4d-9e10-000000000004.srt" type="application/x-subrip" language="en"/>
-<podcast:transcript url="https://transcription.spreaker.com/starship/6a1f0c4e-0004-4c4d-9e10-000000000004/6a1f0c4e-0004-4c4d-9e10-000000000004.txt" type="text/plain" language="en"/>
-<podcast:transcript url="https://transcription.spreaker.com/starship/6a1f0c4e-0004-4c4d-9e10-000000000004/6a1f0c4e-0004-4c4d-9e10-000000000004.vtt" type="text/vtt" language="en"/>
 <itunes:author>Jester's Privilege</itunes:author>
 <itunes:summary><![CDATA[Aquinas thought a person who never jokes is guilty of a vice. Was he right?]]></itunes:summary>
 <itunes:duration>2577</itunes:duration>

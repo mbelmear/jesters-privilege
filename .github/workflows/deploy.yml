@@ -4,7 +4,8 @@ name: Deploy
 # Pushes to main and the Run workflow button deploy to production; each pull
 # request gets its own preview URL, posted as a comment. Every 2 hours the feed
 # check deploys only when the feed has an Episode the live site lacks, or an
-# Episode has gained an Episode Listen link. See docs/deploy.md.
+# Episode has gained an Episode Listen link or a Transcript (transcribe.yml
+# makes them). See docs/deploy.md.
 
 on:
   push:
@@ -118,7 +119,8 @@ jobs:
       - uses: actions/checkout@v5
       - uses: ./.github/actions/setup
       # Sets rebuild=true only when the feed's newest Episode isn't on the live
-      # site, or an Episode has gained an Episode Listen link since. A feed or
+      # site, or an Episode has gained an Episode Listen link or a Transcript
+      # since. A feed or
       # live manifest that can't be read fails this job, so nothing deploys.
       - id: check
         run: npm run feed-check
