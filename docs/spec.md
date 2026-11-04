@@ -180,7 +180,7 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
 
 - Spreaker makes no Transcripts, so the site makes its own (ADR 0003). The podcast host's WebVTT Transcript is used when the feed links one; otherwise the site's own.
 - **Making one**: when an Episode has neither, a workflow transcribes its audio once with Whisper (whisper.cpp) on GitHub's runners, free for this public repo, with a prompt of the show's hard names (Stańczyk, Triboulet, Redeemer, Bozeman, the Jesters' names). It writes WebVTT.
-- **Keeping them**: each one is saved as `<episode-guid>.vtt` on a `transcripts` branch that only the workflow writes to, outside `main`'s protection. Builds read from it. An Episode with a saved Transcript is never transcribed again, (ADR 0003).
+- **Keeping them**: each one is saved as `<episode-guid>.vtt` on a `transcripts` branch that only the workflow writes to, outside `main`'s protection. Builds read from it. An Episode with a saved Transcript is never transcribed again, so a hand fix to its file sticks (ADR 0003).
 - **Timing**: a new Episode deploys first; its Transcript follows. The feed check also rebuilds when an Episode has gained a Transcript or an Episode Listen link since the last deploy.
 - A **Transcript module** turns the caption cues into readable paragraphs, each with a start timestamp. It groups cues on pauses and sentence ends, within a target paragraph length.
 - A missing, unreachable, or unreadable Transcript leaves that Episode without one and doesn't fail the build. The build log names the Episode and why.
