@@ -178,20 +178,24 @@ npm run format              # fix formatting
 npm run format:check        # what CI runs
 npm run lint
 npm run typecheck
+npm run lint:workflows      # actionlint on .github/workflows, as CI's Lint workflows job runs it
 ```
 
 `lint` and `typecheck` both run `next typegen` first: type-aware lint rules need the generated `next-env.d.ts` (gitignored), which types imports such as `import logo from "….webp"`.
 
 The pre-commit hook formats staged files with Prettier, so `format:check` only fails for files committed without the hook.
 
+`lint:workflows` (`scripts/actionlint.sh`) downloads the actionlint release CI pins, once, into `node_modules/.cache`, and also runs shellcheck on every `run:` block. Nothing runs it on commit (#44), so run it before pushing a workflow change.
+
 ## In CI
 
 `.github/workflows/ci.yml` runs on every pull request and every push to `main`:
 
-1. **Format, lint, typecheck, unit tests**, with coverage
-2. **Build static site**, shared with the next two jobs
-3. **Playwright** on Chromium and WebKit, with browsers cached between runs, and the coming-soon journey against its own build from the empty feed
-4. **Lighthouse** with the mobile budget
+1. **Lint workflows** (actionlint, as `npm run lint:workflows`)
+2. **Format, lint, typecheck, unit tests**, with coverage
+3. **Build static site**, shared with the next two jobs
+4. **Playwright** on Chromium and WebKit, with browsers cached between runs, and the coming-soon journey against its own build from the empty feed
+5. **Lighthouse** with the mobile budget
 
 `.github/workflows/nightly.yml` runs the Playwright suite on Firefox every night, and can be started by hand from the Actions tab.
 

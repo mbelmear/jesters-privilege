@@ -31,9 +31,13 @@ runFeedCheck(site.url, {
     }
     return listedEpisodes(await getEpisodes(), lookups);
   },
-  // Read as the build reads them; the log names each Episode left without
-  // one, and why.
-  transcripts: async () => [...(await lookUpTranscripts()).keys()],
+  // Read as the build reads them. An Episode left without one never rebuilds,
+  // so the run's annotations name it and why.
+  transcripts: async () => [
+    ...(
+      await lookUpTranscripts((message) => console.log(`::warning::${message}`))
+    ).keys(),
+  ],
   setOutput: (name, value) => {
     const line = `${name}=${value}\n`;
     if (outputFile) appendFileSync(outputFile, line);
