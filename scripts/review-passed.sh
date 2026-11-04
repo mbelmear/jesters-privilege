@@ -18,7 +18,11 @@ fi
 pr=$1
 reviewed=$2
 
-head=$(gh pr view "$pr" --json headRefOid --jq .headRefOid)
+# Straight after a push GitHub can still show the commit before it, so wait
+# for it to catch up, as pr-status and mark-ready do (#115).
+if ! head=$("$(dirname "$0")/wait-pushed-head.sh" "$pr"); then
+  exit 1
+fi
 if [[ "$reviewed" != "$head" ]]; then
   echo "Refusing: #$pr's head is $head, but the review was of $reviewed. Review the new commits first." >&2
   exit 1

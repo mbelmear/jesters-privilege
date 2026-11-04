@@ -20,26 +20,4 @@ export const microcopy = {
     text: "You've gone looking for a page that doesn't exist. We'd know a fool's errand when we see one.",
   },
   notFoundLink: { text: "Return to the great hall" },
-  readFullTranscript: { text: "Read the full transcript" },
-  transcriptNote: {
-    text: "This Transcript is machine-generated, so forgive the odd spelling.",
-    draft: true,
-  },
-  submitNameLabel: {
-    text: "How should we say your name on the show? (Leave blank to stay anonymous.)",
-  },
-  submitEmailLabel: { text: "Only if you're OK with us following up." },
-  submitConsentLabel: { text: "You can mention this on the show." },
-  submitPrivacyNote: {
-    text: "Your Submission goes straight to the Jesters' inbox and nowhere else. We don't store it on the site, and we'll only use your email to follow up.",
-    draft: true,
-  },
-  submitSuccess: {
-    text: "Received. The Jesters will read it, and you may hear it on the show.",
-    draft: true,
-  },
-  submitFailure: {
-    text: "Something went wrong and your Submission wasn't sent. Please try again in a moment, or email the show instead.",
-    draft: true,
-  },
 } as const satisfies Record<string, Copy>;
