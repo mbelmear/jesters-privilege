@@ -2,6 +2,7 @@ import {
   chooseFeedSource,
   feedUrl,
   loadFeedText,
+  appleLookupFetch,
   transcriptFetch,
   type FeedIO,
   type FeedSources,
@@ -33,6 +34,7 @@ describe("loadFeedText", () => {
         kind: "fixture",
         path: "src/content/feed-fixture.xml",
         transcripts: "src/content/transcripts",
+        appleLookup: "src/content/apple-lookup-fixture.json",
         standsInFor: url,
         draft: true,
       },
@@ -83,6 +85,7 @@ describe("transcriptFetch", () => {
         kind: "fixture",
         path: "src/content/feed-fixture.xml",
         transcripts: "src/content/transcripts",
+        appleLookup: "src/content/apple-lookup-fixture.json",
         standsInFor: url,
         draft: true,
       },
@@ -109,6 +112,39 @@ describe("transcriptFetch", () => {
   });
 });
 
+describe("appleLookupFetch", () => {
+  const lookupUrl =
+    "https://itunes.apple.com/lookup?id=6830338936&entity=podcastEpisode&limit=200";
+
+  it("answers the fixture's Apple lookup from a file, so tests never depend on Apple", async () => {
+    const fetch = appleLookupFetch(
+      {
+        kind: "fixture",
+        path: "src/content/feed-fixture.xml",
+        transcripts: "src/content/transcripts",
+        appleLookup: "src/content/apple-lookup-fixture.json",
+        standsInFor: url,
+        draft: true,
+      },
+      io({
+        readFile: (path) =>
+          Promise.resolve(
+            path === "src/content/apple-lookup-fixture.json" ? "{}" : ""
+          ),
+      })
+    );
+    expect(await (await fetch(lookupUrl)).text()).toBe("{}");
+  });
+
+  it("asks Apple for the real feed's Episodes", async () => {
+    const fetch = appleLookupFetch(
+      { kind: "url", url },
+      io({ fetch: (u) => response(200, "OK", u === lookupUrl ? "{}" : "") })
+    );
+    expect(await (await fetch(lookupUrl)).text()).toBe("{}");
+  });
+});
+
 describe("feedUrl", () => {
   it("is the feed the site reads, for podcast apps to subscribe to", () => {
     expect(feedUrl({ kind: "url", url })).toBe(url);
@@ -120,6 +156,7 @@ describe("feedUrl", () => {
         kind: "fixture",
         path: "src/content/feed-fixture.xml",
         transcripts: "src/content/transcripts",
+        appleLookup: "src/content/apple-lookup-fixture.json",
         standsInFor: "https://www.spreaker.com/show/1/episodes/feed",
         draft: true,
       })
@@ -137,6 +174,7 @@ describe("chooseFeedSource", () => {
       kind: "fixture",
       path: "src/content/feed-fixture.xml",
       transcripts: "src/content/transcripts",
+      appleLookup: "src/content/apple-lookup-fixture.json",
       standsInFor: "https://www.spreaker.com/show/7523831/episodes/feed",
       draft: true,
     },
@@ -144,6 +182,7 @@ describe("chooseFeedSource", () => {
       kind: "fixture",
       path: "src/content/feed-fixture-empty.xml",
       transcripts: "src/content/transcripts",
+      appleLookup: "src/content/apple-lookup-fixture.json",
       standsInFor: "https://www.spreaker.com/show/7523831/episodes/feed",
       draft: true,
     },

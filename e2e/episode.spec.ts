@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
+import { site } from "../src/content/site";
 
 // Every Episode in the fixture feed, oldest first, at its address (ADR 0002).
 const episodes = [
@@ -32,6 +33,32 @@ test.describe("Episode page", () => {
       ).toBeVisible();
     });
   }
+
+  test("opens the Episode in Apple Podcasts where Apple lists it", async ({
+    page,
+  }) => {
+    await page.goto("/episodes/1");
+    await expect(
+      page
+        .getByRole("list", { name: "or listen on" })
+        .getByRole("link", { name: "Apple Podcasts" })
+    ).toHaveAttribute(
+      "href",
+      "https://podcasts.apple.com/us/podcast/celebrity-pastors/id6830338936?i=1000799664710"
+    );
+  });
+
+  test("opens the show in Apple Podcasts for an Episode Apple doesn't list yet", async ({
+    page,
+  }) => {
+    // The fixture's Apple lookup leaves out its newest Episode.
+    await page.goto("/episodes/4");
+    await expect(
+      page
+        .getByRole("list", { name: "or listen on" })
+        .getByRole("link", { name: "Apple Podcasts" })
+    ).toHaveAttribute("href", site.listen["apple-podcasts"] ?? "");
+  });
 
   test("shows Show notes with their links intact", async ({ page }) => {
     await page.goto("/episodes/1");

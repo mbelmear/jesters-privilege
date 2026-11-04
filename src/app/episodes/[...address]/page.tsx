@@ -4,7 +4,12 @@ import { DraftRibbon } from "@/components/draft-ribbon";
 import { EpisodeDetails } from "@/components/episode-details";
 import { JsonLd } from "@/components/json-ld";
 import { content } from "@/content";
-import { feedSource, getEpisodes, getTranscript } from "@/content/feed";
+import {
+  feedSource,
+  getEpisodeListenLinks,
+  getEpisodes,
+  getTranscript,
+} from "@/content/feed";
 import { series } from "@/content/series";
 import { episodeAddress, episodePath, findEpisode } from "@/lib/feed";
 import { episodeTitle } from "@/lib/format-episode";
@@ -46,15 +51,20 @@ export default async function EpisodePage({
 }: PageProps<"/episodes/[...address]">) {
   const sequence = await episodeAt((await params).address);
   const transcript = await getTranscript(sequence.episode);
-  const { shell, site, episodePage } = content;
+  const listenLinks = await getEpisodeListenLinks(sequence.episode);
+  const { shell, site, episodePage, listen } = content;
   return (
     <>
-      <DraftRibbon uses={[shell, site.name, episodePage, feedSource]} />
+      <DraftRibbon
+        uses={[shell, site.name, site.listen, episodePage, listen, feedSource]}
+      />
       <JsonLd data={episodeJsonLd(series, sequence.episode)} />
       <EpisodeDetails
         sequence={sequence}
         transcript={transcript}
+        listenLinks={listenLinks}
         copy={episodePage}
+        listenCopy={listen}
         playerCopy={shell.player}
       />
     </>

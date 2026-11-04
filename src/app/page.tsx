@@ -5,11 +5,11 @@ import { GalleryTeaser } from "@/components/gallery-teaser";
 import { Hero } from "@/components/hero";
 import { HeroReveal } from "@/components/hero-reveal";
 import { JsonLd } from "@/components/json-ld";
+import { EpisodeListenLinks } from "@/components/episode-listen-links";
 import { LatestEpisode } from "@/components/latest-episode";
-import { ListenButtons } from "@/components/listen-buttons";
 import { MeetTheJesters } from "@/components/meet-the-jesters";
 import { content, sectionHref } from "@/content";
-import { feedSource, getEpisodes } from "@/content/feed";
+import { feedSource, getEpisodeListenLinks, getEpisodes } from "@/content/feed";
 import { series } from "@/content/series";
 import { pageMetadata, seriesJsonLd } from "@/lib/seo";
 
@@ -24,6 +24,7 @@ export default async function Home() {
   const { site, shell, hero, home, jesters, listen, microcopy, paintings } =
     content;
   const [latest] = await getEpisodes();
+  const listenLinks = latest ? await getEpisodeListenLinks(latest) : [];
   return (
     <div className="flex flex-col gap-16 pb-20 sm:gap-20">
       <DraftRibbon
@@ -34,7 +35,6 @@ export default async function Home() {
           home,
           listen,
           jesters,
-          microcopy.newToPodcasts,
           microcopy.comingSoon,
           paintings.stanczyk,
           feedSource,
@@ -44,17 +44,13 @@ export default async function Home() {
       <Hero logo={hero.logo} name={site.name}>
         <HeroReveal paragraphs={hero.paragraphs} />
       </Hero>
-      <ListenButtons
-        links={site.listen}
-        copy={listen}
-        newToPodcasts={microcopy.newToPodcasts}
-      />
       <FleuronRule className="mx-auto w-full max-w-xs px-4" />
       <LatestEpisode
         episode={latest}
         copy={home.latestEpisode}
         comingSoon={microcopy.comingSoon}
         playerCopy={shell.player}
+        listenLinks={<EpisodeListenLinks links={listenLinks} copy={listen} />}
       />
       <GalleryTeaser
         painting={paintings.stanczyk}

@@ -1,4 +1,5 @@
 import type { Fetch } from "./download";
+import type { ListedEpisodes } from "./episode-listen-links";
 import { checkFeed, runFeedCheck, type FeedCheckEnv } from "./feed-check";
 
 const SITE = "https://jestersprivilegepodcast.com";
@@ -20,26 +21,62 @@ function liveSite(body: string, status = 200): Fetch {
   };
 }
 
-function deployedWith(newestEpisodeGuid: string | null): Fetch {
-  return liveSite(JSON.stringify({ newestEpisodeGuid, commit: "7c625bc" }));
+function deployedWith(
+  newestEpisodeGuid: string | null,
+  episodeListenLinks: ListedEpisodes = {}
+): Fetch {
+  return liveSite(
+    JSON.stringify({ newestEpisodeGuid, commit: "7c625bc", episodeListenLinks })
+  );
 }
+
+// The feed and the apps' lookups as they stand: no Episode Listen links
+// unless a test gives some.
+const feed = (
+  newestEpisodeGuid: string | null,
+  episodeListenLinks: ListedEpisodes = {}
+) => ({
+  newestEpisodeGuid: async () => newestEpisodeGuid,
+  episodeListenLinks: async () => episodeListenLinks,
+});
 
 describe("checkFeed", () => {
   it("leaves the site alone when its newest Episode is the feed's", async () => {
     const result = await checkFeed(SITE, {
       fetch: deployedWith(EPISODE_1),
-      newestEpisodeGuid: async () => EPISODE_1,
+      ...feed(EPISODE_1),
     });
     expect(result).toEqual({
       rebuild: false,
-      reason: `The live site already has the newest Episode (${EPISODE_1})`,
+      reason: `The live site already has the newest Episode (${EPISODE_1}) and every Episode Listen link`,
     });
+  });
+
+  it("rebuilds when an Episode has gained an Episode Listen link since the deploy", async () => {
+    const result = await checkFeed(SITE, {
+      fetch: deployedWith(EPISODE_2, { "apple-podcasts": [EPISODE_1] }),
+      ...feed(EPISODE_2, { "apple-podcasts": [EPISODE_2, EPISODE_1] }),
+    });
+    expect(result).toEqual({
+      rebuild: true,
+      reason: `Episodes have gained Episode Listen links since the live site was built: ${EPISODE_2} in Apple Podcasts`,
+    });
+  });
+
+  it("leaves the site alone when an Episode has lost a link, as when a lookup failed", async () => {
+    const result = await checkFeed(SITE, {
+      fetch: deployedWith(EPISODE_2, {
+        "apple-podcasts": [EPISODE_2, EPISODE_1],
+      }),
+      ...feed(EPISODE_2),
+    });
+    expect(result.rebuild).toBe(false);
   });
 
   it("rebuilds when the feed has a newer Episode than the live site", async () => {
     const result = await checkFeed(SITE, {
       fetch: deployedWith(EPISODE_1),
-      newestEpisodeGuid: async () => EPISODE_2,
+      ...feed(EPISODE_2),
     });
     expect(result).toEqual({
       rebuild: true,
@@ -74,7 +111,7 @@ describe("checkFeed", () => {
     "fails, naming why, when the live site's manifest %s",
     async (_, fetch, problem) => {
       await expect(
-        checkFeed(SITE, { fetch, newestEpisodeGuid: async () => EPISODE_1 })
+        checkFeed(SITE, { fetch, ...feed(EPISODE_1) })
       ).rejects.toThrow(problem);
     }
   );
@@ -82,7 +119,7 @@ describe("checkFeed", () => {
 
 describe("runFeedCheck", () => {
   // The workflow's side of a run: its step outputs and its log.
-  function workflow(io: Pick<FeedCheckEnv, "fetch" | "newestEpisodeGuid">) {
+  function workflow(io: Omit<FeedCheckEnv, "setOutput" | "log">) {
     const outputs: string[] = [];
     const log: string[] = [];
     const env: FeedCheckEnv = {
@@ -96,19 +133,19 @@ describe("runFeedCheck", () => {
   it("tells the workflow not to deploy when nothing changed", async () => {
     const { env, outputs, log } = workflow({
       fetch: deployedWith(EPISODE_1),
-      newestEpisodeGuid: async () => EPISODE_1,
+      ...feed(EPISODE_1),
     });
     expect(await runFeedCheck(SITE, env)).toBe(0);
     expect(outputs).toEqual(["rebuild=false"]);
     expect(log).toEqual([
-      `::notice::No rebuild: The live site already has the newest Episode (${EPISODE_1})`,
+      `::notice::No rebuild: The live site already has the newest Episode (${EPISODE_1}) and every Episode Listen link`,
     ]);
   });
 
   it("tells the workflow to deploy when the feed has a new Episode", async () => {
     const { env, outputs, log } = workflow({
       fetch: deployedWith(EPISODE_1),
-      newestEpisodeGuid: async () => EPISODE_2,
+      ...feed(EPISODE_2),
     });
     expect(await runFeedCheck(SITE, env)).toBe(0);
     expect(outputs).toEqual(["rebuild=true"]);
@@ -120,6 +157,7 @@ describe("runFeedCheck", () => {
   it("fails the run, deploying nothing, when the feed can't be read", async () => {
     const { env, outputs, log } = workflow({
       fetch: deployedWith(EPISODE_1),
+      ...feed(EPISODE_1),
       newestEpisodeGuid: async () => {
         throw new Error(
           "Feed https://www.spreaker.com/show/6900001/episodes/feed answered 503 Service Unavailable"
@@ -136,7 +174,7 @@ describe("runFeedCheck", () => {
   it("fails the run, deploying nothing, when the live manifest can't be read", async () => {
     const { env, outputs, log } = workflow({
       fetch: liveSite("<!doctype html><h1>Not found</h1>", 404),
-      newestEpisodeGuid: async () => EPISODE_1,
+      ...feed(EPISODE_1),
     });
     expect(await runFeedCheck(SITE, env)).toBe(1);
     expect(outputs).toEqual([]);

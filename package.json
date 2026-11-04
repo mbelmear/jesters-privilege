@@ -3,9 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "npm run images && next dev",
-    "build": "npm run images && next build",
+    "dev": "npm run images && npm run lookups && next dev",
+    "build": "npm run images && npm run lookups && next build",
     "images": "tsx scripts/images.ts",
+    "lookups": "tsx scripts/lookups.ts",
     "add-painting": "tsx scripts/add-painting.ts",
     "start": "next start",
     "lint": "next typegen && eslint",

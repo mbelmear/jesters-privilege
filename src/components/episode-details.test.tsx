@@ -4,6 +4,7 @@ import { render, screen, within } from "@testing-library/react";
 import { axe } from "jest-axe";
 import { content } from "@/content";
 import { findEpisode, parseFeed } from "@/lib/feed";
+import type { EpisodeListenLink } from "@/lib/episode-listen-links";
 import type { Transcript } from "@/lib/transcript";
 import { EpisodeDetails } from "./episode-details";
 
@@ -11,9 +12,20 @@ const episodes = parseFeed(
   readFileSync(join(process.cwd(), "src/content/feed-fixture.xml"), "utf8")
 );
 
+const appleLink = {
+  app: "apple-podcasts",
+  href: "https://podcasts.apple.com/us/podcast/the-holy-fool/id6830338936?i=1000799664730",
+} as const;
+
 function renderEpisode(
   address: string[],
-  { transcript = null }: { transcript?: Transcript | null } = {}
+  {
+    transcript = null,
+    listenLinks = [appleLink],
+  }: {
+    transcript?: Transcript | null;
+    listenLinks?: readonly EpisodeListenLink[];
+  } = {}
 ) {
   const sequence = findEpisode(episodes, address);
   if (!sequence) throw new Error(`The fixture has no Episode at ${address}`);
@@ -21,7 +33,9 @@ function renderEpisode(
     <EpisodeDetails
       sequence={sequence}
       transcript={transcript}
+      listenLinks={listenLinks}
       copy={content.episodePage}
+      listenCopy={content.listen}
       playerCopy={content.shell.player}
     />
   );
@@ -57,6 +71,26 @@ describe("EpisodeDetails", () => {
       screen.getByRole("button", { name: "Play Episode 2" })
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Share" })).toBeInTheDocument();
+  });
+
+  it("offers the Episode in each podcast app, under its Play button", () => {
+    renderEpisode(["2"]);
+    const apps = screen.getByRole("list", { name: "or listen on" });
+    expect(
+      within(apps).getByRole("link", { name: "Apple Podcasts" })
+    ).toHaveAttribute("href", appleLink.href);
+    expect(
+      screen
+        .getByRole("button", { name: "Play Episode 2" })
+        .compareDocumentPosition(apps) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+  });
+
+  it("offers no podcast apps before the show is on any", () => {
+    renderEpisode(["2"], { listenLinks: [] });
+    expect(
+      screen.queryByRole("list", { name: "or listen on" })
+    ).not.toBeInTheDocument();
   });
 
   it("shows the Show notes with their links and line breaks intact", () => {

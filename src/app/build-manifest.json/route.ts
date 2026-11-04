@@ -1,4 +1,4 @@
-import { getEpisodes } from "@/content/feed";
+import { getEpisodes, getListedEpisodes } from "@/content/feed";
 import type { BuildManifest } from "@/lib/build-manifest";
 
 export const dynamic = "force-static";
@@ -8,6 +8,7 @@ export async function GET() {
   const manifest: BuildManifest = {
     newestEpisodeGuid: newest?.guid ?? null,
     commit: process.env.BUILD_COMMIT ?? null,
+    episodeListenLinks: await getListedEpisodes(),
   };
   return Response.json(manifest);
 }

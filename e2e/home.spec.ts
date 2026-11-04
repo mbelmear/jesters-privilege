@@ -47,6 +47,24 @@ test.describe("Home", () => {
     await expect(page).toHaveURL(/\/episodes\/\d+$/);
   });
 
+  // The Episodes page's absence check (episodes.spec.ts) finds it here.
+  test("offers the latest Episode in podcast apps under its Play button", async ({
+    page,
+  }) => {
+    const apps = page
+      .getByRole("region", { name: "Latest Episode" })
+      .getByRole("list", { name: "or listen on" });
+    await expect(apps.getByRole("link").first()).toBeVisible();
+  });
+
+  test("has no Listen on row between the story and the latest Episode", async ({
+    page,
+  }) => {
+    await expect(page.getByRole("region", { name: "Listen on" })).toHaveCount(
+      0
+    );
+  });
+
   test("holds back the story until the visitor scrolls to it", async ({
     page,
   }) => {

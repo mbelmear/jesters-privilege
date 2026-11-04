@@ -1,10 +1,16 @@
 // The scheduled feed check (#18): decides whether the Deploy workflow rebuilds,
-// by comparing the feed's newest Episode with the live site's build manifest.
+// by comparing the feed's newest Episode and its Episodes' Listen links with
+// the live site's build manifest.
 // The logic is src/lib/feed-check.ts; this wires in the network and the
 // workflow. Usage: npm run feed-check (run by .github/workflows/deploy.yml)
 import { appendFileSync } from "node:fs";
-import { getEpisodes } from "@/content/feed";
+import { getEpisodes, lookUpEpisodes } from "@/content/feed";
 import { site } from "@/content/site";
+import {
+  APP_NAMES,
+  EPISODE_LISTEN_APPS,
+  listedEpisodes,
+} from "@/lib/episode-listen-links";
 import { runFeedCheck } from "@/lib/feed-check";
 
 const outputFile = process.env.GITHUB_OUTPUT;
@@ -12,6 +18,19 @@ const outputFile = process.env.GITHUB_OUTPUT;
 runFeedCheck(site.url, {
   fetch: (url) => fetch(url, { signal: AbortSignal.timeout(30_000) }),
   newestEpisodeGuid: async () => (await getEpisodes())[0]?.guid ?? null,
+  episodeListenLinks: async () => {
+    // A failed lookup lists no Episodes, so it never rebuilds; say so.
+    const lookups = await lookUpEpisodes();
+    for (const app of EPISODE_LISTEN_APPS) {
+      const lookup = lookups[app];
+      if (lookup?.kind === "failed") {
+        console.log(
+          `::warning::${APP_NAMES[app]} lookup failed, so its Episode Listen links aren't checked: ${lookup.reason}`
+        );
+      }
+    }
+    return listedEpisodes(await getEpisodes(), lookups);
+  },
   setOutput: (name, value) => {
     const line = `${name}=${value}\n`;
     if (outputFile) appendFileSync(outputFile, line);
