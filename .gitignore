@@ -26,6 +26,9 @@
 # images made by scripts/images.ts
 /public/images/
 
+# Episode lookups made by scripts/lookups.ts
+/.lookups.json
+
 # misc
 .DS_Store
 *.pem

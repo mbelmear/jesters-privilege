@@ -4,10 +4,12 @@ import {
   episodeListenLinks,
   listedEpisodes,
   lookUpApple,
+  parseLookups,
   type EpisodeListenLink,
   type ListedEpisodes,
   type Lookups,
 } from "@/lib/episode-listen-links";
+import { errorMessage } from "@/lib/download";
 import { parseFeed, type Episode } from "@/lib/feed";
 import {
   appleLookupFetch,
@@ -69,17 +71,13 @@ export function getTranscript(episode: Episode): Promise<Transcript | null> {
   });
 }
 
-// Each app's lookup of the Feed's Episodes, made once per build process. The
-// fixture's answer (apple-lookup-fixture.json) lists every Episode but the
-// newest and the trailer, so the built site shows both an Episode's own link
-// and the fallback to the show.
-let lookups: Promise<Lookups> | undefined;
-export function getLookups(): Promise<Lookups> {
-  lookups ??= lookUpAll();
-  return lookups;
-}
+// Where a build that reads the live feed keeps the apps' lookups, written
+// once by scripts/lookups.ts before `next build` (gitignored).
+export const LOOKUPS_SNAPSHOT = ".lookups.json";
 
-async function lookUpAll(): Promise<Lookups> {
+// Each app's lookup of the Feed's Episodes, looked up afresh. The feed check
+// calls this; pages and the build manifest call getLookups.
+export async function lookUpEpisodes(): Promise<Lookups> {
   const apple = site.listen["apple-podcasts"];
   return apple
     ? {
@@ -89,6 +87,38 @@ async function lookUpAll(): Promise<Lookups> {
         ),
       }
     : {};
+}
+
+// The lookups every page and the build manifest read. Next renders them in
+// several worker processes, so a build from the live feed reads the one
+// snapshot made before them all: were each to ask Apple itself, a lookup that
+// failed in one worker would leave a page linking to the show while the
+// manifest recorded the Episode's own link, and the feed check would never
+// rebuild it. The fixture's answer is a file, the same in every worker; it
+// lists every Episode but the newest and the trailer, so the built site shows
+// both an Episode's own link and the fallback to the show.
+let lookups: Promise<Lookups> | undefined;
+export function getLookups(): Promise<Lookups> {
+  lookups ??= feedSource.kind === "url" ? readSnapshot() : lookUpEpisodes();
+  return lookups;
+}
+
+async function readSnapshot(): Promise<Lookups> {
+  let text: string;
+  try {
+    text = await io.readFile(LOOKUPS_SNAPSHOT);
+  } catch (error: unknown) {
+    throw new Error(
+      `Lookups snapshot ${LOOKUPS_SNAPSHOT} can't be read, so run \`npm run lookups\` before \`next build\` (npm run build does): ${errorMessage(error)}`
+    );
+  }
+  let value: unknown;
+  try {
+    value = JSON.parse(text);
+  } catch {
+    throw new Error(`Lookups snapshot ${LOOKUPS_SNAPSHOT} isn't JSON`);
+  }
+  return parseLookups(value);
 }
 
 // The Episode's Listen link in each app the show is on; the build log names

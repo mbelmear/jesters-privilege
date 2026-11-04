@@ -1,6 +1,7 @@
 import { act, render, screen, within } from "@testing-library/react";
 import { axe } from "jest-axe";
 import { content } from "@/content";
+import { EPISODE_LISTEN_APPS } from "@/lib/episode-listen-links";
 import Home from "./page";
 
 beforeAll(() => {
@@ -67,10 +68,11 @@ describe("Home", () => {
       within(apps)
         .getAllByRole("link")
         .map((link) => link.getAttribute("href"))
-    ).toEqual([
-      content.site.listen["apple-podcasts"],
-      content.site.listen.spotify,
-    ]);
+    ).toEqual(
+      // Every app the show is on opens the show: the fixture's Apple lookup
+      // doesn't list this Episode, and Spotify has no lookup yet (#122).
+      EPISODE_LISTEN_APPS.flatMap((app) => content.site.listen[app] ?? [])
+    );
     expect(warn).toHaveBeenCalledWith(
       expect.stringMatching(
         /^Apple Podcasts doesn't list "Is Humor a Virtue\?"/

@@ -72,6 +72,77 @@ export function episodeListenLinks(
   });
 }
 
+// Lookups as JSON, so the build can look the apps up once, before Next's
+// workers render the pages and the build manifest, and every one of them
+// reads the same answer (scripts/lookups.ts).
+type SerializedLookup =
+  | { kind: "found"; episodes: [string, string][] }
+  | { kind: "failed"; reason: string };
+
+export function serializeLookups(lookups: Lookups): {
+  [A in EpisodeListenApp]?: SerializedLookup;
+} {
+  const serialized: { [A in EpisodeListenApp]?: SerializedLookup } = {};
+  for (const app of EPISODE_LISTEN_APPS) {
+    const lookup = lookups[app];
+    if (!lookup) continue;
+    serialized[app] =
+      lookup.kind === "found"
+        ? { kind: "found", episodes: [...lookup.episodes] }
+        : lookup;
+  }
+  return serialized;
+}
+
+export function parseLookups(value: unknown): Lookups {
+  if (!isObject(value) || Array.isArray(value)) {
+    throw new Error("Lookups snapshot must map apps to lookups");
+  }
+  const lookups: { [A in EpisodeListenApp]?: AppLookup } = {};
+  const entries: [string, unknown][] = Object.entries(value);
+  for (const [key, lookup] of entries) {
+    const app = EPISODE_LISTEN_APPS.find((a) => a === key);
+    if (!app) {
+      throw new Error(
+        `Lookups snapshot has "${key}", which isn't an app with Episode Listen links`
+      );
+    }
+    lookups[app] = parseLookup(app, lookup);
+  }
+  return lookups;
+}
+
+function parseLookup(app: EpisodeListenApp, value: unknown): AppLookup {
+  if (isObject(value) && value.kind === "failed") {
+    if (typeof value.reason !== "string") {
+      throw new Error(`Lookups snapshot ${app} failed without a reason`);
+    }
+    return { kind: "failed", reason: value.reason };
+  }
+  if (isObject(value) && value.kind === "found") {
+    const episodes: unknown = value.episodes;
+    const list: unknown[] = Array.isArray(episodes) ? episodes : [];
+    const pairs = list.filter(isGuidAndLink);
+    if (!Array.isArray(episodes) || pairs.length !== list.length) {
+      throw new Error(
+        `Lookups snapshot ${app} must list its Episodes as [GUID, link] pairs`
+      );
+    }
+    return { kind: "found", episodes: new Map(pairs) };
+  }
+  throw new Error(`Lookups snapshot ${app} is neither found nor failed`);
+}
+
+function isGuidAndLink(value: unknown): value is [string, string] {
+  if (!Array.isArray(value)) return false;
+  const pair: unknown[] = value;
+  return (
+    pair.length === 2 &&
+    typeof pair[0] === "string" &&
+    typeof pair[1] === "string"
+  );
+}
+
 // The feed GUIDs of the Episodes each app had a link for: what the build
 // manifest records, so the feed check can rebuild when an Episode gains one.
 export type ListedEpisodes = {

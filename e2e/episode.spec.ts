@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
+import { site } from "../src/content/site";
 
 // Every Episode in the fixture feed, oldest first, at its address (ADR 0002).
 const episodes = [
@@ -56,10 +57,7 @@ test.describe("Episode page", () => {
       page
         .getByRole("list", { name: "or listen on" })
         .getByRole("link", { name: "Apple Podcasts" })
-    ).toHaveAttribute(
-      "href",
-      "https://podcasts.apple.com/us/podcast/jesters-privilege/id6830338936"
-    );
+    ).toHaveAttribute("href", site.listen["apple-podcasts"] ?? "");
   });
 
   test("shows Show notes with their links intact", async ({ page }) => {

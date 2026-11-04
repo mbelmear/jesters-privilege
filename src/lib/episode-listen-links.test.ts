@@ -4,6 +4,8 @@ import {
   gainedListenLinks,
   listedEpisodes,
   lookUpApple,
+  parseLookups,
+  serializeLookups,
 } from "./episode-listen-links";
 
 const SHOW =
@@ -267,5 +269,39 @@ describe("gainedListenLinks", () => {
       )
     ).toEqual([]);
     expect(gainedListenLinks({ "apple-podcasts": [two, one] }, {})).toEqual([]);
+  });
+});
+
+describe("serializeLookups and parseLookups", () => {
+  // The build looks the apps up once and every page reads the same answer.
+  it("hand every page the lookups the build made, found or failed", () => {
+    const lookups = {
+      "apple-podcasts": {
+        kind: "found",
+        episodes: new Map([
+          [
+            "https://api.spreaker.com/episode/76161078",
+            "https://podcasts.apple.com/us/podcast/celebrity-pastors/id6830338936?i=1000799664710",
+          ],
+        ]),
+      },
+      spotify: { kind: "failed", reason: "Spotify lookup answered 503" },
+    } as const;
+    expect(
+      parseLookups(JSON.parse(JSON.stringify(serializeLookups(lookups))))
+    ).toEqual(lookups);
+  });
+
+  it.each([
+    ["isn't an object", "[]"],
+    ["names an app it doesn't know", '{"rss":{"kind":"failed","reason":"x"}}'],
+    ["has a lookup of an unknown kind", '{"spotify":{"kind":"maybe"}}'],
+    ["has a failure without its reason", '{"spotify":{"kind":"failed"}}'],
+    [
+      "has Episodes that aren't GUID and link pairs",
+      '{"apple-podcasts":{"kind":"found","episodes":[["only-a-guid"]]}}',
+    ],
+  ])("refuses a snapshot that %s", (_, text) => {
+    expect(() => parseLookups(JSON.parse(text))).toThrow(/^Lookups snapshot /);
   });
 });
