@@ -29,8 +29,12 @@ The description written for an Episode when it is published to the podcast host,
 _Avoid_: Notes, description, summary
 
 **Transcript**:
-The machine-generated text of an Episode, supplied by the podcast host and shown on the Episode page.
+The machine-generated text of an Episode, shown on the Episode page. The podcast host's, when it has one; otherwise the site makes its own, once per Episode.
 _Avoid_: Captions, subtitles
+
+**Listen link**:
+A link to the show in a podcast app (Apple Podcasts, Spotify, YouTube). On an Episode, it opens that Episode in the app; anywhere general, such as the footer, it opens the show. Listening on the site itself needs no Listen link: every Episode plays here, free.
+_Avoid_: Platform link, subscribe button
 
 ## Paintings
 
