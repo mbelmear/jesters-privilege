@@ -118,9 +118,9 @@ function plainText(paragraph: Paragraph): string {
     .join("");
 }
 
-// Every microcopy entry is shown somewhere. Four went unused after Speak
-// Freely replaced Submit and the Episode page took its own Transcript note,
-// and sat waiting for the Jesters' approval of text nobody sees (2026-11-03).
+// Every microcopy entry is shown somewhere. Eight went unused once Speak
+// Freely and the Episode page kept copies of their own, and four of them sat
+// waiting for the Jesters' approval of text nobody sees (2026-11-03).
 describe("microcopy", () => {
   const sources = (dir: string): string[] =>
     readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
@@ -136,6 +136,6 @@ describe("microcopy", () => {
     .join("\n");
 
   it.each(Object.keys(content.microcopy))("uses microcopy.%s", (key) => {
-    expect(code).toMatch(new RegExp(`\\b${key}\\b`));
+    expect(code).toMatch(new RegExp(`microcopy\\.${key}\\b`));
   });
 });
