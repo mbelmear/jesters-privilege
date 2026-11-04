@@ -1,10 +1,10 @@
 // The scheduled feed check (#18): decides whether the Deploy workflow rebuilds,
-// by comparing the feed's newest Episode and its Episodes' Listen links with
-// the live site's build manifest.
+// by comparing the feed's newest Episode, its Episodes' Listen links, and
+// which of them have Transcripts with the live site's build manifest.
 // The logic is src/lib/feed-check.ts; this wires in the network and the
 // workflow. Usage: npm run feed-check (run by .github/workflows/deploy.yml)
 import { appendFileSync } from "node:fs";
-import { getEpisodes, lookUpEpisodes } from "@/content/feed";
+import { getEpisodes, lookUpEpisodes, lookUpTranscripts } from "@/content/feed";
 import { site } from "@/content/site";
 import {
   APP_NAMES,
@@ -31,6 +31,9 @@ runFeedCheck(site.url, {
     }
     return listedEpisodes(await getEpisodes(), lookups);
   },
+  // Read as the build reads them; the log names each Episode left without
+  // one, and why.
+  transcripts: async () => [...(await lookUpTranscripts()).keys()],
   setOutput: (name, value) => {
     const line = `${name}=${value}\n`;
     if (outputFile) appendFileSync(outputFile, line);

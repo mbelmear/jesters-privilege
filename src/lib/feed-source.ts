@@ -1,9 +1,16 @@
 import { basename, join } from "node:path";
-import { downloadText, type Fetch } from "./download";
+import {
+  downloadText,
+  errorMessage,
+  type Fetch,
+  type TextResponse,
+} from "./download";
 
-// Where the Feed comes from: the Spreaker feed's address, or a fixture shaped
-// like it, with its Transcripts in a folder beside it and Apple's lookup of
-// its Episodes in a file, which every build but a deploy reads
+// Where the Feed comes from: the Spreaker feed's address, with the site's own
+// Transcripts on the `transcripts` branch (`savedTranscripts`, the branch's
+// raw address); or a fixture shaped like it, with its Transcripts in a folder
+// beside it, its saved ones in another standing in for the branch, and
+// Apple's lookup of its Episodes in a file, which every build but a deploy reads
 // (chooseFeedSource). A fixture's Episodes are draft copy;
 // `standsInFor` is the feed address it pretends to be, which the page head
 // links to.
@@ -12,11 +19,12 @@ export type FeedSource =
       kind: "fixture";
       path: string;
       transcripts: string;
+      savedTranscripts: string;
       appleLookup: string;
       standsInFor: string;
       draft: true;
     }
-  | { kind: "url"; url: string };
+  | { kind: "url"; url: string; savedTranscripts: string };
 
 // The feeds a build can read, named by FEED: the live Spreaker feed, and
 // fixtures shaped like it for tests, one with Episodes and one without.
@@ -133,6 +141,58 @@ export function transcriptFetch(source: FeedSource, io: FeedIO): Fetch {
       return unhandled;
     }
   }
+}
+
+// How to read the site's own Transcripts, saved on the `transcripts` branch
+// (ADR 0003): null when none is saved under the file name, and a throw when
+// the branch can't be read. The fixture's are files in a folder.
+export function savedTranscripts(
+  source: FeedSource,
+  io: FeedIO
+): (fileName: string) => Promise<string | null> {
+  switch (source.kind) {
+    case "fixture":
+      return async (fileName) => {
+        try {
+          return await io.readFile(join(source.savedTranscripts, fileName));
+        } catch (error: unknown) {
+          if (isMissingFile(error)) return null;
+          throw error;
+        }
+      };
+    case "url":
+      return async (fileName) => {
+        const url = source.savedTranscripts + encodeURIComponent(fileName);
+        let response: TextResponse;
+        try {
+          response = await io.fetch(url);
+        } catch (error: unknown) {
+          throw new Error(
+            `Saved Transcript ${url} couldn't be reached: ${errorMessage(error)}`
+          );
+        }
+        if (response.status === 404) return null;
+        if (!response.ok) {
+          throw new Error(
+            `Saved Transcript ${url} answered ${response.status} ${response.statusText}`
+          );
+        }
+        return response.text();
+      };
+    default: {
+      const unhandled: never = source;
+      return unhandled;
+    }
+  }
+}
+
+function isMissingFile(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    error.code === "ENOENT"
+  );
 }
 
 // How to look up the Feed's Episodes in Apple Podcasts. The fixture answers

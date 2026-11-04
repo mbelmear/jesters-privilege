@@ -1,7 +1,11 @@
 import {
   currentParagraph,
-  loadTranscript,
+  loadTranscriptText,
+  loadTranscriptTexts,
+  parseTranscriptTexts,
+  serializeTranscriptTexts,
   parseTranscript,
+  transcriptFileName,
   type TranscriptIO,
 } from "./transcript";
 
@@ -181,15 +185,32 @@ describe("parseTranscript", () => {
   });
 });
 
-describe("loadTranscript", () => {
+describe("loadTranscriptText", () => {
   const url = "https://transcription.spreaker.com/starship/abc/abc.vtt";
-  const episode = { title: "Celebrity Pastors", transcriptUrl: url };
+  const guid = "https://api.spreaker.com/episode/76161078";
+  const episode = { guid, title: "Celebrity Pastors", transcriptUrl: url };
+  const unlinked = { ...episode, transcriptUrl: null };
   const transcript = vtt([{ start: at(0), end: at(3), text: "Welcome." }]);
+  const savedTranscript = vtt([
+    { start: at(0), end: at(3), text: "Welcome, says Whisper." },
+  ]);
 
-  function io(fetch: TranscriptIO["fetch"]) {
+  // The host serves what `fetch` answers; the transcripts branch holds
+  // `saved`, by file name.
+  function io(
+    fetch: TranscriptIO["fetch"],
+    saved: Record<string, string> = {}
+  ) {
     const warnings: string[] = [];
-    return { warnings, io: { fetch, warn: (m: string) => warnings.push(m) } };
+    const io: TranscriptIO = {
+      fetch,
+      saved: async (fileName) => saved[fileName] ?? null,
+      warn: (m: string) => warnings.push(m),
+    };
+    return { warnings, io };
   }
+
+  const noFetch = () => Promise.reject(new Error("fetch not expected"));
 
   function response(status: number, statusText: string, body = "") {
     return Promise.resolve({
@@ -200,29 +221,64 @@ describe("loadTranscript", () => {
     });
   }
 
-  it("downloads and reads an Episode's Transcript", async () => {
+  it("downloads the Transcript the feed links", async () => {
     const { io: fake, warnings } = io((u) =>
       response(200, "OK", u === url ? transcript : "")
     );
-    expect(await loadTranscript(episode, fake)).toEqual([
-      { startSeconds: 0, text: "Welcome." },
-    ]);
+    expect(await loadTranscriptText(episode, fake)).toBe(transcript);
     expect(warnings).toEqual([]);
   });
 
-  it("leaves an Episode with no Transcript link without one, quietly", async () => {
-    const { io: fake, warnings } = io(() =>
-      Promise.reject(new Error("fetch not expected"))
-    );
-    expect(
-      await loadTranscript({ ...episode, transcriptUrl: null }, fake)
-    ).toBeNull();
+  it("reads the site's own Transcript when the feed links none", async () => {
+    const { io: fake, warnings } = io(noFetch, {
+      "https%3A%2F%2Fapi.spreaker.com%2Fepisode%2F76161078.vtt":
+        savedTranscript,
+    });
+    expect(await loadTranscriptText(unlinked, fake)).toBe(savedTranscript);
     expect(warnings).toEqual([]);
+  });
+
+  it("prefers the Transcript the feed links to the site's own", async () => {
+    const { io: fake } = io(
+      (u) => response(200, "OK", u === url ? transcript : ""),
+      {
+        [transcriptFileName(guid)]: savedTranscript,
+      }
+    );
+    expect(await loadTranscriptText(episode, fake)).toBe(transcript);
+  });
+
+  it("says so when an Episode has no Transcript yet", async () => {
+    const { io: fake, warnings } = io(noFetch);
+    expect(await loadTranscriptText(unlinked, fake)).toBeNull();
+    expect(warnings).toEqual([
+      `Episode "Celebrity Pastors" has no Transcript yet: the feed links none, and the transcripts branch has no ${transcriptFileName(guid)}`,
+    ]);
+  });
+
+  it("leaves the Episode without one when its saved Transcript can't be had", async () => {
+    const { io: fake, warnings } = io(noFetch);
+    fake.saved = () =>
+      Promise.reject(new Error("Saved Transcript x answered 500 Server Error"));
+    expect(await loadTranscriptText(unlinked, fake)).toBeNull();
+    expect(warnings).toEqual([
+      `Episode "Celebrity Pastors" left without its Transcript: Saved Transcript x answered 500 Server Error`,
+    ]);
+  });
+
+  it("leaves the Episode without one when its saved Transcript can't be read", async () => {
+    const { io: fake, warnings } = io(noFetch, {
+      [transcriptFileName(guid)]: "",
+    });
+    expect(await loadTranscriptText(unlinked, fake)).toBeNull();
+    expect(warnings).toEqual([
+      `Episode "Celebrity Pastors" left without its Transcript: Transcript isn't WebVTT: it doesn't start with WEBVTT`,
+    ]);
   });
 
   it("leaves the Episode without one when the Transcript is missing", async () => {
     const { io: fake, warnings } = io(() => response(403, "Forbidden"));
-    expect(await loadTranscript(episode, fake)).toBeNull();
+    expect(await loadTranscriptText(episode, fake)).toBeNull();
     expect(warnings).toEqual([
       `Episode "Celebrity Pastors" left without its Transcript: Transcript ${url} answered 403 Forbidden`,
     ]);
@@ -234,7 +290,7 @@ describe("loadTranscript", () => {
         new DOMException("The operation timed out.", "TimeoutError")
       )
     );
-    expect(await loadTranscript(episode, fake)).toBeNull();
+    expect(await loadTranscriptText(episode, fake)).toBeNull();
     expect(warnings).toEqual([
       `Episode "Celebrity Pastors" left without its Transcript: Transcript ${url} couldn't be reached: The operation timed out.`,
     ]);
@@ -244,10 +300,60 @@ describe("loadTranscript", () => {
     const { io: fake, warnings } = io(() =>
       response(200, "OK", "<html></html>")
     );
-    expect(await loadTranscript(episode, fake)).toBeNull();
+    expect(await loadTranscriptText(episode, fake)).toBeNull();
     expect(warnings).toEqual([
       `Episode "Celebrity Pastors" left without its Transcript: Transcript isn't WebVTT: it doesn't start with WEBVTT`,
     ]);
+  });
+});
+
+describe("loadTranscriptTexts", () => {
+  const savedTranscript = vtt([{ start: at(0), end: at(3), text: "Hello." }]);
+  const episodes = [
+    { guid: "ep-2", title: "Mockery", transcriptUrl: null },
+    { guid: "ep-1", title: "Celebrity Pastors", transcriptUrl: null },
+  ];
+
+  it("holds each Episode's Transcript by GUID, leaving out those with none", async () => {
+    const warnings: string[] = [];
+    const texts = await loadTranscriptTexts(episodes, {
+      fetch: () => Promise.reject(new Error("fetch not expected")),
+      saved: async (fileName) =>
+        fileName === "ep-1.vtt" ? savedTranscript : null,
+      warn: (m) => warnings.push(m),
+    });
+    expect([...texts]).toEqual([["ep-1", savedTranscript]]);
+    expect(warnings).toHaveLength(1);
+  });
+});
+
+describe("parseTranscriptTexts", () => {
+  it("reads back what serializing wrote", () => {
+    const texts = new Map([["ep-1", "WEBVTT\n"]]);
+    expect(
+      parseTranscriptTexts(
+        JSON.parse(JSON.stringify(serializeTranscriptTexts(texts)))
+      )
+    ).toEqual(texts);
+  });
+
+  it.each([
+    ["not an object", "WEBVTT"],
+    ["a list", ["WEBVTT"]],
+    ["a Transcript that isn't text", { "ep-1": 3 }],
+  ])("refuses a snapshot that is %s", (_, value) => {
+    expect(() => parseTranscriptTexts(value)).toThrow(
+      "Transcripts snapshot must map Episode GUIDs to WebVTT text"
+    );
+  });
+});
+
+describe("transcriptFileName", () => {
+  it("names the file after the Episode's GUID, whatever characters it holds", () => {
+    expect(
+      transcriptFileName("https://api.spreaker.com/episode/76161078")
+    ).toBe("https%3A%2F%2Fapi.spreaker.com%2Fepisode%2F76161078.vtt");
+    expect(transcriptFileName("6a1f0c4e-0001")).toBe("6a1f0c4e-0001.vtt");
   });
 });
 

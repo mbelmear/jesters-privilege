@@ -3,12 +3,15 @@ import {
   feedUrl,
   loadFeedText,
   appleLookupFetch,
+  savedTranscripts,
   transcriptFetch,
   type FeedIO,
   type FeedSources,
 } from "./feed-source";
 
 const url = "https://www.spreaker.com/show/6900001/episodes/feed";
+const BRANCH =
+  "https://raw.githubusercontent.com/mbelmear/jesters-privilege/transcripts/";
 
 function io(overrides: Partial<FeedIO>): FeedIO {
   return {
@@ -34,6 +37,7 @@ describe("loadFeedText", () => {
         kind: "fixture",
         path: "src/content/feed-fixture.xml",
         transcripts: "src/content/transcripts",
+        savedTranscripts: "src/content/saved-transcripts",
         appleLookup: "src/content/apple-lookup-fixture.json",
         standsInFor: url,
         draft: true,
@@ -50,7 +54,7 @@ describe("loadFeedText", () => {
 
   it("downloads the real feed", async () => {
     const text = await loadFeedText(
-      { kind: "url", url },
+      { kind: "url", url, savedTranscripts: BRANCH },
       io({ fetch: (u) => response(200, "OK", u === url ? "<rss/>" : "") })
     );
     expect(text).toBe("<rss/>");
@@ -59,7 +63,7 @@ describe("loadFeedText", () => {
   it("fails the build when the feed can't be reached", async () => {
     await expect(
       loadFeedText(
-        { kind: "url", url },
+        { kind: "url", url, savedTranscripts: BRANCH },
         io({ fetch: () => Promise.reject(new TypeError("fetch failed")) })
       )
     ).rejects.toThrow(`Feed ${url} couldn't be reached: fetch failed`);
@@ -68,7 +72,7 @@ describe("loadFeedText", () => {
   it("fails the build when the feed answers with an error", async () => {
     await expect(
       loadFeedText(
-        { kind: "url", url },
+        { kind: "url", url, savedTranscripts: BRANCH },
         io({ fetch: () => response(503, "Service Unavailable", "<html/>") })
       )
     ).rejects.toThrow(`Feed ${url} answered 503 Service Unavailable`);
@@ -85,6 +89,7 @@ describe("transcriptFetch", () => {
         kind: "fixture",
         path: "src/content/feed-fixture.xml",
         transcripts: "src/content/transcripts",
+        savedTranscripts: "src/content/saved-transcripts",
         appleLookup: "src/content/apple-lookup-fixture.json",
         standsInFor: url,
         draft: true,
@@ -103,12 +108,90 @@ describe("transcriptFetch", () => {
 
   it("downloads the real feed's Transcripts", async () => {
     const fetch = transcriptFetch(
-      { kind: "url", url },
+      { kind: "url", url, savedTranscripts: BRANCH },
       io({
         fetch: (u) => response(200, "OK", u === transcriptUrl ? "WEBVTT" : ""),
       })
     );
     expect(await (await fetch(transcriptUrl)).text()).toBe("WEBVTT");
+  });
+});
+
+describe("savedTranscripts", () => {
+  const branch =
+    "https://raw.githubusercontent.com/mbelmear/jesters-privilege/transcripts/";
+  const fileName = "https%3A%2F%2Fapi.spreaker.com%2Fepisode%2F1.vtt";
+  const fixture = {
+    kind: "fixture" as const,
+    path: "src/content/feed-fixture.xml",
+    transcripts: "src/content/transcripts",
+    savedTranscripts: "src/content/saved-transcripts",
+    appleLookup: "src/content/apple-lookup-fixture.json",
+    standsInFor: url,
+    draft: true as const,
+  };
+  const live = { kind: "url" as const, url, savedTranscripts: branch };
+
+  it("reads the fixture's saved Transcripts from a folder standing in for the branch", async () => {
+    const saved = savedTranscripts(
+      fixture,
+      io({
+        readFile: (path) =>
+          path === `src/content/saved-transcripts/${fileName}`
+            ? Promise.resolve("WEBVTT")
+            : Promise.reject(
+                Object.assign(new Error(`ENOENT: no such file, ${path}`), {
+                  code: "ENOENT",
+                })
+              ),
+      })
+    );
+    expect(await saved(fileName)).toBe("WEBVTT");
+    expect(await saved("other.vtt")).toBeNull();
+  });
+
+  it("fails when the fixture's folder can't be read", async () => {
+    const saved = savedTranscripts(
+      fixture,
+      io({ readFile: () => Promise.reject(new Error("EACCES: denied")) })
+    );
+    await expect(saved(fileName)).rejects.toThrow("EACCES: denied");
+  });
+
+  it("downloads the real feed's saved Transcripts from the transcripts branch", async () => {
+    const asked: string[] = [];
+    const saved = savedTranscripts(
+      live,
+      io({
+        fetch: (u) => {
+          asked.push(u);
+          return response(200, "OK", "WEBVTT");
+        },
+      })
+    );
+    expect(await saved(fileName)).toBe("WEBVTT");
+    // The file name is a path segment of its own, percent signs and all.
+    expect(asked).toEqual([
+      `${branch}https%253A%252F%252Fapi.spreaker.com%252Fepisode%252F1.vtt`,
+    ]);
+  });
+
+  it("finds none saved when the branch has no such file", async () => {
+    const saved = savedTranscripts(
+      live,
+      io({ fetch: () => response(404, "Not Found") })
+    );
+    expect(await saved(fileName)).toBeNull();
+  });
+
+  it("fails when the branch can't be read", async () => {
+    const saved = savedTranscripts(
+      live,
+      io({ fetch: () => response(503, "Service Unavailable") })
+    );
+    await expect(saved(fileName)).rejects.toThrow(
+      `Saved Transcript ${branch}https%253A%252F%252Fapi.spreaker.com%252Fepisode%252F1.vtt answered 503 Service Unavailable`
+    );
   });
 });
 
@@ -122,6 +205,7 @@ describe("appleLookupFetch", () => {
         kind: "fixture",
         path: "src/content/feed-fixture.xml",
         transcripts: "src/content/transcripts",
+        savedTranscripts: "src/content/saved-transcripts",
         appleLookup: "src/content/apple-lookup-fixture.json",
         standsInFor: url,
         draft: true,
@@ -138,7 +222,7 @@ describe("appleLookupFetch", () => {
 
   it("asks Apple for the real feed's Episodes", async () => {
     const fetch = appleLookupFetch(
-      { kind: "url", url },
+      { kind: "url", url, savedTranscripts: BRANCH },
       io({ fetch: (u) => response(200, "OK", u === lookupUrl ? "{}" : "") })
     );
     expect(await (await fetch(lookupUrl)).text()).toBe("{}");
@@ -147,7 +231,7 @@ describe("appleLookupFetch", () => {
 
 describe("feedUrl", () => {
   it("is the feed the site reads, for podcast apps to subscribe to", () => {
-    expect(feedUrl({ kind: "url", url })).toBe(url);
+    expect(feedUrl({ kind: "url", url, savedTranscripts: BRANCH })).toBe(url);
   });
 
   it("is the address the fixture stands in for, until the real feed exists", () => {
@@ -156,6 +240,7 @@ describe("feedUrl", () => {
         kind: "fixture",
         path: "src/content/feed-fixture.xml",
         transcripts: "src/content/transcripts",
+        savedTranscripts: "src/content/saved-transcripts",
         appleLookup: "src/content/apple-lookup-fixture.json",
         standsInFor: "https://www.spreaker.com/show/1/episodes/feed",
         draft: true,
@@ -169,11 +254,13 @@ describe("chooseFeedSource", () => {
     live: {
       kind: "url",
       url: "https://www.spreaker.com/show/7523831/episodes/feed",
+      savedTranscripts: BRANCH,
     },
     fixture: {
       kind: "fixture",
       path: "src/content/feed-fixture.xml",
       transcripts: "src/content/transcripts",
+      savedTranscripts: "src/content/saved-transcripts",
       appleLookup: "src/content/apple-lookup-fixture.json",
       standsInFor: "https://www.spreaker.com/show/7523831/episodes/feed",
       draft: true,
@@ -182,6 +269,7 @@ describe("chooseFeedSource", () => {
       kind: "fixture",
       path: "src/content/feed-fixture-empty.xml",
       transcripts: "src/content/transcripts",
+      savedTranscripts: "src/content/saved-transcripts",
       appleLookup: "src/content/apple-lookup-fixture.json",
       standsInFor: "https://www.spreaker.com/show/7523831/episodes/feed",
       draft: true,

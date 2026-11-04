@@ -15,11 +15,18 @@ import {
   appleLookupFetch,
   chooseFeedSource,
   loadFeedText,
+  savedTranscripts,
   transcriptFetch,
   type FeedIO,
   type FeedSource,
 } from "@/lib/feed-source";
-import { loadTranscript, type Transcript } from "@/lib/transcript";
+import {
+  loadTranscriptTexts,
+  parseTranscript,
+  parseTranscriptTexts,
+  type Transcript,
+  type TranscriptTexts,
+} from "@/lib/transcript";
 import { LIVE_FEED_URL, site } from "./site";
 
 // Deploys read the live feed (FEED=live); every other build reads a fixture
@@ -29,11 +36,17 @@ import { LIVE_FEED_URL, site } from "./site";
 export const feedSource: FeedSource = chooseFeedSource(
   { FEED: process.env.FEED, SITE_ENV: process.env.SITE_ENV },
   {
-    live: { kind: "url", url: LIVE_FEED_URL },
+    live: {
+      kind: "url",
+      url: LIVE_FEED_URL,
+      savedTranscripts:
+        "https://raw.githubusercontent.com/mbelmear/jesters-privilege/transcripts/",
+    },
     fixture: {
       kind: "fixture",
       path: "src/content/feed-fixture.xml",
       transcripts: "src/content/transcripts",
+      savedTranscripts: "src/content/saved-transcripts",
       appleLookup: "src/content/apple-lookup-fixture.json",
       standsInFor: LIVE_FEED_URL,
       draft: true,
@@ -42,6 +55,7 @@ export const feedSource: FeedSource = chooseFeedSource(
       kind: "fixture",
       path: "src/content/feed-fixture-empty.xml",
       transcripts: "src/content/transcripts",
+      savedTranscripts: "src/content/saved-transcripts",
       appleLookup: "src/content/apple-lookup-fixture.json",
       standsInFor: LIVE_FEED_URL,
       draft: true,
@@ -62,13 +76,52 @@ export async function getEpisodes(): Promise<Episode[]> {
   return parseFeed(await loadFeedText(feedSource, io));
 }
 
-// An Episode's Transcript, or null when it has none or it can't be had (the
-// build log says which).
-export function getTranscript(episode: Episode): Promise<Transcript | null> {
-  return loadTranscript(episode, {
+// Where a build that reads the live feed keeps every Episode's Transcript,
+// written once by scripts/transcripts.ts before `next build` (gitignored).
+export const TRANSCRIPTS_SNAPSHOT = ".transcripts.json";
+
+// Each Episode's Transcript, read afresh: the host's where the feed links
+// one, the site's own from the `transcripts` branch otherwise. The build log
+// names each Episode left without one, and why. The feed check calls this;
+// pages and the build manifest call getTranscriptTexts.
+export async function lookUpTranscripts(): Promise<TranscriptTexts> {
+  return loadTranscriptTexts(await getEpisodes(), {
     fetch: transcriptFetch(feedSource, io),
+    saved: savedTranscripts(feedSource, io),
     warn: (message) => console.warn(message),
   });
+}
+
+// The Transcripts every page and the build manifest read: a build from the
+// live feed reads the one snapshot made before Next's workers start, as with
+// the apps' lookups (getLookups), so a download that fails in one worker
+// can't leave a page without the Transcript the manifest records. The
+// fixture's are files, the same in every worker.
+let transcriptTexts: Promise<TranscriptTexts> | undefined;
+export function getTranscriptTexts(): Promise<TranscriptTexts> {
+  transcriptTexts ??=
+    feedSource.kind === "url"
+      ? readSnapshot(TRANSCRIPTS_SNAPSHOT, "transcripts", parseTranscriptTexts)
+      : lookUpTranscripts();
+  return transcriptTexts;
+}
+
+// An Episode's Transcript, or null when it has none or it can't be had (the
+// build log says which).
+export async function getTranscript(
+  episode: Episode
+): Promise<Transcript | null> {
+  const text = (await getTranscriptTexts()).get(episode.guid);
+  return text === undefined ? null : parseTranscript(text);
+}
+
+// The Episodes that have a Transcript, newest first, as the build manifest
+// records.
+export async function getTranscribedEpisodes(): Promise<string[]> {
+  const texts = await getTranscriptTexts();
+  return (await getEpisodes())
+    .map(({ guid }) => guid)
+    .filter((guid) => texts.has(guid));
 }
 
 // Where a build that reads the live feed keeps the apps' lookups, written
@@ -99,26 +152,33 @@ export async function lookUpEpisodes(): Promise<Lookups> {
 // both an Episode's own link and the fallback to the show.
 let lookups: Promise<Lookups> | undefined;
 export function getLookups(): Promise<Lookups> {
-  lookups ??= feedSource.kind === "url" ? readSnapshot() : lookUpEpisodes();
+  lookups ??=
+    feedSource.kind === "url"
+      ? readSnapshot(LOOKUPS_SNAPSHOT, "lookups", parseLookups)
+      : lookUpEpisodes();
   return lookups;
 }
 
-async function readSnapshot(): Promise<Lookups> {
+async function readSnapshot<T>(
+  path: string,
+  script: string,
+  parse: (value: unknown) => T
+): Promise<T> {
   let text: string;
   try {
-    text = await io.readFile(LOOKUPS_SNAPSHOT);
+    text = await io.readFile(path);
   } catch (error: unknown) {
     throw new Error(
-      `Lookups snapshot ${LOOKUPS_SNAPSHOT} can't be read, so run \`npm run lookups\` before \`next build\` (npm run build does): ${errorMessage(error)}`
+      `Snapshot ${path} can't be read, so run \`npm run ${script}\` before \`next build\` (npm run build does): ${errorMessage(error)}`
     );
   }
   let value: unknown;
   try {
     value = JSON.parse(text);
   } catch {
-    throw new Error(`Lookups snapshot ${LOOKUPS_SNAPSHOT} isn't JSON`);
+    throw new Error(`Snapshot ${path} isn't JSON`);
   }
-  return parseLookups(value);
+  return parse(value);
 }
 
 // The Episode's Listen link in each app the show is on; the build log names

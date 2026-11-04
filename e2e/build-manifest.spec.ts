@@ -28,3 +28,17 @@ test("records the Episodes that had Episode Listen links", async ({
     ],
   });
 });
+
+test("records the Episodes that had Transcripts", async ({ request }) => {
+  const manifest = parseBuildManifest(
+    await (await request.get(BUILD_MANIFEST_PATH)).json()
+  );
+  // Every fixture Episode but the bonus has one, from the feed or saved.
+  expect(manifest.transcripts).toEqual([
+    "https://api.spreaker.com/episode/70000006",
+    "https://api.spreaker.com/episode/70000004",
+    "https://api.spreaker.com/episode/70000003",
+    "https://api.spreaker.com/episode/70000002",
+    "https://api.spreaker.com/episode/70000001",
+  ]);
+});

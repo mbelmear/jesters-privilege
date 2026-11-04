@@ -83,6 +83,23 @@ test.describe("Interactive Transcript", () => {
     await expect(transcript(page)).toHaveCount(0);
   });
 
+  test("shows the site's own Transcript of an Episode the feed links none for", async ({
+    request,
+  }) => {
+    // The fixture's Episode 4 has only a Transcript saved on the branch.
+    const html = await (await request.get("/episodes/4")).text();
+    expect(html).toContain("start with a pun");
+  });
+
+  test("shows the Transcript the feed links over the site's own", async ({
+    request,
+  }) => {
+    // The fixture saves a Transcript of Episode 1 too; the feed's wins.
+    const html = await (await request.get("/episodes/1")).text();
+    expect(html).toContain(lateWords);
+    expect(html).not.toContain("This saved Transcript loses");
+  });
+
   test("has no detectable accessibility violations, opened in full", async ({
     page,
   }) => {

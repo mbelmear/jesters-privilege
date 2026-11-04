@@ -23,21 +23,29 @@ function liveSite(body: string, status = 200): Fetch {
 
 function deployedWith(
   newestEpisodeGuid: string | null,
-  episodeListenLinks: ListedEpisodes = {}
+  episodeListenLinks: ListedEpisodes = {},
+  transcripts: string[] = []
 ): Fetch {
   return liveSite(
-    JSON.stringify({ newestEpisodeGuid, commit: "7c625bc", episodeListenLinks })
+    JSON.stringify({
+      newestEpisodeGuid,
+      commit: "7c625bc",
+      episodeListenLinks,
+      transcripts,
+    })
   );
 }
 
-// The feed and the apps' lookups as they stand: no Episode Listen links
-// unless a test gives some.
+// The feed, the apps' lookups, and the Transcripts as they stand: no Episode
+// Listen links or Transcripts unless a test gives some.
 const feed = (
   newestEpisodeGuid: string | null,
-  episodeListenLinks: ListedEpisodes = {}
+  episodeListenLinks: ListedEpisodes = {},
+  transcripts: string[] = []
 ) => ({
   newestEpisodeGuid: async () => newestEpisodeGuid,
   episodeListenLinks: async () => episodeListenLinks,
+  transcripts: async () => transcripts,
 });
 
 describe("checkFeed", () => {
@@ -48,7 +56,7 @@ describe("checkFeed", () => {
     });
     expect(result).toEqual({
       rebuild: false,
-      reason: `The live site already has the newest Episode (${EPISODE_1}) and every Episode Listen link`,
+      reason: `The live site already has the newest Episode (${EPISODE_1}) and every Episode Listen link and Transcript`,
     });
   });
 
@@ -69,6 +77,25 @@ describe("checkFeed", () => {
         "apple-podcasts": [EPISODE_2, EPISODE_1],
       }),
       ...feed(EPISODE_2),
+    });
+    expect(result.rebuild).toBe(false);
+  });
+
+  it("rebuilds when an Episode has gained a Transcript since the deploy", async () => {
+    const result = await checkFeed(SITE, {
+      fetch: deployedWith(EPISODE_2, {}, [EPISODE_1]),
+      ...feed(EPISODE_2, {}, [EPISODE_2, EPISODE_1]),
+    });
+    expect(result).toEqual({
+      rebuild: true,
+      reason: `Episodes have gained Transcripts since the live site was built: ${EPISODE_2}`,
+    });
+  });
+
+  it("leaves the site alone when an Episode has lost its Transcript, as when a download failed", async () => {
+    const result = await checkFeed(SITE, {
+      fetch: deployedWith(EPISODE_2, {}, [EPISODE_2, EPISODE_1]),
+      ...feed(EPISODE_2, {}, [EPISODE_1]),
     });
     expect(result.rebuild).toBe(false);
   });
@@ -138,7 +165,7 @@ describe("runFeedCheck", () => {
     expect(await runFeedCheck(SITE, env)).toBe(0);
     expect(outputs).toEqual(["rebuild=false"]);
     expect(log).toEqual([
-      `::notice::No rebuild: The live site already has the newest Episode (${EPISODE_1}) and every Episode Listen link`,
+      `::notice::No rebuild: The live site already has the newest Episode (${EPISODE_1}) and every Episode Listen link and Transcript`,
     ]);
   });
 

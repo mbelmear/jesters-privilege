@@ -124,26 +124,93 @@ function seconds(timestamp: string): number {
 }
 
 export type TranscriptIO = {
+  // Downloads the Transcript the feed links to.
   fetch: Fetch;
+  // The site's own Transcript, saved under this file name on the
+  // `transcripts` branch (ADR 0003), or null when none is saved. Throws
+  // when the branch can't be read.
+  saved: (fileName: string) => Promise<string | null>;
   // Where the build log notes an Episode left without its Transcript.
   warn: (message: string) => void;
 };
 
-// An Episode's Transcript, or null when it has none. A Transcript that is
-// missing, unreachable or unreadable leaves the Episode without one rather
-// than failing the build, since the Episode is worth publishing without it.
-export async function loadTranscript(
-  episode: Pick<Episode, "title" | "transcriptUrl">,
+// The file the site's own Transcript of an Episode is saved as on the
+// `transcripts` branch: its feed GUID, encoded so that any GUID (Spreaker's
+// are URLs) makes one file name, and a hand fix finds the file by it.
+export function transcriptFileName(guid: string): string {
+  return `${encodeURIComponent(guid)}.vtt`;
+}
+
+// An Episode's Transcript as WebVTT that reads, or null when it has none.
+// The host's Transcript is used when the feed links one; otherwise the site's
+// own (docs/spec.md, Transcripts). A Transcript that is missing, unreachable
+// or unreadable leaves the Episode without one rather than failing the
+// build, since the Episode is worth publishing without it; the build log
+// names the Episode and why.
+export async function loadTranscriptText(
+  episode: Pick<Episode, "guid" | "title" | "transcriptUrl">,
   io: TranscriptIO
-): Promise<Transcript | null> {
+): Promise<string | null> {
   const url = episode.transcriptUrl;
-  if (!url) return null;
+  const fileName = transcriptFileName(episode.guid);
   try {
-    return parseTranscript(await downloadText("Transcript", url, io.fetch));
+    const text = url
+      ? await downloadText("Transcript", url, io.fetch)
+      : await io.saved(fileName);
+    if (text === null) {
+      io.warn(
+        `Episode "${episode.title}" has no Transcript yet: the feed links none, and the transcripts branch has no ${fileName}`
+      );
+      return null;
+    }
+    parseTranscript(text);
+    return text;
   } catch (error: unknown) {
     io.warn(
       `Episode "${episode.title}" left without its Transcript: ${errorMessage(error)}`
     );
     return null;
   }
+}
+
+// Each Episode's Transcript as WebVTT, by feed GUID; an Episode with none is
+// left out.
+export type TranscriptTexts = ReadonlyMap<string, string>;
+
+export async function loadTranscriptTexts(
+  episodes: readonly Pick<Episode, "guid" | "title" | "transcriptUrl">[],
+  io: TranscriptIO
+): Promise<TranscriptTexts> {
+  const texts = await Promise.all(
+    episodes.map(
+      async (episode) =>
+        [episode.guid, await loadTranscriptText(episode, io)] as const
+    )
+  );
+  return new Map(
+    texts.flatMap(([guid, text]) => (text === null ? [] : [[guid, text]]))
+  );
+}
+
+// Transcripts as JSON, so a build from the live feed reads them once, before
+// Next's workers render the pages and the build manifest, and every one of
+// them reads the same answer (scripts/transcripts.ts).
+export function serializeTranscriptTexts(texts: TranscriptTexts): {
+  [guid: string]: string;
+} {
+  return Object.fromEntries(texts);
+}
+
+export function parseTranscriptTexts(value: unknown): TranscriptTexts {
+  const shape = "Transcripts snapshot must map Episode GUIDs to WebVTT text";
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    throw new Error(shape);
+  }
+  const entries: [string, unknown][] = Object.entries(value);
+  return new Map(
+    entries.map(([guid, text]) => {
+      if (typeof text !== "string") throw new Error(shape);
+      return [guid, text];
+    })
+  );
 }
