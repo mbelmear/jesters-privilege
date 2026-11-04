@@ -10,7 +10,7 @@ _Avoid_: Host, co-host, cast, team (anywhere but those labels)
 
 **Fool**:
 A historical court jester or holy fool featured in the Fools' Gallery, such as Stańczyk or Will Somers. Never one of the three Jesters.
-_Avoid_: Jester (for historical figures), clown
+_Avoid_: Jester, capitalized, for a historical figure (lowercase "jester" for the job is fine: "Henry VIII's jester"), clown
 
 **Fools' Gallery**:
 The part of the site that tells the history of jesters and holy fools as a timeline, each Fool shown with their painting.
