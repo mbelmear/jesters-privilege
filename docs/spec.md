@@ -4,7 +4,7 @@ Agreed with the Jesters on 2026-10-28 after a grilling session. Vocabulary follo
 
 ## Problem Statement
 
-Jester's Privilege is a new weekly theology-and-humor podcast by three Jesters (Dan Collins, Michael Belmear, and Aaron Canen) of Redeemer Church in Bozeman. Episode 1, on Celebrity Pastors, has been recorded but not yet published. The show has no home on the web: no place to send people from Instagram, nowhere to explain the court-jester idea behind the show, no archive of Episodes, and no way for listeners to send in Questions or Confessions.
+Jester's Privilege is a new weekly theology-and-humor podcast by three Jesters (Dan Collins, Michael Belmear, and Aaron Canen) of Redeemer Church in Bozeman. Episode 1, on Celebrity Pastors, had been recorded but not yet published (it went out on 2026-11-03). The show has no home on the web: no place to send people from Instagram, nowhere to explain the court-jester idea behind the show, no archive of Episodes, and no way for listeners to send in Questions or Confessions.
 
 Most podcast sites are thin landing pages that rush visitors to "listen on Spotify." The Jesters want more than that: a site that looks and feels like entering a king's court or a cathedral, rooted in real history, substantive enough that people enjoy spending time there, and built well enough that updating it later is easy. It must look great on phones, because most visitors arrive from Instagram. Nobody should ever have to touch the site when an Episode is published.
 
@@ -119,7 +119,7 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
 70. As a Jester on release day, I want a button I can tap from my phone to update the site immediately, so that I don't wait for the next scheduled check.
 71. As a Jester, I want a publishing mistake (a missing or duplicate Episode number) to stop the update and alert us, without breaking the live site, so that errors never reach visitors.
 72. As a Jester, I want the site to stay up with the last good version if the feed is unreachable, so that a Spreaker outage doesn't empty the site.
-73. As a Jester, I want Listen buttons, social links, photos, and bios to appear as soon as each one is added, without waiting for all of them, so that we can launch before every input is ready.
+73. As a Jester, I want Listen links, social links, photos, and bios to appear as soon as each one is added, without waiting for all of them, so that we can launch before every input is ready.
 74. As a Jester, I want a missing photo to show an on-brand monogram shield, so that the site looks intentional while we gather headshots.
 75. As a Jester, I want draft copy clearly marked on preview links and blocked from launch, so that we know what still needs our words.
 76. As a Jester, I want to change a bio, a link, or a Fool's story by editing one content file, without touching components, so that updates are easy.
@@ -141,9 +141,9 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
 
 - One GitHub Actions workflow builds and deploys with `wrangler`. It has three triggers:
   - every push to `main`
-  - a feed check **every 2 hours**, which rebuilds only when the newest Episode differs from what's deployed
+  - a feed check **every 2 hours**, which rebuilds when the newest Episode differs from what's deployed, or when an Episode has gained a Transcript or an Episode Listen link since (ADR 0003)
   - a manual **Run workflow** button
-- The site publishes a small build manifest (the identity of the newest Episode it was built with), which the feed check compares against.
+- The site publishes a small build manifest (the identity of the newest Episode it was built with, and which Episodes it had Transcripts and Episode Listen links for), which the feed check compares against.
 - If the feed can't be reached or fails validation, the build fails and the last good deploy stays live. A failed workflow emails the repo owner.
 - Every pull request gets a Cloudflare **preview URL**, posted on the pull request.
 - Review and merge policy:
@@ -174,13 +174,13 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
   - **Apple Podcasts**: Apple's public lookup (`itunes.apple.com/lookup?id=<show>&entity=podcastEpisode`), matched exactly on the Episode's feed GUID (`episodeGuid`). No key.
   - **Spotify**: the Spotify Web API with a client-credentials key stored as GitHub secrets, matched on title and release date.
   - **YouTube**: once the show is on YouTube; how to match is decided then.
-  - Until an app lists an Episode, or when a lookup fails, its Listen link opens the show instead. A lookup never fails the build.
+  - Until an app lists an Episode, or when a lookup fails, its Listen link opens the show instead. A lookup never fails the build; the build log names the Episode and the app.
 
 ### Transcripts
 
 - Spreaker makes no Transcripts, so the site makes its own (ADR 0003). The podcast host's WebVTT Transcript is used when the feed links one; otherwise the site's own.
 - **Making one**: when an Episode has neither, a workflow transcribes its audio once with Whisper (whisper.cpp) on GitHub's runners, free for this public repo, with a prompt of the show's hard names (Stańczyk, Triboulet, Redeemer, Bozeman, the Jesters' names). It writes WebVTT.
-- **Keeping them**: each one is saved as `<episode-guid>.vtt` on a `transcripts` branch that only the workflow writes to, outside `main`'s protection. Builds read from it. An Episode with a saved Transcript is never transcribed again, so a hand fix to its file sticks.
+- **Keeping them**: each one is saved as `<episode-guid>.vtt` on a `transcripts` branch that only the workflow writes to, outside `main`'s protection. Builds read from it. An Episode with a saved Transcript is never transcribed again, (ADR 0003).
 - **Timing**: a new Episode deploys first; its Transcript follows. The feed check also rebuilds when an Episode has gained a Transcript or an Episode Listen link since the last deploy.
 - A **Transcript module** turns the caption cues into readable paragraphs, each with a start timestamp. It groups cues on pauses and sentence ends, within a target paragraph length.
 - A missing, unreachable, or unreadable Transcript leaves that Episode without one and doesn't fail the build. The build log names the Episode and why.
@@ -225,10 +225,10 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
 - Episode Listen links appear only on the home page's latest Episode and on Episode pages: not on the Episodes page's featured card or archive rows.
 - **Fools' Gallery**
   - A timeline in eras: Holy Fools, the Medieval Court, the Renaissance, the Reformation.
-  - Each era opens with a painting band and one short paragraph that sets the scene.
+  - Each era opens with a painting band and one short paragraph (about 40–60 words) that sets the scene.
   - Each Fool gets a framed painting and their story. A hard name has a plain-English respelling under it, stressed syllable in capitals (Stańczyk: STAHN-chik), checked against a pronunciation source.
-  - A jester Fool's story is who they were and what they did, in one short paragraph, then two or three of their lines, each with a short setup. Every line is attested in the sources, and anything that's only legend says so ("the story goes"). The painting gets a sentence only where it matters (Stańczyk's, which helped name the show). Jester Fools: Stańczyk, Triboulet, Will Somers, Richard Tarlton, Archibald Armstrong, Erasmus (Folly's lines), and the yurodivy (Nikola's rebuke to Ivan).
-  - Fools with no recorded jests (Paul, Francis, Pablo de Valladolid, Calabacillas) keep their stories as written.
+  - A court-jester Fool's story is who they were and what they did, in one short paragraph, then two or three of their lines, each with a short setup. Every line is attested in the sources, and anything that's only legend says so ("the story goes"). The painting gets a sentence only where it matters (Stańczyk's, which helped name the show). The Fools with jests: Stańczyk, Triboulet, Will Somers, Richard Tarlton, Archibald Armstrong, Erasmus (Folly's lines), and the yurodivy (Nikola's rebuke to Ivan).
+  - Fools with no recorded jests (Paul, Francis, Pablo de Valladolid, Calabacillas) keep their stories as written, apart from quoting Scripture in the ESV.
   - v1 Fools, each depending on finding a suitable public-domain painting: Paul's "fools for Christ" and the holy fools (St. Francis's _jongleurs de Dieu_, the Russian _yurodivy_), Stańczyk (Matejko, 1862), Triboulet, Will Somers, Archibald Armstrong, Richard Tarlton, the Spanish court fools painted by Velázquez, and Erasmus's _In Praise of Folly_ with Holbein's marginal drawings.
   - It ends with why this show wears the motley.
 - **About**: why the show is called "Jester's Privilege"; the three Jesters with equal billing, each under the label they chose (Co-host; Aaron is Producer & Co-host) and with their full bio; what we believe; Redeemer Church (the show is ours, not the church's); how to listen, with the show's Listen links and "New to podcasts?".
@@ -271,7 +271,7 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
   - restyled **shadcn/ui** primitives, owned in the repo (menu, dialog, select, checkbox, toggle)
   - site components (banner, shield and monogram frame, illuminated paragraph, painting band, framed painting with placard, Episode row, fleuron rule)
   - pages that only arrange those components
-- **Icons**: Lucide for the interface, Simple Icons for platform and social logos. A platform or social link is its icon with a hidden text label, never a bare text link.
+- **Icons**: Lucide for the interface, Simple Icons for app and social logos. A Listen link or social link is its icon with a hidden text label, never a bare text link.
 - **Footer**, stacked on phones:
   1. the logo and the site's one-line description
   2. Explore: the nav sections (Episodes, Fools' Gallery, About, Speak Freely)
@@ -299,7 +299,7 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
 
 ### Content
 
-- All copy and data live in typed content files: site links (each platform and social link optional), Jesters, Fools and eras, hero copy, About sections, microcopy.
+- All copy and data live in typed content files: site links (each Listen link and social link optional), Jesters, Fools and eras, hero copy, About sections, microcopy.
 - Components never hard-code copy.
 - Content still awaiting the Jesters' words is marked `draft: true` and written at realistic length:
   - Previews show a **DRAFT** ribbon on pages that use draft content.
@@ -360,7 +360,7 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
 
 - Site-only Episode extras (Scripture passages, books mentioned), the Scripture index, the Jester's Library, topic and series browsing, site search.
 - Player queue, autoplay, sleep timer, downloads, chapters, and share-from-timestamp.
-- Proofreading every Transcript. A fix to one Transcript's file sticks, but nobody reviews them by default.
+- Proofreading every Transcript.
 - Newsletter, merch, blog, comments, accounts, a CMS, and a database.
 - Forwarding `hello@` to several inboxes: everything goes to the show's Gmail.
 - Instant updates through a Spreaker publish webhook, and narrowing the feed-check schedule to a fixed release day.
@@ -372,6 +372,7 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
 - **Pending inputs** (none block starting):
   - the YouTube link
   - a Spotify Web API key (client ID and secret) as GitHub secrets
+  - the Jesters' approval of the rewritten Fools' Gallery copy and the light wit pass on working messages
   - headshots for all three Jesters
   - final logo files (SVG, transparent background, square mark, dark-background version)
 - **Human-only setup**: a Cloudflare account and domain purchase, Email Routing, a Cloudflare API token and account ID as GitHub secrets, and Turnstile keys.
