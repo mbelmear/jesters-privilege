@@ -14,8 +14,7 @@ export const episodePage = {
     expand: "Read the full transcript",
     playFrom: "Play from",
     machineNote: {
-      text: "A machine wrote this Transcript from the audio, so expect the odd misheard word, most of all in names, Scripture references, and whatever Latin we attempt. Choose a timestamp to hear that moment.",
-      draft: true,
+      text: "A machine wrote this down while we talked. It's fast, it's free, and it has never once heard of Stańczyk. If it got something wrong, tell us on Speak Freely and we'll set it straight. Tap any timestamp to hear that moment.",
     },
   },
   sequence: {
@@ -27,11 +26,9 @@ export const episodePage = {
     button: "Share",
     copied: {
       text: "Link copied. Paste it anywhere to share this Episode.",
-      draft: true,
     },
     failed: {
       text: "Your browser wouldn't copy the link. Copy this page's address to share it.",
-      draft: true,
     },
   },
 } as const satisfies EpisodePage;

@@ -8,12 +8,10 @@ export const microcopy = {
     text: "Draft: this page uses copy awaiting the Jesters' words.",
   },
   comingSoon: {
-    text: "Episode 1 is on its way. Follow the show and you'll hear it the moment it's published.",
-    draft: true,
+    text: "Our Episodes have wandered off, which is awkward for a show about a church that wanders. We're out rounding them up. Check back soon.",
   },
   newToPodcasts: {
-    text: "New to podcasts? Open the podcast app already on your phone (Apple Podcasts on an iPhone, Spotify or YouTube elsewhere), search for Jester's Privilege, and tap Follow. New Episodes will arrive on their own.",
-    draft: true,
+    text: "New to podcasts? Open the podcast app already on your phone (Apple Podcasts on an iPhone, Spotify elsewhere), search for Jester's Privilege, and tap Follow. New Episodes will arrive on their own.",
   },
   notFoundTitle: { text: "A fool's errand" },
   notFoundBody: {

@@ -46,7 +46,6 @@ export const shell = {
     collapse: "Hide player controls",
     failed: {
       text: "The Episode stopped loading. Check your connection, then press Play to carry on from here.",
-      draft: true,
     },
   },
   footer: {
@@ -61,7 +60,6 @@ export const shell = {
     rss: "RSS feed",
     privacyNote: {
       text: "No cookies and no tracking. We count visits with Cloudflare's privacy-first analytics, and anything you send through Speak Freely goes only to the Jesters' inbox.",
-      draft: true,
     },
   },
 } as const satisfies Shell;

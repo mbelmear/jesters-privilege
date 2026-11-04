@@ -72,7 +72,7 @@ const fools = [
     story: {
       title: "A fool for Christ's sake",
       paragraphs: [
-        'Paul was a learned man, trained in the law at the feet of Gamaliel, and he knew exactly how the gospel sounded to learned ears. A crucified Messiah was a stumbling block to Jews, he wrote, and folly to Gentiles. He didn\'t soften it. "The foolishness of God is wiser than men," he told the Corinthians, and God chose what is foolish in the world to shame the wise.',
+        'Paul was a learned man, trained in the law at the feet of Gamaliel, and he knew exactly how the gospel sounded to learned ears. A crucified Messiah, he wrote, was "a stumbling block to Jews and folly to Gentiles." He didn\'t soften it. "The foolishness of God is wiser than men," he told the Corinthians, and "God chose what is foolish in the world to shame the wise."',
         'The church at Corinth grew proud of its wisdom, and Paul answered with an irony any court fool would envy: "We are fools for Christ\'s sake, but you are wise in Christ. We are weak, but you are strong." Later, made to defend himself against rivals who boasted of their credentials, he played the fool on purpose. He boasted of beatings, shipwrecks, and being let down the wall of Damascus in a basket. "I have been a fool!" he wrote. "You forced me to it."',
         "Valentin de Boulogne painted him at his desk, pen in hand, with a letter half written. Every holy fool after him took Paul's phrase as a calling: to look foolish to the world for the sake of a truth the world couldn't see.",
       ],
@@ -153,7 +153,9 @@ const fools = [
           line: "They're skinning you worse than me, king: Smolensk has been torn away from you, and you say nothing.",
         },
       ],
-      coda: "Three centuries later, Jan Matejko painted him brooding alone over the news from Smolensk while the court danced in the next room: Michael's favorite painting, and the one that helped name this show.",
+      // The coda is Michael's approved line (2026-11-03, #116); the rest of
+      // the story is the Gallery rewrite's draft (#123).
+      coda: "It's Michael's favorite painting, and it helped name this show: a fool who sees the truth while the court dances on without him.",
       draft: true,
     },
     painting: paintings.stanczyk,
@@ -350,7 +352,6 @@ export const gallery = {
   title: "The Fools' Gallery",
   intro: {
     text: "For as long as there have been kings, there have been fools who told them the truth. Some wore the motley at court; others went barefoot for Christ. Walk through their history, era by era, painting by painting.",
-    draft: true,
   },
   eras,
   fools,

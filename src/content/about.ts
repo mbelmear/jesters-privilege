@@ -3,7 +3,7 @@ import type { About } from "@/lib/content";
 export const about = {
   title: "About",
   intro: {
-    text: "Three Jesters from Redeemer Church in Bozeman, a weekly podcast about the church and her King, and why we wear the motley to make it.",
+    text: "Who we are, and why the show is called Jester's Privilege: three fools for Christ, in the motley each week to call the church to listen to her King.",
     draft: true,
   },
   whyAJester: {
@@ -16,6 +16,10 @@ export const about = {
       "So we take up the jester's place. We seek no platform in the church and no office in it; we are simply three of her members, which is why we can say plainly what flatterers won't. Paul says we are \"fools for Christ's sake\" (1 Corinthians 4:10), and like the best fools of old, we speak because we love the one we serve, and we love his bride. So we laugh at ourselves first, speak the truth in love and call the church back to listen to her King.",
     ],
   },
+  independence: {
+    text: "Jester's Privilege is our own project. No church or ministry stands behind it, so if we say something foolish, blame the fools.",
+    draft: true,
+  },
   jestersTitle: "The Jesters",
   whatWeBelieve: {
     title: "What we believe",
@@ -23,21 +27,11 @@ export const about = {
       "We believe the Bible is the Word of God, true in all it teaches and the final word on what the church believes and does. We believe in one God, Father, Son, and Holy Spirit, and that we are saved by grace alone, through faith alone, in Christ alone.",
       "We laugh at a lot on this show, but never at the gospel. The jokes are aimed at us and at the habits the church picks up along the way, so that the truth underneath can be heard more clearly.",
     ],
-    draft: true,
-  },
-  church: {
-    title: "Redeemer Church, Bozeman",
-    paragraphs: [
-      "All three of us serve at Redeemer Church in Bozeman, Montana, where the coffee is strong and the sermons are long. The show is ours, not the church's, but it grew out of conversations in the halls there.",
-      "If you're ever in Bozeman on a Sunday, come and find us. We're easy to spot: we're the ones laughing.",
-    ],
-    draft: true,
   },
   howToListen: {
     title: "How to listen",
     paragraphs: [
-      "New Episodes come out every week. Follow the show in your favorite podcast app, or press play on any Episode right here on the site.",
+      "We aim to release a new Episode every week. We're fools, not prophets, so if one runs late, forgive us. Follow the show in your podcast app and each new Episode arrives on its own, or press Play on any of them right here, free, no app required.",
     ],
-    draft: true,
   },
 } as const satisfies About;

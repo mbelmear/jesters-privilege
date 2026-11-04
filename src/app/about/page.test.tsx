@@ -32,7 +32,7 @@ describe("About", () => {
     expect(metadata.title).toBe("About");
   });
 
-  it("explains the show's name, then the Jesters, belief, church, and listening, in that order", () => {
+  it("explains the show's name, then the Jesters, belief, and listening, in that order", () => {
     render(<About />);
     expect(
       screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent)
@@ -40,10 +40,22 @@ describe("About", () => {
       content.about.whyAJester.title,
       "The Jesters",
       "What we believe",
-      "Redeemer Church, Bozeman",
       "How to listen",
     ]);
     expect(screen.getByText(/1 Corinthians 4:10/)).toBeVisible();
+  });
+
+  // The elders' request on #6: the show reads as its Jesters' own.
+  it("closes the show's name by saying the show is the Jesters' own", () => {
+    render(<About />);
+    const why = screen.getByRole("region", {
+      name: content.about.whyAJester.title,
+    });
+    const paragraphs = within(why)
+      .getAllByRole("paragraph")
+      .map((p) => p.textContent);
+    expect(paragraphs.at(-2)).toMatch(/^So we take up the jester's place\./);
+    expect(paragraphs.at(-1)).toMatch(/our own project/);
   });
 
   it("introduces the three Jesters in their order, each with role and full bio", () => {

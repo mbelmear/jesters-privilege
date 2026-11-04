@@ -9,7 +9,6 @@ export const jesters = [
     role: "Co-host",
     summary: {
       text: "A deacon and software engineer who argues with computers all week and with Dan on Sundays. At 24, he's the voice of the pews.",
-      draft: true,
     },
     bio: {
       paragraphs: [
@@ -33,7 +32,6 @@ export const jesters = [
     role: "Co-host",
     summary: {
       text: "A discipleship pastor and father of five who came back to Christ and has talked about him ever since. He counts mountain biking as a spiritual discipline.",
-      draft: true,
     },
     bio: {
       paragraphs: [
@@ -57,7 +55,6 @@ export const jesters = [
     role: "Producer & Co-host",
     summary: {
       text: "A pastor's kid from Glendive who makes the rest of us sound good. He produces the show, rules on every dispute, and cuts the jokes that didn't land.",
-      draft: true,
     },
     bio: {
       paragraphs: [

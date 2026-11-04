@@ -8,12 +8,17 @@ import { scrollThrough } from "./hero-story";
 // that build succeeding is itself the check that every route exports with
 // no Episodes.
 test.describe("Coming soon", { tag: "@empty-feed" }, () => {
-  test("the home page says Episode 1 is on its way", async ({ page }) => {
-    await page.goto("/");
-    const latest = page.getByRole("region", { name: "Latest Episode" });
-    await expect(latest).toContainText("Episode 1 is on its way.");
-    await expect(latest.getByRole("link")).toHaveCount(0);
-  });
+  // The zero-Episodes message, as Michael approved it (2026-11-03).
+  for (const path of ["/", "/episodes"]) {
+    test(`${path} says the Episodes have wandered off`, async ({ page }) => {
+      await page.goto(path);
+      const latest = page.getByRole("region", { name: "Latest Episode" });
+      await expect(latest).toContainText(
+        "Our Episodes have wandered off, which is awkward for a show about a church that wanders. We're out rounding them up. Check back soon."
+      );
+      await expect(latest.getByRole("link")).toHaveCount(0);
+    });
+  }
 
   test("the navigation leaves out Episodes", async ({ page }) => {
     await page.goto("/");

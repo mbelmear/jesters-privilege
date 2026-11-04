@@ -46,12 +46,13 @@ describe("Speak Freely", () => {
     ).toBeVisible();
   });
 
-  it("marks its draft copy with the DRAFT ribbon on a preview", () => {
+  // Its copy is all approved (#116), so even a preview shows no ribbon.
+  it("shows no DRAFT ribbon on a preview", () => {
     const before = process.env.SITE_ENV;
     process.env.SITE_ENV = "preview";
     try {
       render(<SpeakFreely />);
-      expect(screen.getByRole("note")).toHaveTextContent("Draft");
+      expect(screen.queryByRole("note")).toBeNull();
     } finally {
       if (before === undefined) delete process.env.SITE_ENV;
       else process.env.SITE_ENV = before;

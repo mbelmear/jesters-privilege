@@ -5,8 +5,7 @@ import type { EpisodesPage } from "@/lib/content";
 export const episodes = {
   title: "Episodes",
   intro: {
-    text: "Every Episode of Jester's Privilege, newest first. Three fools for Christ laugh at church culture, and at themselves first, then open the Scriptures so that the church listens to her King. Press Play on any of them and keep browsing while it plays.",
-    draft: true,
+    text: "Every Episode, newest first. In each one, three fools for Christ laugh at the church's habits (ours first), then open the Scriptures to hear what the King actually said. Press Play on any of them, and it keeps playing while you wander the rest of the court.",
   },
   finished: "Finished",
 } as const satisfies EpisodesPage;
