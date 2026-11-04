@@ -350,7 +350,7 @@ Each entry gives the current wording, the problem, and what the sources say. Wor
 9. **"so many auditors about him, and so many 'frauditors'"**. Wilson records three puns: "frauditours … conueiers … deceiuers", in place of auditors, surveyors, and receivers[15]. Somers never said "auditors". Quote Wilson.
 10. **"came to Henry VIII's court from Shropshire around 1535"**. 1535 is his first appearance in the accounts[17]. The Shropshire birth is tradition ("born in Shropshire, as some say", Armin 1608)[16]; Wikipedia attributes the arrival story to an 18th-century account[17]. Say "from Shropshire, it was said".
 11. **"was still at court for Elizabeth's coronation"**. The only source I found is an uncited sentence on Wikipedia[17]. Unverified.
-12. **"Will Somers could cheer Henry VIII when no one else could"** (Renaissance intro). This rests on Armin's 1608 riddles story, labelled Legend above, and on Armin's verse that "Will exilëd sadness many a time"[16]. Soften it ("was remembered for cheering Henry VIII"). The same intro opens "The Renaissance was the jester's golden age", which is borderline: `GLOSSARY.md` lists "Jester" for historical figures under _Avoid_, though its own definition of Fool says "a historical court jester". "The fool's golden age" avoids the question.
+12. **"Will Somers could cheer Henry VIII when no one else could"** (Renaissance intro). This rests on Armin's 1608 riddles story, labelled Legend above, and on Armin's verse that "Will exilëd sadness many a time"[16]. Soften it ("was remembered for cheering Henry VIII"). The same intro's "The Renaissance was the jester's golden age" is fine: `GLOSSARY.md` allows lowercase "jester" for the historical job.
 
 ### Richard Tarlton
 
