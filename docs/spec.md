@@ -30,7 +30,7 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
 2. As a first-time visitor, I want to read the jester story (the hero copy) in a way that feels crafted, so that the show's idea lands with me.
 3. As a first-time visitor, I want to start the latest Episode with one tap, so that I can try the show immediately.
 4. As a first-time visitor, I want to see who the Jesters are, with faces and short bios, so that I know who I'm listening to.
-5. As a first-time visitor, I want "Listen on" buttons for Apple Podcasts, Spotify, YouTube, and RSS, so that I can subscribe in the app I already use.
+5. As a first-time visitor, I want "Listen on" buttons for Apple Podcasts, Spotify, and YouTube, so that I can subscribe in the app I already use.
 6. As a visitor who has never used a podcast app, I want a short "New to podcasts?" explanation, so that I can figure out how to subscribe.
 7. As a visitor, I want the site to be readable and comfortable on a small phone held in one hand, so that I don't have to pinch or scroll sideways.
 8. As a visitor, I want the site to load quickly on mobile data, so that I don't give up before it appears.
@@ -104,7 +104,7 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
 58. As a phone visitor, I want a simple menu that opens and closes smoothly and traps focus correctly, so that navigation works one-handed and with assistive technology.
 59. As a visitor, I want dark mode that follows my phone's setting, plus a toggle that remembers my choice, so that the site is comfortable at night.
 60. As a visitor, I want no flash of the wrong theme when a page loads, so that the site feels polished.
-61. As a visitor, I want a footer with social links, the contact email, the RSS link, the privacy note, and copyright, so that I can reach the show.
+61. As a visitor, I want a footer with social links, the contact email, the privacy note, and copyright, so that I can reach the show.
 62. As a visitor who follows a broken link, I want a themed "a fool's errand" page with a way back, so that I'm not stuck.
 63. As a visitor relying on assistive technology, I want real contrast, alt text, visible focus, and keyboard access everywhere, so that the site works for me.
 64. As someone searching Google for the show or an Episode topic, I want to find the site with accurate titles and descriptions, so that I land in the right place.
@@ -151,7 +151,7 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
 
 - Source: the Spreaker RSS feed, shaped exactly like the feed of _Polemical with Dan Collins_, which the same producer publishes.
 - Deploys (production and pull request previews) read the real feed, `https://www.spreaker.com/show/7523831/episodes/feed`. Every other build, CI's tests included, reads a **fixture** with the same structure, so tests never depend on Spreaker. Episode 1 in it is "Celebrity Pastors". It also includes multiple years, a bonus Episode, HTML Show notes, and Transcript links.
-- Which feed a build reads is one environment value, `FEED` (docs/deploy.md); the real feed's address is one value, `LIVE_FEED_URL` in `src/content/site.ts`, which is also the RSS Listen link. A production build that isn't reading the real feed fails.
+- Which feed a build reads is one environment value, `FEED` (docs/deploy.md); the real feed's address is one value, `LIVE_FEED_URL` in `src/content/site.ts`. A production build that isn't reading the real feed fails.
 - **Feed module** (a deep module with a small interface): takes the raw feed text and returns a validated, ordered list of Episodes or throws a descriptive error. An Episode carries:
   - number (absent for bonus and trailer Episodes) and type (full, bonus, trailer)
   - title, slug (for bonus Episodes), publish date and duration
