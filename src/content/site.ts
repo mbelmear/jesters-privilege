@@ -15,6 +15,11 @@ const listen: Site["listen"] = {
   rss: LIVE_FEED_URL,
 };
 
+// Without Instagram's share-tracking query string.
+const social: Site["social"] = {
+  instagram: "https://www.instagram.com/jestersprivilegepod/",
+};
+
 // Each Listen and social link appears on the site as soon as it's filled in.
 export const site = {
   name: "Jester's Privilege",
@@ -27,5 +32,5 @@ export const site = {
   // emails land here (wrangler.jsonc pins the email binding to it too).
   contactEmail: "hello@jestersprivilegepodcast.com",
   listen,
-  social: {},
+  social,
 } as const satisfies Site;

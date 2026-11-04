@@ -19,6 +19,12 @@ describe("content", () => {
     });
   });
 
+  it("links to the show's Instagram", () => {
+    expect(content.site.social).toEqual({
+      instagram: "https://www.instagram.com/jestersprivilegepod/",
+    });
+  });
+
   // A name such as Stańczyk sets its ń from the self-hosted subsets only if
   // `npm run fonts` has added it; otherwise the page also fetches the rest of
   // the typeface, up to 98 KB, before its first paint (#57).
