@@ -4,6 +4,12 @@
 import { site } from "@/content/site";
 import type { Email, SubmitDeps } from "@/lib/submit";
 
+// Where Submissions go. Cloudflare's send_email binding only delivers to a
+// verified destination address in Email Routing, so this is the show's Gmail,
+// not the hello@ alias that forwards to it (wrangler.jsonc pins the binding to
+// the same address).
+export const SUBMISSION_INBOX = "thejestersprivilegepodcast@gmail.com";
+
 const SITEVERIFY_URL =
   "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 
@@ -69,6 +75,6 @@ export function emailSender(
   binding: SendEmailBinding
 ): SubmitDeps["sendEmail"] {
   return async (email: Email) => {
-    await binding.send({ from: FROM, to: site.contactEmail, ...email });
+    await binding.send({ from: FROM, to: SUBMISSION_INBOX, ...email });
   };
 }

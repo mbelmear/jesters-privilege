@@ -107,7 +107,7 @@ describe("Worker", () => {
             email: "submit@jestersprivilegepodcast.com",
             name: "Jester's Privilege site",
           },
-          to: "hello@jestersprivilegepodcast.com",
+          to: "thejestersprivilegepodcast@gmail.com",
           subject: "Confession from Anonymous",
           text: [
             "Type: Confession",

@@ -130,7 +130,7 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
 - Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4, built as a **static export** (ADR 0001). The default Cache Components and Partial Prefetching features are disabled because they need a server.
 - Hosted on **Cloudflare Workers with static assets**: one Worker serves the exported site and handles the Submit endpoint.
 - Domain **`jestersprivilegepodcast.com`**, registered on Cloudflare Registrar, with DNS on Cloudflare. No misspelling domain. (`jestersprivilege.com` belongs to an unrelated party.)
-- Email: Cloudflare Email Routing forwards `hello@jestersprivilegepodcast.com` to the show's Gmail, `thejestersprivilegepodcast@gmail.com`. Aaron gets added later (`LATER.md`).
+- Email: Cloudflare Email Routing forwards `hello@jestersprivilegepodcast.com` to the show's Gmail, `thejestersprivilegepodcast@gmail.com`, a verified destination address.
 - Analytics: Cloudflare Web Analytics, which is cookieless and needs no banner.
 
 ### Build and deploy
@@ -232,7 +232,7 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
   - It validates the fields (type allowlist, message length limits, optional email format, consent required).
   - It rejects honeypot hits silently.
   - It verifies the Cloudflare **Turnstile** token server-side.
-  - It sends one email to the verified `hello@` address through Cloudflare's email-sending binding.
+  - It sends one email to the show's Gmail through Cloudflare's email-sending binding, which delivers only to verified destination addresses, so not to the `hello@` alias.
   - It returns a small JSON result the page uses for success and error states.
 - The email sender and the Turnstile verifier are injected, so the handler can be tested without Cloudflare.
 - Submissions are not stored anywhere else.
