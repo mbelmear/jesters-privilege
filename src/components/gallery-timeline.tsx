@@ -90,7 +90,7 @@ function EraSection({
 // A Fool framed beside their story. The slug is the entry's id, so a link can
 // point straight at them.
 function FoolEntry({ fool }: { fool: Fool }) {
-  const { slug, name, lived, story, painting } = fool;
+  const { slug, name, respelling, lived, story, painting } = fool;
   const headingId = `${slug}-name`;
   return (
     <article
@@ -103,6 +103,12 @@ function FoolEntry({ fool }: { fool: Fool }) {
           <h3 id={headingId} className="font-display text-4xl">
             {name}
           </h3>
+          {/* Set like a placard: the UI face, small, on the brand rule. */}
+          {respelling && (
+            <p className="border-l-2 border-brand pl-3 font-ui text-sm leading-snug font-semibold">
+              {respelling}
+            </p>
+          )}
           <p className="font-ui text-sm font-semibold tracking-wider text-muted-foreground uppercase">
             {lived}
           </p>
@@ -115,6 +121,16 @@ function FoolEntry({ fool }: { fool: Fool }) {
             {paragraph}
           </p>
         ))}
+        {story.jests?.map(({ setup, line }) => (
+          <div key={line} className="flex flex-col gap-3">
+            <p className="text-lg">{setup}</p>
+            {/* Upright in the display face: an italic would load a font file. */}
+            <blockquote className="border-l-2 border-brand pl-6 font-display text-2xl text-balance">
+              <p>{line}</p>
+            </blockquote>
+          </div>
+        ))}
+        {story.coda && <p className="text-lg">{story.coda}</p>}
       </div>
       <FramedPainting
         painting={painting}

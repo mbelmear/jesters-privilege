@@ -3,6 +3,11 @@ import { paintings } from "./paintings";
 
 // The Fools' Gallery timeline: each era opens with its painting band, and each
 // Fool has an entry framed with their public-domain painting.
+//
+// Every fact, line, and respelling below traces to
+// docs/research/fools-jests-and-pronunciations.md. Quotations from English
+// sources keep their words and modernize only their spelling; lines from
+// Polish, French, and Latin are the research file's translations.
 const eras = [
   {
     id: "holy-fools",
@@ -12,8 +17,7 @@ const eras = [
     intro: {
       title: "Fools for Christ",
       paragraphs: [
-        'Before there were jesters in castles, there were fools in the church. Paul wrote to the proud Corinthians, "We are fools for Christ\'s sake," and meant it as a boast: the gospel looked like nonsense to the wise, and the apostles were content to look foolish carrying it.',
-        "Francis of Assisi called his friars the jongleurs de Dieu, God's own minstrels and tumblers. In Russia, the yurodivy wandered barefoot through the snow and rebuked tsars to their faces, protected by a reputation for madness that let them say what no courtier dared.",
+        "Before there were jesters in castles, there were fools in the church. Paul boasted that the apostles were \"fools for Christ's sake,\" and the saints after him took him at his word: friars sang as God's minstrels, and holy men walked naked through Russian winters to tell tsars what their courtiers wouldn't.",
       ],
       draft: true,
     },
@@ -26,8 +30,7 @@ const eras = [
     intro: {
       title: "The licensed fool",
       paragraphs: [
-        "In the great households of medieval Europe, the fool held a strange place at court. He wore the motley and the cap with its bells, he ate at the lord's table, and he alone could mock the lord without losing his head.",
-        "Some fools were simple, kept for the laughter they couldn't help. Others were sharp as knives, and their jokes carried warnings a wise king would heed and a foolish one would not.",
+        "In the great households of medieval Europe, the fool held a strange place at court. He wore the motley and the cap with its bells, he ate at the lord's table, and he alone could mock the lord without losing his head. Some fools were simple, kept for the laughs they couldn't help; others were sharp as knives.",
       ],
       draft: true,
     },
@@ -40,8 +43,7 @@ const eras = [
     intro: {
       title: "Truth in a jest",
       paragraphs: [
-        "The Renaissance was the jester's golden age. Stańczyk brooded at the Polish court while others danced, Triboulet traded barbs with the kings of France, and Will Somers could cheer Henry VIII when no one else could.",
-        "In 1511 Erasmus published In Praise of Folly, putting a sermon on the vanity of the powerful into Folly's own mouth. Holbein filled the margins of a copy with drawings, and the fool became a voice for reform.",
+        "The Renaissance was the jester's golden age. Kings in Poland, France, and England kept fools at their elbows, some for their wit and at least one for his lack of it. In 1511 Erasmus handed Folly herself the floor for a speech in her own praise, and she spared neither popes nor theologians.",
       ],
       draft: true,
     },
@@ -54,8 +56,7 @@ const eras = [
     intro: {
       title: "The last of the court fools",
       paragraphs: [
-        "As Europe argued over the gospel, the fools argued too. Richard Tarlton made Elizabeth I laugh until she ordered him from the room, and Archibald Armstrong mocked Archbishop Laud so openly that he lost his place at court.",
-        "In Spain, Velázquez painted the court fools of Philip IV with a dignity their masters rarely gave them. Within a generation the office was gone, but the fool's privilege of telling the truth with a smile was not.",
+        "As Europe argued over the gospel, the fools argued too, and paid for it: an English queen had her comic actor taken away for making her laugh too hard, and an archbishop got the king's fool thrown out of court. In Spain, Velázquez painted Philip IV's fools with a dignity their masters rarely gave them.",
       ],
       draft: true,
     },
@@ -71,8 +72,8 @@ const fools = [
     story: {
       title: "A fool for Christ's sake",
       paragraphs: [
-        'Paul was a learned man, trained in the law at the feet of Gamaliel, and he knew exactly how the gospel sounded to learned ears. A crucified Messiah was a stumbling block to Jews, he wrote, and foolishness to Greeks. He didn\'t soften it. "The foolishness of God is wiser than men," he told the Corinthians, and God had chosen the foolish things of the world to confound the wise.',
-        'The church at Corinth grew proud of its wisdom, and Paul answered with an irony any court fool would envy: "We are fools for Christ\'s sake, but ye are wise in Christ; we are weak, but ye are strong." Later, made to defend himself against rivals who boasted of their credentials, he played the fool on purpose. He boasted of beatings, shipwrecks, and being let down the wall of Damascus in a basket. "I am become a fool in glorying," he wrote; "ye have compelled me."',
+        'Paul was a learned man, trained in the law at the feet of Gamaliel, and he knew exactly how the gospel sounded to learned ears. A crucified Messiah was a stumbling block to Jews, he wrote, and folly to Gentiles. He didn\'t soften it. "The foolishness of God is wiser than men," he told the Corinthians, and God chose what is foolish in the world to shame the wise.',
+        'The church at Corinth grew proud of its wisdom, and Paul answered with an irony any court fool would envy: "We are fools for Christ\'s sake, but you are wise in Christ. We are weak, but you are strong." Later, made to defend himself against rivals who boasted of their credentials, he played the fool on purpose. He boasted of beatings, shipwrecks, and being let down the wall of Damascus in a basket. "I have been a fool!" he wrote. "You forced me to it."',
         "Valentin de Boulogne painted him at his desk, pen in hand, with a letter half written. Every holy fool after him took Paul's phrase as a calling: to look foolish to the world for the sake of a truth the world couldn't see.",
       ],
       draft: true,
@@ -82,6 +83,7 @@ const fools = [
   {
     slug: "francis-of-assisi",
     name: "Francis of Assisi",
+    respelling: "Francis of ah-SEE-see",
     era: "holy-fools",
     lived: "c. 1181–1226",
     story: {
@@ -98,15 +100,27 @@ const fools = [
   {
     slug: "yurodivy",
     name: "The yurodivy",
+    respelling: "yoo-ROH-dih-vee",
     era: "holy-fools",
     lived: "15th–17th centuries",
     story: {
       title: "Barefoot in the snow",
       paragraphs: [
-        "In Russia the holy fool became an institution. The yurodivy went barefoot through the winter in rags or chains, slept in church porches, and spoke in riddles. People feared and honored him in equal measure, because his madness was understood as a disguise. A man who had given up everything, even his good name, had nothing left to lose by telling the truth.",
-        "Basil the Blessed walked naked through Moscow's winters, and the cathedral on Red Square where he was buried still bears his name. When Ivan the Terrible came to Pskov in 1570, fresh from slaughtering the people of Novgorod, the story goes that the holy fool Nikola offered him a slab of raw meat. Ivan protested that it was Lent and he was a Christian. Nikola asked why, then, he drank Christian blood. Ivan left Pskov largely unharmed.",
-        "Vasily Surikov's yurodivy sits barefoot in the snow as the Old Believer noblewoman Morozova is carted off to prison, raising two fingers in the old sign of the cross to answer hers. Surikov found his model selling cucumbers in a Moscow market, and painted him sitting in real snow.",
+        'In Russia the holy fool, the yurodivy, went naked even in the depths of winter, and the people took him for a prophet. The Englishman Giles Fletcher, who saw them in Moscow, wrote that they were given "a liberty to speak what they list," even against the tsar himself. Basil the Blessed rebuked Ivan the Terrible for his cruelty, and was made a saint.',
       ],
+      jests: [
+        {
+          setup:
+            "In 1570 Ivan came to sack Pskov on suspicion of rebellion. The hermit Nikola sent him a piece of raw meat. It was Lent, and when the tsar sent word that he was surprised a holy man would offer him meat in Lent, Nikola answered, as Fletcher recorded it:",
+          line: "And doth Ivasko (which is as much to say, as Jack) think … that it is unlawful to eat a piece of beast's flesh in Lent, and not to eat up so much man's flesh as he hath done already?",
+        },
+        {
+          setup:
+            'Jerome Horsey, an Englishman who saw Nikola with his own eyes and thought him "a foul creature," still recorded him calling the tsar to his face, as a storm broke over the town:',
+          line: "… the Emperor bloodsucker, the devourer and eater of Christian flesh …",
+        },
+      ],
+      coda: 'The words, Horsey wrote, "made the Emperor to tremble," and Fletcher says the fool "saved a great many men\'s lives at that time."',
       draft: true,
     },
     painting: paintings.yurodivy,
@@ -114,15 +128,32 @@ const fools = [
   {
     slug: "stanczyk",
     name: "Stańczyk",
+    respelling: "STAHN-chik",
     era: "renaissance",
-    lived: "c. 1480–1560",
+    lived: "c. 1480–c. 1560",
     story: {
       title: "The fool who wouldn't dance",
       paragraphs: [
-        "Stańczyk served three kings of Poland, and the Kraków court remembered him less for his clowning than for his nerve. The story goes that at a royal hunt King Sigismund had a bear let out of its cage, and when it charged, Stańczyk ran. The king scolded him for fleeing. Stańczyk answered that the greater fool was the one who lets a bear out of its cage.",
-        "Another story has him walking through Kraków with his face bound in a bandage, to settle a bet over which trade had the most practitioners. Everyone he passed offered him a cure, and he won the bet: the city was full of doctors.",
-        "Three centuries later, Jan Matejko painted him alone at a ball. In the next room the court dances; on the table beside him lies a letter announcing that Smolensk has fallen to Moscow. Only the fool understands what it means. This painting gave the show its name: a fool who sees the truth while the court looks away.",
+        'Stańczyk was the fool of two kings of Poland, Alexander and Sigismund I, and perhaps of a third. His contemporary, the chronicler Marcin Bielski, called him "an exceptional fool," and warned that lords make a mistake joking with fools, "for they like to tell the truth in jest."',
       ],
+      jests: [
+        {
+          setup:
+            "A huge bear from Lithuania was let out of its crate to be baited before the court. It mauled the dogs, charged the royal party, and knocked Stańczyk over, horse and all. The king laughed that he had run from the bear like a fool, not a knight. Stańczyk answered:",
+          line: "He's the bigger fool who has a bear in a crate and lets it out to his own harm.",
+        },
+        {
+          setup:
+            "The poet Jan Kochanowski recorded his verdict on two of the court's bishops:",
+          line: 'Stańczyk used to say there were no bigger liars in Poland than Archbishop Gamrat and Maciejowski, Bishop of Kraków: the first always said "I know everything" and knew nothing, and the second said "I really don\'t know" and knew everything.',
+        },
+        {
+          setup:
+            "When some boys tore the clothes off him, he ran to the king, who took pity on him. Stańczyk told him:",
+          line: "They're skinning you worse than me, king: Smolensk has been torn away from you, and you say nothing.",
+        },
+      ],
+      coda: "Three centuries later, Jan Matejko painted him brooding alone over the news from Smolensk while the court danced in the next room: Michael's favorite painting, and the one that helped name this show.",
       draft: true,
     },
     painting: paintings.stanczyk,
@@ -130,14 +161,30 @@ const fools = [
   {
     slug: "triboulet",
     name: "Triboulet",
+    respelling: "tree-boo-LAY",
     era: "renaissance",
-    lived: "c. 1479–1536",
+    lived: "c. 1479–c. 1537",
     story: {
-      title: "A quarter of an hour before",
+      title: "Other men's jokes",
       paragraphs: [
-        'Triboulet served two kings of France, Louis XII and Francis I, and his jokes had a way of finding the most powerful person in the room. The best-known story says a nobleman he had mocked swore to kill him. Triboulet ran to the king, who promised that anyone who murdered his fool would hang a quarter of an hour later. "Sire," said Triboulet, "might he hang a quarter of an hour before?"',
-        "Rabelais put him in the Third Book of Pantagruel. Panurge can't decide whether to marry, and after consulting a theologian, a physician, and a philosopher, he is sent at last to the fool Triboulet, on the theory that a fool might see what the wise had missed.",
-        "Three centuries later Victor Hugo made him the hero of Le roi s'amuse, a play so hard on the king that it was banned after one night. Verdi set the story to music, and Triboulet became Rigoletto. This chalk drawing at Chantilly has long carried his name, though it was made around 1545, after his death, so no one can be sure the face is his.",
+        'Triboulet was the household fool of Louis XII and Francis I, though two fools of that name may have been merged into one. The poet Jean Marot, who knew him, called him "a fool with a cracked head, as wise at thirty as the day he was born": a natural fool, kept for his simplicity. Later writers lent him other men\'s jokes, and Victor Hugo made him the hero of a play banned after one night.',
+      ],
+      jests: [
+        {
+          setup:
+            "The storyteller Bonaventure des Périers tells how at the king's entry into Rouen in 1508, Triboulet was sent ahead on a fine horse to announce him. When his keeper shouted at him to stop, Triboulet, afraid of a beating, hauled on the reins and drove his spurs in as hard as he could:",
+          line: "By God's blood, this wicked horse! I spur it as hard as I can, and it still won't stand still!",
+        },
+        {
+          setup:
+            "The story goes that at vespers in the Sainte-Chapelle, a bishop began to chant, the choir burst in, and Triboulet walked up and punched the bishop. Asked by the king why, he said:",
+          line: "Well, cousin, when we came in here it was quiet, and this fellow started the racket, so he's the one to punish.",
+        },
+        {
+          setup:
+            "The story also goes, as it goes of at least half a dozen other fools, that a lord threatened to have him beaten to death, and the king promised to hang the man a quarter of an hour after Triboulet died. Triboulet asked:",
+          line: "Thank you kindly, cousin, but would you be so good as to hang him a quarter of an hour before?",
+        },
       ],
       draft: true,
     },
@@ -149,11 +196,21 @@ const fools = [
     era: "renaissance",
     lived: "Died 1560",
     story: {
-      title: "The fool in the king's psalter",
+      title: "So many frauditors",
       paragraphs: [
-        "Will Somers came to Henry VIII's court from Shropshire around 1535 and stayed for the rest of the reign. As the king grew older, sicker, and more dangerous, Somers was one of the few people who could still make him laugh, and one of the few who could tell him the truth while doing it.",
-        'Thomas Wilson\'s Art of Rhetoric, printed while Somers was still alive, records him explaining to the king why the treasury was always empty: Henry had so many auditors about him, and so many "frauditors", that they kept the money for themselves.',
-        "He outlived Henry, served Edward VI and Mary, and was still at court for Elizabeth's coronation. In Henry's own psalter, at the psalm that begins \"The fool hath said in his heart, There is no God,\" the king sits as David with his harp, and his fool stands beside him.",
+        'Will Somers was Henry VIII\'s fool, first recorded at court in 1535, and he went on to serve Edward VI and Mary. The actor Robert Armin, writing when "so many knew him," remembered a lean, stooping man, "a poor man\'s friend," whose merry talk "exiled sadness many a time" for the king.',
+      ],
+      jests: [
+        {
+          setup:
+            "When Henry was short of money owed him, Somers explained why. Thomas Wilson printed the answer in 1553, while Somers was alive, as a lesson in punning:",
+          line: "And please your grace, quoth he, you have so many frauditors, so many conveyers, and so many deceivers to get up your money, that they get all to themselves.",
+        },
+        {
+          setup:
+            "The story goes, in Armin's telling, that when Henry was so low that nothing could cheer him, Will went behind the arras to think and came back with three riddles, the last of them bawdy. The first:",
+          line: "Harry, says he, what is it, that the lesser it is, the more it is to be feared? … it was a little bridge over a deep river.",
+        },
       ],
       draft: true,
     },
@@ -162,14 +219,30 @@ const fools = [
   {
     slug: "erasmus",
     name: "Erasmus",
+    respelling: "ih-RAZ-mus",
     era: "renaissance",
     lived: "c. 1466–1536",
     story: {
-      title: "Folly in the pulpit",
+      title: "Folly takes the floor",
       paragraphs: [
-        "Erasmus wrote In Praise of Folly in 1509 while staying with his friend Thomas More in London, and he said it took him only a few days. The Greek title, Moriae Encomium, puns on More's name. Folly herself climbs into the pulpit and preaches a sermon in her own praise, and along the way she mocks everyone who thinks himself wise: theologians splitting hairs, monks counting their fasts, popes and kings living in luxury.",
-        "Then the joke turns. In her last pages Folly quotes Paul: the foolishness of God is wiser than men, and Christians must be fools for Christ's sake. The book that laughed at the church's pride ended by commending the folly of the cross, and it was read across Europe on the eve of the Reformation.",
-        "In 1515 a Basel schoolmaster, Oswald Myconius, let the young Hans Holbein and his brother Ambrosius fill the margins of his copy with 82 pen drawings. The first shows Folly, in her fool's cap, preaching from the pulpit. When Erasmus saw the sketch of himself at his desk, he is said to have remarked that if he still looked like that, he would take a wife.",
+        'Erasmus thought of In Praise of Folly while riding from Italy to England, and printed it in 1511. Its title, Moriae Encomium, puns on the name of his friend Thomas More, which, he told More, "comes so near the word Moriae (folly) as you are far from the thing." The book is a mock speech, and Folly delivers it in her own praise.',
+      ],
+      jests: [
+        {
+          setup:
+            "Her proof that she is a goddess is what happened when she appeared:",
+          line: "I no sooner stepped up to speak to this full assembly than all your faces put on a kind of new and unwonted pleasantness.",
+        },
+        {
+          setup:
+            "Touring the powerful, past the theologians, monks, and bishops, she comes at last to the popes:",
+          line: "And for popes, that supply the place of Christ, if they should endeavor to imitate His life, to wit His poverty, labor, doctrine, cross, and contempt of life … who would live more disconsolate than themselves?",
+        },
+        {
+          setup:
+            'Then the joke turns. Folly piles up texts from Paul, praises "the foolishness of the cross," excuses anything too bold as a fool\'s talk, and leaves with a proverb:',
+          line: "Sometimes a fool may speak a word in season … Wherefore farewell, clap your hands, live and drink lustily, my most excellent disciples of Folly.",
+        },
       ],
       draft: true,
     },
@@ -181,11 +254,26 @@ const fools = [
     era: "reformation",
     lived: "Died 1588",
     story: {
-      title: "More of her faults than her chaplains",
+      title: "Take away the knave",
       paragraphs: [
-        "Richard Tarlton was the most famous clown in Elizabethan England, a star of the Queen's Men who could make up rhymes on any subject the crowd shouted at him. He played the pipe and tabor, danced the jig that ended the show, and, a poet remembered, only had to put his head round the curtain for the whole theatre to laugh.",
-        "He made the queen laugh too, and he didn't spare her court. Once, the story goes, he mocked Sir Walter Raleigh and the Earl of Leicester so mercilessly in her presence that she had him taken away for making her laugh too much. Thomas Fuller wrote that Tarlton told the queen more of her faults than most of her chaplains, and cured her melancholy better than all her physicians.",
-        'He died in 1588, poor, and some readers have heard him in Hamlet\'s Yorick, "a fellow of infinite jest," whose skull the prince holds in the graveyard. This engraving copies an Elizabethan drawing of him, pipe at his lips and drum at his side.',
+        'Richard Tarlton was the most famous comic actor of Elizabethan England, one of the twelve players chosen for the new Queen\'s Men in 1583. He made up verses on any theme the crowd shouted, and Thomas Nashe wrote that people began to laugh the moment he "first peeped out his head." He died poor, in 1588. Thomas Fuller, writing later, said he told the queen "more of her faults than most of her chaplains."',
+      ],
+      jests: [
+        {
+          setup:
+            "A court note from the year he died records how Tarlton, a master of fence, fought the queen's lapdog with sword and staff as if it were a fighting mastiff:",
+          line: "… the Queen bade them take away the knave for making her to laugh so excessively, as he fought against her little dog, Perrico de Faldas, with his sword and long staff, and bade the Queen take off her mastiff.",
+        },
+        {
+          setup:
+            "The story goes, in a book printed a century later, that one joke cost him his place at her table. Acting before the queen, he pointed at Sir Walter Raleigh:",
+          line: "See, the Knave commands the Queen!",
+        },
+        {
+          setup:
+            "The story also goes that he compared Queen Elizabeth to a sculler, who rows alone:",
+          line: "… neither the Queen nor the sculler hath a fellow.",
+        },
       ],
       draft: true,
     },
@@ -199,10 +287,26 @@ const fools = [
     story: {
       title: "Who's fool now?",
       paragraphs: [
-        "Archibald Armstrong, Archy to the court, came south from the Scottish borders with James VI when he became James I of England in 1603. Legend says he had been a sheep stealer. He grew rich, rude, and indispensable, and in 1623 he went with Prince Charles to Madrid, where a courtier wrote home that Archy had more privilege than any of them, going in his fool's coat wherever the princess was.",
-        'Under Charles I he chose the wrong enemy: William Laud, Archbishop of Canterbury. Asked to say grace at a dinner Laud attended, Archy prayed, "Great praise be given to God, and little Laud to the devil." When Laud\'s new prayer book set off a riot in Edinburgh in 1637, Archy asked him, "Who\'s fool now?" Laud complained to the Privy Council, and in 1638 Archy was stripped of his fool\'s coat and put out of the court.',
-        "He retired to Cumberland with the fortune his jokes had made, and lived to see Laud beheaded in 1645 and the king after him. Richard Gaywood etched him for A Banquet of Jests, a book of jokes sold under his name.",
+        "Archibald Armstrong, Archy to the court, was the fool of James VI and I and of Charles I. Tradition says he began as a sheep-stealer on the Scottish border. He went with Prince Charles to Madrid in 1623, grew rich, and made the mistake of choosing William Laud, Archbishop of Canterbury, as his target.",
       ],
+      jests: [
+        {
+          setup:
+            "In a letter from Madrid, James Howell wrote that \"our cousin Archy hath more privilege than any,\" going in his fool's coat among the Infanta's ladies. When they marveled at a Catholic victory at Prague, Archy offered them a stranger thing:",
+          line: "Was it not a strange thing, quoth he, that in the year '88 there should come a fleet of 140 sail from Spain to invade England, and that ten of these could not go back to tell what became of the rest?",
+        },
+        {
+          setup:
+            "The story goes that Archy asked leave to say grace before the king, with Laud, a little man, at the table:",
+          line: "Great praise be given to God, and little Laud to the devil.",
+        },
+        {
+          setup:
+            "On 11 March 1638, with news from Stirling about the new Scottish prayer book, Archy met Laud on his way into the Council:",
+          line: "Whea's feule now? doth not your Grace hear the News from Striveling about the Liturgy?",
+        },
+      ],
+      coda: "Laud complained, and that same day the king and Council had Archy's coat pulled over his head and put him out of the king's service and the court.",
       draft: true,
     },
     painting: paintings["archibald-armstrong"],
@@ -210,6 +314,7 @@ const fools = [
   {
     slug: "pablo-de-valladolid",
     name: "Pablo de Valladolid",
+    respelling: "PAH-bloh deh bah-yah-doh-LEED",
     era: "reformation",
     lived: "Died 1648",
     story: {
@@ -226,6 +331,7 @@ const fools = [
   {
     slug: "calabacillas",
     name: "Calabacillas",
+    respelling: "kah-lah-bah-THEE-yahs",
     era: "reformation",
     lived: "Died 1639",
     story: {
