@@ -131,7 +131,8 @@ export type Jest = {
 };
 
 // A Fool's story: who they were, in its paragraphs; then any lines of theirs
-// the sources record; then, where the painting matters, a sentence on it.
+// the sources record; then a closing paragraph, such as how the story ended
+// or, where the painting matters, a sentence on it.
 export type Story = Section & {
   readonly jests?: readonly Jest[];
   readonly coda?: string;

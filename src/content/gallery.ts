@@ -235,7 +235,7 @@ const fools = [
         },
         {
           setup:
-            "Touring the powerful, past the theologians, monks, and bishops, she comes at last to the popes:",
+            "Touring the powerful, past the theologians, monks, and bishops, she comes to the popes:",
           line: "And for popes, that supply the place of Christ, if they should endeavor to imitate His life, to wit His poverty, labor, doctrine, cross, and contempt of life … who would live more disconsolate than themselves?",
         },
         {
@@ -256,7 +256,7 @@ const fools = [
     story: {
       title: "Take away the knave",
       paragraphs: [
-        'Richard Tarlton was the most famous comic actor of Elizabethan England, one of the twelve players chosen for the new Queen\'s Men in 1583. He made up verses on any theme the crowd shouted, and Thomas Nashe wrote that people began to laugh the moment he "first peeped out his head." He died poor, in 1588. Thomas Fuller, writing later, said he told the queen "more of her faults than most of her chaplains."',
+        'Richard Tarlton was the most famous comic actor of Elizabethan England, one of the twelve players chosen for the new Queen\'s Men in 1583. He made up verses on any theme the crowd shouted, and Thomas Nashe wrote that people began to laugh the moment he "first peeped out his head." He died poor, in 1588. Thomas Fuller, writing in 1662, long after he died, said he told the queen "more of her faults than most of her chaplains."',
       ],
       jests: [
         {
@@ -306,7 +306,7 @@ const fools = [
           line: "Whea's feule now? doth not your Grace hear the News from Striveling about the Liturgy?",
         },
       ],
-      coda: "Laud complained, and that same day the king and Council had Archy's coat pulled over his head and put him out of the king's service and the court.",
+      coda: "The complaint went straight to the Council, and that same day the king and Council had Archy's coat pulled over his head and put him out of the king's service and the court.",
       draft: true,
     },
     painting: paintings["archibald-armstrong"],
