@@ -219,9 +219,11 @@ export type PlayerCopy = {
   readonly failed: Copy;
 };
 
-// The "Listen on" buttons' copy, on the home page and About.
+// The Listen links' copy: the show's "Listen on" buttons on About, and the
+// "or listen on" icons under an Episode's Play button.
 export type ListenCopy = {
   readonly title: string;
+  readonly onEpisode: string;
   readonly platforms: { readonly [P in ListenPlatform]: string };
 };
 

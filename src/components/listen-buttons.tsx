@@ -1,11 +1,10 @@
-import { siApplepodcasts, siRss, siSpotify, siYoutube } from "simple-icons";
 import { useId } from "react";
+import { ListenIcon } from "@/components/listen-icon";
 import { Button } from "@/components/ui/button";
 import {
   LISTEN_PLATFORMS,
   type Copy,
   type ListenCopy,
-  type ListenPlatform,
   type Site,
 } from "@/lib/content";
 
@@ -16,15 +15,6 @@ type Props = {
   // The heading's level: a section of its own on the home page, a part of
   // "How to listen" on About.
   headingLevel?: 2 | 3;
-};
-
-// Platform marks from Simple Icons, drawn in the button's own color rather
-// than each brand's.
-const ICONS: Record<ListenPlatform, { path: string }> = {
-  "apple-podcasts": siApplepodcasts,
-  spotify: siSpotify,
-  youtube: siYoutube,
-  rss: siRss,
 };
 
 /**
@@ -61,13 +51,7 @@ export function ListenButtons({
           <li key={platform}>
             <Button asChild variant="outline" size="lg">
               <a href={href}>
-                <svg
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                  className="size-5 fill-current"
-                >
-                  <path d={ICONS[platform].path} />
-                </svg>
+                <ListenIcon platform={platform} />
                 {copy.platforms[platform]}
               </a>
             </Button>

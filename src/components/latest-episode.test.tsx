@@ -23,13 +23,17 @@ const bonus: Episode = {
   slug: "listener-confessions-christmas-edition",
 };
 
-const renderLatest = (episode: Episode | undefined) =>
+const renderLatest = (
+  episode: Episode | undefined,
+  listenLinks?: React.ReactNode
+) =>
   render(
     <LatestEpisode
       episode={episode}
       copy={content.home.latestEpisode}
       comingSoon={content.microcopy.comingSoon}
       playerCopy={content.shell.player}
+      listenLinks={listenLinks}
     />
   );
 
@@ -58,6 +62,15 @@ describe("LatestEpisode", () => {
     expect(
       screen.getByRole("button", { name: "Play Episode 4" })
     ).toBeInTheDocument();
+  });
+
+  it("offers the Episode in podcast apps under its Play button, when given", () => {
+    renderLatest(full, <ul aria-label="or listen on" />);
+    const play = screen.getByRole("button", { name: "Play Episode 4" });
+    const apps = screen.getByRole("list", { name: "or listen on" });
+    expect(
+      play.compareDocumentPosition(apps) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
   });
 
   it("labels a bonus Episode in place of a number", () => {

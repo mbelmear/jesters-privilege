@@ -2,8 +2,9 @@ import { basename, join } from "node:path";
 import { downloadText, type Fetch } from "./download";
 
 // Where the Feed comes from: the Spreaker feed's address, or a fixture shaped
-// like it, with its Transcripts in a folder beside it, which every build but a
-// deploy reads (chooseFeedSource). A fixture's Episodes are draft copy;
+// like it, with its Transcripts in a folder beside it and Apple's lookup of
+// its Episodes in a file, which every build but a deploy reads
+// (chooseFeedSource). A fixture's Episodes are draft copy;
 // `standsInFor` is the feed address it pretends to be, which the page head
 // links to.
 export type FeedSource =
@@ -11,6 +12,7 @@ export type FeedSource =
       kind: "fixture";
       path: string;
       transcripts: string;
+      appleLookup: string;
       standsInFor: string;
       draft: true;
     }
@@ -117,6 +119,29 @@ export function transcriptFetch(source: FeedSource, io: FeedIO): Fetch {
         const text = await io.readFile(
           join(source.transcripts, basename(new URL(url).pathname))
         );
+        return {
+          ok: true,
+          status: 200,
+          statusText: "OK",
+          text: async () => text,
+        };
+      };
+    case "url":
+      return io.fetch;
+    default: {
+      const unhandled: never = source;
+      return unhandled;
+    }
+  }
+}
+
+// How to look up the Feed's Episodes in Apple Podcasts. The fixture answers
+// every lookup with one file shaped like Apple's answer.
+export function appleLookupFetch(source: FeedSource, io: FeedIO): Fetch {
+  switch (source.kind) {
+    case "fixture":
+      return async () => {
+        const text = await io.readFile(source.appleLookup);
         return {
           ok: true,
           status: 200,

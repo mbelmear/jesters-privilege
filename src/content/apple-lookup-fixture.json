@@ -1,0 +1,44 @@
+{
+  "resultCount": 5,
+  "results": [
+    {
+      "wrapperType": "track",
+      "kind": "podcast",
+      "collectionId": 6830338936,
+      "trackName": "Jester's Privilege",
+      "trackViewUrl": "https://podcasts.apple.com/us/podcast/jesters-privilege/id6830338936?uo=4"
+    },
+    {
+      "wrapperType": "podcastEpisode",
+      "kind": "podcast-episode",
+      "episodeGuid": "https://api.spreaker.com/episode/70000005",
+      "trackId": 1000799664750,
+      "trackName": "Listener Confessions: Christmas Edition",
+      "trackViewUrl": "https://podcasts.apple.com/us/podcast/listener-confessions-christmas-edition/id6830338936?i=1000799664750&uo=4"
+    },
+    {
+      "wrapperType": "podcastEpisode",
+      "kind": "podcast-episode",
+      "episodeGuid": "https://api.spreaker.com/episode/70000004",
+      "trackId": 1000799664740,
+      "trackName": "Mockery and the Prophets",
+      "trackViewUrl": "https://podcasts.apple.com/us/podcast/mockery-and-the-prophets/id6830338936?i=1000799664740&uo=4"
+    },
+    {
+      "wrapperType": "podcastEpisode",
+      "kind": "podcast-episode",
+      "episodeGuid": "https://api.spreaker.com/episode/70000003",
+      "trackId": 1000799664730,
+      "trackName": "The Holy Fool",
+      "trackViewUrl": "https://podcasts.apple.com/us/podcast/the-holy-fool/id6830338936?i=1000799664730&uo=4"
+    },
+    {
+      "wrapperType": "podcastEpisode",
+      "kind": "podcast-episode",
+      "episodeGuid": "https://api.spreaker.com/episode/70000002",
+      "trackId": 1000799664710,
+      "trackName": "Celebrity Pastors",
+      "trackViewUrl": "https://podcasts.apple.com/us/podcast/celebrity-pastors/id6830338936?i=1000799664710&uo=4"
+    }
+  ]
+}

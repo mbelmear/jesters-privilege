@@ -19,12 +19,15 @@ type Props = {
   // Shown after the length, such as the archive's check for an Episode heard
   // to the end. Passed in, so only the page that shows it ships its code.
   mark?: ReactNode;
+  // Shown under Play: the Episode's Listen links on the home page, which the
+  // Episodes page's featured card leaves out (docs/spec.md, Pages).
+  listenLinks?: ReactNode;
 };
 
 /**
  * The newest Episode, set like a hymn board: its number large in the display
  * face beside the title, date, length, and excerpt, with a button to play
- * it in the player. Bonus and trailer Episodes carry an orange label in place of a number.
+ * it in the player, and any Listen links under it. Bonus and trailer Episodes carry an orange label in place of a number.
  * Before any Episode is published, it says one is on its way.
  */
 export function LatestEpisode({
@@ -33,6 +36,7 @@ export function LatestEpisode({
   comingSoon,
   playerCopy,
   mark,
+  listenLinks,
 }: Props) {
   const headingId = useId();
   return (
@@ -52,6 +56,7 @@ export function LatestEpisode({
           copy={copy}
           playerCopy={playerCopy}
           mark={mark}
+          listenLinks={listenLinks}
         />
       ) : (
         <p className="border-l-2 border-brand py-2 pl-4 text-lg">
@@ -67,11 +72,13 @@ function EpisodeCard({
   copy,
   playerCopy,
   mark,
+  listenLinks,
 }: {
   episode: Episode;
   copy: Home["latestEpisode"];
   playerCopy: PlayerCopy;
   mark: ReactNode;
+  listenLinks: ReactNode;
 }) {
   const href = episodePath(episode);
   const label = episodeLabel(episode, copy);
@@ -106,12 +113,13 @@ function EpisodeCard({
           {mark}
         </p>
         <p className="line-clamp-3">{episode.excerpt}</p>
-        <div className="mt-2">
+        <div className="mt-2 flex flex-col items-start gap-2">
           <PlayEpisodeButton
             episode={playableEpisode(episode)}
             name={label.kind === "labelled" ? episode.title : label.text}
             copy={playerCopy}
           />
+          {listenLinks}
         </div>
       </div>
     </article>

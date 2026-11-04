@@ -12,6 +12,14 @@ beforeAll(() => {
   }));
 });
 
+// The fixture's Apple lookup doesn't list its newest Episode yet, so every
+// render logs that its Apple Podcasts link opens the show.
+let warn: jest.SpyInstance;
+beforeEach(() => {
+  warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+});
+afterEach(() => warn.mockRestore());
+
 // The page reads the Feed (the fixture), and its story's MotionProvider loads
 // Motion's features in the background; let that land inside act.
 async function renderHome() {
@@ -43,15 +51,31 @@ describe("Home", () => {
     ).toHaveTextContent("Is Humor a Virtue?");
   });
 
-  it("links only to the platforms the show is on", async () => {
+  it("has no Listen on row: the hero leads straight into the latest Episode", async () => {
     await renderHome();
-    const section = screen.queryByRole("region", { name: "Listen on" });
-    const hrefs = section
-      ? within(section)
-          .getAllByRole("link")
-          .map((link) => link.getAttribute("href"))
-      : [];
-    expect(hrefs.sort()).toEqual(Object.values(content.site.listen).sort());
+    expect(
+      screen.queryByRole("region", { name: "Listen on" })
+    ).not.toBeInTheDocument();
+  });
+
+  it("offers the latest Episode in each app the show is on, the show where an app doesn't list it yet", async () => {
+    await renderHome();
+    const apps = within(
+      screen.getByRole("region", { name: "Latest Episode" })
+    ).getByRole("list", { name: "or listen on" });
+    expect(
+      within(apps)
+        .getAllByRole("link")
+        .map((link) => link.getAttribute("href"))
+    ).toEqual([
+      content.site.listen["apple-podcasts"],
+      content.site.listen.spotify,
+    ]);
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringMatching(
+        /^Apple Podcasts doesn't list "Is Humor a Virtue\?"/
+      )
+    );
   });
 
   it("leads to the Fools' Gallery and About at their addresses in the navigation", async () => {

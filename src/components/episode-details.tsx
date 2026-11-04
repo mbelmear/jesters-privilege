@@ -1,11 +1,13 @@
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useId } from "react";
+import { EpisodeListenLinks } from "@/components/episode-listen-links";
 import { EpisodeTranscript } from "@/components/episode-transcript";
 import { FleuronRule } from "@/components/fleuron-rule";
 import { PlayEpisodeButton } from "@/components/play-episode-button";
 import { ShareButton } from "@/components/share-button";
-import type { EpisodePage, PlayerCopy } from "@/lib/content";
+import type { EpisodePage, ListenCopy, PlayerCopy } from "@/lib/content";
+import type { EpisodeListenLink } from "@/lib/episode-listen-links";
 import { episodePath, type Episode, type EpisodeInSequence } from "@/lib/feed";
 import {
   episodeLabel,
@@ -22,19 +24,24 @@ type Props = {
   sequence: EpisodeInSequence;
   // Null for an Episode without one, which then has no Transcript section.
   transcript: Transcript | null;
+  // Shown under Play, each opening the Episode in its app, or the show.
+  listenLinks: readonly EpisodeListenLink[];
   copy: EpisodePage;
+  listenCopy: ListenCopy;
   playerCopy: PlayerCopy;
 };
 
 /**
  * One Episode's page: its number (or bonus label), title, date, and length,
- * with Play and Share; then its Show notes and Transcript; then the Episodes
+ * with Play and Share and the Episode's Listen links; then its Show notes and Transcript; then the Episodes
  * published just before and after it.
  */
 export function EpisodeDetails({
   sequence,
   transcript,
+  listenLinks,
   copy,
+  listenCopy,
   playerCopy,
 }: Props) {
   const { episode, previous, next } = sequence;
@@ -82,6 +89,7 @@ export function EpisodeDetails({
             copy={copy.share}
           />
         </div>
+        <EpisodeListenLinks links={listenLinks} copy={listenCopy} />
       </header>
 
       <FleuronRule />

@@ -31,6 +31,20 @@ test.describe("Episodes", () => {
     ).toBeVisible();
   });
 
+  // Episode Listen links show only on the home page's latest Episode and on
+  // Episode pages; home.spec.ts finds them on the home page's card.
+  test("offers no podcast apps on its featured card or rows", async ({
+    page,
+  }) => {
+    await page.goto(PAGE);
+    await expect(
+      page.getByRole("heading", { level: 3, name: "Is Humor a Virtue?" })
+    ).toBeVisible();
+    await expect(page.getByRole("list", { name: "or listen on" })).toHaveCount(
+      0
+    );
+  });
+
   test("plays a row's Episode in place, without leaving the archive", async ({
     page,
   }) => {

@@ -1,9 +1,11 @@
 import type { ListenCopy } from "@/lib/content";
 
-// The "Listen on" buttons, shown on the home page and under How to listen on
-// About.
+// The Listen links: the show's "Listen on" buttons under How to listen on
+// About, and the "or listen on" icons on the home page's latest Episode and
+// on Episode pages (docs/spec.md, Pages).
 export const listen = {
   title: "Listen on",
+  onEpisode: "or listen on",
   platforms: {
     "apple-podcasts": "Apple Podcasts",
     spotify: "Spotify",
