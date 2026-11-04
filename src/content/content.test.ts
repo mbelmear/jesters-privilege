@@ -1,3 +1,5 @@
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import fontGlyphs from "@/fonts/glyphs.json";
 import { validateContent, type Jester, type Paragraph } from "@/lib/content";
 import { content } from ".";
@@ -115,3 +117,25 @@ function plainText(paragraph: Paragraph): string {
     .map((part) => (typeof part === "string" ? part : part.em))
     .join("");
 }
+
+// Every microcopy entry is shown somewhere. Four went unused after Speak
+// Freely replaced Submit and the Episode page took its own Transcript note,
+// and sat waiting for the Jesters' approval of text nobody sees (2026-11-03).
+describe("microcopy", () => {
+  const sources = (dir: string): string[] =>
+    readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+      const path = join(dir, entry.name);
+      if (entry.isDirectory()) return sources(path);
+      return /\.tsx?$/.test(entry.name) && !/\.test\.tsx?$/.test(entry.name)
+        ? [path]
+        : [];
+    });
+  const code = sources(join(__dirname, ".."))
+    .filter((path) => !path.endsWith(join("content", "microcopy.ts")))
+    .map((path) => readFileSync(path, "utf8"))
+    .join("\n");
+
+  it.each(Object.keys(content.microcopy))("uses microcopy.%s", (key) => {
+    expect(code).toMatch(new RegExp(`\\b${key}\\b`));
+  });
+});
