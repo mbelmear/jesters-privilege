@@ -97,8 +97,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           </main>
           <SiteFooter
             site={site}
-            copy={shell.footer}
-            logo={shell.logo}
+            shell={shell}
+            platforms={content.listen.platforms}
+            episodeCount={episodes.length}
             year={new Date().getFullYear()}
           />
           {/* The persistent player lives here so audio survives client-side

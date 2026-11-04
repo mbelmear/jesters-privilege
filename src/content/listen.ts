@@ -9,6 +9,7 @@ export const listen = {
   platforms: {
     "apple-podcasts": "Apple Podcasts",
     spotify: "Spotify",
+    "amazon-music": "Amazon Music",
     youtube: "YouTube",
     rss: "RSS",
   },

@@ -11,6 +11,7 @@ import type { Episode } from "./feed";
 export const EPISODE_LISTEN_APPS = [
   "apple-podcasts",
   "spotify",
+  "amazon-music",
   "youtube",
 ] as const satisfies readonly ListenPlatform[];
 export type EpisodeListenApp = (typeof EPISODE_LISTEN_APPS)[number];
@@ -19,6 +20,7 @@ export type EpisodeListenApp = (typeof EPISODE_LISTEN_APPS)[number];
 export const APP_NAMES: Record<EpisodeListenApp, string> = {
   "apple-podcasts": "Apple Podcasts",
   spotify: "Spotify",
+  "amazon-music": "Amazon Music",
   youtube: "YouTube",
 };
 
@@ -28,8 +30,8 @@ export type AppLookup =
   | { kind: "found"; episodes: ReadonlyMap<string, string> }
   | { kind: "failed"; reason: string };
 
-// Each app's lookup. An app with none yet (Spotify until #122, YouTube) links
-// every Episode to the show.
+// Each app's lookup. An app with none yet (Spotify until #122, Amazon Music,
+// YouTube) links every Episode to the show.
 export type Lookups = { readonly [A in EpisodeListenApp]?: AppLookup };
 
 export type EpisodeListenLink = { app: EpisodeListenApp; href: string };

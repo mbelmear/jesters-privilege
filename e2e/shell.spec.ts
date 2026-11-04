@@ -180,6 +180,51 @@ test.describe("Footer", () => {
         .getByRole("link", { name: "hello@jestersprivilegepodcast.com" })
     ).toHaveAttribute("href", "mailto:hello@jestersprivilegepodcast.com");
   });
+
+  test("maps the site's sections", async ({ page }) => {
+    await page.goto("/");
+    const explore = page
+      .getByRole("contentinfo")
+      .getByRole("navigation", { name: "Explore" });
+    await explore.getByRole("link", { name: "Fools' Gallery" }).click();
+    await expect(page).toHaveURL("/gallery");
+  });
+
+  // Its mark is drawn from a file of its own (src/components/brand-marks.ts).
+  test("draws the Amazon Music mark", async ({ page }) => {
+    await page.goto("/");
+    const mark = page
+      .getByRole("contentinfo")
+      .getByRole("link", { name: "Amazon Music" })
+      .locator("use");
+    await mark.scrollIntoViewIfNeeded();
+    await expect
+      .poll(() => mark.evaluate((el: SVGUseElement) => el.getBBox().width), {
+        timeout: 5000,
+      })
+      .toBeGreaterThan(0);
+  });
+
+  test("fits a phone's width", async ({ page }) => {
+    await page.goto("/");
+    const overflow = await page
+      .getByRole("contentinfo")
+      .evaluate((el) => el.scrollWidth - el.clientWidth);
+    expect(overflow).toBeLessThanOrEqual(0);
+  });
+
+  for (const colorScheme of ["light", "dark"] as const) {
+    test(`has no detectable accessibility violations (${colorScheme})`, async ({
+      page,
+    }) => {
+      await page.emulateMedia({ colorScheme });
+      await page.goto("/");
+      const results = await new AxeBuilder({ page })
+        .include("footer")
+        .analyze();
+      expect(results.violations).toEqual([]);
+    });
+  }
 });
 
 test.describe("Not found", () => {

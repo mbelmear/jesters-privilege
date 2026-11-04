@@ -30,7 +30,7 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
 2. As a first-time visitor, I want to read the jester story (the hero copy) in a way that feels crafted, so that the show's idea lands with me.
 3. As a first-time visitor, I want to start the latest Episode with one tap, so that I can try the show immediately.
 4. As a first-time visitor, I want to see who the Jesters are, with faces and short bios, so that I know who I'm listening to.
-5. As a first-time visitor, I want Listen links for Apple Podcasts, Spotify, and YouTube, so that I can subscribe in the app I already use, while knowing every Episode also plays here for free.
+5. As a first-time visitor, I want Listen links for Apple Podcasts, Spotify, Amazon Music, and YouTube, so that I can subscribe in the app I already use, while knowing every Episode also plays here for free.
 6. As a visitor who has never used a podcast app, I want a short "New to podcasts?" explanation, so that I can figure out how to subscribe.
 7. As a visitor, I want the site to be readable and comfortable on a small phone held in one hand, so that I don't have to pinch or scroll sideways.
 8. As a visitor, I want the site to load quickly on mobile data, so that I don't give up before it appears.
@@ -173,6 +173,7 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
 - **Episode Listen links** (GLOSSARY: Listen link): on an Episode, a Listen link opens that Episode in the app. The build looks them up:
   - **Apple Podcasts**: Apple's public lookup (`itunes.apple.com/lookup?id=<show>&entity=podcastEpisode`), matched exactly on the Episode's feed GUID (`episodeGuid`). No key.
   - **Spotify**: the Spotify Web API with a client-credentials key stored as GitHub secrets, matched on title and release date.
+  - **Amazon Music**: no lookup, so each Episode's Amazon Music link opens the show.
   - **YouTube**: once the show is on YouTube; how to match is decided then.
   - Until an app lists an Episode, or when a lookup fails, its Listen link opens the show instead. A lookup never fails the build; the build log names the Episode and the app.
 
@@ -271,7 +272,7 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
   - restyled **shadcn/ui** primitives, owned in the repo (menu, dialog, select, checkbox, toggle)
   - site components (banner, shield and monogram frame, illuminated paragraph, painting band, framed painting with placard, Episode row, fleuron rule)
   - pages that only arrange those components
-- **Icons**: Lucide for the interface, Simple Icons for app and social logos. A Listen link or social link is its icon with a hidden text label, never a bare text link.
+- **Icons**: Lucide for the interface, Simple Icons for app and social logos, or the brand's own mark where Simple Icons has none (LinkedIn and Amazon Music, drawn one colour like the rest). A Listen link or social link is its icon with a hidden text label, never a bare text link.
 - **Footer**, stacked on phones:
   1. the logo and the site's one-line description
   2. Explore: the nav sections (Episodes, Fools' Gallery, About, Speak Freely)

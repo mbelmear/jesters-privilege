@@ -35,7 +35,9 @@ test.describe("Fools' Gallery", () => {
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(
       "The Fools' Gallery"
     );
-    await expect(page.getByRole("heading", { level: 2 })).toHaveText([
+    await expect(
+      page.getByRole("main").getByRole("heading", { level: 2 })
+    ).toHaveText([
       "Holy Fools",
       "The Medieval Court",
       "The Renaissance",
