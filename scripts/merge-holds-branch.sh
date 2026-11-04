@@ -5,14 +5,19 @@
 # Usage: scripts/merge-holds-branch.sh <branch head> <merge commit>
 set -euo pipefail
 
-head="${1:?Usage: merge-holds-branch.sh <branch head> <merge commit>}"
-merge="${2:?Usage: merge-holds-branch.sh <branch head> <merge commit>}"
+if (($# != 2)); then
+  echo "Usage: merge-holds-branch.sh <branch head> <merge commit>" >&2
+  exit 2
+fi
+head=$1
+merge=$2
 
 base=$(git merge-base "$head" "$merge^")
 
 # The same change, whatever else main gained first: a patch id ignores line
 # numbers, so another PR editing the same file elsewhere doesn't count.
-patch_id() { git diff "$1" "$2" | git patch-id --stable | cut -d' ' -f1; }
+# Verbatim, so a merge that lost the branch's whitespace still differs.
+patch_id() { git diff "$1" "$2" | git patch-id --verbatim | cut -d' ' -f1; }
 if [[ "$(patch_id "$base" "$head")" == "$(patch_id "$merge^" "$merge")" ]]; then
   exit 0
 fi
@@ -24,7 +29,7 @@ while IFS= read -r file; do changed+=("$file"); done \
   < <(git -c core.quotePath=false diff --name-only "$base" "$head")
 if ((${#changed[@]})) &&
   ! git diff --quiet "$head" "$merge" -- "${changed[@]}"; then
-  echo "Refusing: ${head:0:7} differs from the merge commit ${merge:0:7} in:" >&2
+  echo "Refusing: ${head:0:7} differs from the merge commit ${merge:0:7} in the files it changed:" >&2
   git diff --stat "$head" "$merge" -- "${changed[@]}" >&2
   exit 1
 fi

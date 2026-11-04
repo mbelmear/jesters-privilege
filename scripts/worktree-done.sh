@@ -39,10 +39,7 @@ if [[ -n "$dir" && -n "$(git -C "$dir" status --porcelain)" ]]; then
 fi
 # Each copy of the branch still here must hold what was merged.
 for head in $local_head $remote_head; do
-  if ! "$holds" "$head" "$merge"; then
-    echo "Refusing: $branch isn't all in #$pr." >&2
-    exit 1
-  fi
+  "$holds" "$head" "$merge" || exit 1
 done
 
 if [[ -n "$dir" ]]; then

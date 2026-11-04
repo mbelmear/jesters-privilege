@@ -60,7 +60,7 @@ npm run test:e2e:empty-feed
 npm run build               # before testing the normal site again
 ```
 
-One spec on its own still needs the variable: `FEED=empty npx playwright test e2e/coming-soon.spec.ts`. Without it, Playwright skips the `@empty-feed` tests and reports "No tests found".
+One spec on its own still needs the variable: `FEED=empty npx playwright test e2e/coming-soon.spec.ts --project='chromium-*'`. Without it, Playwright skips the `@empty-feed` tests and reports "No tests found".
 
 That build is the only check that every route still exports with no Episodes, since a static export refuses a route with no pages (CODING_STANDARDS.md, React).
 

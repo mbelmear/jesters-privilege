@@ -87,4 +87,16 @@ describe("merge-holds-branch", () => {
     expect(result.status).toBe(1);
     expect(result.stderr).toMatch(/feed\.xml/);
   });
+
+  // Indentation is work too: in YAML or a Python file it changes meaning.
+  it("refuses a merge commit that lost the branch's whitespace", () => {
+    r.git("checkout", "--quiet", "-b", "ticket");
+    r.write([...lines, "  indented"]);
+    const head = r.commit("ticket");
+    r.git("checkout", "--quiet", "main");
+    r.write([...lines, "indented"]);
+    const merge = r.commit("ticket, flattened");
+
+    expect(r.holds(head, merge).status).toBe(1);
+  });
 });
