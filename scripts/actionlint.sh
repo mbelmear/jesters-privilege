@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# Lints every workflow with actionlint (which also runs shellcheck on each
-# `run:` block), the same version CI's "Lint workflows" job runs, so a
-# workflow change is checked before it's pushed. Downloads the release binary
+# Lints every workflow with actionlint, the same version CI's "Lint workflows"
+# job runs, so a workflow change is checked before it's pushed. actionlint
+# runs shellcheck on each `run:` block only when shellcheck is on the PATH
+# (CI's image has it); without it, this says so and lints the rest. Downloads the release binary
 # once into node_modules/.cache and checks it against the release's checksums.
 # Usage: npm run lint:workflows [-- <actionlint args>]
 set -euo pipefail
@@ -36,6 +37,10 @@ if [[ ! -x $bin ]]; then
   }
   tar -xzf "$dir/$archive" -C "$dir" actionlint
   rm -f "$dir/$archive"
+fi
+
+if ! command -v shellcheck >/dev/null; then
+  echo "lint:workflows: shellcheck isn't installed, so the run: blocks go unchecked; CI checks them" >&2
 fi
 
 cd "$root"

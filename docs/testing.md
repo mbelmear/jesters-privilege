@@ -185,7 +185,7 @@ npm run lint:workflows      # actionlint on .github/workflows, as CI's Lint work
 
 The pre-commit hook formats staged files with Prettier, so `format:check` only fails for files committed without the hook.
 
-`lint:workflows` (`scripts/actionlint.sh`) downloads the actionlint release CI pins, once, into `node_modules/.cache`, and also runs shellcheck on every `run:` block. Nothing runs it on commit (#44), so run it before pushing a workflow change.
+`lint:workflows` (`scripts/actionlint.sh`) downloads the actionlint release CI pins, once, into `node_modules/.cache`. It runs shellcheck on every `run:` block only when shellcheck is installed, and says so when it isn't; CI's image has it. Nothing runs it on commit (#44), so run it before pushing a workflow change.
 
 ## In CI
 
