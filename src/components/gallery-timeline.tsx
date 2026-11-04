@@ -125,7 +125,7 @@ function FoolEntry({ fool }: { fool: Fool }) {
           <div key={line} className="flex flex-col gap-3">
             <p className="text-lg">{setup}</p>
             {/* Upright in the display face: an italic would load a font file. */}
-            <blockquote className="border-l-2 border-brand pl-6 font-display text-2xl text-balance">
+            <blockquote className="border-l-2 border-brand pl-6 font-display text-xl text-balance">
               <p>{line}</p>
             </blockquote>
           </div>
