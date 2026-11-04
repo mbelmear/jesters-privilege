@@ -17,8 +17,8 @@ export const metadata: Metadata = pageMetadata(content.site, {
   description: about.intro.text,
 });
 
-// About: why the show is called "Jester's Privilege", the three Jesters and their bios, what the show
-// believes, Redeemer Church, and how to listen.
+// About: why the show is called "Jester's Privilege", the three Jesters and
+// their bios, what the show believes, and how to listen.
 export default function About() {
   // Read as the page renders, so a test can swap in other content.
   const { jesters, listen, microcopy, shell, site } = content;
@@ -42,12 +42,13 @@ export default function About() {
         </h1>
         <p className="text-xl text-muted-foreground">{about.intro.text}</p>
       </div>
-      <ProseSection section={about.whyAJester} />
+      <ProseSection section={about.whyAJester}>
+        <p className="text-lg">{about.independence.text}</p>
+      </ProseSection>
       <FleuronRule className="mx-auto w-full max-w-xs" />
       <JestersSection title={about.jestersTitle} jesters={jesters} />
       <FleuronRule className="mx-auto w-full max-w-xs" />
       <ProseSection section={about.whatWeBelieve} />
-      <ProseSection section={about.church} />
       <ProseSection section={about.howToListen}>
         <ListenButtons
           links={site.listen}

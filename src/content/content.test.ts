@@ -4,9 +4,11 @@ import fontGlyphs from "@/fonts/glyphs.json";
 import {
   findText,
   validateContent,
+  type Copy,
   type Fool,
   type Jester,
   type Paragraph,
+  type Section,
 } from "@/lib/content";
 import { content } from ".";
 import { contentGlyphsBeyondLatin } from "./glyphs";
@@ -119,6 +121,65 @@ describe("content", () => {
     expect(findText(content).filter((text) => word.test(text))).toEqual([]);
   });
 
+  // The show is the Jesters' own, so no church is named in anything a
+  // visitor reads (the elders' request on #6; docs/spec.md, About). The
+  // fixture feed counts: previews show it. A Transcript may name the church
+  // where a Jester says it, so transcripts/ is skipped.
+  it("names no church", () => {
+    const files = readdirSync(__dirname, { withFileTypes: true })
+      .filter((entry) => entry.isFile() && !/\.test\.tsx?$/.test(entry.name))
+      .map((entry) => entry.name);
+    expect(
+      files.filter((name) =>
+        /Redeemer/i.test(readFileSync(join(__dirname, name), "utf8"))
+      )
+    ).toEqual([]);
+  });
+
+  // Michael's copy sign-off of 2026-11-03 (#116), word for word.
+  it.each([
+    [
+      "the zero-Episodes message",
+      content.microcopy.comingSoon,
+      "Our Episodes have wandered off, which is awkward for a show about a church that wanders. We're out rounding them up. Check back soon.",
+    ],
+    [
+      "the Episodes page intro",
+      content.episodes.intro,
+      "Every Episode, newest first. In each one, three fools for Christ laugh at the church's habits (ours first), then open the Scriptures to hear what the King actually said. Press Play on any of them, and it keeps playing while you wander the rest of the court.",
+    ],
+    [
+      "the Transcript note",
+      content.episodePage.transcript.machineNote,
+      "A machine wrote this down while we talked. It's fast, it's free, and it has never once heard of Stańczyk. If it got something wrong, tell us on Speak Freely and we'll set it straight. Tap any timestamp to hear that moment.",
+    ],
+  ])("uses the approved %s", (_, copy: Copy, text) => {
+    expect(copy).toEqual({ text });
+  });
+
+  it("uses the approved How to listen", () => {
+    const { paragraphs, draft }: Section = content.about.howToListen;
+    expect({ paragraphs, draft }).toEqual({
+      paragraphs: [
+        "We aim to release a new Episode every week. We're fools, not prophets, so if one runs late, forgive us. Follow the show in your podcast app and each new Episode arrives on its own, or press Play on any of them right here, free, no app required.",
+      ],
+      draft: undefined,
+    });
+  });
+
+  // The rest of his story is the Gallery rewrite's (#123), still draft.
+  it("closes Stańczyk's story with the approved line", () => {
+    const fools: readonly Fool[] = content.gallery.fools;
+    expect(fools.find((fool) => fool.slug === "stanczyk")?.story.coda).toBe(
+      "It's Michael's favorite painting, and it helped name this show: a fool who sees the truth while the court dances on without him."
+    );
+  });
+
+  // Not until the show is on YouTube (#116).
+  it("sends newcomers to podcast apps the show is on", () => {
+    expect(content.microcopy.newToPodcasts.text).not.toMatch(/YouTube/);
+  });
+
   // Scripture is quoted from the ESV (docs/spec.md, Content), so the site's
   // own copy has no King James English. A Fool's jests, setups included,
   // keep their sources' words ("hath", "quoth"), so they're skipped. Paul's story quoted the KJV
@@ -170,9 +231,11 @@ describe("content", () => {
     ]);
   });
 
-  it("gives each Jester a two-line summary, drafted until they approve one", () => {
-    for (const { summary } of content.jesters) {
-      expect(summary?.draft).toBe(true);
+  // Approved in Michael's copy sign-off of 2026-11-03 (#116).
+  it("gives each Jester an approved two-line summary", () => {
+    const jesters: readonly Jester[] = content.jesters;
+    for (const { summary } of jesters) {
+      expect(summary?.draft).toBeUndefined();
       expect(summary?.text.length).toBeLessThanOrEqual(160);
     }
   });

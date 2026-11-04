@@ -178,11 +178,13 @@ describe("Episodes", () => {
   });
 });
 
-describe("Episodes before Episode 1 is published", () => {
-  it("says Episode 1 is on its way, with no Episodes listed", async () => {
+describe("Episodes when the Feed comes back empty", () => {
+  it("says the Episodes have wandered off, with no Episodes listed", async () => {
     jest.mocked(getEpisodes).mockResolvedValueOnce([]);
     await renderEpisodes();
-    expect(screen.getByText(/^Episode 1 is on its way\./)).toBeInTheDocument();
+    expect(
+      screen.getByText(/^Our Episodes have wandered off/)
+    ).toBeInTheDocument();
     expect(screen.queryByRole("listitem")).toBeNull();
   });
 });

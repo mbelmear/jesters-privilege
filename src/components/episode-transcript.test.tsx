@@ -145,7 +145,7 @@ describe("EpisodeTranscript", () => {
   it("is headed Transcript, with a note that a machine wrote it", async () => {
     const { container } = setup();
     const section = screen.getByRole("region", { name: "Transcript" });
-    expect(section).toHaveTextContent(/A machine wrote this Transcript/);
+    expect(section).toHaveTextContent(/A machine wrote this down/);
     expect(await axe(container)).toHaveNoViolations();
   });
 });

@@ -165,10 +165,12 @@ export type About = {
   // Under the title, and in link previews.
   readonly intro: Copy;
   readonly whyAJester: Section;
+  // The line that closes whyAJester: the show is the Jesters' own, and no
+  // church stands behind it (the elders' request on #6). It names no church.
+  readonly independence: Copy;
   // Over the Jesters' portraits and full bios.
   readonly jestersTitle: string;
   readonly whatWeBelieve: Section;
-  readonly church: Section;
   readonly howToListen: Section;
 };
 

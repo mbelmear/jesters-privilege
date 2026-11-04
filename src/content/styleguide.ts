@@ -81,7 +81,7 @@ export const styleguide = {
       role: "Body: everything meant to be read",
       utility: "font-body",
       sample:
-        "In the old courts, the jester alone could tell the king the truth and keep his head. Three friends from Redeemer Church borrow the privilege each week, serving a better King and laughing at the folly they find, starting with their own.",
+        "In the old courts, the jester alone could tell the king the truth and keep his head. Three friends borrow the privilege each week, serving a better King and laughing at the folly they find, starting with their own.",
     },
     {
       name: "Barlow Semi Condensed",
