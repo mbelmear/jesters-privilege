@@ -123,12 +123,30 @@ export type Era = {
   readonly band: Painting;
 };
 
+// One of a Fool's lines, set off as a quotation after a short setup. A line
+// the sources give only as legend says so in its setup ("The story goes").
+export type Jest = {
+  readonly setup: string;
+  readonly line: string;
+};
+
+// A Fool's story: who they were, in its paragraphs; then any lines of theirs
+// the sources record; then a closing paragraph, such as how the story ended
+// or, where the painting matters, a sentence on it.
+export type Story = Section & {
+  readonly jests?: readonly Jest[];
+  readonly coda?: string;
+};
+
 export type Fool = {
   readonly slug: string;
   readonly name: string;
+  // How a hard name is said, in plain English syllables with the stressed one
+  // in capitals (STAHN-chik), from the Fools research's pronunciations.
+  readonly respelling?: string;
   readonly era: EraId;
   readonly lived: string;
-  readonly story: Section;
+  readonly story: Story;
   readonly painting: Painting;
 };
 

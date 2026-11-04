@@ -73,7 +73,7 @@ describe("GalleryTimeline", () => {
     expect(
       within(fool).getByRole("heading", { level: 3, name: "Stańczyk" })
     ).toBeVisible();
-    expect(within(fool).getByText("c. 1480–1560")).toBeVisible();
+    expect(within(fool).getByText("c. 1480–c. 1560")).toBeVisible();
     expect(within(fool).getByRole("img")).toHaveAccessibleName(
       /^The jester Stańczyk slumped alone in a chair/
     );
@@ -83,8 +83,27 @@ describe("GalleryTimeline", () => {
       within(placard).getByText("National Museum in Warsaw")
     ).toBeVisible();
     expect(
-      within(fool).getByText(/^Stańczyk served three kings/)
+      within(fool).getByText(/^Stańczyk was the fool of two kings of Poland/)
     ).toBeVisible();
+  });
+
+  it("says a hard name aloud under it, stressed syllable in capitals", () => {
+    render(<GalleryTimeline gallery={gallery} />);
+    const fool = screen.getByRole("article", { name: "Stańczyk" });
+    expect(within(fool).getByText("STAHN-chik")).toBeVisible();
+  });
+
+  it("sets a Fool's jest off as a quotation, after its setup", () => {
+    render(<GalleryTimeline gallery={gallery} />);
+    const fool = screen.getByRole("article", { name: "Stańczyk" });
+    const quotations = within(fool).getAllByRole("blockquote");
+    const smolensk = quotations.find((quotation) =>
+      /Smolensk has been torn away/.test(quotation.textContent)
+    );
+    expect(smolensk).toBeVisible();
+    const setup = smolensk?.previousElementSibling;
+    expect(setup?.tagName).toBe("P");
+    expect(setup).toHaveTextContent(/tore the clothes off him/);
   });
 
   it("gives each Fool an address of their own on the page", () => {

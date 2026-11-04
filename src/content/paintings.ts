@@ -203,7 +203,7 @@ export const paintings = {
     height: 1072,
     source:
       "https://commons.wikimedia.org/wiki/File:Portrait_of_Richard_Tarlton_(4673035).jpg",
-    alt: "The clown Richard Tarlton in a cap and plain smock, playing a pipe with one hand and beating the drum slung at his side with the other",
+    alt: "The comic actor Richard Tarlton in a cap and plain smock, playing a pipe with one hand and beating the drum slung at his side with the other",
     focalPoint: { x: 0.45, y: 0.18 },
     placard: {
       artist: "Silvester Harding",

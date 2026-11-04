@@ -1,7 +1,13 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import fontGlyphs from "@/fonts/glyphs.json";
-import { validateContent, type Jester, type Paragraph } from "@/lib/content";
+import {
+  findText,
+  validateContent,
+  type Fool,
+  type Jester,
+  type Paragraph,
+} from "@/lib/content";
 import { content } from ".";
 import { contentGlyphsBeyondLatin } from "./glyphs";
 
@@ -101,6 +107,47 @@ describe("content", () => {
       ["michael", "/jesters/michael-belmear.jpg", true],
       ["dan", "/jesters/dan-collins.jpg", true],
       ["aaron", "/jesters/aaron-canen.jpg", true],
+    ]);
+  });
+
+  // GLOSSARY.md's Avoid terms that are wrong wherever they appear. Terms that
+  // depend on context, such as "Jester" for a historical figure, stay with
+  // the reviewer. "Clown" reached Stańczyk's and Tarlton's stories and
+  // Tarlton's alt text before #123.
+  it.each(["clown"])("never calls anyone a %s (GLOSSARY.md)", (term) => {
+    const word = new RegExp(`\\b${term}`, "i");
+    expect(findText(content).filter((text) => word.test(text))).toEqual([]);
+  });
+
+  // docs/spec.md, Pages: each era opens with "one short paragraph (about
+  // 40–60 words) that sets the scene".
+  it.each(content.gallery.eras.map((era) => [era.title, era.intro]))(
+    "sets the scene for %s in one paragraph of 40 to 60 words",
+    (_, intro) => {
+      expect(intro.paragraphs).toHaveLength(1);
+      const words = intro.paragraphs[0].split(/\s+/).length;
+      expect(words).toBeGreaterThanOrEqual(40);
+      expect(words).toBeLessThanOrEqual(60);
+    }
+  );
+
+  // The hard names and their respellings in the Fools research
+  // (docs/research/fools-jests-and-pronunciations.md, Pronunciations), which
+  // also lists the names that need none.
+  it("respells every hard Fool name", () => {
+    const fools: readonly Fool[] = content.gallery.fools;
+    expect(fools.map(({ name, respelling }) => [name, respelling])).toEqual([
+      ["Saint Paul", undefined],
+      ["Francis of Assisi", "Francis of ah-SEE-see"],
+      ["The yurodivy", "yoo-ROH-dih-vee"],
+      ["Stańczyk", "STAHN-chik"],
+      ["Triboulet", "tree-boo-LAY"],
+      ["Will Somers", undefined],
+      ["Erasmus", "ih-RAZ-mus"],
+      ["Richard Tarlton", undefined],
+      ["Archibald Armstrong", undefined],
+      ["Pablo de Valladolid", "PAH-bloh deh bah-yah-doh-LEED"],
+      ["Calabacillas", "kah-lah-bah-THEE-yahs"],
     ]);
   });
 
