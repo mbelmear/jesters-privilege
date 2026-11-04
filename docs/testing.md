@@ -60,6 +60,8 @@ npm run test:e2e:empty-feed
 npm run build               # before testing the normal site again
 ```
 
+One spec on its own still needs the variable: `FEED=empty npx playwright test e2e/coming-soon.spec.ts`. Without it, Playwright skips the `@empty-feed` tests and reports "No tests found".
+
 That build is the only check that every route still exports with no Episodes, since a static export refuses a route with no pages (CODING_STANDARDS.md, React).
 
 CI runners are slower than a laptop, so a timing assertion ("finishes at once") first waits for a state that proves the code it times has loaded, such as the first animation completing; otherwise it measures the download, passes locally, and fails in CI. Then it counts rendered frames, not milliseconds: it waits for the thing it times to begin, such as the replayed element mounting, awaits two `requestAnimationFrame`s inside `evaluate`, and measures once. CI's WebKit sometimes renders no frames for most of a second, and Motion applies even an instant reduced-motion value on the next frame, so a short `expect.poll` window flakes there (#60). Likewise, let an opening animation finish before an axe scan, since axe samples colors mid-fade. A reveal on scroll (`whileInView` with `once`) plays only while its element is on screen, so a test holds each element in view until it shows; a quick scroll can pass it before Motion has loaded, and WebKit drops a scroll made while the page is still loading. `reveal()` in `e2e/hero-story.ts` repeats the scroll until the element shows.
