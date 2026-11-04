@@ -1,6 +1,6 @@
 // Waits for the static server that serves the built site in out/ to come up,
 // for scripts/screenshots.ts. Any answer means it is up: a missing page
-// answers with the 404 page, which is worth a screenshot too.
+// answers with the 404 page, which screenshots.ts refuses unless asked for.
 export type WaitIO = {
   fetch: (url: string) => Promise<{ ok: boolean; status: number }>;
   sleep: (ms: number) => Promise<void>;

@@ -119,6 +119,25 @@ describe("content", () => {
     expect(findText(content).filter((text) => word.test(text))).toEqual([]);
   });
 
+  // Scripture is quoted from the ESV (docs/spec.md, Content), so the site's
+  // own copy has no King James English. A Fool's jests, setups included,
+  // keep their sources' words ("hath", "quoth"), so they're skipped. Paul's story quoted the KJV
+  // ("ye are wise in Christ") until #123, past a standard naming that mistake.
+  it("quotes Scripture in modern English, not the KJV's", () => {
+    const fools: readonly Fool[] = content.gallery.fools;
+    const jests = new Set(
+      fools
+        .flatMap(({ story }) => story.jests ?? [])
+        .flatMap(({ setup, line }) => [setup, line])
+    );
+    // Lowercase or capitalized, so a respelling's stressed THEE passes.
+    const kjv =
+      /\b([Yy]e|[Tt]hee|[Tt]hou|[Tt]hy|[Tt]hine|[Hh]ath|[Uu]nto|I am become)\b/;
+    expect(
+      findText(content).filter((text) => !jests.has(text) && kjv.test(text))
+    ).toEqual([]);
+  });
+
   // docs/spec.md, Pages: each era opens with "one short paragraph (about
   // 40–60 words) that sets the scene".
   it.each(content.gallery.eras.map((era) => [era.title, era.intro]))(
