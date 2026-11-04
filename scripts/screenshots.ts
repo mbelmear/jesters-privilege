@@ -3,7 +3,10 @@
 // scrolling through it (so reveals and lazy images have run), plus the
 // phone's first screen, where most visitors land from Instagram.
 // Build first. Usage:
-//   npm run screenshots -- <page path> [folder] [--click <button>]... [--storage <key>=<json>]...
+//   npm run screenshots -- <page path> [folder] [--click <button>]... [--storage <key>=<json>]... [--missing]
+// A path the site doesn't have answers with the 404 page, so it fails unless
+// --missing says the 404 page is the one to shoot: #123's prompt named
+// /fools-gallery for the Gallery, which lives at /gallery.
 //   npm run screenshots -- /styleguide/home .screenshots/home
 // Each --click presses the button of that name, in order, then shoots the
 // screen as it stands (<size>-<scheme>-clicked.png), for a state that shows
@@ -31,11 +34,13 @@ const SIZES = {
 const SCHEMES = ["light", "dark"] as const;
 
 async function main() {
-  const { positional, clicks, storage } = parseArgs(process.argv.slice(2));
+  const { positional, clicks, storage, missing } = parseArgs(
+    process.argv.slice(2)
+  );
   const [page, folder = ".screenshots"] = positional;
   if (!page?.startsWith("/")) {
     throw new Error(
-      'Usage: npm run screenshots -- <page path such as /about> [folder] [--click "<button name>"]... [--storage <key>=<json>]...'
+      'Usage: npm run screenshots -- <page path such as /about> [folder] [--click "<button name>"]... [--storage <key>=<json>]... [--missing]'
     );
   }
   await mkdir(folder, { recursive: true });
@@ -76,6 +81,12 @@ async function main() {
       }),
       exited,
     ]);
+    const { status } = await fetch(url);
+    if (status === 404 && !missing) {
+      throw new Error(
+        `${page} answers with the 404 page: check its address in src/content/shell.ts, or pass --missing to shoot the 404 page`
+      );
+    }
     for (const [size, options] of Object.entries(SIZES)) {
       for (const colorScheme of SCHEMES) {
         const tab = await browser.newPage({ ...options, colorScheme });
@@ -118,14 +129,19 @@ async function main() {
   }
 }
 
-// Splits the arguments into positional ones, the --click button names, and
-// the --storage entries.
+// Splits the arguments into positional ones, the --click button names, the
+// --storage entries, and whether --missing was passed.
 function parseArgs(args: string[]) {
   const positional: string[] = [];
   const clicks: string[] = [];
   const storage: [string, string][] = [];
+  let missing = false;
   for (let i = 0; i < args.length; i += 1) {
     const arg = args[i];
+    if (arg === "--missing") {
+      missing = true;
+      continue;
+    }
     if (arg !== "--click" && arg !== "--storage") {
       positional.push(arg);
       continue;
@@ -143,7 +159,7 @@ function parseArgs(args: string[]) {
     }
     storage.push([value.slice(0, split), value.slice(split + 1)]);
   }
-  return { positional, clicks, storage };
+  return { positional, clicks, storage, missing };
 }
 
 // Each step pauses long enough for an on-scroll reveal to start.
