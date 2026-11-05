@@ -5,11 +5,14 @@ import {
   listedEpisodes,
   lookUpApple,
   parseLookups,
+  type AppLookup,
+  type EpisodeListenApp,
   type EpisodeListenLink,
   type ListedEpisodes,
   type Lookups,
 } from "@/lib/episode-listen-links";
 import { errorMessage } from "@/lib/download";
+import { lookUpSpotify, spotifyKey } from "@/lib/spotify-lookup";
 import { parseFeed, type Episode } from "@/lib/feed";
 import {
   appleLookupFetch,
@@ -66,7 +69,8 @@ export const feedSource: FeedSource = chooseFeedSource(
 const io: FeedIO = {
   // A hung download fails (or, for a Transcript, skips) rather than stalling
   // the build.
-  fetch: (url) => fetch(url, { signal: AbortSignal.timeout(30_000) }),
+  fetch: (url, init) =>
+    fetch(url, { ...init, signal: AbortSignal.timeout(30_000) }),
   readFile: (path) => readFile(join(process.cwd(), path), "utf8"),
 };
 
@@ -131,17 +135,33 @@ export async function getTranscribedEpisodes(): Promise<string[]> {
 export const LOOKUPS_SNAPSHOT = ".lookups.json";
 
 // Each app's lookup of the Feed's Episodes, looked up afresh. The feed check
-// calls this; pages and the build manifest call getLookups.
+// calls this; pages and the build manifest call getLookups. Spotify is asked
+// only for the live feed, with the key the deploy passes in
+// (SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET); fixture builds, and builds
+// without the key, leave every Episode's Spotify link on the show.
 export async function lookUpEpisodes(): Promise<Lookups> {
+  const lookups: { [A in EpisodeListenApp]?: AppLookup } = {};
   const apple = site.listen["apple-podcasts"];
-  return apple
-    ? {
-        "apple-podcasts": await lookUpApple(
-          apple,
-          appleLookupFetch(feedSource, io)
-        ),
-      }
-    : {};
+  if (apple) {
+    lookups["apple-podcasts"] = await lookUpApple(
+      apple,
+      appleLookupFetch(feedSource, io)
+    );
+  }
+  const spotify = site.listen.spotify;
+  if (spotify && feedSource.kind === "url") {
+    const lookup = await lookUpSpotify(
+      spotify,
+      spotifyKey({
+        SPOTIFY_CLIENT_ID: process.env.SPOTIFY_CLIENT_ID,
+        SPOTIFY_CLIENT_SECRET: process.env.SPOTIFY_CLIENT_SECRET,
+      }),
+      await getEpisodes(),
+      io.fetch
+    );
+    if (lookup) lookups.spotify = lookup;
+  }
+  return lookups;
 }
 
 // The lookups every page and the build manifest read. Next renders them in

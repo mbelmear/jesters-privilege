@@ -43,6 +43,10 @@ jobs:
           SITE_ENV: preview
           # The Submit page's Turnstile widget (src/lib/turnstile.ts).
           TURNSTILE_SITE_KEY: ${{ secrets.TURNSTILE_SITE_KEY }}
+          # Spotify's Episode Listen links (src/lib/spotify-lookup.ts). A
+          # fork's pull request has no secrets and skips the lookup.
+          SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
+          SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
       # A preview version can only be uploaded to a Worker that exists. Before the
       # first production deploy it doesn't, so create it once with a blank
       # placeholder page on workers.dev only: no custom domains, no PR content.
@@ -126,6 +130,8 @@ jobs:
         run: npm run feed-check
         env:
           FEED: live
+          SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
+          SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
 
   deploy:
     name: Deploy to production
@@ -158,6 +164,8 @@ jobs:
           SITE_ENV: production
           WEB_ANALYTICS_TOKEN: ${{ vars.WEB_ANALYTICS_TOKEN }}
           TURNSTILE_SITE_KEY: ${{ secrets.TURNSTILE_SITE_KEY }}
+          SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
+          SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
       - run: |
           jq -n '{TURNSTILE_SECRET_KEY: env.TURNSTILE_SECRET_KEY}' > "$RUNNER_TEMP/secrets.json"
           npx wrangler deploy --message "${GITHUB_SHA::7}" \

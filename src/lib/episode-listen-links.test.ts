@@ -153,7 +153,7 @@ describe("episodeListenLinks", () => {
         app: "apple-podcasts",
         href: "https://podcasts.apple.com/us/podcast/celebrity-pastors/id6830338936?i=1000799664710",
       },
-      // No Spotify lookup yet (#122), so its link opens the show.
+      // No Spotify lookup (a build without the key), so its link opens the show.
       { app: "spotify", href: show.spotify },
     ]);
     expect(warn).not.toHaveBeenCalled();

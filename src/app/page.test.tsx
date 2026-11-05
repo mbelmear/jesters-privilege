@@ -70,7 +70,7 @@ describe("Home", () => {
         .map((link) => link.getAttribute("href"))
     ).toEqual(
       // Every app the show is on opens the show: the fixture's Apple lookup
-      // doesn't list this Episode, and Spotify has no lookup yet (#122).
+      // doesn't list this Episode, and a fixture build doesn't ask Spotify.
       EPISODE_LISTEN_APPS.flatMap((app) => content.site.listen[app] ?? [])
     );
     expect(warn).toHaveBeenCalledWith(
