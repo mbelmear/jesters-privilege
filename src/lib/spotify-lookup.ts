@@ -10,22 +10,34 @@ export type SpotifyCredentials = { clientId: string; clientSecret: string };
 
 // The build's Spotify key, from the GitHub secrets the deploy passes in. A
 // build with neither (a fork, a local build, CI's tests) skips the lookup
-// quietly; one with only one has a mistake to name.
+// quietly; one with only one has a mistake to name, and so does a run that
+// needs the key (a production build, the feed check) with neither.
 export type SpotifyKey =
   | { kind: "set"; credentials: SpotifyCredentials }
   | { kind: "none" }
   | { kind: "incomplete"; reason: string };
 
-export function spotifyKey(env: {
-  SPOTIFY_CLIENT_ID?: string;
-  SPOTIFY_CLIENT_SECRET?: string;
-}): SpotifyKey {
+export function spotifyKey(
+  env: {
+    SPOTIFY_CLIENT_ID?: string;
+    SPOTIFY_CLIENT_SECRET?: string;
+  },
+  { required = false } = {}
+): SpotifyKey {
   const clientId = env.SPOTIFY_CLIENT_ID ?? "";
   const clientSecret = env.SPOTIFY_CLIENT_SECRET ?? "";
   if (clientId && clientSecret) {
     return { kind: "set", credentials: { clientId, clientSecret } };
   }
-  if (!clientId && !clientSecret) return { kind: "none" };
+  if (!clientId && !clientSecret) {
+    return required
+      ? {
+          kind: "incomplete",
+          reason:
+            "SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET aren't set, so Spotify can't be asked",
+        }
+      : { kind: "none" };
+  }
   const missing = clientId ? "SPOTIFY_CLIENT_SECRET" : "SPOTIFY_CLIENT_ID";
   return {
     kind: "incomplete",

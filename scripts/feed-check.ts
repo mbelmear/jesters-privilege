@@ -23,7 +23,7 @@ runFeedCheck(site.url, {
   newestEpisodeGuid: async () => (await getEpisodes())[0]?.guid ?? null,
   episodeListenLinks: async () => {
     // A failed lookup lists no Episodes, so it never rebuilds; say so.
-    const lookups = await lookUpEpisodes();
+    const lookups = await lookUpEpisodes({ spotifyKeyRequired: true });
     for (const app of EPISODE_LISTEN_APPS) {
       const lookup = lookups[app];
       if (lookup?.kind === "failed") {

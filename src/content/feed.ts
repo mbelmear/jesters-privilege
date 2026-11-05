@@ -138,8 +138,11 @@ export const LOOKUPS_SNAPSHOT = ".lookups.json";
 // calls this; pages and the build manifest call getLookups. Spotify is asked
 // only for the live feed, with the key the deploy passes in
 // (SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET); fixture builds, and builds
-// without the key, leave every Episode's Spotify link on the show.
-export async function lookUpEpisodes(): Promise<Lookups> {
+// without the key, leave every Episode's Spotify link on the show. A run that
+// needs the key counts going without as a failed lookup, so it's reported.
+export async function lookUpEpisodes({
+  spotifyKeyRequired = false,
+} = {}): Promise<Lookups> {
   const lookups: { [A in EpisodeListenApp]?: AppLookup } = {};
   const apple = site.listen["apple-podcasts"];
   if (apple) {
@@ -152,10 +155,13 @@ export async function lookUpEpisodes(): Promise<Lookups> {
   if (spotify && feedSource.kind === "url") {
     const lookup = await lookUpSpotify(
       spotify,
-      spotifyKey({
-        SPOTIFY_CLIENT_ID: process.env.SPOTIFY_CLIENT_ID,
-        SPOTIFY_CLIENT_SECRET: process.env.SPOTIFY_CLIENT_SECRET,
-      }),
+      spotifyKey(
+        {
+          SPOTIFY_CLIENT_ID: process.env.SPOTIFY_CLIENT_ID,
+          SPOTIFY_CLIENT_SECRET: process.env.SPOTIFY_CLIENT_SECRET,
+        },
+        { required: spotifyKeyRequired }
+      ),
       await getEpisodes(),
       io.fetch
     );
