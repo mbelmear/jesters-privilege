@@ -40,8 +40,10 @@ const SIZES = {
 } as const;
 const SCHEMES = ["light", "dark"] as const;
 
-// The site's source, which a build turns into out/.
+// The site's source, which a build turns into out/: its folders, and the
+// config at the root that changes what a build makes.
 const SOURCE_FOLDERS = ["src", "public"];
+const SOURCE_FILES = ["next.config.ts", "package.json"];
 
 // Stops before serving when out/ has no build, or one older than the source:
 // serve would answer every page with a 404, or the screenshots would show old
@@ -52,6 +54,9 @@ async function refuseUnbuiltSite(): Promise<void> {
     () => null
   );
   const sources: SourceFile[] = [];
+  for (const path of SOURCE_FILES) {
+    sources.push({ path, modifiedMs: (await stat(path)).mtimeMs });
+  }
   for (const folder of SOURCE_FOLDERS) {
     for (const entry of await readdir(folder, {
       recursive: true,
