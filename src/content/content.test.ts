@@ -21,17 +21,20 @@ describe("content", () => {
   // The show's pages as the Jesters gave them (#6), without share-tracking
   // query strings.
   // The RSS feed stays in the page head only; the Jesters dropped its button.
-  it("links to the show on Apple Podcasts and Spotify", () => {
+  it("links to the show on Apple Podcasts, Spotify, and Amazon Music", () => {
     expect(content.site.listen).toEqual({
       "apple-podcasts":
         "https://podcasts.apple.com/us/podcast/jesters-privilege/id6830338936",
       spotify: "https://open.spotify.com/show/6a7KnKe6ohzrMGZwJDc5Ti",
+      "amazon-music":
+        "https://music.amazon.com/podcasts/581f57eb-1503-4a04-b10d-5431bb5029b9/jesters-privilege",
     });
   });
 
-  it("links to the show's Instagram", () => {
+  it("links to the show's Instagram and LinkedIn", () => {
     expect(content.site.social).toEqual({
       instagram: "https://www.instagram.com/jestersprivilegepod/",
+      linkedin: "https://www.linkedin.com/company/jester-s-privilege",
     });
   });
 

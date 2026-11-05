@@ -33,7 +33,7 @@ The machine-generated text of an Episode, shown on the Episode page.
 _Avoid_: Captions, subtitles
 
 **Listen link**:
-A link to the show, or to one of its Episodes, in a podcast app (Apple Podcasts, Spotify, YouTube). On an Episode, it opens that Episode in the app; anywhere general, such as the footer, it opens the show. Listening on the site itself needs no Listen link: every Episode plays here, free.
+A link to the show, or to one of its Episodes, in a podcast app (Apple Podcasts, Spotify, Amazon Music, YouTube). On an Episode, it opens that Episode in the app; anywhere general, such as the footer, it opens the show. Listening on the site itself needs no Listen link: every Episode plays here, free.
 _Avoid_: Platform link, subscribe button
 
 ## Paintings

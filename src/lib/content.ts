@@ -27,6 +27,7 @@ export type Section = {
 export const LISTEN_PLATFORMS = [
   "apple-podcasts",
   "spotify",
+  "amazon-music",
   "youtube",
   "rss",
 ] as const;
@@ -34,6 +35,7 @@ export type ListenPlatform = (typeof LISTEN_PLATFORMS)[number];
 
 export const SOCIAL_NETWORKS = [
   "instagram",
+  "linkedin",
   "facebook",
   "tiktok",
   "x",
@@ -204,11 +206,17 @@ export type Shell = {
   readonly themeToggle: string;
   readonly player: PlayerCopy;
   readonly footer: {
+    // The footer's parts: the site's sections, the show's apps, and its
+    // social accounts.
+    readonly explore: string;
+    readonly listen: string;
+    readonly follow: string;
     readonly social: { readonly [N in SocialNetwork]: string };
-    readonly socialLabel: string;
     readonly contact: string;
-    readonly rss: string;
     readonly privacyNote: Copy;
+    // Crossway's notice for Scripture quoted from the ESV, worded as
+    // crossway.org/permissions requires.
+    readonly esvNotice: Copy;
   };
 };
 

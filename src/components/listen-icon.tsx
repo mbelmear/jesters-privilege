@@ -1,12 +1,14 @@
 import { siApplepodcasts, siRss, siSpotify, siYoutube } from "simple-icons";
+import { amazonMusicMark } from "@/components/brand-marks";
+import { Mark, type MarkSource } from "@/components/mark";
 import type { ListenPlatform } from "@/lib/content";
-import { cn } from "@/lib/utils";
 
-// Platform marks from Simple Icons, drawn in the surrounding text color rather
-// than each brand's.
-const ICONS: Record<ListenPlatform, { path: string }> = {
+// Platform marks from Simple Icons, or the brand's own where Simple Icons has
+// none, drawn in the surrounding text color rather than each brand's.
+const ICONS: Record<ListenPlatform, MarkSource> = {
   "apple-podcasts": siApplepodcasts,
   spotify: siSpotify,
+  "amazon-music": amazonMusicMark,
   youtube: siYoutube,
   rss: siRss,
 };
@@ -19,13 +21,5 @@ export function ListenIcon({
   platform: ListenPlatform;
   className?: string;
 }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className={cn("size-5 fill-current", className)}
-    >
-      <path d={ICONS[platform].path} />
-    </svg>
-  );
+  return <Mark source={ICONS[platform]} className={className} />;
 }

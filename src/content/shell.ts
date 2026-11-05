@@ -49,17 +49,24 @@ export const shell = {
     },
   },
   footer: {
+    explore: "Explore",
+    listen: "Listen",
+    follow: "Follow",
     social: {
       instagram: "Instagram",
+      linkedin: "LinkedIn",
       facebook: "Facebook",
       tiktok: "TikTok",
       x: "X",
     },
-    socialLabel: "Follow the show",
     contact: "Write to the Jesters",
-    rss: "RSS feed",
     privacyNote: {
       text: "No cookies and no tracking. We count visits with Cloudflare's privacy-first analytics, and anything you send through Speak Freely goes only to the Jesters' inbox.",
+    },
+    // Crossway's own wording for digital works, quoted in docs/spec.md
+    // (Content), so it's final rather than the Jesters' copy to approve.
+    esvNotice: {
+      text: "Scripture quotations are from the ESV® Bible (The Holy Bible, English Standard Version®), © 2001 by Crossway, a publishing ministry of Good News Publishers. ESV Text Edition: 2025. The ESV text may not be quoted in any publication made available to the public by a Creative Commons license. The ESV may not be translated in whole or in part into any other language. Used by permission. All rights reserved.",
     },
   },
 } as const satisfies Shell;
