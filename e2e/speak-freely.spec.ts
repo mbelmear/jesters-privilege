@@ -1,24 +1,10 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type Page, type Route } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
+import { answerSubmit, passTurnstile } from "./speak-freely";
 
-// The Speak Freely page's form against Turnstile's real widget, which the build gives the
-// always-pass test key (src/lib/turnstile.ts). The static server has no
-// Worker, so each test answers POST /api/submit itself.
+// The Speak Freely page's form; ./speak-freely says how Turnstile and the
+// endpoint are stood in for.
 const PAGE = "/speak-freely";
-
-// The widget's hidden input holds its token once the challenge has passed.
-async function passTurnstile(page: Page) {
-  await expect
-    .poll(
-      () =>
-        page
-          .locator('[data-turnstile] input[name="cf-turnstile-response"]')
-          .inputValue()
-          .catch(() => ""),
-      { timeout: 20_000 }
-    )
-    .not.toBe("");
-}
 
 async function fillIn(page: Page) {
   await page
@@ -32,20 +18,6 @@ async function fillIn(page: Page) {
 const send = (page: Page) => page.getByRole("button", { name: "Send" });
 // The form's own alert; Next's route announcer is one too.
 const alert = (page: Page) => page.getByRole("form").getByRole("alert");
-
-// Answers the endpoint as the Worker would, keeping each body it was sent.
-async function answerSubmit(
-  page: Page,
-  status: number,
-  body: unknown
-): Promise<unknown[]> {
-  const bodies: unknown[] = [];
-  await page.route("**/api/submit", async (route: Route) => {
-    bodies.push(route.request().postDataJSON());
-    await route.fulfill({ status, json: body });
-  });
-  return bodies;
-}
 
 test.describe("Speak Freely", () => {
   test("sends a Submission with Turnstile's token and confirms it", async ({
