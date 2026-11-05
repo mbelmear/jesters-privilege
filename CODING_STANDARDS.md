@@ -67,7 +67,7 @@ Reviewers skip these; the rules below are the ones that need judgement.
 
 GitHub's secret scanning and push protection refuse a recognised key in a push; these rules cover what they can't see.
 
-- **A key lives in GitHub secrets, or as a Worker secret for the Worker**, and reaches code only as an environment variable a workflow step sets. Code reads it in build scripts or server-side modules, never under a `NEXT_PUBLIC_` name or in a client component, so no key reaches a page. What a key fetches (a link, a Transcript) may be published; the key may not.
+- **A key lives in GitHub secrets, or as a Worker secret for the Worker**, and reaches code only as an environment variable a workflow step sets. Code reads it in build scripts or server-side modules, never under a `NEXT_PUBLIC_` name or in a client component, so no key reaches a page. What a key fetches (a link, a Transcript) may be published; the key may not. A key its service publishes by design, such as Turnstile's site key, may sit in secrets for convenience and still appear on the page.
 - **A workflow hands a secret only to the steps that use it**, through `env:` on that step, and runs fork pull requests without secrets (`pull_request`, never `pull_request_target`). A build that lacks a key skips what the key does and says so where the spec asks, as Spotify's lookup does (#122).
 - **A key never appears in output**: not in an error message, a log line, a `::warning::`, or a command line other processes can read. A script that needs one takes it through hidden input and passes it on stdin, as `scripts/spotify-key-wizard.sh` does.
 
