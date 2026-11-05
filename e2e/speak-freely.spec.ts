@@ -166,7 +166,7 @@ test.describe("Speak Freely", () => {
       expect(results.violations).toEqual([]);
     });
 
-    test(`has no detectable accessibility violations once sent (${colorScheme})`, async ({
+    test(`fits, with no detectable accessibility violations, once sent (${colorScheme})`, async ({
       page,
     }) => {
       await answerSubmit(page, 200, { ok: true });
@@ -178,13 +178,18 @@ test.describe("Speak Freely", () => {
       await expect(
         page.getByRole("heading", { name: "Received" })
       ).toBeFocused();
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth - window.innerWidth
+        )
+      ).toBeLessThanOrEqual(0);
       const results = await new AxeBuilder({ page })
         .exclude("[data-turnstile]")
         .analyze();
       expect(results.violations).toEqual([]);
     });
 
-    test(`has no detectable accessibility violations after a failed send (${colorScheme})`, async ({
+    test(`fits, with no detectable accessibility violations, after a failed send (${colorScheme})`, async ({
       page,
     }) => {
       await answerSubmit(page, 502, { ok: false, error: "delivery" });
@@ -196,6 +201,11 @@ test.describe("Speak Freely", () => {
       await expect(alert(page)).toContainText(
         "didn't reach the Jesters' inbox"
       );
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth - window.innerWidth
+        )
+      ).toBeLessThanOrEqual(0);
       const results = await new AxeBuilder({ page })
         .exclude("[data-turnstile]")
         .analyze();

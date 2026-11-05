@@ -39,6 +39,28 @@ test.describe("Persistent player", () => {
   });
 
   test("resumes a partly heard Episode where it was left", async ({ page }) => {
+    // This device heard Episode 2 to 0:30 on an earlier visit.
+    await page.addInitScript(() => {
+      localStorage.setItem(
+        "player",
+        JSON.stringify({
+          positions: { "https://api.spreaker.com/episode/70000003": 30 },
+          finished: [],
+          lastPlayed: "https://api.spreaker.com/episode/70000003",
+        })
+      );
+    });
+    await page.goto("/episodes/2");
+    // The seek lands before the audio's metadata has loaded, which older
+    // iOS Safari ignored.
+    await startEpisode(page, "Resume from 0:30 Episode 2");
+    await expect
+      .poll(async () => (await audioState(page)).time, { timeout: 5000 })
+      .toBeGreaterThanOrEqual(30);
+    await expectPlaying(page);
+  });
+
+  test("offers to resume from any page on a return visit", async ({ page }) => {
     await rememberEpisodeTwo(page);
     await page.goto("/gallery");
     await expect(playerBar(page)).toContainText("The Holy Fool");
