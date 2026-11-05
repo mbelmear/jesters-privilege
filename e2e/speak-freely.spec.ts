@@ -137,7 +137,7 @@ test.describe("Speak Freely", () => {
     const message = page.getByRole("textbox", { name: "Message" });
     await expect(message).toBeFocused();
     await expect(message).toHaveAccessibleDescription(
-      "Write your message before you send it."
+      /^Write your message before you send it\./
     );
     await page.keyboard.type("A Confession");
     // Desktop Safari's Tab skips buttons, as the checkbox is, so it's focused

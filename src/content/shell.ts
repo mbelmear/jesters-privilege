@@ -1,7 +1,8 @@
 import type { Shell } from "@/lib/content";
 
 // The frame around every page: header, mobile menu, and footer. Section names
-// follow GLOSSARY.md; the footer's privacy note awaits the Jesters' words.
+// follow GLOSSARY.md; the player's failure and the footer's privacy note,
+// rewritten in #124's wit pass, await the Jesters' approval.
 export const shell = {
   // Aaron's logo set (public/brand/), trimmed to the artwork.
   logo: {
@@ -46,7 +47,8 @@ export const shell = {
     collapse: "Hide player controls",
     close: "Close player",
     failed: {
-      text: "The Episode stopped loading. Check your connection, then press Play to carry on from here.",
+      text: "The Episode stopped loading, which is no way to treat a punchline. Check your connection, then press Play to carry on from here.",
+      draft: true,
     },
   },
   footer: {
@@ -62,7 +64,8 @@ export const shell = {
     },
     contact: "Write to the Jesters",
     privacyNote: {
-      text: "No cookies and no tracking. We count visits with Cloudflare's privacy-first analytics, and anything you send through Speak Freely goes only to the Jesters' inbox.",
+      text: "No cookies and no tracking: a jester says things to your face, not behind your back. We count visits with Cloudflare's privacy-first analytics, and anything you send through Speak Freely goes only to the Jesters' inbox.",
+      draft: true,
     },
     // Crossway's own wording for digital works, quoted in docs/spec.md
     // (Content), so it's final rather than the Jesters' copy to approve.
