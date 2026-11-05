@@ -2,7 +2,8 @@ name: Deploy
 
 # Builds the static export and ships it to Cloudflare with wrangler.
 # Pushes to main and the Run workflow button deploy to production; each pull
-# request gets its own preview URL, posted as a comment. Every 2 hours the feed
+# request from this repo's own branches gets its own preview URL, posted as a
+# comment (Dependabot's and forks' run without secrets, so they skip it). Every 2 hours the feed
 # check deploys only when the feed has an Episode the live site lacks, or an
 # Episode has gained an Episode Listen link or a Transcript (transcribe.yml
 # makes them). See docs/deploy.md.
@@ -23,7 +24,14 @@ permissions:
 jobs:
   preview:
     name: Preview URL
-    if: github.event_name == 'pull_request'
+    # Only pull requests that get the repo's secrets: GitHub runs a fork's
+    # and Dependabot's without them, and the build stops on the empty
+    # Turnstile key. Their required checks (ci.yml) still build and test them;
+    # Dependabot gets no copy of the Cloudflare token.
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.user.login != 'dependabot[bot]'
     runs-on: ubuntu-latest
     permissions:
       contents: read
