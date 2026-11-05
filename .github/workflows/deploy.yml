@@ -44,7 +44,7 @@ jobs:
           # The Submit page's Turnstile widget (src/lib/turnstile.ts).
           TURNSTILE_SITE_KEY: ${{ secrets.TURNSTILE_SITE_KEY }}
           # Spotify's Episode Listen links (src/lib/spotify-lookup.ts). A
-          # fork's pull request has no secrets and skips the lookup.
+          # build without them skips the lookup.
           SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
           SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
       # A preview version can only be uploaded to a Worker that exists. Before the
