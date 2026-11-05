@@ -11,7 +11,7 @@ import {
   RotateCw,
 } from "lucide-react";
 import Link from "next/link";
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { PlayerCopy } from "@/lib/content";
 import { episodePath } from "@/lib/feed";
@@ -36,6 +36,11 @@ import {
 type Props = {
   copy: PlayerCopy;
   labels: EpisodeLabels;
+  // Set when the bar replaces the resume offer whose Play was pressed: the
+  // bar's play and pause takes over that button's focus as it appears, then
+  // reports it has, so the bar doesn't take it again the next time it shows.
+  takeFocus?: boolean;
+  onFocusTaken?: () => void;
 };
 
 /**
@@ -43,11 +48,23 @@ type Props = {
  * played: a compact bar with the title, play and pause, and a slim progress
  * line, which expands into the full controls.
  */
-export function PlayerBar({ copy, labels }: Props) {
+export function PlayerBar({
+  copy,
+  labels,
+  takeFocus = false,
+  onFocusTaken,
+}: Props) {
   const player = usePlayer();
   const state = usePlayerState(player);
   const [expanded, setExpanded] = useState(false);
   const controlsId = useId();
+  const playPause = useRef<HTMLButtonElement>(null);
+  // Once, as the bar appears; not each time it collapses back.
+  useEffect(() => {
+    if (!takeFocus) return;
+    playPause.current?.focus();
+    onFocusTaken?.();
+  }, [takeFocus, onFocusTaken]);
   if (!player || !state || state.mode === "empty") return null;
 
   // The feed's length is an estimate until the audio reports its own.
@@ -108,7 +125,12 @@ export function PlayerBar({ copy, labels }: Props) {
           </div>
         ) : (
           <div className="flex items-center gap-3 py-2 pr-24">
-            <PlayPause player={player} state={state} copy={copy} />
+            <PlayPause
+              ref={playPause}
+              player={player}
+              state={state}
+              copy={copy}
+            />
             <p className="flex min-w-0 flex-col">
               <span className="font-ui text-xs font-semibold tracking-widest text-brand-ink uppercase">
                 {label}
@@ -143,7 +165,10 @@ export function PlayerBar({ copy, labels }: Props) {
             type="button"
             variant="ghost"
             size="icon"
-            onClick={player.close}
+            onClick={() => {
+              player.close();
+              focusMainContent();
+            }}
           >
             <X aria-hidden="true" className="size-6" />
             <span className="sr-only">{copy.close}</span>
@@ -167,12 +192,14 @@ export function PlayerBar({ copy, labels }: Props) {
 export function ResumeOffer({
   player,
   offer,
+  onResume,
   onDismiss,
   copy,
   labels,
 }: {
   player: Player;
   offer: PartlyHeard;
+  onResume: () => void;
   onDismiss: () => void;
   copy: PlayerCopy;
   labels: EpisodeLabels;
@@ -191,9 +218,10 @@ export function ResumeOffer({
           variant="brand"
           size="icon"
           className="rounded-full"
-          onClick={() =>
-            player.play(episode, { at: position }).catch(reportPlayerError)
-          }
+          onClick={() => {
+            onResume();
+            player.play(episode, { at: position }).catch(reportPlayerError);
+          }}
         >
           <Play aria-hidden="true" className="size-5 fill-current" />
           <span className="sr-only">
@@ -208,7 +236,15 @@ export function ResumeOffer({
             {episode.title}
           </span>
         </p>
-        <Button type="button" variant="ghost" size="icon" onClick={onDismiss}>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={() => {
+            onDismiss();
+            focusMainContent();
+          }}
+        >
           <X aria-hidden="true" className="size-6" />
           <span className="sr-only">{copy.dismiss}</span>
         </Button>
@@ -217,12 +253,23 @@ export function ResumeOffer({
   );
 }
 
+/**
+ * For a button that takes the dock away with it: focus moves to the page's
+ * content (the root layout's <main>), where the page stays scrolled, rather
+ * than falling to <body>.
+ */
+function focusMainContent() {
+  document.getElementById("main")?.focus({ preventScroll: true });
+}
+
 function PlayPause({
+  ref,
   player,
   state,
   copy,
   large = false,
 }: {
+  ref?: React.Ref<HTMLButtonElement>;
   player: Player;
   state: LoadedState;
   copy: PlayerCopy;
@@ -232,6 +279,7 @@ function PlayPause({
   const icon = large ? "size-7" : "size-5";
   return (
     <Button
+      ref={ref}
       type="button"
       variant="brand"
       size="icon"

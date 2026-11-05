@@ -17,8 +17,9 @@
 // state that comes from this device's history: an Episode heard to the end
 // (its check in the archive), one partly heard (the offer to resume).
 //   npm run screenshots -- /episodes --storage 'player={"positions":{},"finished":["https://api.spreaker.com/episode/70000003"],"lastPlayed":null}'
-// The Preview's audio doesn't load (the fixture's addresses are made up), so
-// these are the Jesters' only view of such a state.
+// These shoot the fixture's Episodes. The preview reads the live feed
+// (deploy.yml), so its Episodes differ from these, and it plays their real
+// audio.
 // Each --element also shoots just the part a CSS selector names, cut from the
 // full page (<size>-<scheme>-<selector>.png), for a change to the header or
 // footer that a full phone page, thousands of pixels tall, shrinks past

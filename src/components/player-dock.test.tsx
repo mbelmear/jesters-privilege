@@ -36,8 +36,10 @@ function setup({
 }: { storage?: ReturnType<typeof partlyHeard> | null } = {}) {
   const audio = new FakeAudio();
   const player = createPlayer({ audio, storage });
+  // The page around the dock, as the root layout gives it.
   const result = render(
     <PlayerContext value={player}>
+      <main id="main" tabIndex={-1} />
       <PlayerDock copy={content.shell.player} labels={content.episodePage} />
     </PlayerContext>
   );
@@ -70,10 +72,52 @@ describe("PlayerDock", () => {
     ).toBeInTheDocument();
   });
 
+  it("hands focus to the bar's Pause when the offer is taken up", async () => {
+    const { user } = setup({ storage: partlyHeard() });
+    await user.click(
+      await screen.findByRole("button", { name: "Resume from 12:34 Episode 4" })
+    );
+    expect(await screen.findByRole("button", { name: "Pause" })).toHaveFocus();
+  });
+
+  it("hands over focus only that once", async () => {
+    const { player, user } = setup({ storage: partlyHeard() });
+    await user.click(
+      await screen.findByRole("button", { name: "Resume from 12:34 Episode 4" })
+    );
+    await user.click(
+      await screen.findByRole("button", { name: "Close player" })
+    );
+    // Played again from elsewhere on the page, which keeps its focus.
+    await act(() => player.play(episode));
+    expect(
+      await screen.findByRole("button", { name: "Pause" })
+    ).not.toHaveFocus();
+  });
+
   it("puts the offer away for this visit when declined", async () => {
     const { user } = setup({ storage: partlyHeard() });
     await user.click(await screen.findByRole("button", { name: "Not now" }));
     expect(screen.queryByRole("region", { name: "Player" })).toBeNull();
+  });
+
+  // The button pressed goes with the dock, so focus moves to the page's
+  // content rather than falling to <body>.
+  it.each([
+    [
+      "closing the player",
+      async (player: ReturnType<typeof createPlayer>) => {
+        await act(() => player.play(episode));
+        return "Close player";
+      },
+    ],
+    ["declining the offer", async () => "Not now"],
+  ])("sends focus to the main content after %s", async (_, before) => {
+    const { player, user } = setup({ storage: partlyHeard() });
+    const name = await before(player);
+    await user.click(await screen.findByRole("button", { name }));
+    expect(screen.queryByRole("region", { name: "Player" })).toBeNull();
+    expect(screen.getByRole("main")).toHaveFocus();
   });
 
   it("has no accessibility violations while offering to resume", async () => {
