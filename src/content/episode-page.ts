@@ -25,7 +25,7 @@ export const episodePage = {
   share: {
     button: "Share",
     copied: {
-      text: "Link copied. Paste it anywhere to share this Episode; every court needs a jester.",
+      text: "Link copied. Paste it anywhere to share this Episode: the more who laugh, the more who listen.",
       draft: true,
     },
     failed: {
