@@ -164,10 +164,14 @@ describe("Episodes", () => {
 
   // Its own draft, so the test holds whatever the Jesters have approved.
   it("marks draft copy with the DRAFT ribbon on a preview", async () => {
-    jest.replaceProperty<{ intro: Copy }, "intro">(content.episodes, "intro", {
-      ...content.episodes.intro,
-      draft: true,
-    });
+    const draft = jest.replaceProperty<{ intro: Copy }, "intro">(
+      content.episodes,
+      "intro",
+      {
+        ...content.episodes.intro,
+        draft: true,
+      }
+    );
     const before = process.env.SITE_ENV;
     process.env.SITE_ENV = "preview";
     try {
@@ -176,6 +180,7 @@ describe("Episodes", () => {
     } finally {
       if (before === undefined) delete process.env.SITE_ENV;
       else process.env.SITE_ENV = before;
+      draft.restore();
     }
   });
 

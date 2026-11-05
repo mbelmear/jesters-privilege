@@ -50,7 +50,7 @@ describe("Speak Freely", () => {
 
   // Its own draft, so the test holds whatever the Jesters have approved.
   it("marks draft copy with the DRAFT ribbon on a preview", () => {
-    jest.replaceProperty<{ intro: Copy }, "intro">(
+    const draft = jest.replaceProperty<{ intro: Copy }, "intro">(
       content.speakFreely,
       "intro",
       {
@@ -66,6 +66,7 @@ describe("Speak Freely", () => {
     } finally {
       if (before === undefined) delete process.env.SITE_ENV;
       else process.env.SITE_ENV = before;
+      draft.restore();
     }
   });
 
