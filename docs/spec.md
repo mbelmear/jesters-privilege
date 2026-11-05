@@ -272,7 +272,7 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
   - restyled **shadcn/ui** primitives, owned in the repo (menu, dialog, select, checkbox, toggle)
   - site components (banner, shield and monogram frame, illuminated paragraph, painting band, framed painting with placard, Episode row, fleuron rule)
   - pages that only arrange those components
-- **Icons**: Lucide for the interface, Simple Icons for app and social logos, or the brand's own mark where Simple Icons has none (LinkedIn and Amazon Music, drawn one colour like the rest). A Listen link or social link is its icon with a hidden text label, never a bare text link.
+- **Icons**: Lucide for the interface, Simple Icons for app and social logos, or the brand's own mark where Simple Icons has none (LinkedIn's "in" bug and Amazon Music's app tile, drawn in one colour like the rest). A Listen link or social link is its icon with a hidden text label, never a bare text link.
 - **Footer**, stacked on phones:
   1. the logo and the site's one-line description
   2. Explore: the nav sections (Episodes, Fools' Gallery, About, Speak Freely)
@@ -315,7 +315,9 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
   The pages don't need to match the landing page word for word, but each one should use its metaphor and vocabulary (the King who needs no jester, the church who is dearly loved yet can wander, her courtiers, fools for Christ, the motley), never contradict it, and point back to it where that comes naturally. The landing-page text itself is final and doesn't change. Before approving any draft copy, check it against this principle. (Set by the Jesters on #6, 2026-11-02.)
 
 - **Voice: witty, always.** The Jesters are silver-tongued fools using the gift for the church's good, so every piece of copy carries their wit: jokes strewn about, the working messages included. Clear first, funny second: an error still says exactly what happened and what to do. Never invent facts about real people or the church for a joke. (Set by Michael, 2026-11-03.)
-- **Scripture is quoted from the ESV**, with Crossway's notice in the footer (check its current wording at crossway.org/permissions).
+- **Scripture is quoted from the ESV**, with Crossway's notice in the footer. Its wording is Crossway's, required for digital works (crossway.org/permissions, checked 2026-11-04); check it again whenever Crossway updates the ESV text edition:
+
+  > Scripture quotations are from the ESV® Bible (The Holy Bible, English Standard Version®), © 2001 by Crossway, a publishing ministry of Good News Publishers. ESV Text Edition: 2025. The ESV text may not be quoted in any publication made available to the public by a Creative Commons license. The ESV may not be translated in whole or in part into any other language. Used by permission. All rights reserved.
 
 - Jester bios: the Jesters supplied their full bios (on #6), used word for word on About, in the order Michael, Dan, Aaron. The home page shows a two-line summary of each, condensed from them.
 

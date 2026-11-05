@@ -1,6 +1,6 @@
 import { siFacebook, siInstagram, siTiktok, siX } from "simple-icons";
 import { linkedinMark } from "@/components/brand-marks";
-import { Mark, type MarkSource } from "@/components/listen-icon";
+import { Mark, type MarkSource } from "@/components/mark";
 import type { SocialNetwork } from "@/lib/content";
 
 // Network marks from Simple Icons, or the brand's own where Simple Icons has

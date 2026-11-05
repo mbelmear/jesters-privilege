@@ -190,7 +190,7 @@ test.describe("Footer", () => {
     await expect(page).toHaveURL("/gallery");
   });
 
-  // Its mark is drawn from a file of its own (src/components/brand-marks.ts).
+  // Its mark is drawn from a file of its own, public/icons/amazon-music.svg.
   test("draws the Amazon Music mark", async ({ page }) => {
     await page.goto("/");
     const mark = page
@@ -207,9 +207,9 @@ test.describe("Footer", () => {
 
   test("fits a phone's width", async ({ page }) => {
     await page.goto("/");
-    const overflow = await page
-      .getByRole("contentinfo")
-      .evaluate((el) => el.scrollWidth - el.clientWidth);
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - window.innerWidth
+    );
     expect(overflow).toBeLessThanOrEqual(0);
   });
 
