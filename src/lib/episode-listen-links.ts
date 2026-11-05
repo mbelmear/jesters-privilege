@@ -30,8 +30,8 @@ export type AppLookup =
   | { kind: "found"; episodes: ReadonlyMap<string, string> }
   | { kind: "failed"; reason: string };
 
-// Each app's lookup. An app with none yet (Spotify until #122, Amazon Music,
-// YouTube) links every Episode to the show.
+// Each app's lookup. An app with none (Amazon Music, YouTube, and Spotify in a
+// build without its key) links every Episode to the show.
 export type Lookups = { readonly [A in EpisodeListenApp]?: AppLookup };
 
 export type EpisodeListenLink = { app: EpisodeListenApp; href: string };
