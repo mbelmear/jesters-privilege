@@ -3,16 +3,28 @@
 // scrolling through it (so reveals and lazy images have run), plus the
 // phone's first screen, where most visitors land from Instagram.
 // It refuses a missing or stale build in out/; run `npm run build` first. Usage:
-//   npm run screenshots -- <page path> [folder] [--click <button>]... [--storage <key>=<json>]... [--element <selector>]... [--missing]
+//   npm run screenshots -- <page path> [folder] [--click <name>]... [--fill <label>=<text>]... [--drop-audio] [--submit <status>=<json>] [--grant clipboard] [--storage <key>=<json>]... [--element <selector>]... [--missing]
 // A path the site doesn't have answers with the 404 page, so it fails unless
 // --missing says the 404 page is the one to shoot: #123's prompt named
 // /fools-gallery for the Gallery, which lives at /gallery.
 //   npm run screenshots -- /styleguide/home .screenshots/home
-// Each --click presses the button of that name, in order, then shoots the
-// screen as it stands (<size>-<scheme>-clicked.png), for a state that shows
-// only after interaction: the player once an Episode plays, a sent form.
+// The steps reach a state that shows only after interaction, then the
+// screen is shot as it stands (<size>-<scheme>-clicked.png). They run in the
+// order given: --click presses the button or ticks the checkbox of that name,
+// --fill types into the field of that label, and --drop-audio fires the
+// playing Episode's audio error, as a lost connection does. Episode audio is
+// served as silence (e2e/player.ts), so Play really plays.
 //   npm run screenshots -- /episodes/2 --click "Play Episode 2" --click "Show player controls"
-// Episode audio is served as silence (e2e/player.ts), so Play really plays.
+//   npm run screenshots -- /episodes/1 --click "Play Episode 1" --drop-audio
+// Chromium takes audio that fails before it starts as an interrupted play
+// and shows Play again, so only --drop-audio reaches the player's failure.
+// The static server has no Worker: --submit answers POST /api/submit as it
+// would and waits for Turnstile's test key to pass before the steps
+// (e2e/speak-freely.ts). Without it a send can't succeed or fail on purpose.
+//   npm run screenshots -- /speak-freely --submit '200={"ok":true}' --fill "Message=Why skinny jeans?" --click "You can mention this on the show." --click Send
+//   npm run screenshots -- /speak-freely --submit '502={"ok":false,"error":"delivery"}' --fill …
+// --grant clipboard lets Share copy the link; without it the copy fails.
+//   npm run screenshots -- /episodes/1 --grant clipboard --click Share
 // Each --storage puts a value in localStorage before the page loads, for a
 // state that comes from this device's history: an Episode heard to the end
 // (its check in the archive), one partly heard (the offer to resume).
@@ -31,7 +43,12 @@ import { createServer } from "node:net";
 import { join } from "node:path";
 import { chromium, type Page } from "@playwright/test";
 import { serveEpisodeAudio } from "../e2e/player";
+import { answerSubmit, passTurnstile } from "../e2e/speak-freely";
 import { buildFreshness, type SourceFile } from "../src/lib/build-freshness";
+import {
+  parseScreenshotArgs,
+  type ScreenshotStep,
+} from "../src/lib/screenshot-args";
 import { waitForServer } from "../src/lib/wait-for-server";
 
 const SIZES = {
@@ -85,13 +102,19 @@ async function refuseUnbuiltSite(): Promise<void> {
 }
 
 async function main() {
-  const { positional, clicks, storage, elements, missing } = parseArgs(
-    process.argv.slice(2)
-  );
+  const {
+    positional,
+    steps,
+    storage,
+    elements,
+    missing,
+    submit,
+    grantClipboard,
+  } = parseScreenshotArgs(process.argv.slice(2));
   const [page, folder = ".screenshots"] = positional;
   if (!page?.startsWith("/")) {
     throw new Error(
-      'Usage: npm run screenshots -- <page path such as /about> [folder] [--click "<button name>"]... [--storage <key>=<json>]... [--element <selector>]... [--missing]'
+      "Usage: npm run screenshots -- <page path such as /about> [folder] [--click <name>]... [--fill <label>=<text>]... [--drop-audio] [--submit <status>=<json>] [--grant clipboard] [--storage <key>=<json>]... [--element <selector>]... [--missing]"
     );
   }
   await refuseUnbuiltSite();
@@ -142,7 +165,13 @@ async function main() {
     for (const [size, options] of Object.entries(SIZES)) {
       for (const colorScheme of SCHEMES) {
         const tab = await browser.newPage({ ...options, colorScheme });
+        if (grantClipboard) {
+          await tab
+            .context()
+            .grantPermissions(["clipboard-read", "clipboard-write"]);
+        }
         await serveEpisodeAudio(tab);
+        if (submit) await answerSubmit(tab, submit.status, submit.body);
         await tab.addInitScript((entries) => {
           for (const [key, value] of entries) localStorage.setItem(key, value);
         }, storage);
@@ -174,12 +203,9 @@ async function main() {
           await tab.screenshot({ path: part, fullPage: true, clip: box });
           console.log(part);
         }
-        if (clicks.length > 0) {
-          for (const name of clicks) {
-            await tab.getByRole("button", { name, exact: true }).click();
-            // Lazily loaded UI (the player bar) arrives and settles.
-            await tab.waitForTimeout(1500);
-          }
+        if (steps.length > 0) {
+          if (submit) await passTurnstile(tab);
+          for (const step of steps) await take(tab, step);
           const clicked = join(folder, `${size}-${colorScheme}-clicked.png`);
           await tab.screenshot({ path: clicked });
           console.log(clicked);
@@ -194,43 +220,32 @@ async function main() {
   }
 }
 
-// Splits the arguments into positional ones, the --click button names, the
-// --storage entries, the --element selectors, and whether --missing was
-// passed.
-function parseArgs(args: string[]) {
-  const positional: string[] = [];
-  const clicks: string[] = [];
-  const storage: [string, string][] = [];
-  const elements: string[] = [];
-  let missing = false;
-  for (let i = 0; i < args.length; i += 1) {
-    const arg = args[i];
-    if (arg === "--missing") {
-      missing = true;
-      continue;
+// Does one step, then lets lazily loaded UI (the player bar) arrive and
+// settle.
+async function take(tab: Page, step: ScreenshotStep) {
+  switch (step.kind) {
+    case "click": {
+      const { name } = step;
+      await tab
+        .getByRole("button", { name, exact: true })
+        .or(tab.getByRole("checkbox", { name, exact: true }))
+        .click();
+      return tab.waitForTimeout(1500);
     }
-    if (arg !== "--click" && arg !== "--storage" && arg !== "--element") {
-      positional.push(arg);
-      continue;
+    case "fill":
+      return tab
+        .getByRole("textbox", { name: step.label, exact: true })
+        .fill(step.text);
+    case "drop-audio":
+      await tab
+        .locator("audio")
+        .evaluate((audio) => audio.dispatchEvent(new Event("error")));
+      return tab.waitForTimeout(800);
+    default: {
+      const unhandled: never = step;
+      throw new Error(`Unknown step ${JSON.stringify(unhandled)}`);
     }
-    const value = args[i + 1];
-    if (!value) throw new Error(`${arg} needs a value`);
-    i += 1;
-    if (arg === "--click") {
-      clicks.push(value);
-      continue;
-    }
-    if (arg === "--element") {
-      elements.push(value);
-      continue;
-    }
-    const split = value.indexOf("=");
-    if (split < 1) {
-      throw new Error(`--storage needs <key>=<value>, not "${value}"`);
-    }
-    storage.push([value.slice(0, split), value.slice(split + 1)]);
   }
-  return { positional, clicks, storage, elements, missing };
 }
 
 // Each step pauses long enough for an on-scroll reveal to start.

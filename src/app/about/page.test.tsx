@@ -1,7 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
 import { axe } from "jest-axe";
 import { content } from "@/content";
-import type { Jester, Site } from "@/lib/content";
+import type { Copy, Jester, Site } from "@/lib/content";
 import About, { metadata } from "./page";
 
 describe("About", () => {
@@ -101,7 +101,12 @@ describe("About", () => {
     expect(screen.getByRole("img", { name: /^Aaron Canen/ })).toBeVisible();
   });
 
-  it("marks its draft copy with the DRAFT ribbon on a preview", () => {
+  // Its own draft, so the test holds whatever the Jesters have approved.
+  it("marks draft copy with the DRAFT ribbon on a preview", () => {
+    jest.replaceProperty<{ intro: Copy }, "intro">(content.about, "intro", {
+      ...content.about.intro,
+      draft: true,
+    });
     const before = process.env.SITE_ENV;
     process.env.SITE_ENV = "preview";
     try {

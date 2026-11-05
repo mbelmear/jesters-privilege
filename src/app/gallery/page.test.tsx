@@ -1,5 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { axe } from "jest-axe";
+import { content } from "@/content";
+import type { Copy } from "@/lib/content";
 import Gallery, { metadata } from "./page";
 
 describe("Gallery", () => {
@@ -18,7 +20,16 @@ describe("Gallery", () => {
     ).toBeVisible();
   });
 
-  it("marks its draft copy with the DRAFT ribbon on a preview", () => {
+  // Its own draft, so the test holds whatever the Jesters have approved.
+  it("marks draft copy with the DRAFT ribbon on a preview", () => {
+    const draft = jest.replaceProperty<{ intro: Copy }, "intro">(
+      content.gallery,
+      "intro",
+      {
+        ...content.gallery.intro,
+        draft: true,
+      }
+    );
     const before = process.env.SITE_ENV;
     process.env.SITE_ENV = "preview";
     try {
@@ -27,6 +38,7 @@ describe("Gallery", () => {
     } finally {
       if (before === undefined) delete process.env.SITE_ENV;
       else process.env.SITE_ENV = before;
+      draft.restore();
     }
   });
 
