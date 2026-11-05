@@ -68,6 +68,26 @@ jobs:
           retention-days: 14
           if-no-files-found: error
 
+  # Warns, without failing, when a pull request removes or renames a browser
+  # test. Its specs read the built site.
+  dropped-tests:
+    name: Dropped browser tests
+    if: github.event_name == 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
+      - uses: actions/download-artifact@v4
+        with:
+          name: site
+          path: out/
+      - run: |
+          git fetch --quiet --depth=1 origin "$BASE"
+          npm run dropped-tests -- "$BASE"
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+
   # The site before Episode 1: a full build from the empty feed, which fails
   # if any route can't export with no Episodes, then the coming-soon journey.
   e2e-empty-feed:
