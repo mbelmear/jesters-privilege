@@ -1,5 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { axe } from "jest-axe";
+import { content } from "@/content";
+import type { Copy } from "@/lib/content";
 import { fakeTurnstile } from "@/lib/fake-turnstile";
 import SpeakFreely, { metadata } from "./page";
 
@@ -46,9 +48,16 @@ describe("Speak Freely", () => {
     ).toBeVisible();
   });
 
-  // #124's wit pass rewrote its working messages, which await the Jesters'
-  // approval, so a preview shows the ribbon until they give it.
-  it("shows the DRAFT ribbon on a preview", () => {
+  // Its own draft, so the test holds whatever the Jesters have approved.
+  it("marks draft copy with the DRAFT ribbon on a preview", () => {
+    jest.replaceProperty<{ intro: Copy }, "intro">(
+      content.speakFreely,
+      "intro",
+      {
+        ...content.speakFreely.intro,
+        draft: true,
+      }
+    );
     const before = process.env.SITE_ENV;
     process.env.SITE_ENV = "preview";
     try {

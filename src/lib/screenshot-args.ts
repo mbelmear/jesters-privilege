@@ -30,7 +30,11 @@ const TAKES_VALUE = [
   "--element",
   "--submit",
   "--grant",
-];
+] as const;
+type OptionWithValue = (typeof TAKES_VALUE)[number];
+
+const takesValue = (arg: string): arg is OptionWithValue =>
+  TAKES_VALUE.some((option) => option === arg);
 
 export function parseScreenshotArgs(args: readonly string[]): ScreenshotArgs {
   const positional: string[] = [];
@@ -50,7 +54,7 @@ export function parseScreenshotArgs(args: readonly string[]): ScreenshotArgs {
       steps.push({ kind: "drop-audio" });
       continue;
     }
-    if (!TAKES_VALUE.includes(arg)) {
+    if (!takesValue(arg)) {
       positional.push(arg);
       continue;
     }
@@ -81,7 +85,16 @@ export function parseScreenshotArgs(args: readonly string[]): ScreenshotArgs {
         }
         grantClipboard = true;
         break;
+      default: {
+        const unhandled: never = arg;
+        throw new Error(`Unknown option ${String(unhandled)}`);
+      }
     }
+  }
+  if (submit && steps.length === 0) {
+    throw new Error(
+      "--submit needs steps that send the form, such as --click Send"
+    );
   }
   return {
     positional,

@@ -40,6 +40,8 @@ describe("parseScreenshotArgs", () => {
         "/speak-freely",
         "--submit",
         '502={"ok":false,"error":"delivery"}',
+        "--click",
+        "Send",
       ]).submit
     ).toEqual({ status: 502, body: { ok: false, error: "delivery" } });
   });
@@ -49,9 +51,16 @@ describe("parseScreenshotArgs", () => {
     ["a status that isn't one", 'ok={"ok":true}'],
     ["a body that isn't JSON", "200=ok"],
   ])("refuses a --submit with %s", (_, value) => {
-    expect(() => parseScreenshotArgs(["/", "--submit", value])).toThrow(
-      /--submit needs <status>=<json>/
-    );
+    expect(() =>
+      parseScreenshotArgs(["/", "--submit", value, "--click", "Send"])
+    ).toThrow(/--submit needs <status>=<json>/);
+  });
+
+  // Answered, the endpoint waits on a send that no step makes.
+  it("refuses a --submit with no steps to send it", () => {
+    expect(() =>
+      parseScreenshotArgs(["/speak-freely", "--submit", '200={"ok":true}'])
+    ).toThrow(/--submit needs steps that send the form/);
   });
 
   it("grants the clipboard", () => {
