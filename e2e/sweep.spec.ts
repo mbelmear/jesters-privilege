@@ -5,13 +5,15 @@ import { scrollDown, scrollThrough } from "./hero-story";
 import {
   expectPlaying,
   playerBar,
+  rememberEpisodeTwo,
   serveEpisodeAudio,
   startEpisode,
 } from "./player";
 
-// The hardening sweep (#29): every page a visitor can reach, found on disk, so
-// a page or Episode address added later is swept too. Each page's own spec
-// covers what's particular to it; this holds what must be true everywhere.
+// The hardening sweep (#29): every page search engines may list, found on disk
+// so a page or Episode address added later is swept too, and the 404 page. Each
+// page's own spec covers what's particular to it; this holds what must be true
+// everywhere.
 const everyPage = [...indexable, "/no-such-page"];
 
 // The narrowest phones still in use; the phone projects are wider.
@@ -52,7 +54,12 @@ const scan = async (page: Page) => {
 test.describe("Every page", () => {
   test("the sweep finds the Episode pages, Bonus and Trailer among them", () => {
     expect(everyPage).toContain("/episodes/1");
-    expect(everyPage.filter((path) => /bonus/.test(path))).not.toEqual([]);
+    expect(everyPage).toContain(
+      "/episodes/bonus/listener-confessions-christmas-edition"
+    );
+    expect(everyPage).toContain(
+      "/episodes/bonus/introducing-jesters-privilege-trailer"
+    );
   });
 
   for (const path of everyPage) {
@@ -141,8 +148,8 @@ test.describe("The player, in each of its states", () => {
       });
 
       test("playing, with its controls open", async ({ page }) => {
-        await page.goto("/episodes/2");
-        await startEpisode(page, "Play Episode 2");
+        await page.goto("/episodes/1");
+        await startEpisode(page, "Play Episode 1");
         await expectPlaying(page);
         await playerBar(page)
           .getByRole("button", { name: "Show player controls" })
@@ -154,12 +161,37 @@ test.describe("The player, in each of its states", () => {
         await scan(page);
       });
 
+      test("paused", async ({ page }) => {
+        await page.goto("/episodes/1");
+        await startEpisode(page, "Play Episode 1");
+        await expectPlaying(page);
+        await playerBar(page).getByRole("button", { name: "Pause" }).click();
+        await expect(
+          playerBar(page).getByRole("button", { name: "Play", exact: true })
+        ).toBeVisible();
+        expect(await overflow(page)).toBeLessThanOrEqual(0);
+        await scan(page);
+      });
+
+      test("offering to resume", async ({ page }) => {
+        await rememberEpisodeTwo(page);
+        await page.goto("/gallery");
+        await expect(
+          page.getByRole("button", {
+            name: "Resume from 0:30 Episode 2",
+            exact: true,
+          })
+        ).toBeVisible();
+        expect(await overflow(page)).toBeLessThanOrEqual(0);
+        await scan(page);
+      });
+
       test("failed", async ({ page }) => {
         await page.unroute(/\.mp3$/);
         await page.route(/\.mp3$/, (route) => route.abort());
-        await page.goto("/episodes/2");
+        await page.goto("/episodes/1");
         const play = page.getByRole("button", {
-          name: "Play Episode 2",
+          name: "Play Episode 1",
           exact: true,
         });
         const alert = playerBar(page).getByRole("alert");

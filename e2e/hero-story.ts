@@ -25,7 +25,7 @@ export async function scrollThrough(page: Page) {
   await scrollDown(page);
 }
 
-// Scrolls a whole page a screenful at a time, so what waits to be seen has run.
+// Scrolls down a whole page in steps, so what waits to be seen has run.
 export async function scrollDown(page: Page) {
   const height = await page.evaluate(() => document.body.scrollHeight);
   for (let y = 0; y <= height; y += 300) {

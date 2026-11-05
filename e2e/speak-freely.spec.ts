@@ -165,5 +165,41 @@ test.describe("Speak Freely", () => {
         .analyze();
       expect(results.violations).toEqual([]);
     });
+
+    test(`has no detectable accessibility violations once sent (${colorScheme})`, async ({
+      page,
+    }) => {
+      await answerSubmit(page, 200, { ok: true });
+      await page.emulateMedia({ colorScheme });
+      await page.goto(PAGE);
+      await fillIn(page);
+      await passTurnstile(page);
+      await send(page).click();
+      await expect(
+        page.getByRole("heading", { name: "Received" })
+      ).toBeFocused();
+      const results = await new AxeBuilder({ page })
+        .exclude("[data-turnstile]")
+        .analyze();
+      expect(results.violations).toEqual([]);
+    });
+
+    test(`has no detectable accessibility violations after a failed send (${colorScheme})`, async ({
+      page,
+    }) => {
+      await answerSubmit(page, 502, { ok: false, error: "delivery" });
+      await page.emulateMedia({ colorScheme });
+      await page.goto(PAGE);
+      await fillIn(page);
+      await passTurnstile(page);
+      await send(page).click();
+      await expect(alert(page)).toContainText(
+        "didn't reach the Jesters' inbox"
+      );
+      const results = await new AxeBuilder({ page })
+        .exclude("[data-turnstile]")
+        .analyze();
+      expect(results.violations).toEqual([]);
+    });
   }
 });

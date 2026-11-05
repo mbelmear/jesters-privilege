@@ -53,24 +53,26 @@ test.describe("Coming soon", { tag: "@empty-feed" }, () => {
     expect(await response.json()).toMatchObject({ newestEpisodeGuid: null });
   });
 
-  test("the home page has no horizontal scroll", async ({ page }) => {
-    await page.goto("/");
-    const overflow = await page.evaluate(
-      () => document.documentElement.scrollWidth - window.innerWidth
-    );
-    expect(overflow).toBeLessThanOrEqual(0);
-  });
-
-  for (const colorScheme of ["light", "dark"] as const) {
-    test(`the home page has no detectable accessibility violations (${colorScheme})`, async ({
-      page,
-    }) => {
-      await page.emulateMedia({ colorScheme });
-      await page.goto("/");
-      // axe samples colors mid-fade, so let the story's reveal finish first.
-      await scrollThrough(page);
-      const results = await new AxeBuilder({ page }).analyze();
-      expect(results.violations).toEqual([]);
+  for (const path of ["/", "/episodes", "/episodes/coming-soon"]) {
+    test(`${path} has no horizontal scroll`, async ({ page }) => {
+      await page.goto(path);
+      const overflow = await page.evaluate(
+        () => document.documentElement.scrollWidth - window.innerWidth
+      );
+      expect(overflow).toBeLessThanOrEqual(0);
     });
+
+    for (const colorScheme of ["light", "dark"] as const) {
+      test(`${path} has no detectable accessibility violations (${colorScheme})`, async ({
+        page,
+      }) => {
+        await page.emulateMedia({ colorScheme });
+        await page.goto(path);
+        // axe samples colors mid-fade, so let the story's reveal finish first.
+        if (path === "/") await scrollThrough(page);
+        const results = await new AxeBuilder({ page }).analyze();
+        expect(results.violations).toEqual([]);
+      });
+    }
   }
 });
