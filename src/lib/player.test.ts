@@ -150,6 +150,51 @@ describe("player", () => {
     expect(player.getState()).toMatchObject({ mode: "playing", position: 600 });
   });
 
+  it("closes: stops the audio and unloads the Episode, keeping its place", async () => {
+    const { audio, player } = setup();
+    player.setSpeed(1.5);
+    await player.play(episode());
+    audio.playTo(754);
+    player.close();
+    expect(audio.playing).toBe(false);
+    expect(player.getState()).toMatchObject({ mode: "empty", speed: 1.5 });
+    expect(player.savedPosition("ep-1")).toBe(754);
+  });
+
+  it("doesn't offer to resume an Episode closed after it was heard to the end", async () => {
+    const { audio, player } = setup();
+    await player.play(episode());
+    audio.reportDuration(3000);
+    audio.end();
+    player.close();
+    expect(player.savedPosition("ep-1")).toBeNull();
+  });
+
+  it("stays closed when a play the close cut short is refused", async () => {
+    const { audio, player } = setup();
+    let refuse: (error: Error) => void = () => {};
+    audio.play = () =>
+      new Promise((_, reject) => {
+        refuse = reject;
+      });
+    const pending = player.play(episode());
+    player.close();
+    refuse(new DOMException("Interrupted", "AbortError"));
+    await pending;
+    expect(player.getState().mode).toBe("empty");
+  });
+
+  it("resumes a closed Episode from where it was closed", async () => {
+    const { audio, player } = setup();
+    await player.play(episode());
+    audio.playTo(754);
+    player.close();
+    const saved = player.savedPosition("ep-1");
+    await player.play(episode(), { at: saved ?? 0 });
+    expect(audio.playing).toBe(true);
+    expect(audio.position).toBe(754);
+  });
+
   it("starts an Episode at a given moment, as a Transcript timestamp does", async () => {
     const { audio, player } = setup();
     await player.play(episode());
@@ -235,7 +280,7 @@ describe("player", () => {
         press: (action: MediaAction, details: MediaActionDetails = {}) =>
           handlers.get(action)?.(details),
         adapter: {
-          setMetadata: (metadata: NowPlaying) => {
+          setMetadata: (metadata: NowPlaying | null) => {
             session.metadata = metadata;
           },
           setPlaybackState: (state: MediaPlaybackState) => {
@@ -268,6 +313,19 @@ describe("player", () => {
         title: "Celebrity Pastors",
         artworkUrl: "https://example.com/ep-1.jpg",
       });
+    });
+
+    it("leaves the lock screen when the player closes, and returns on the next play", async () => {
+      const session = fakeMediaSession();
+      const { player } = setup({ mediaSession: session.adapter });
+      const closed = episode();
+      await player.play(closed);
+      player.close();
+      expect(session.metadata).toBeNull();
+      expect(session.playbackState).toBe("none");
+      await player.play(closed);
+      expect(session.metadata).toMatchObject({ title: "Celebrity Pastors" });
+      expect(session.playbackState).toBe("playing");
     });
 
     it("shows whether it is playing, and where", async () => {
@@ -393,6 +451,19 @@ describe("player", () => {
       await player.play(offer.episode, { at: offer.position });
       expect(audio.src).toBe("https://example.com/ep-1.mp3");
       expect(audio.position).toBe(1234);
+    });
+
+    it("offers to resume a closed Episode on the next visit, not this one", async () => {
+      const storage = memoryStorage();
+      const { audio, player } = setup({ storage });
+      await player.play(episode());
+      audio.playTo(754);
+      player.close();
+      expect(player.resumeOffer()).toBeNull();
+      expect(setup({ storage }).player.resumeOffer()).toMatchObject({
+        episode: { guid: "ep-1" },
+        position: 754,
+      });
     });
 
     it("offers nothing on a first visit", () => {

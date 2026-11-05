@@ -95,6 +95,22 @@ describe("PlayerBar", () => {
     expect(audio.position).toBe(1200);
   });
 
+  it.each([
+    ["the compact bar", false],
+    ["the full controls", true],
+  ])("closes from %s, stopping the audio", async (_, expand) => {
+    const { audio, player, user } = setup();
+    await playing(audio, player);
+    if (expand)
+      await user.click(
+        screen.getByRole("button", { name: "Show player controls" })
+      );
+    await user.click(screen.getByRole("button", { name: "Close player" }));
+    expect(audio.playing).toBe(false);
+    expect(screen.queryByRole("region", { name: "Player" })).toBeNull();
+    expect(player.savedPosition(episode.guid)).toBe(754);
+  });
+
   it("steps through the playback speeds", async () => {
     const { audio, player, user } = setup();
     await playing(audio, player);

@@ -80,7 +80,7 @@ export async function expectPlaying(page: Page) {
  */
 export async function startEpisode(
   page: Page,
-  name: string,
+  name: string | RegExp,
   { keyboard = false } = {}
 ) {
   const button = page.getByRole("button", { name, exact: true });

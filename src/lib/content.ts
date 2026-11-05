@@ -244,6 +244,8 @@ export type PlayerCopy = {
   readonly remaining: string;
   readonly expand: string;
   readonly collapse: string;
+  // Stops the audio and hides the player, keeping the Episode's place.
+  readonly close: string;
   readonly failed: Copy;
 };
 

@@ -71,7 +71,7 @@ export function PlayerBar({ copy, labels }: Props) {
       <div className="relative mx-auto w-full max-w-3xl px-4 sm:px-6">
         {expanded ? (
           <div id={controlsId} className="flex flex-col gap-2 pt-3 pb-2">
-            <p className="flex min-w-0 flex-col pr-14">
+            <p className="flex min-w-0 flex-col pr-24">
               <span className="font-ui text-xs font-semibold tracking-widest text-brand-ink uppercase">
                 {label}
               </span>
@@ -107,7 +107,7 @@ export function PlayerBar({ copy, labels }: Props) {
             </div>
           </div>
         ) : (
-          <div className="flex items-center gap-3 py-2 pr-14">
+          <div className="flex items-center gap-3 py-2 pr-24">
             <PlayPause player={player} state={state} copy={copy} />
             <p className="flex min-w-0 flex-col">
               <span className="font-ui text-xs font-semibold tracking-widest text-brand-ink uppercase">
@@ -119,25 +119,36 @@ export function PlayerBar({ copy, labels }: Props) {
             </p>
           </div>
         )}
-        {/* One button in one place for both layouts, so it keeps focus. */}
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="absolute top-2 right-2 sm:right-4"
-          aria-expanded={expanded}
-          aria-controls={expanded ? controlsId : undefined}
-          onClick={() => setExpanded(!expanded)}
-        >
-          {expanded ? (
-            <ChevronDown aria-hidden="true" className="size-6" />
-          ) : (
-            <ChevronUp aria-hidden="true" className="size-6" />
-          )}
-          <span className="sr-only">
-            {expanded ? copy.collapse : copy.expand}
-          </span>
-        </Button>
+        {/* One pair of buttons in one place for both layouts, so they keep
+            focus. */}
+        <div className="absolute top-2 right-2 flex sm:right-4">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-expanded={expanded}
+            aria-controls={expanded ? controlsId : undefined}
+            onClick={() => setExpanded(!expanded)}
+          >
+            {expanded ? (
+              <ChevronDown aria-hidden="true" className="size-6" />
+            ) : (
+              <ChevronUp aria-hidden="true" className="size-6" />
+            )}
+            <span className="sr-only">
+              {expanded ? copy.collapse : copy.expand}
+            </span>
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={player.close}
+          >
+            <X aria-hidden="true" className="size-6" />
+            <span className="sr-only">{copy.close}</span>
+          </Button>
+        </div>
         <p role="status" className="sr-only">
           {buffering ? copy.loading : ""}
         </p>
