@@ -82,13 +82,15 @@ export const TRANSCRIPTS_SNAPSHOT = ".transcripts.json";
 
 // Each Episode's Transcript, read afresh: the host's where the feed links
 // one, the site's own from the `transcripts` branch otherwise. The build log
-// names each Episode left without one, and why. The feed check calls this;
-// pages and the build manifest call getTranscriptTexts.
-export async function lookUpTranscripts(): Promise<TranscriptTexts> {
+// names each Episode left without one, and why, through `warn`. The feed
+// check calls this; pages and the build manifest call getTranscriptTexts.
+export async function lookUpTranscripts(
+  warn: (message: string) => void = (message) => console.warn(message)
+): Promise<TranscriptTexts> {
   return loadTranscriptTexts(await getEpisodes(), {
     fetch: transcriptFetch(feedSource, io),
     saved: savedTranscripts(feedSource, io),
-    warn: (message) => console.warn(message),
+    warn,
   });
 }
 

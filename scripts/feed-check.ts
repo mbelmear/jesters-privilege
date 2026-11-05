@@ -15,6 +15,9 @@ import { runFeedCheck } from "@/lib/feed-check";
 
 const outputFile = process.env.GITHUB_OUTPUT;
 
+// A workflow annotation, shown on the run's summary page.
+const warn = (message: string) => console.log(`::warning::${message}`);
+
 runFeedCheck(site.url, {
   fetch: (url) => fetch(url, { signal: AbortSignal.timeout(30_000) }),
   newestEpisodeGuid: async () => (await getEpisodes())[0]?.guid ?? null,
@@ -24,16 +27,17 @@ runFeedCheck(site.url, {
     for (const app of EPISODE_LISTEN_APPS) {
       const lookup = lookups[app];
       if (lookup?.kind === "failed") {
-        console.log(
-          `::warning::${APP_NAMES[app]} lookup failed, so its Episode Listen links aren't checked: ${lookup.reason}`
+        warn(
+          `${APP_NAMES[app]} lookup failed, so its Episode Listen links aren't checked: ${lookup.reason}`
         );
       }
     }
     return listedEpisodes(await getEpisodes(), lookups);
   },
-  // Read as the build reads them; the log names each Episode left without
-  // one, and why.
-  transcripts: async () => [...(await lookUpTranscripts()).keys()],
+  // Read as the build reads them. An Episode left without one never rebuilds,
+  // so the run's annotations name it and why (a new Episode, until Transcribe
+  // reaches it, too).
+  transcripts: async () => [...(await lookUpTranscripts(warn)).keys()],
   setOutput: (name, value) => {
     const line = `${name}=${value}\n`;
     if (outputFile) appendFileSync(outputFile, line);
