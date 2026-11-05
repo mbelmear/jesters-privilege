@@ -673,6 +673,28 @@ describe("player", () => {
     expect(player.getState()).toMatchObject({ mode: "playing", position: 600 });
   });
 
+  it("keeps showing the failure when the audio reports a pause after its error, as Chromium does", async () => {
+    const { audio, player } = setup();
+    await player.play(episode());
+    audio.playTo(600);
+    audio.fail();
+    expect(player.getState()).toMatchObject({ mode: "failed", position: 600 });
+  });
+
+  it("keeps showing the failure when the error abandons a pending play", async () => {
+    const { audio, player } = setup();
+    let abandon = () => {};
+    audio.play = () =>
+      new Promise((_, reject) => {
+        abandon = () => reject(new DOMException("Stopped", "AbortError"));
+      });
+    const started = player.play(episode());
+    audio.emit({ type: "error" });
+    abandon();
+    await started;
+    expect(player.getState().mode).toBe("failed");
+  });
+
   it("shows paused when the browser refuses to start playback", async () => {
     const { audio, player } = setup();
     audio.rejectPlay = true;

@@ -213,6 +213,8 @@ export function createPlayer({
       case "play":
         return setState(playing(state));
       case "pause":
+        // Chromium reports a pause just after an error; the failure stands.
+        if (state.mode === "failed") return;
         history.savePosition(state.episode.guid, state.position, { now: true });
         return setState(stopped(state, "paused"));
       case "waiting":
@@ -261,7 +263,7 @@ export function createPlayer({
       await audio.play();
     } catch (error: unknown) {
       const refused = isRefusal(error);
-      if (load === loadCount)
+      if (load === loadCount && state.mode !== "failed")
         setState(stopped(state, refused ? "paused" : "failed"));
       if (refused) return;
       const reason = error instanceof Error ? error.message : String(error);

@@ -17,6 +17,15 @@ jobs:
       - uses: ./.github/actions/playwright-browsers
         with:
           browsers: firefox
+      # The runner has no sound card, and without one Firefox breaks off playback
+      # a moment after it starts (OnMediaSinkAudioError), failing the player's
+      # tests. A silent PulseAudio sink stands in (#29).
+      - name: Give Firefox a sound device
+        run: |
+          sudo apt-get install --yes --no-install-recommends pulseaudio
+          pulseaudio --start --exit-idle-time=-1
+          pactl load-module module-null-sink sink_name=silence
+          pactl set-default-sink silence
       - run: npm run test:e2e:firefox
       - if: failure()
         uses: actions/upload-artifact@v4
