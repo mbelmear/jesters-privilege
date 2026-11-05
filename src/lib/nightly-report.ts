@@ -3,19 +3,24 @@
 
 export const NIGHTLY_ISSUE_TITLE = "Nightly is failing";
 
-// Playwright's name for a failed test, as the GitHub reporter logs it, with
-// the rule its heading pads the line with.
-const FAILED_TEST = /(\[[a-z]+-[a-z]+\]) › (e2e\/\S+:\d+:\d+ › .+?)[\s─]*$/gm;
-
 const TERMINAL_COLOR = /\u001b\[[0-9;]*m/g;
+// The heading of Playwright's closing summary. Failures' details come first,
+// and they name a test that passed on a retry too, so only this is read.
+const FAILED_HEADING = /\s\d+ failed\s*$/;
+const LISTED_TEST = /(\[[a-z]+-[a-z]+\]) › (e2e\/\S+:\d+:\d+ › .+?)\s*$/;
 
-/** Each failed test a job's log names, once, however often its retries repeat. */
+/** Each test a job's log lists as failed, as its closing summary lists them. */
 export function failedTests(log: string): string[] {
-  const plain = log.replace(TERMINAL_COLOR, "");
-  const names = [...plain.matchAll(FAILED_TEST)].map(
-    ([, project, test]) => `${project} ${test}`
-  );
-  return [...new Set(names)];
+  const lines = log.replace(TERMINAL_COLOR, "").split("\n");
+  const start = lines.findIndex((line) => FAILED_HEADING.test(line));
+  if (start === -1) return [];
+  const tests: string[] = [];
+  for (const line of lines.slice(start + 1)) {
+    const listed = LISTED_TEST.exec(line);
+    if (!listed) break;
+    tests.push(`${listed[1]} ${listed[2]}`);
+  }
+  return tests;
 }
 
 /** The issue text for a failed run, from the logs of its failed jobs. */
@@ -23,7 +28,7 @@ export function nightlyReport(runUrl: string, log: string): string {
   const tests = failedTests(log);
   const failures = tests.length
     ? tests.map((test) => `- ${test}`).join("\n")
-    : "No test failed by name, so the run stopped before or around them.";
+    : "No test is named: the run stopped before its tests finished, or its logs couldn't be read.";
   return [
     `Nightly failed: ${runUrl}`,
     "",

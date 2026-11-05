@@ -21,6 +21,7 @@ const runId = dryRun
       "list",
       "--workflow=nightly.yml",
       "--status=failure",
+      "--event=schedule",
       "--limit=1",
       "--json=databaseId",
       "--jq=.[0].databaseId"
@@ -41,15 +42,21 @@ const jobs = gh(
 )
   .split("\n")
   .filter(Boolean);
-const log = jobs
-  .map((job) =>
-    gh(
-      "api",
-      "--allow-escape-sequences",
-      `repos/{owner}/{repo}/actions/jobs/${job}/logs`
+// A report without names still beats no report, so unreadable logs don't stop it.
+let log = "";
+try {
+  log = jobs
+    .map((job) =>
+      gh(
+        "api",
+        "--allow-escape-sequences",
+        `repos/{owner}/{repo}/actions/jobs/${job}/logs`
+      )
     )
-  )
-  .join("\n");
+    .join("\n");
+} catch (error: unknown) {
+  console.log(`::warning::Can't read the failed jobs' logs: ${String(error)}`);
+}
 const report = nightlyReport(
   gh("run", "view", runId, "--json=url", "--jq=.url").trim(),
   log
