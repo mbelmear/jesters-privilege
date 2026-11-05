@@ -8,7 +8,9 @@ import { feedSource, LOOKUPS_SNAPSHOT, lookUpEpisodes } from "@/content/feed";
 import { serializeLookups } from "@/lib/episode-listen-links";
 
 if (feedSource.kind === "url") {
-  lookUpEpisodes().then(
+  lookUpEpisodes({
+    spotifyKeyRequired: process.env.SITE_ENV === "production",
+  }).then(
     (lookups) => {
       writeFileSync(
         LOOKUPS_SNAPSHOT,

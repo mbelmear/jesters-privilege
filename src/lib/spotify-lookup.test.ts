@@ -356,6 +356,28 @@ describe("spotifyKey", () => {
     }
   );
 
+  // A production build or the feed check has the key since 2026-11-05, so
+  // going without means the secrets were deleted or renamed.
+  it.each([{}, { SPOTIFY_CLIENT_ID: "", SPOTIFY_CLIENT_SECRET: "" }])(
+    "names both secrets when a run that needs the key has neither (%j)",
+    (env) => {
+      expect(spotifyKey(env, { required: true })).toEqual({
+        kind: "incomplete",
+        reason:
+          "SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET aren't set, so Spotify can't be asked",
+      });
+    }
+  );
+
+  it("has the key when a run that needs it has both secrets", () => {
+    expect(
+      spotifyKey(
+        { SPOTIFY_CLIENT_ID: "the-id", SPOTIFY_CLIENT_SECRET: "the-secret" },
+        { required: true }
+      )
+    ).toEqual({ kind: "set", credentials: CREDENTIALS });
+  });
+
   it.each([
     [{ SPOTIFY_CLIENT_ID: "the-id" }, "SPOTIFY_CLIENT_SECRET"],
     [{ SPOTIFY_CLIENT_SECRET: "the-secret" }, "SPOTIFY_CLIENT_ID"],
