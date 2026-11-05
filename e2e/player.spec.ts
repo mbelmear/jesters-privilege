@@ -108,6 +108,8 @@ test.describe("Persistent player", () => {
     await playerBar(page).getByRole("button", { name: "Close player" }).focus();
     await page.keyboard.press("Enter");
     await expect(playerBar(page)).toBeHidden();
+    // Focus goes on to the page's content, not <body>.
+    await expect(page.getByRole("main")).toBeFocused();
     await expect
       .poll(async () => (await audioState(page)).paused, { timeout: 1000 })
       .toBe(true);

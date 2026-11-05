@@ -119,7 +119,7 @@ Why each budget sits where it does, with the measurements behind every change to
 
 `lighthouserc.json` sets the two budgets in its `assertMatrix`. One entry carries every other assertion for every page. The two LCP entries share one URL pattern, the second negated, so a page added later takes 3.2 s unless it joins the pattern. A unit test (`src/lib/lighthouse.test.ts`) fails if any page matches both LCP entries or neither, and the summary's "near the LCP budget" mark measures each page against its own budget.
 
-Before pushing a change to the header, the footer, the root layout, or the first screen of a page, compare it with main: everything those fetch counts against every page's largest paint.
+Before pushing a change to the header, the footer, the root layout, or the first screen of a page, compare it with main: everything those fetch counts against every page's largest paint. It measures this checkout as it stands, uncommitted changes included, so there's nothing to commit first. It builds both sides and takes over 10 minutes, so run it in the background.
 
 ```bash
 npm run lighthouse:compare              # every budgeted page, against origin/main

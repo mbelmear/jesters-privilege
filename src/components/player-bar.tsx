@@ -143,7 +143,10 @@ export function PlayerBar({ copy, labels }: Props) {
             type="button"
             variant="ghost"
             size="icon"
-            onClick={player.close}
+            onClick={() => {
+              player.close();
+              focusMainContent();
+            }}
           >
             <X aria-hidden="true" className="size-6" />
             <span className="sr-only">{copy.close}</span>
@@ -208,13 +211,30 @@ export function ResumeOffer({
             {episode.title}
           </span>
         </p>
-        <Button type="button" variant="ghost" size="icon" onClick={onDismiss}>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={() => {
+            onDismiss();
+            focusMainContent();
+          }}
+        >
           <X aria-hidden="true" className="size-6" />
           <span className="sr-only">{copy.dismiss}</span>
         </Button>
       </div>
     </section>
   );
+}
+
+/**
+ * For a button that takes the dock away with it: focus moves to the page's
+ * content (the root layout's <main>), where the page stays scrolled, rather
+ * than falling to <body>.
+ */
+function focusMainContent() {
+  document.getElementById("main")?.focus({ preventScroll: true });
 }
 
 function PlayPause({
