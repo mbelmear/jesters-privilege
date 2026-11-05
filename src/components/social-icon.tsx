@@ -5,7 +5,7 @@ import type { SocialNetwork } from "@/lib/content";
 
 // Network marks from Simple Icons, or the brand's own where Simple Icons has
 // none, drawn in the surrounding text color rather than each brand's.
-const ICONS: Record<SocialNetwork, MarkSource> = {
+export const SOCIAL_MARKS: Record<SocialNetwork, MarkSource> = {
   instagram: siInstagram,
   linkedin: linkedinMark,
   facebook: siFacebook,
@@ -21,5 +21,5 @@ export function SocialIcon({
   network: SocialNetwork;
   className?: string;
 }) {
-  return <Mark source={ICONS[network]} className={className} />;
+  return <Mark source={SOCIAL_MARKS[network]} className={className} />;
 }

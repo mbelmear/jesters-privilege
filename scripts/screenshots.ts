@@ -3,7 +3,7 @@
 // scrolling through it (so reveals and lazy images have run), plus the
 // phone's first screen, where most visitors land from Instagram.
 // Build first. Usage:
-//   npm run screenshots -- <page path> [folder] [--click <button>]... [--storage <key>=<json>]... [--missing]
+//   npm run screenshots -- <page path> [folder] [--click <button>]... [--storage <key>=<json>]... [--element <selector>]... [--missing]
 // A path the site doesn't have answers with the 404 page, so it fails unless
 // --missing says the 404 page is the one to shoot: #123's prompt named
 // /fools-gallery for the Gallery, which lives at /gallery.
@@ -19,6 +19,11 @@
 //   npm run screenshots -- /episodes --storage 'player={"positions":{},"finished":["https://api.spreaker.com/episode/70000003"],"lastPlayed":null}'
 // The Preview's audio doesn't load (the fixture's addresses are made up), so
 // these are the Jesters' only view of such a state.
+// Each --element also shoots just the part a CSS selector names, cut from the
+// full page (<size>-<scheme>-<selector>.png), for a change to the header or
+// footer that a full phone page, thousands of pixels tall, shrinks past
+// reading. Cut from the full page, a sticky header or player stays put.
+//   npm run screenshots -- /episodes/1 --element footer
 import { spawn } from "node:child_process";
 import { mkdir } from "node:fs/promises";
 import { createServer } from "node:net";
@@ -34,13 +39,13 @@ const SIZES = {
 const SCHEMES = ["light", "dark"] as const;
 
 async function main() {
-  const { positional, clicks, storage, missing } = parseArgs(
+  const { positional, clicks, storage, elements, missing } = parseArgs(
     process.argv.slice(2)
   );
   const [page, folder = ".screenshots"] = positional;
   if (!page?.startsWith("/")) {
     throw new Error(
-      'Usage: npm run screenshots -- <page path such as /about> [folder] [--click "<button name>"]... [--storage <key>=<json>]... [--missing]'
+      'Usage: npm run screenshots -- <page path such as /about> [folder] [--click "<button name>"]... [--storage <key>=<json>]... [--element <selector>]... [--missing]'
     );
   }
   await mkdir(folder, { recursive: true });
@@ -109,6 +114,19 @@ async function main() {
         const path = join(folder, `${size}-${colorScheme}.png`);
         await tab.screenshot({ path, fullPage: true });
         console.log(path);
+        for (const selector of elements) {
+          // At the top of the page, as scrollThrough leaves it, the box is
+          // where the element sits on the full page.
+          const box = await tab.locator(selector).first().boundingBox();
+          if (!box)
+            throw new Error(`${page} shows nothing matching ${selector}`);
+          const part = join(
+            folder,
+            `${size}-${colorScheme}-${selector.replace(/[^a-z0-9]+/gi, "-")}.png`
+          );
+          await tab.screenshot({ path: part, fullPage: true, clip: box });
+          console.log(part);
+        }
         if (clicks.length > 0) {
           for (const name of clicks) {
             await tab.getByRole("button", { name, exact: true }).click();
@@ -130,11 +148,13 @@ async function main() {
 }
 
 // Splits the arguments into positional ones, the --click button names, the
-// --storage entries, and whether --missing was passed.
+// --storage entries, the --element selectors, and whether --missing was
+// passed.
 function parseArgs(args: string[]) {
   const positional: string[] = [];
   const clicks: string[] = [];
   const storage: [string, string][] = [];
+  const elements: string[] = [];
   let missing = false;
   for (let i = 0; i < args.length; i += 1) {
     const arg = args[i];
@@ -142,7 +162,7 @@ function parseArgs(args: string[]) {
       missing = true;
       continue;
     }
-    if (arg !== "--click" && arg !== "--storage") {
+    if (arg !== "--click" && arg !== "--storage" && arg !== "--element") {
       positional.push(arg);
       continue;
     }
@@ -153,13 +173,17 @@ function parseArgs(args: string[]) {
       clicks.push(value);
       continue;
     }
+    if (arg === "--element") {
+      elements.push(value);
+      continue;
+    }
     const split = value.indexOf("=");
     if (split < 1) {
       throw new Error(`--storage needs <key>=<value>, not "${value}"`);
     }
     storage.push([value.slice(0, split), value.slice(split + 1)]);
   }
-  return { positional, clicks, storage, missing };
+  return { positional, clicks, storage, elements, missing };
 }
 
 // Each step pauses long enough for an on-scroll reveal to start.

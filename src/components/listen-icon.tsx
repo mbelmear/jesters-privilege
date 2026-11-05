@@ -5,7 +5,7 @@ import type { ListenPlatform } from "@/lib/content";
 
 // Platform marks from Simple Icons, or the brand's own where Simple Icons has
 // none, drawn in the surrounding text color rather than each brand's.
-const ICONS: Record<ListenPlatform, MarkSource> = {
+export const LISTEN_MARKS: Record<ListenPlatform, MarkSource> = {
   "apple-podcasts": siApplepodcasts,
   spotify: siSpotify,
   "amazon-music": amazonMusicMark,
@@ -21,5 +21,5 @@ export function ListenIcon({
   platform: ListenPlatform;
   className?: string;
 }) {
-  return <Mark source={ICONS[platform]} className={className} />;
+  return <Mark source={LISTEN_MARKS[platform]} className={className} />;
 }
