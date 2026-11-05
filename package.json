@@ -39,7 +39,9 @@
     "feed-check": "tsx scripts/feed-check.ts",
     "try-feed": "tsx scripts/try-feed.ts",
     "pr-status": "scripts/pr-status.sh",
-    "fonts": "tsx scripts/fonts.ts"
+    "fonts": "tsx scripts/fonts.ts",
+    "report-nightly": "tsx scripts/report-nightly.ts",
+    "dropped-tests": "tsx scripts/dropped-tests.ts"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",

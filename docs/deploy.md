@@ -51,7 +51,7 @@ Before pointing the live feed at a new address, run `npm run try-feed -- <feed u
 
 Copy awaiting the Jesters' words is marked `draft: true` in `src/content/`. Preview builds set `SITE_ENV=preview`, so a page that uses draft content shows a DRAFT ribbon there (and under `next dev`); production builds never show it.
 
-`npm run launch-check` lists every draft that would go live (it reads the live feed, as production does) and exits 1 while any remain. It must pass before launch (#30).
+`npm run launch-check` lists every draft that would go live (it reads the live feed, as production does) and exits 1 while any remain. It lists the drafts of the checkout it runs from, and warns first if that checkout is behind `origin/main`. It must pass before launch (#30).
 
 The smoke check confirms the manifest shows the commit just deployed, the home page serves, and `www` redirects.
 

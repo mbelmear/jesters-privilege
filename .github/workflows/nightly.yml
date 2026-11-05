@@ -5,10 +5,20 @@ on:
     # 09:00 UTC, the middle of the night in Bozeman.
     - cron: "0 9 * * *"
   workflow_dispatch:
+  # A pull request that changes the failure report runs it, writing nothing.
+  pull_request:
+    paths:
+      - .github/workflows/nightly.yml
+      - scripts/report-nightly.ts
+      - src/lib/nightly-report.ts
+
+permissions:
+  contents: read
 
 jobs:
   firefox:
     name: Playwright (Firefox)
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -34,3 +44,36 @@ jobs:
           path: playwright-report/
           retention-days: 14
           if-no-files-found: error
+
+  # Nobody reads a red run in the Actions tab, so a scheduled failure opens an
+  # issue, or adds to the one still open. See scripts/report-nightly.ts.
+  report:
+    name: Report the failure
+    needs: firefox
+    if: failure() && github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
+      - run: npm run report-nightly -- "$GITHUB_RUN_ID"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+  report-preview:
+    name: Preview the failure report
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      issues: read
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
+      - run: npm run report-nightly -- --dry-run
+        env:
+          GH_TOKEN: ${{ github.token }}

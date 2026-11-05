@@ -60,6 +60,10 @@ Reviewers skip these; the rules below are the ones that need judgement.
 - **A test survives a Jester's approval.** Which copy is draft lives only in `src/content/content.test.ts`. A test of the DRAFT ribbon makes its own draft with `jest.replaceProperty`, and a test that finds draft copy reads its text from `content` or matches the fixed instruction it keeps (`/^Link copied/`, "didn't reach the Jesters' inbox"). In #124, a Speak Freely page test asserting "no DRAFT ribbon" and a browser test matching a whole draft message both broke on a copy change.
 - **Copy shown on more than one page lives once**, in a content record each page reads, such as the Episode labels and length units. A page that needs copy another page already has moves it into a shared record, in place of a second copy.
 
+## Comments and docs
+
+- **A note explaining why a state a visitor should see doesn't appear names the ticket that investigates it.** A surprise written up as how things behave stops anyone questioning it: the screenshot script's header said Chromium "shows Play again" when audio fails before it starts, which was the bug #29 fixed.
+
 ## Workflows
 
 - **A workflow that writes lasting state runs on the pull request that changes it, writing nothing.** A branch it pushes to, or a file nothing rewrites, keeps a first run's mistakes; a workflow started only by a schedule or the Run workflow button can't run before merge at all. Its pull request run does the real work against real inputs and uploads what it made as an artifact, so the PR shows it working. #121's Transcribe workflow does this: its PR run transcribed Episode 1 with Whisper, and the Transcript was read before the first one was saved for good.
@@ -75,5 +79,6 @@ GitHub's push protection, once switched on (Settings → Advanced Security), ref
 ## Browser tests
 
 - **A browser test checks what the built page does, not what the Jesters' inputs hold today.** A count or fact about content that changes as their inputs arrive (how many Jesters have a headshot, which Listen links exist) lives once, in `src/content/content.test.ts`; the browser test checks behaviour that holds whatever those inputs say (every headshot shown loads). Fixed content, such as the style guide's specimens, can be counted where it's shown. In #26, `e2e/home-preview.spec.ts` pinned the headshot count beside the content test, and Michael's photo failed it in CI after Jest had already flagged the same change.
+- **A behaviour tested only against a fake gets one browser test against the real thing**, on each browser the site supports. A fake copies only what its author knew: `FakeAudio` sent no `pause` after `error`, so Jest stayed green while Chrome, Edge, and Android wiped the player's failure message (#29).
 - **A test of absence proves it can fail.** A test that something doesn't happen (no animation, no request, no file fetched) passes just as well when it checks nothing, so a sibling case shows the same check finding the thing, or the PR shows it going red. #57's "fetches no rest file" matched `-rest` while the build names files `_rest`, until a sibling case that adds a letter found none.
 - **A motion test proves it can fail.** A test that an animation finishes at once, or is skipped under reduced motion, follows the timing method in `docs/testing.md` (Browser tests (Playwright)), and its PR shows it failing with motion on (`reducedMotion: "no-preference"`). A test that runs before Motion loads passes either way, as the mobile menu's did until #60.
