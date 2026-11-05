@@ -254,11 +254,13 @@ set_secret SPOTIFY_CLIENT_ID "$SPOTIFY_CLIENT_ID"
 set_secret SPOTIFY_CLIENT_SECRET "$SPOTIFY_CLIENT_SECRET"
 
 stage "Publish the Spotify links"
-say "The next deploy looks every Episode up on Spotify. Deploy now rather than"
-say "wait: Actions → Deploy → Run workflow, on main."
+say "Builds read the key from now on. Which build to run depends on whether"
+say "the Spotify lookup (src/lib/spotify-lookup.ts) is on main yet:"
+step "On main: Actions → Deploy → Run workflow, on main."
+step "Only in an open pull request: re-run that PR's Deploy run (its preview),"
+step "since a deploy from main wouldn't have the lookup yet."
 open_url "https://github.com/mbelmear/jesters-privilege/actions/workflows/deploy.yml"
-say "Then Episode 1's Spotify icon opens Celebrity Pastors itself:"
-note "  https://jestersprivilegepodcast.com/episodes/1"
+say "Then Episode 1's Spotify icon opens Celebrity Pastors itself."
 note "The build log names any Episode whose Spotify link still opens the show."
 pause "Press Enter to finish."
 
@@ -267,8 +269,8 @@ finish
 
 # check_key asks Spotify for a client-credentials token with the pasted key,
 # then for the show's newest episode, as the build does
-# (src/lib/spotify-lookup.ts). The secret goes to curl on stdin, never on its
-# command line. Sets CHECK_RESULT to what happened.
+# (src/lib/spotify-lookup.ts). The secret and the token go to curl on stdin,
+# never on its command line. Sets CHECK_RESULT to what happened.
 SHOW_ID="6a7KnKe6ohzrMGZwJDc5Ti"
 check_key() {
   local answer token
@@ -283,9 +285,9 @@ check_key() {
         if (typeof t !== "string") process.exit(1); process.stdout.write(t);
       } catch { process.exit(1); } });') || {
     CHECK_RESULT="Spotify refused the key: $answer"; return 1; }
-  answer=$(curl -sS --max-time 30 \
-    -H "Authorization: Bearer $token" \
-    "https://api.spotify.com/v1/shows/$SHOW_ID/episodes?market=US&limit=1" 2>&1) || {
+  answer=$(printf 'Authorization: Bearer %s\n' "$token" |
+    curl -sS --max-time 30 -H @- \
+      "https://api.spotify.com/v1/shows/$SHOW_ID/episodes?market=US&limit=1" 2>&1) || {
     CHECK_RESULT="Spotify's episodes couldn't be reached: $answer"; return 1; }
   CHECK_RESULT=$(printf '%s' "$answer" | node -e '
     let s = ""; process.stdin.on("data", (c) => (s += c)).on("end", () => {

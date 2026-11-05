@@ -59,7 +59,8 @@ export async function lookUpSpotify(
       }
     default: {
       const unhandled: never = key;
-      throw new Error(`Unknown Spotify key ${JSON.stringify(unhandled)}`);
+      // Names no field: a key in an error message would reach the build log.
+      throw new Error(`Unknown Spotify key kind (${typeof unhandled})`);
     }
   }
 }

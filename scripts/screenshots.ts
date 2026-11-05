@@ -2,7 +2,7 @@
 // change: phone and desktop, light and dark, each the full page after
 // scrolling through it (so reveals and lazy images have run), plus the
 // phone's first screen, where most visitors land from Instagram.
-// Build first. Usage:
+// It refuses a missing or stale build in out/; run `npm run build` first. Usage:
 //   npm run screenshots -- <page path> [folder] [--click <button>]... [--storage <key>=<json>]... [--element <selector>]... [--missing]
 // A path the site doesn't have answers with the 404 page, so it fails unless
 // --missing says the 404 page is the one to shoot: #123's prompt named
@@ -26,11 +26,12 @@
 // reading. Cut from the full page, a sticky header or player stays put.
 //   npm run screenshots -- /episodes/1 --element footer
 import { spawn } from "node:child_process";
-import { mkdir } from "node:fs/promises";
+import { mkdir, readdir, stat } from "node:fs/promises";
 import { createServer } from "node:net";
 import { join } from "node:path";
 import { chromium, type Page } from "@playwright/test";
 import { serveEpisodeAudio } from "../e2e/player";
+import { buildFreshness, type SourceFile } from "../src/lib/build-freshness";
 import { waitForServer } from "../src/lib/wait-for-server";
 
 const SIZES = {
@@ -38,6 +39,50 @@ const SIZES = {
   desktop: { viewport: { width: 1280, height: 900 }, deviceScaleFactor: 1 },
 } as const;
 const SCHEMES = ["light", "dark"] as const;
+
+// The site's source, which a build turns into out/: its folders, and the
+// config at the root that changes what a build makes.
+const SOURCE_FOLDERS = ["src", "public"];
+const SOURCE_FILES = ["next.config.ts", "package.json"];
+
+// Stops before serving when out/ has no build, or one older than the source:
+// serve would answer every page with a 404, or the screenshots would show old
+// code. #122's first run blamed the page's address for a missing build.
+async function refuseUnbuiltSite(): Promise<void> {
+  const built = await stat(join("out", "index.html")).then(
+    ({ mtimeMs }) => mtimeMs,
+    () => null
+  );
+  const sources: SourceFile[] = [];
+  for (const path of SOURCE_FILES) {
+    sources.push({ path, modifiedMs: (await stat(path)).mtimeMs });
+  }
+  for (const folder of SOURCE_FOLDERS) {
+    for (const entry of await readdir(folder, {
+      recursive: true,
+      withFileTypes: true,
+    })) {
+      if (!entry.isFile()) continue;
+      const path = join(entry.parentPath, entry.name);
+      sources.push({ path, modifiedMs: (await stat(path)).mtimeMs });
+    }
+  }
+  const freshness = buildFreshness(built, sources);
+  switch (freshness.kind) {
+    case "missing":
+      throw new Error("out/ has no build: run `npm run build` first");
+    case "stale":
+      throw new Error(
+        `out/ is older than ${freshness.newest}: run \`npm run build\` again`
+      );
+    case "fresh":
+      return;
+    default: {
+      const unhandled: never = freshness;
+      throw new Error(`Unknown build state ${JSON.stringify(unhandled)}`);
+    }
+  }
+}
 
 async function main() {
   const { positional, clicks, storage, elements, missing } = parseArgs(
@@ -49,6 +94,7 @@ async function main() {
       'Usage: npm run screenshots -- <page path such as /about> [folder] [--click "<button name>"]... [--storage <key>=<json>]... [--element <selector>]... [--missing]'
     );
   }
+  await refuseUnbuiltSite();
   await mkdir(folder, { recursive: true });
   const port = await freePort();
   // serve itself, not through npx, so killing it stops the server. A port the

@@ -172,7 +172,7 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
 - Zero Episodes is a normal state. It hides the Episodes nav item and any Episode-dependent sections, and the home page says the Episodes have wandered off (written for a feed that comes back empty, now that Episode 1 is out).
 - **Episode Listen links** (GLOSSARY: Listen link): on an Episode, a Listen link opens that Episode in the app. The build looks them up:
   - **Apple Podcasts**: Apple's public lookup (`itunes.apple.com/lookup?id=<show>&entity=podcastEpisode`), matched exactly on the Episode's feed GUID (`episodeGuid`). No key.
-  - **Spotify**: the Spotify Web API with a client-credentials key stored as GitHub secrets, matched on title and release date.
+  - **Spotify**: the Spotify Web API with a client-credentials key stored as GitHub secrets, matched on exact title and a release date within a day of the Episode's (Spotify dates by day, with no time zone). Spotify runs the key's developer app only while its owner (Michael) has Spotify Premium.
   - **Amazon Music**: no lookup, so each Episode's Amazon Music link opens the show.
   - **YouTube**: once the show is on YouTube; how to match is decided then.
   - Until an app lists an Episode, or when a lookup fails, its Listen link opens the show instead. A lookup never fails the build; the build log names the Episode and the app.
@@ -374,11 +374,10 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
 
 - **Pending inputs** (none block starting):
   - the YouTube link
-  - a Spotify Web API key (client ID and secret) as GitHub secrets
   - the Jesters' approval of the rewritten Fools' Gallery copy and the light wit pass on working messages
   - headshots for all three Jesters
   - final logo files (SVG, transparent background, square mark, dark-background version)
-- **Human-only setup**: a Cloudflare account and domain purchase, Email Routing, a Cloudflare API token and account ID as GitHub secrets, and Turnstile keys.
+- **Human-only setup**: a Cloudflare account and domain purchase, Email Routing, a Cloudflare API token and account ID as GitHub secrets, Turnstile keys, and the Spotify key (`scripts/spotify-key-wizard.sh`, done 2026-11-05).
 - **Build phases**:
 
   0. Human setup.
