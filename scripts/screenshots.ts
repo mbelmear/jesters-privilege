@@ -16,8 +16,8 @@
 // served as silence (e2e/player.ts), so Play really plays.
 //   npm run screenshots -- /episodes/2 --click "Play Episode 2" --click "Show player controls"
 //   npm run screenshots -- /episodes/1 --click "Play Episode 1" --drop-audio
-// Chromium takes audio that fails before it starts as an interrupted play
-// and shows Play again, so only --drop-audio reaches the player's failure.
+// Since that silence never fails, only --drop-audio reaches the player's
+// failure.
 // The static server has no Worker: --submit answers POST /api/submit as it
 // would and waits for Turnstile's test key to pass before the steps
 // (e2e/speak-freely.ts). Without it a send can't succeed or fail on purpose.

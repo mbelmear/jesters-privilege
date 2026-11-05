@@ -7,6 +7,8 @@
 //   length arrives after its metadata loads.
 // - Reaching the end fires pause (if it was playing) and then ended, and play()
 //   after that starts again from 0.
+// - A failure fires error, then pause if it was playing, in Chromium's order.
+//   Firefox and WebKit fire only the error.
 //
 // Two differences:
 // - The element queues its events as tasks, so they arrive after the code that
@@ -86,8 +88,10 @@ export class FakeAudio implements AudioAdapter {
   }
   /** The audio can't go on, as when the network fails mid-Episode. */
   fail() {
+    const wasPlaying = this.playing;
     this.playing = false;
     this.emit({ type: "error" });
+    if (wasPlaying) this.emit({ type: "pause" });
   }
   /** Playback reaches the end, at the real duration once it is known. */
   end() {

@@ -12,7 +12,7 @@ const buttonClasses = cva(
     variants: {
       variant: {
         default: "bg-primary text-primary-foreground hover:bg-primary/85",
-        brand: "bg-brand text-on-brand hover:bg-brand/85",
+        brand: "bg-brand text-on-brand hover:bg-brand/90",
         outline:
           "border-primary bg-transparent text-primary hover:bg-muted aria-expanded:bg-muted",
         secondary:

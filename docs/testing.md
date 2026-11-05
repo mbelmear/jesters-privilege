@@ -50,7 +50,7 @@ npm run test:e2e:firefox    # Firefox, phone and desktop (nightly in CI)
 npx playwright test --ui    # interactive runner
 ```
 
-Specs live in `e2e/`. Every page should get an axe scan (`@axe-core/playwright`) and a no-horizontal-scroll check at phone width. Project names follow `<browser>-<size>`, so `--project=webkit-phone` runs a single combination.
+Specs live in `e2e/`. Every page gets an axe scan (`@axe-core/playwright`) and a no-horizontal-scroll check at phone width. `e2e/sweep.spec.ts` holds what must be true everywhere, on each page in `out/` that search engines may list, and the 404 page, so a new public page or Episode address is swept without being listed: axe in both themes with reduced motion, nothing animating without end under reduced motion, and no overflow at 320 px. It also scans each of the style guide's buttons while hovered, since axe sees only the state a page is in, and the player playing, paused, failed, and offering to resume. To sweep the real content, not the fixture, run `FEED=live npm run build` first; the one check that fails then is the one that the fixture's Bonus and Trailer pages exist. Project names follow `<browser>-<size>`, so `--project=webkit-phone` runs a single combination.
 
 Every build but a deploy reads the fixture feed, `src/content/feed-fixture.xml`, whatever the live feed holds (docs/deploy.md), so tests can count on its Episodes, bonus, trailer, and Transcripts. The site before Episode 1 is published has its own build. `FEED=empty` swaps the Feed for `src/content/feed-fixture-empty.xml`, a channel with no Episodes, and runs only the tests tagged `@empty-feed` (`e2e/coming-soon.spec.ts`), which the normal run leaves out:
 
@@ -83,6 +83,10 @@ Desktop WebKit's Tab moves only between text fields, as Safari does by default, 
 To test a page whose scripts fail to load, abort only the scripts (`page.route(/\/_next\/static\/chunks\/.*\.js/, …)`): Next serves the stylesheet from the same folder, so blocking the whole folder also takes away the CSS.
 
 A test that plays an Episode uses the helpers in `e2e/player.ts`: its audio route serves byte ranges, without which Chromium ignores a seek.
+
+CI's Linux runners have no sound card. Firefox then breaks off playback a moment after it starts (`NS_ERROR_DOM_MEDIA_MEDIASINK_ERR` in the trace's console), so the player shows its failure and any test still looking for Pause fails, though the audio did play. `nightly.yml` gives it a silent PulseAudio sink. A player test that fails only on Firefox in CI and passes locally: check there first.
+
+Browsers report a failed `<audio>` differently: Chromium fires `error` and then `pause`, while Firefox and WebKit fire only `error`, and `audio.paused` can stay false after one. To test a failure, check what the player shows, not `audio.paused`. `FakeAudio` copies Chromium's order, the harder of the two for the store.
 
 Sessions on this machine build and test in parallel. Each worktree serves its build on its own port (derived from its path in `playwright.config.ts`), and a run fails if that port is taken rather than testing whatever already listens there; stop the stray server (`lsof -nP -iTCP:<port> -sTCP:LISTEN`) and rerun. When tests a change didn't touch time out locally, check `uptime` before suspecting the code: a load average far above the core count slows every browser.
 

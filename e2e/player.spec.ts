@@ -4,6 +4,7 @@ import {
   audioState,
   expectPlaying,
   playerBar,
+  rememberEpisodeTwo,
   serveEpisodeAudio,
   startEpisode,
 } from "./player";
@@ -60,26 +61,7 @@ test.describe("Persistent player", () => {
   });
 
   test("offers to resume from any page on a return visit", async ({ page }) => {
-    // This device heard Episode 2 to 0:30 on an earlier visit.
-    await page.addInitScript(() => {
-      const guid = "https://api.spreaker.com/episode/70000003";
-      localStorage.setItem(
-        "player",
-        JSON.stringify({
-          positions: { [guid]: 30 },
-          finished: [],
-          lastPlayed: {
-            type: "full",
-            number: 2,
-            guid,
-            title: "The Holy Fool",
-            durationSeconds: 2280,
-            audioUrl: "https://example.com/jesters_privilege_2.mp3",
-            artworkUrl: "https://example.com/art.jpg",
-          },
-        })
-      );
-    });
+    await rememberEpisodeTwo(page);
     await page.goto("/gallery");
     await expect(playerBar(page)).toContainText("The Holy Fool");
     await startEpisode(page, "Resume from 0:30 Episode 2", { keyboard: true });

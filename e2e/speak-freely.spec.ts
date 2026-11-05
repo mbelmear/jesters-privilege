@@ -165,5 +165,51 @@ test.describe("Speak Freely", () => {
         .analyze();
       expect(results.violations).toEqual([]);
     });
+
+    test(`fits, with no detectable accessibility violations, once sent (${colorScheme})`, async ({
+      page,
+    }) => {
+      await answerSubmit(page, 200, { ok: true });
+      await page.emulateMedia({ colorScheme });
+      await page.goto(PAGE);
+      await fillIn(page);
+      await passTurnstile(page);
+      await send(page).click();
+      await expect(
+        page.getByRole("heading", { name: "Received" })
+      ).toBeFocused();
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth - window.innerWidth
+        )
+      ).toBeLessThanOrEqual(0);
+      const results = await new AxeBuilder({ page })
+        .exclude("[data-turnstile]")
+        .analyze();
+      expect(results.violations).toEqual([]);
+    });
+
+    test(`fits, with no detectable accessibility violations, after a failed send (${colorScheme})`, async ({
+      page,
+    }) => {
+      await answerSubmit(page, 502, { ok: false, error: "delivery" });
+      await page.emulateMedia({ colorScheme });
+      await page.goto(PAGE);
+      await fillIn(page);
+      await passTurnstile(page);
+      await send(page).click();
+      await expect(alert(page)).toContainText(
+        "didn't reach the Jesters' inbox"
+      );
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth - window.innerWidth
+        )
+      ).toBeLessThanOrEqual(0);
+      const results = await new AxeBuilder({ page })
+        .exclude("[data-turnstile]")
+        .analyze();
+      expect(results.violations).toEqual([]);
+    });
   }
 });

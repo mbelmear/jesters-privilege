@@ -22,6 +22,11 @@ export async function scrollThrough(page: Page) {
   const story = storyParagraphs(page);
   await expect(story).toHaveCount(4);
   for (const paragraph of await story.all()) await reveal(paragraph);
+  await scrollDown(page);
+}
+
+// Scrolls down a whole page in steps, so what waits to be seen has run.
+export async function scrollDown(page: Page) {
   const height = await page.evaluate(() => document.body.scrollHeight);
   for (let y = 0; y <= height; y += 300) {
     await page.evaluate((top) => window.scrollTo(0, top), y);

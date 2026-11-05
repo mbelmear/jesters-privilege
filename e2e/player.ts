@@ -51,6 +51,29 @@ export async function serveEpisodeAudio(page: Page) {
   });
 }
 
+/** This device heard Episode 2 to 0:30 on an earlier visit. */
+export async function rememberEpisodeTwo(page: Page) {
+  await page.addInitScript(() => {
+    const guid = "https://api.spreaker.com/episode/70000003";
+    localStorage.setItem(
+      "player",
+      JSON.stringify({
+        positions: { [guid]: 30 },
+        finished: [],
+        lastPlayed: {
+          type: "full",
+          number: 2,
+          guid,
+          title: "The Holy Fool",
+          durationSeconds: 2280,
+          audioUrl: "https://example.com/jesters_privilege_2.mp3",
+          artworkUrl: "https://example.com/art.jpg",
+        },
+      })
+    );
+  });
+}
+
 /** The player dock: the bar, or its offer to resume. */
 export const playerBar = (page: Page) =>
   page.getByRole("region", { name: "Player" });
