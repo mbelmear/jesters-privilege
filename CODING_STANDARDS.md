@@ -63,6 +63,14 @@ Reviewers skip these; the rules below are the ones that need judgement.
 
 - **A workflow that writes lasting state runs on the pull request that changes it, writing nothing.** A branch it pushes to, or a file nothing rewrites, keeps a first run's mistakes; a workflow started only by a schedule or the Run workflow button can't run before merge at all. Its pull request run does the real work against real inputs and uploads what it made as an artifact, so the PR shows it working. #121's Transcribe workflow does this: its PR run transcribed Episode 1 with Whisper, and the Transcript was read before the first one was saved for good.
 
+## Secrets
+
+GitHub's secret scanning and push protection refuse a recognised key in a push; these rules cover what they can't see.
+
+- **A key lives in GitHub secrets, or as a Worker secret for the Worker**, and reaches code only as an environment variable a workflow step sets. Code reads it in build scripts or server-side modules, never under a `NEXT_PUBLIC_` name or in a client component, so no key reaches a page. What a key fetches (a link, a Transcript) may be published; the key may not.
+- **A workflow hands a secret only to the steps that use it**, through `env:` on that step, and runs fork pull requests without secrets (`pull_request`, never `pull_request_target`). A build that lacks a key skips what the key does and says so where the spec asks, as Spotify's lookup does (#122).
+- **A key never appears in output**: not in an error message, a log line, a `::warning::`, or a command line other processes can read. A script that needs one takes it through hidden input and passes it on stdin, as `scripts/spotify-key-wizard.sh` does.
+
 ## Browser tests
 
 - **A browser test checks what the built page does, not what the Jesters' inputs hold today.** A count or fact about content that changes as their inputs arrive (how many Jesters have a headshot, which Listen links exist) lives once, in `src/content/content.test.ts`; the browser test checks behaviour that holds whatever those inputs say (every headshot shown loads). Fixed content, such as the style guide's specimens, can be counted where it's shown. In #26, `e2e/home-preview.spec.ts` pinned the headshot count beside the content test, and Michael's photo failed it in CI after Jest had already flagged the same change.
