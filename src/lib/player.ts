@@ -64,7 +64,8 @@ export type MediaActionHandler = (details: MediaActionDetails) => void;
 
 // The Media Session API, or what stands in for it.
 export type MediaSessionAdapter = {
-  setMetadata: (nowPlaying: NowPlaying) => void;
+  // Null when nothing is loaded, so the lock screen shows nothing.
+  setMetadata: (nowPlaying: NowPlaying | null) => void;
   setPlaybackState: (state: MediaPlaybackState) => void;
   setPositionState: (position: MediaPosition) => void;
   setActionHandler: (action: MediaAction, handler: MediaActionHandler) => void;
@@ -151,9 +152,14 @@ export type Player = {
   skipBack: () => void;
   skipForward: () => void;
   setSpeed: (speed: Speed) => void;
+  /** Stops the audio and unloads the Episode, keeping its place for later. */
+  close: () => void;
   /** Where a partly heard Episode was left on this device, or null. */
   savedPosition: (guid: string) => number | null;
-  /** The Episode last played on this device, if it was left partly heard. */
+  /**
+   * The Episode last played on this device, if it was left partly heard: an
+   * offer for a return visit, so none once this visit has played anything.
+   */
   resumeOffer: () => PartlyHeard | null;
 };
 
@@ -187,15 +193,18 @@ export function createPlayer({
 
   function setState(next: PlayerState) {
     state = next;
-    if (mediaSession && state.mode !== "empty") {
-      showOnLockScreen(
-        mediaSession,
-        state,
-        state.episode !== lockScreenEpisode
-      );
-      lockScreenEpisode = state.episode;
-    }
+    if (mediaSession) updateLockScreen(mediaSession, state);
     for (const listener of listeners) listener();
+  }
+
+  function updateLockScreen(session: MediaSessionAdapter, next: PlayerState) {
+    if (next.mode === "empty") {
+      if (lockScreenEpisode) leaveLockScreen(session);
+      lockScreenEpisode = null;
+      return;
+    }
+    showOnLockScreen(session, next, next.episode !== lockScreenEpisode);
+    lockScreenEpisode = next.episode;
   }
 
   function onAudio(event: AudioEvent) {
@@ -246,6 +255,7 @@ export function createPlayer({
       seek(state.position);
     }
     const load = loadCount;
+    const { episode } = state;
     setState(playing(state));
     try {
       await audio.play();
@@ -256,7 +266,7 @@ export function createPlayer({
       if (refused) return;
       const reason = error instanceof Error ? error.message : String(error);
       throw new Error(
-        `Can't play Episode "${state.episode.title}" from ${state.episode.audioUrl}: ${reason}`,
+        `Can't play Episode "${episode.title}" from ${episode.audioUrl}: ${reason}`,
         { cause: error }
       );
     }
@@ -326,8 +336,23 @@ export function createPlayer({
       audio.setRate(speed);
       setState({ ...state, speed });
     },
+    close() {
+      if (state.mode === "empty") return;
+      // One heard to the end is finished, with no place to resume from.
+      if (!heardToEnd)
+        history.savePosition(state.episode.guid, state.position, { now: true });
+      const { speed, finished } = state;
+      // A play still pending is now for nothing loaded, and its answer is
+      // ignored.
+      loadCount += 1;
+      // Set first, so the audio's pause that follows finds nothing loaded.
+      state = { mode: "empty", speed, finished };
+      audio.pause();
+      setState(state);
+    },
     savedPosition: history.position,
     resumeOffer() {
+      if (loadCount > 0) return null;
       const episode = history.lastPlayed();
       const position = episode && history.position(episode.guid);
       return episode && position !== null ? { episode, position } : null;
@@ -364,6 +389,11 @@ function showOnLockScreen(
       playbackRate: next.speed,
     });
   }
+}
+
+function leaveLockScreen(session: MediaSessionAdapter) {
+  session.setMetadata(null);
+  session.setPlaybackState("none");
 }
 
 function answerMediaAction(

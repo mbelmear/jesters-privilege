@@ -44,6 +44,7 @@ export const shell = {
     remaining: "Remaining",
     expand: "Show player controls",
     collapse: "Hide player controls",
+    close: "Close player",
     failed: {
       text: "The Episode stopped loading. Check your connection, then press Play to carry on from here.",
     },

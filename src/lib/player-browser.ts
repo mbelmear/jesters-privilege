@@ -65,7 +65,12 @@ export function browserMediaSession(
   if (!("mediaSession" in navigator)) return null;
   const session = navigator.mediaSession;
   return {
-    setMetadata({ title, artworkUrl }) {
+    setMetadata(nowPlaying) {
+      if (!nowPlaying) {
+        session.metadata = null;
+        return;
+      }
+      const { title, artworkUrl } = nowPlaying;
       session.metadata = new MediaMetadata({
         title,
         artist: showName,

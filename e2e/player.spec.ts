@@ -89,6 +89,45 @@ test.describe("Persistent player", () => {
     await expectPlaying(page);
   });
 
+  test("closes by keyboard, and resumes from where it was closed", async ({
+    page,
+  }) => {
+    await page.goto("/episodes/2");
+    await startEpisode(page, "Play Episode 2");
+    await expectPlaying(page);
+    await playerBar(page)
+      .getByRole("button", { name: "Show player controls" })
+      .click();
+    await playerBar(page)
+      .getByRole("button", { name: "Forward 30 seconds" })
+      .click();
+    await expect
+      .poll(async () => (await audioState(page)).time, { timeout: 5000 })
+      .toBeGreaterThanOrEqual(30);
+
+    await playerBar(page).getByRole("button", { name: "Close player" }).focus();
+    await page.keyboard.press("Enter");
+    await expect(playerBar(page)).toBeHidden();
+    await expect
+      .poll(async () => (await audioState(page)).paused, { timeout: 1000 })
+      .toBe(true);
+
+    // Closed on every page: browsing on doesn't bring it back.
+    const episodes = page.getByRole("navigation", { name: "More Episodes" });
+    await episodes.getByRole("link", { name: /^Next Episode/ }).click();
+    await expect(page).toHaveURL(/\/episodes\/3$/);
+    await expect(playerBar(page)).toBeHidden();
+    await episodes.getByRole("link", { name: /^Previous Episode/ }).click();
+    await expect(page).toHaveURL(/\/episodes\/2$/);
+
+    // Closed past 0:30, so Play offers to carry on from there.
+    await startEpisode(page, /^Resume from 0:[3-5]\d Episode 2$/);
+    await expect
+      .poll(async () => (await audioState(page)).time, { timeout: 5000 })
+      .toBeGreaterThanOrEqual(30);
+    await expectPlaying(page);
+  });
+
   test("works by keyboard, with every control named", async ({ page }) => {
     await page.goto("/episodes/2");
     await startEpisode(page, "Play Episode 2", { keyboard: true });

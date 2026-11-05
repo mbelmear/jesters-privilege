@@ -118,6 +118,18 @@ describe("browserMediaSession", () => {
     );
   });
 
+  it("clears the Episode when nothing is loaded", () => {
+    const session = { metadata: null, playbackState: "none" };
+    install(session);
+    const adapter = browserMediaSession("Jester's Privilege");
+    adapter?.setMetadata({
+      title: "Celebrity Pastors",
+      artworkUrl: "https://example.com/ep-1.jpg",
+    });
+    adapter?.setMetadata(null);
+    expect(session.metadata).toBeNull();
+  });
+
   it("passes on the playback state, position, and handlers", () => {
     const session = {
       playbackState: "none",
