@@ -46,13 +46,14 @@ describe("Speak Freely", () => {
     ).toBeVisible();
   });
 
-  // Its copy is all approved (#116), so even a preview shows no ribbon.
-  it("shows no DRAFT ribbon on a preview", () => {
+  // #124's wit pass rewrote its working messages, which await the Jesters'
+  // approval, so a preview shows the ribbon until they give it.
+  it("shows the DRAFT ribbon on a preview", () => {
     const before = process.env.SITE_ENV;
     process.env.SITE_ENV = "preview";
     try {
       render(<SpeakFreely />);
-      expect(screen.queryByRole("note")).toBeNull();
+      expect(screen.getByRole("note")).toHaveTextContent("Draft");
     } finally {
       if (before === undefined) delete process.env.SITE_ENV;
       else process.env.SITE_ENV = before;
