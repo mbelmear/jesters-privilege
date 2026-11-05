@@ -82,11 +82,15 @@ test.describe("Persistent player", () => {
     });
     await page.goto("/gallery");
     await expect(playerBar(page)).toContainText("The Holy Fool");
-    await startEpisode(page, "Resume from 0:30 Episode 2");
+    await startEpisode(page, "Resume from 0:30 Episode 2", { keyboard: true });
     await expect
       .poll(async () => (await audioState(page)).time, { timeout: 5000 })
       .toBeGreaterThanOrEqual(30);
     await expectPlaying(page);
+    // The offer's button goes, and the bar's Pause takes its focus.
+    await expect(
+      playerBar(page).getByRole("button", { name: "Pause" })
+    ).toBeFocused();
   });
 
   test("closes by keyboard, and resumes from where it was closed", async ({

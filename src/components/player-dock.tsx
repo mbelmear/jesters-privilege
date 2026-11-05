@@ -29,6 +29,7 @@ export function PlayerDock({ copy, labels }: Props) {
   const player = usePlayer();
   const state = usePlayerState(player);
   const [declined, setDeclined] = useState(false);
+  const [resumed, setResumed] = useState(false);
   if (!player || !state) return null;
   if (state.mode === "empty") {
     const offer = declined ? null : player.resumeOffer();
@@ -38,6 +39,7 @@ export function PlayerDock({ copy, labels }: Props) {
         <ResumeOffer
           player={player}
           offer={offer}
+          onResume={() => setResumed(true)}
           onDismiss={() => setDeclined(true)}
           copy={copy}
           labels={labels}
@@ -47,7 +49,12 @@ export function PlayerDock({ copy, labels }: Props) {
   }
   return (
     <Suspense fallback={null}>
-      <PlayerBar copy={copy} labels={labels} />
+      <PlayerBar
+        copy={copy}
+        labels={labels}
+        takeFocus={resumed}
+        onFocusTaken={() => setResumed(false)}
+      />
     </Suspense>
   );
 }

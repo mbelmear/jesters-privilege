@@ -72,6 +72,29 @@ describe("PlayerDock", () => {
     ).toBeInTheDocument();
   });
 
+  it("hands focus to the bar's Pause when the offer is taken up", async () => {
+    const { user } = setup({ storage: partlyHeard() });
+    await user.click(
+      await screen.findByRole("button", { name: "Resume from 12:34 Episode 4" })
+    );
+    expect(await screen.findByRole("button", { name: "Pause" })).toHaveFocus();
+  });
+
+  it("hands over focus only that once", async () => {
+    const { player, user } = setup({ storage: partlyHeard() });
+    await user.click(
+      await screen.findByRole("button", { name: "Resume from 12:34 Episode 4" })
+    );
+    await user.click(
+      await screen.findByRole("button", { name: "Close player" })
+    );
+    // Played again from elsewhere on the page, which keeps its focus.
+    await act(() => player.play(episode));
+    expect(
+      await screen.findByRole("button", { name: "Pause" })
+    ).not.toHaveFocus();
+  });
+
   it("puts the offer away for this visit when declined", async () => {
     const { user } = setup({ storage: partlyHeard() });
     await user.click(await screen.findByRole("button", { name: "Not now" }));
