@@ -103,6 +103,7 @@ describe("require-review", () => {
     r.git("push", "--quiet", "origin", "main");
     r.git("switch", "--quiet", "ticket");
     r.git("merge", "--quiet", "--no-edit", "-X", "ours", "origin/main");
+    r.git("push", "--quiet", "origin", "ticket");
     return r.git("rev-parse", "HEAD");
   }
 
@@ -122,6 +123,14 @@ describe("require-review", () => {
       new RegExp(`--body Code review: passed at ${head} `)
     );
     expect(r.postedComment()).toContain(`carried over from ${reviewed}`);
+  });
+
+  it("sees main as it is now, not as this clone last fetched it", () => {
+    const before = r.git("rev-parse", "origin/main");
+    const head = mergeMainGaining("other.md", "other\n");
+    r.git("update-ref", "refs/remotes/origin/main", before);
+
+    expect(r.requireReview(head).status).toBe(0);
   });
 
   it("refuses a merge that touches the PR's files, naming the fixed point", () => {

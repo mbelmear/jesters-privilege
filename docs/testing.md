@@ -123,7 +123,7 @@ The budget lives in `lighthouserc.json`. Each figure is asserted on its median a
 
 The four pages on 3.6 s are `/`, `/gallery.html`, `/styleguide/paintings.html`, and `/styleguide/home/simple.html`: CI's runs swing them across 3.2 s on unchanged bytes. Text-led pages keep 3.2 s. Lighthouse's LCP discovery check (`lcp-discovery-insight`, asserted for every page) fails a page whose largest paint is an image that loads lazily or without `fetchpriority="high"`; a page whose largest paint is text isn't checked.
 
-The first page measured takes the runner's warm-up, and `/` is first: all three blocking-time failures in the 150 CI runs up to #170 were on it and fell run by run (3168, 214, 19 ms in #170), so the median was the warm-up's second run. `scripts/lighthouse.sh` now runs `/` once first, unmeasured.
+`/` is the first page measured, and all three blocking-time failures in the 150 CI runs up to #170 were on it and fell run by run (3168, 214, 19 ms in #170). That points to the runner warming up, though nothing has tested it, so `scripts/lighthouse.sh` runs `/` once first, unmeasured. A later failure on `/` that falls the same way means the warm-up didn't cover it.
 
 Locally, `/` measures about 3.2 s on main's own unchanged build, so judge a change to `/` by the early bytes `lighthouse:compare` prints, not by its simulated time.
 

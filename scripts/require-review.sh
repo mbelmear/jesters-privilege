@@ -18,9 +18,9 @@ reviewed=$("$(dirname "$0")/last-reviewed-sha.sh" "$pr")
 if [[ "$reviewed" != "$head" ]]; then
   if [[ -n "$reviewed" ]]; then
     # Unfetched, a merge of newer main looks like commits of the PR's own, and
-    # refusing is the safe answer if this fails.
-    git fetch --quiet origin main 2>/dev/null || true
-    if "$(dirname "$0")/merged-main-only.sh" "$reviewed" "$head" origin/main 2>/dev/null; then
+    # the check below refuses.
+    git fetch --quiet origin main "$head" || echo "Couldn't fetch main and $head; checking what's here." >&2
+    if "$(dirname "$0")/merged-main-only.sh" "$reviewed" "$head" origin/main; then
       gh pr comment "$pr" --body "Code review: passed at $head (carried over from $reviewed: only clean merges of main since)"
       exit 0
     fi

@@ -6,7 +6,7 @@
 #
 # It compares the blobs of every file the PR changes, before and after, so main
 # touching one of those files, or a merge commit adding a change of its own,
-# refuses. What it can't see is main changing something the PR relies on in
+# refuses. main-overlap.sh sees only the first, and only commits still to merge. What it can't see is main changing something the PR relies on in
 # another file; CI runs on the merged code.
 # Usage: scripts/merged-main-only.sh <reviewed> <head> <main>
 set -euo pipefail

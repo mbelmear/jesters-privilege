@@ -5,7 +5,8 @@
 #
 # It takes exactly two arguments, passes no other flags to gh, and refuses
 # unless the reviewed commit is still the PR's head: a push after the review
-# needs a review of its own, except a clean merge of main (require-review.sh).
+# needs a review of its own. merge and mark-ready carry one over a clean merge
+# of main without this script (require-review.sh).
 #
 # Usage: npm run review-passed -- <pr-number> <reviewed full SHA>
 set -euo pipefail

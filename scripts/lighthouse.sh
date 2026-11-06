@@ -5,9 +5,9 @@
 # Then prints each page's figures (scripts/lighthouse-summary.ts), so a
 # budget miss shows by how much and from which bytes.
 #
-# The first page measured takes the runner's warm-up: `/`'s blocking time on CI
-# has read 3168, 214, 19 ms across three runs of one build. So `/` runs once
-# first, unmeasured.
+# `/`, the first page measured, has read 3168, 214, 19 ms of blocking time on CI
+# across three runs of one build. That points to the runner warming up, though
+# nothing has tested it, so `/` runs once first, unmeasured (docs/testing.md).
 set -euo pipefail
 
 args=()
