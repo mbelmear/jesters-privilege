@@ -8,7 +8,7 @@ import { Specimen } from "./specimen";
 
 // An internal page for checking the design system, kept out of search.
 export const metadata: Metadata = {
-  title: `${styleguide.title} · ${site.name}`,
+  title: styleguide.title,
   robots: { index: false, follow: false },
 };
 

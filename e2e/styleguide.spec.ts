@@ -8,6 +8,18 @@ const settled = (locator: Locator) =>
   );
 
 test.describe("Style guide", () => {
+  for (const [path, title] of [
+    ["/styleguide", "Style guide | Jester's Privilege"],
+    ["/styleguide/home", "Home page preview | Jester's Privilege"],
+    ["/styleguide/home/simple", "Home page preview | Jester's Privilege"],
+    ["/styleguide/paintings", "Paintings · Style guide | Jester's Privilege"],
+  ]) {
+    test(`${path} names the site once in its tab title`, async ({ page }) => {
+      await page.goto(path);
+      await expect(page).toHaveTitle(title);
+    });
+  }
+
   test("is kept out of search engines", async ({ page }) => {
     await page.goto("/styleguide");
     await expect(page.locator('meta[name="robots"]')).toHaveAttribute(

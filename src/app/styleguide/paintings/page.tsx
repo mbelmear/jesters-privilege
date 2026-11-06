@@ -9,7 +9,7 @@ import { styleguide } from "@/content/styleguide";
 const copy = styleguide.paintings;
 
 export const metadata: Metadata = {
-  title: `${copy.title} · ${styleguide.title} · ${site.name}`,
+  title: `${copy.title} · ${styleguide.title}`,
   robots: { index: false, follow: false },
 };
 
