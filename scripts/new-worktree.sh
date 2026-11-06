@@ -4,7 +4,8 @@
 # no node_modules, so npx would quietly run some other copy of a tool.
 # The worktree is ../jp-<issue>; a non-number such as retro-17 works too. If npm
 # ci or typegen fails, cd in and rerun it rather than running this script again.
-# It also says when the worktree's AGENTS.md differs from the main checkout's.
+# npm run worktree fetches, then runs origin/main's copy of this script, so a
+# main checkout that is behind still gets today's setup.
 # Usage: npm run worktree -- <issue> <branch>
 set -euo pipefail
 
@@ -15,14 +16,8 @@ branch="${2:?Usage: npm run worktree -- <issue> <branch>}"
 main=$(git worktree list --porcelain | sed -n '1s/^worktree //p')
 dir="$(dirname "$main")/jp-$issue"
 
-git fetch --quiet origin
 git worktree add "$dir" -b "$branch" origin/main
 # typegen writes the route types, so a bare tsc agrees with npm run typecheck.
 (cd "$dir" && npm ci --no-audit --no-fund && npx next typegen)
 
 echo "Ready: $dir on $branch"
-# A session started in the main checkout loads its AGENTS.md, which can lag
-# origin/main.
-if ! cmp -s "$main/AGENTS.md" "$dir/AGENTS.md"; then
-  echo "AGENTS.md differs from the main checkout's, which sessions load: read $dir/AGENTS.md before starting."
-fi
