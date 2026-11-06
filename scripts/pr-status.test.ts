@@ -41,6 +41,7 @@ function fakes(checks: string, comment = "") {
   *comments*) cat "${join(root, "comment")}" ;;
   *state*) echo OPEN ;;
   "pr checks"*) cat "${join(root, "checks")}" ;;
+  *) echo "pr-status.test.ts has no answer for: gh $*" >&2; exit 1 ;;
 esac`
   );
   tool("sleep", `echo slept >> "${sleeps}"`);

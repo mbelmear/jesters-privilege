@@ -10,9 +10,15 @@ import { readFileSync } from "node:fs";
 
 type Job = { name: string; needs: string[]; condition: string };
 
-function jobsIn(workflow: string): Job[] {
-  const text = readFileSync(`.github/workflows/${workflow}`, "utf8");
+function jobsIn(text: string): Job[] {
   const [, jobs = ""] = text.split(/^jobs:\n/m);
+  for (const line of jobs.split("\n")) {
+    const unreadable =
+      (/^ {2}[^\s#]/.test(line) && !/^ {2}[\w-]+:$/.test(line)) ||
+      (/^ {4}needs:/.test(line) &&
+        !/^ {4}needs: (?:[\w-]+|\[[\w-]+(?:, *[\w-]+)*\])$/.test(line));
+    if (unreadable) throw new Error(`workflows.test.ts can't read: ${line}`);
+  }
   return jobs
     .split(/^(?= {2}[\w-]+:\n)/m)
     .map((block) => {
@@ -46,7 +52,9 @@ function afterDocsOnly(jobs: Job[]): Job[] {
 describe.each(["ci.yml", "deploy.yml"])(
   "%s after the docs-only check",
   (file) => {
-    const jobs = afterDocsOnly(jobsIn(file));
+    const jobs = afterDocsOnly(
+      jobsIn(readFileSync(`.github/workflows/${file}`, "utf8"))
+    );
 
     it("finds the jobs it holds to the rule", () => {
       expect(jobs.length).toBeGreaterThan(0);
@@ -73,6 +81,41 @@ describe.each(["ci.yml", "deploy.yml"])(
     });
   }
 );
+
+describe("reading a workflow", () => {
+  // Skipping a job it can't read would pass that job without checking it.
+  it.each([
+    ["a job line with a comment", "  build: # note\n    runs-on: x\n"],
+    ["needs with a comment", "  build:\n    needs: docs-only # note\n"],
+    ["needs as a block list", "  build:\n    needs:\n      - docs-only\n"],
+  ])("refuses %s", (_, jobs) => {
+    expect(() => jobsIn(`jobs:\n${jobs}`)).toThrow(/can't read/);
+  });
+
+  it("reads one need, several, and an if: over several lines", () => {
+    const text = `jobs:
+  first:
+    runs-on: x
+  second:
+    needs: first
+    if: >-
+      !cancelled() &&
+      always()
+    runs-on: x
+  third:
+    needs: [first, second]
+`;
+    expect(jobsIn(text)).toEqual([
+      { name: "first", needs: [], condition: "" },
+      {
+        name: "second",
+        needs: ["first"],
+        condition: ">-\n      !cancelled() &&\n      always()",
+      },
+      { name: "third", needs: ["first", "second"], condition: "" },
+    ]);
+  });
+});
 
 describe("the names scripts read", () => {
   // pr-status.sh reads this one; a rename brings back its wait for a preview.

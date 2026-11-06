@@ -230,7 +230,7 @@ Two more run on every push to `main`:
 Every pull request is reviewed before it merges or goes to a Jester (`AGENTS.md`, Merging). Merge with the helper. It merges only a head commit that has passed review and every check:
 
 ```bash
-npm run review-passed -- <pr-number> <reviewed full SHA>   # after /code-review finds nothing serious
+npm run review-passed -- <pr-number> <reviewed full SHA>   # after review finds nothing serious
 npm run merge -- <pr-number>
 ```
 
