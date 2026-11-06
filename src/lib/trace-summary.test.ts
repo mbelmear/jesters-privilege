@@ -143,16 +143,51 @@ describe("summariseTrace", () => {
     );
   });
 
-  it("says so when the test opened no browser, as then nothing names it", () => {
-    const output = rows([
-      {
-        name: "test.trace",
-        text: '{"type":"context-options","origin":"testRunner","browserName":"","options":{},"monotonicTime":0}',
-      },
-    ]);
-    expect(output[0]).toBe(
-      "This trace names no test: the test opened no browser."
-    );
+  describe("when a trace lacks part of its first line", () => {
+    const firstLine = (...contexts: object[]) =>
+      rows([
+        {
+          name: "1-trace.trace",
+          text: contexts
+            .map((context) =>
+              JSON.stringify({
+                type: "context-options",
+                browserName: "",
+                options: {},
+                monotonicTime: 0,
+                ...context,
+              })
+            )
+            .join("\n"),
+        },
+      ])[0];
+
+    it("says it names no test when the test opened no browser", () => {
+      expect(firstLine({})).toBe("This trace names no test");
+    });
+
+    it("still gives the browser of a trace that names no test", () => {
+      expect(
+        firstLine({
+          browserName: "webkit",
+          options: { viewport: { width: 1280, height: 720 } },
+        })
+      ).toBe("This trace names no test (webkit, 1280x720)");
+    });
+
+    it("gives only the test when no browser is recorded", () => {
+      expect(firstLine({ title: "a.spec.ts:1 › a" })).toBe("a.spec.ts:1 › a");
+    });
+
+    it("leaves out the viewport of a context with none", () => {
+      expect(
+        firstLine({
+          title: "a.spec.ts:1 › a",
+          browserName: "webkit",
+          options: { viewport: null },
+        })
+      ).toBe("a.spec.ts:1 › a (webkit)");
+    });
   });
 
   it("refuses a viewport with no height", () => {

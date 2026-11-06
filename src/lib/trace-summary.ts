@@ -97,7 +97,7 @@ const timelineRow = (when: string, kind: string, text: string) =>
   `${when}  ${kind.padEnd(10)}  ${text}`;
 
 // A row with no end time, its columns lined up with a step's.
-const momentRow = (when: string, kind: string, text: string) =>
+const rowWithoutEnd = (when: string, kind: string, text: string) =>
   timelineRow(`${when}         `, kind, text);
 
 function depth(step: Step, steps: Map<string, Step>): number {
@@ -235,11 +235,11 @@ export function summariseTrace(files: TraceFile[], imageDir: string): string {
         text: timelineRow(`${ms(step.start - began)} - ${end}`, "step", text),
       };
     });
-  const momentRows = moments.map(({ time, kind, text, atLeast }) => {
+  const rowWithoutEnds = moments.map(({ time, kind, text, atLeast }) => {
     const when = atLeast
       ? `>${Math.round(time - began)}`.padStart(6)
       : ms(time - began);
-    return { time, text: momentRow(when, kind, text) };
+    return { time, text: rowWithoutEnd(when, kind, text) };
   });
   const lastFrame = new Map<string, number>();
   const frameRows = frames
@@ -251,7 +251,7 @@ export function summariseTrace(files: TraceFile[], imageDir: string): string {
         previous === undefined ? "" : ` (+${Math.round(time - previous)} ms)`;
       return {
         time,
-        text: momentRow(
+        text: rowWithoutEnd(
           ms(time - began),
           "frame",
           `${join(imageDir, file)}${gap}`
@@ -259,15 +259,14 @@ export function summariseTrace(files: TraceFile[], imageDir: string): string {
       };
     });
 
-  // A test that opens no browser leaves only test.trace, which names nothing.
+  // A test that opens no browser leaves only test.trace, which names neither
+  // the test nor a browser.
   const context = [browser, viewport].filter(Boolean).join(", ");
   return [
-    title
-      ? `${title}${context && ` (${context})`}`
-      : "This trace names no test: the test opened no browser.",
+    `${title ?? "This trace names no test"}${context && ` (${context})`}`,
     `Times are ms since the trace began. A time marked > is a lower bound: Playwright records none for a test's own error. Frames are under ${imageDir}.`,
     "",
-    ...[...stepRows, ...momentRows, ...frameRows]
+    ...[...stepRows, ...rowWithoutEnds, ...frameRows]
       .sort((a, b) => a.time - b.time)
       .map(({ text }) => text),
   ].join("\n");
