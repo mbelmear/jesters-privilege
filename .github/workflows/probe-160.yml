@@ -1,0 +1,26 @@
+name: Probe 160
+on:
+  pull_request:
+jobs:
+  first:
+    if: github.event_name == 'never'
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo first
+  middle:
+    needs: first
+    if: "!cancelled()"
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo middle
+  default-condition:
+    needs: middle
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo default
+  named-result:
+    needs: middle
+    if: "!cancelled() && needs.middle.result == 'success'"
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo named
