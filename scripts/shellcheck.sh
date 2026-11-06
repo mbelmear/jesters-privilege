@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Runs the shellcheck this repo pins, here and in CI, so a shell script is
-# checked before it's pushed whatever the machine has installed. Downloads the
+# Runs the shellcheck this repo pins, here and in CI, so npm run lint:shell works
+# whatever the machine has installed. Downloads the
 # release binary once into node_modules/.cache and checks it against the
 # checksum below, taken when the version was pinned: the release publishes none.
 # Usage: scripts/shellcheck.sh <shellcheck args>

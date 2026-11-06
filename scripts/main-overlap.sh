@@ -7,9 +7,9 @@
 # Usage: scripts/main-overlap.sh [--patch] <pr head> <main>
 set -euo pipefail
 
-format=(--format='%H %s')
+log_output=(--format='%H %s')
 if [[ ${1:-} == --patch ]]; then
-  format=(--patch)
+  log_output=(--patch)
   shift
 fi
 
@@ -29,4 +29,4 @@ while IFS= read -r file; do files+=("$file"); done \
   < <(git -c core.quotePath=false diff --no-renames --name-only "$base" "$head")
 ((${#files[@]})) || exit 0
 
-git log "${format[@]}" "$base..$main" -- "${files[@]}"
+git log "${log_output[@]}" "$base..$main" -- "${files[@]}"

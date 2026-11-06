@@ -82,13 +82,25 @@ describe("warn-stale-checkout", () => {
     expect(warn(checkout).stdout).toBe("");
   });
 
-  it("goes by the last fetch when origin can't be reached", () => {
+  it("says nothing in a ticket's worktree, which falls behind as main moves", () => {
+    const worktree = join(root, "worktree");
+    git(checkout, "worktree", "add", "--quiet", "-b", "ticket", worktree);
+    commit(origin, "second");
+
+    const result = warn(worktree);
+
+    expect(result.stdout).toBe("");
+    expect(result.status).toBe(0);
+  });
+
+  it("goes by the last fetch, and says so, when origin can't be reached", () => {
     commit(origin, "second");
     git(checkout, "fetch", "--quiet");
     rmSync(origin, { recursive: true, force: true });
 
     const result = warn(checkout);
 
+    expect(result.stdout).toContain("Couldn't fetch origin");
     expect(result.stdout).toContain("1 commit behind origin/main");
     expect(result.status).toBe(0);
   });
