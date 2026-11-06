@@ -53,7 +53,7 @@ Copy awaiting the Jesters' words is marked `draft: true` in `src/content/`. Prev
 
 `npm run launch-check` lists every draft that would go live (it reads the live feed, as production does) and exits 1 while any remain. It lists the drafts of the checkout it runs from, and warns first if that checkout is behind `origin/main`. It must pass before launch (#30).
 
-The smoke check confirms the manifest shows the commit just deployed, the home page serves, and `www` redirects.
+The smoke check confirms the manifest shows the commit just deployed, the home page serves, `www` redirects, and `http://` redirects to `https://`.
 
 ## Submit endpoint
 

@@ -38,8 +38,14 @@ www_redirects_to_apex() {
     "https://www.$domain/about?x=1")" = "301 $site/about?x=1" ]
 }
 
+http_redirects_to_https() {
+  [ "$(curl -sS -o /dev/null -w '%{http_code} %{redirect_url}' \
+    "http://$domain/x?y=1")" = "301 $site/x?y=1" ]
+}
+
 retry manifest_has_commit
 retry home_page_serves
 retry home_page_counts_visits
 retry www_redirects_to_apex
+retry http_redirects_to_https
 echo "Production is serving $commit"
