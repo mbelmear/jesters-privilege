@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
 import { HeroReveal } from "@/components/hero-reveal";
 import { hero } from "@/content/hero";
-import { site } from "@/content/site";
 import { styleguide } from "@/content/styleguide";
 import { HomePreview } from "./home-preview";
 
 export const metadata: Metadata = {
-  title: `${styleguide.home.title} · ${site.name}`,
+  title: styleguide.home.title,
   robots: { index: false, follow: false },
 };
 
