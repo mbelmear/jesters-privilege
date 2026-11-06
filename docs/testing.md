@@ -92,7 +92,7 @@ Sessions on this machine build and test in parallel. Each worktree serves its bu
 
 A scheduled Nightly that fails opens an issue titled "Nightly is failing", or comments on the one still open, naming each failed test and the run. `npm run report-nightly -- --dry-run` prints what it would say for the newest failed run.
 
-On each pull request, `npm run dropped-tests` adds a `::warning::` naming any browser test the base has and the head doesn't. It needs `out/`; a rename shows as a drop too.
+On each pull request that builds, `npm run dropped-tests` adds a `::warning::` naming any browser test the base has and the head doesn't. It needs `out/`; a rename shows as a drop too.
 
 When a run fails in CI, the HTML report is attached to the workflow run as `playwright-report`. A failure that won't reproduce locally is usually timing: `gh run download <run-id> -n playwright-report -D playwright-report/<run-id>` (git ignores the folder, and a download refuses to overwrite an earlier one), then run `npm run trace -- playwright-report/<run-id>/data/<hash>.zip` on the failing test's trace (one zip per failure; the first line printed names the test, its browser and its viewport, or says it names no test, as when the test opened no browser) to see what loaded around the failing step. It prints one timeline: each step and page action with its start, end and error, console messages, page errors, failed requests, and screencast frames with the gap since the last one. Each frame row gives the path of its image, unzipped to a temporary folder, so open the frames around the failing step.
 
@@ -216,7 +216,7 @@ A shell script with logic is tested from a `scripts/*.test.ts` that runs it for 
 5. **Lighthouse** with the mobile budget
 6. **Dropped browser tests**, on pull requests only: warns, without failing, when one removes or renames a browser test
 
-A pull request changing only `docs/**` or top-level `*.md` is **docs-only** (`scripts/docs-only.sh`): it runs jobs 1 and 2 and skips the rest, along with its preview, because no build step or browser test reads those files. The whole PR is judged on each push, and a PR that also changes anything else runs every job. Main's required checks count a skipped job as passed, and `npm run merge` merges it as usual. A push to `main` always builds and runs the browser and Lighthouse jobs. If a test or build step starts reading a file under `docs/` or top-level Markdown, change the script's patterns with it; until then, a docs-only PR that breaks it shows up only as that push's failed CI run.
+A pull request changing only `docs/**` or top-level `*.md` is **docs-only** (`scripts/docs-only.sh`): it runs jobs 1 and 2 and skips the rest, along with its preview, because no build step or browser test reads those files. The whole PR is judged on each push, and a PR that also changes anything else runs every job. Main's required checks count a skipped job as passed, and `npm run merge` merges it as usual. A push to `main` always builds and runs the browser and Lighthouse jobs. If a test or build step starts reading a file under `docs/` or top-level Markdown, change the script's patterns with it; until then, a docs-only PR that breaks it first fails after merging, on that push's CI run (and its deploy, for a build step).
 
 `.github/workflows/nightly.yml` runs the Playwright suite on Firefox every night, and can be started by hand from the Actions tab. A pull request that changes its failure report previews it against the newest failed run.
 

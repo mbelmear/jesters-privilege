@@ -30,20 +30,26 @@ for _ in $(seq 1 30); do
 done
 failed=0
 gh pr checks "$pr" --watch >/dev/null 2>&1 || failed=1
-{ gh pr checks "$pr" || true; } | cut -f1,2
+checks=$({ gh pr checks "$pr" || true; } | cut -f1,2)
+echo "$checks"
 
-# The deploy workflow edits one comment per PR, naming the commit it built.
-preview=""
-for _ in $(seq 1 30); do
-  comment=$(gh pr view "$pr" --json comments \
-    --jq '[.comments[].body | select(startswith("<!-- deploy-preview -->"))] | last // ""')
-  if [[ "$comment" == *"Built from $head"* ]]; then
-    preview=$(grep -oE 'https://[a-z0-9.-]+\.workers\.dev' <<<"$comment" | head -1 || true)
-    break
-  fi
-  sleep 10
-done
-echo "Preview: ${preview:-none built from ${head:0:7} yet}"
+# A skipped job posts nothing: a docs-only PR's, a fork's, Dependabot's.
+if grep -q $'^Preview URL\tskipping$' <<<"$checks"; then
+  echo "Preview: none, its job was skipped"
+else
+  # The deploy workflow edits one comment per PR, naming the commit it built.
+  preview=""
+  for _ in $(seq 1 30); do
+    comment=$(gh pr view "$pr" --json comments \
+      --jq '[.comments[].body | select(startswith("<!-- deploy-preview -->"))] | last // ""')
+    if [[ "$comment" == *"Built from $head"* ]]; then
+      preview=$(grep -oE 'https://[a-z0-9.-]+\.workers\.dev' <<<"$comment" | head -1 || true)
+      break
+    fi
+    sleep 10
+  done
+  echo "Preview: ${preview:-none built from ${head:0:7} yet}"
+fi
 
 mergeable=$("$(dirname "$0")/wait-mergeable.sh" "$pr")
 echo "Merges cleanly with main: $([[ $mergeable == MERGEABLE ]] && echo yes || echo "no ($mergeable)")"

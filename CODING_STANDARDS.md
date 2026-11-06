@@ -68,6 +68,7 @@ Reviewers skip these; the rules below are the ones that need judgement.
 ## Workflows
 
 - **A workflow that writes lasting state runs on the pull request that changes it, writing nothing.** A branch it pushes to, or a file nothing rewrites, keeps a first run's mistakes; a workflow started only by a schedule or the Run workflow button can't run before merge at all. Its pull request run does the real work against real inputs and uploads what it made as an artifact, so the PR shows it working. #121's Transcribe workflow does this: its PR run transcribed Episode 1 with Whisper, and the Transcript was read before the first one was saved for good.
+- **A path a workflow's own pull request can't reach is shown on a throwaway one.** A draft PR based on the branch runs the new workflow, as #167 did for the docs-only path #160's own PR couldn't take; a throwaway workflow file answers a question about GitHub Actions itself, as #171 did. Main's ruleset applies only to main, so merging still needs a real PR. Close the draft and cancel its runs once it's read.
 
 ## Secrets
 
