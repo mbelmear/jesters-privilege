@@ -201,7 +201,7 @@ The pre-commit hook formats staged files with Prettier, so `format:check` only f
 
 `lint:workflows` (`scripts/actionlint.sh`) downloads the actionlint release CI pins, once, into `node_modules/.cache`. It runs shellcheck on every `run:` block only when shellcheck is installed, and says so when it isn't; CI's image has it. Nothing runs it on commit (#44), so run it before pushing a workflow change.
 
-`lint:shell` runs shellcheck on `scripts/*.sh`, which actionlint doesn't reach. CI's **Lint workflows** job runs it; locally it needs shellcheck installed.
+`lint:shell` runs shellcheck on `scripts/*.sh`, which actionlint doesn't reach, failing on warnings and errors: its `info` notes here are single-quoted scripts and functions it can't see called. CI's **Lint workflows** job runs it; locally it needs shellcheck installed.
 
 A shell script with logic is tested from a `scripts/*.test.ts` that runs it for real: `merge-holds-branch.test.ts` against a throwaway repo, `smoke-check.test.ts` with stubs for `curl` and `sleep` on the `PATH`.
 
