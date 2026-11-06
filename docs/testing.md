@@ -123,7 +123,9 @@ The budget lives in `lighthouserc.json`. Each figure is asserted on its median a
 
 The four pages on 3.6 s are `/`, `/gallery.html`, `/styleguide/paintings.html`, and `/styleguide/home/simple.html`: CI's runs swing them across 3.2 s on unchanged bytes. Text-led pages keep 3.2 s. Lighthouse's LCP discovery check (`lcp-discovery-insight`, asserted for every page) fails a page whose largest paint is an image that loads lazily or without `fetchpriority="high"`; a page whose largest paint is text isn't checked.
 
-Locally, `/` measures about 3.2 s on main's own unchanged build, and CI's first run of it is always cold, so judge a change to `/` by the early bytes `lighthouse:compare` prints, not by its simulated time.
+The first page measured takes the runner's warm-up, and `/` is first: all three blocking-time failures in the 150 CI runs up to #170 were on it and fell run by run (3168, 214, 19 ms in #170), so the median was the warm-up's second run. `scripts/lighthouse.sh` now runs `/` once first, unmeasured.
+
+Locally, `/` measures about 3.2 s on main's own unchanged build, so judge a change to `/` by the early bytes `lighthouse:compare` prints, not by its simulated time.
 
 Why each budget sits where it does, with the measurements behind every change to it: `docs/lighthouse-history.md`. Read it before changing a budget.
 
@@ -234,6 +236,6 @@ npm run review-passed -- <pr-number> <reviewed full SHA>   # after review finds 
 npm run merge -- <pr-number>
 ```
 
-It waits for pending checks, stops at the first failure, and refuses a pull request with no checks or whose latest passed review names an older commit. Once the checks pass, it also refuses if main has meanwhile gained commits in the PR's files (`scripts/main-overlap.sh`), listing them; read them, then rerun with the `--overlap-read <sha>` it prints, or merge `origin/main` in and review again. Each push after a review needs its own review first (`AGENTS.md`, Merging). `scripts/merge-on-green.sh` has the details.
+It waits for pending checks, stops at the first failure, and refuses a pull request with no checks or whose latest passed review names an older commit. Once the checks pass, it also refuses if main has meanwhile gained commits in the PR's files (`scripts/main-overlap.sh`), listing them; read them, then rerun with the `--overlap-read <sha>` it prints, or merge `origin/main` in and review again. Each push after a review needs its own review first (`AGENTS.md`, Merging), except clean merges of main that leave the PR's changes as they were (`scripts/merged-main-only.sh`): `merge` and `mark-ready` record those as a passed review of the new head. `scripts/merge-on-green.sh` has the details.
 
 Visual pull requests go to a Jester instead: `npm run mark-ready -- <pr-number>` refuses a head without a passed review, as `merge` does (`scripts/require-review.sh`), then labels it once its checks and preview pass. See `AGENTS.md`.

@@ -2,7 +2,9 @@
 # Exit 0 if a pull request's newest "Code review: passed at <sha>" comment
 # names the given head; otherwise say which commits still need a review and
 # exit 1. Shared by `npm run merge` and `npm run mark-ready`, so both refuse
-# an unreviewed head the same way.
+# an unreviewed head the same way. A head that adds only clean merges of main
+# keeps its review (merged-main-only.sh), recorded as a comment on that head
+# for the post-merge audit, which reads the same line.
 # Usage: scripts/require-review.sh <pr-number> <head-sha> <action>
 set -euo pipefail
 
@@ -14,6 +16,15 @@ action="${3:?$usage}"
 
 reviewed=$("$(dirname "$0")/last-reviewed-sha.sh" "$pr")
 if [[ "$reviewed" != "$head" ]]; then
+  if [[ -n "$reviewed" ]]; then
+    # Unfetched, a merge of newer main looks like commits of the PR's own, and
+    # refusing is the safe answer if this fails.
+    git fetch --quiet origin main 2>/dev/null || true
+    if "$(dirname "$0")/merged-main-only.sh" "$reviewed" "$head" origin/main 2>/dev/null; then
+      gh pr comment "$pr" --body "Code review: passed at $head (carried over from $reviewed: only clean merges of main since)"
+      exit 0
+    fi
+  fi
   echo "Refusing to $action #$pr: head is $head, but the last passed review is at ${reviewed:-no commit}." >&2
   # Review only the new commits, unless a rebase dropped the reviewed one.
   since=origin/main

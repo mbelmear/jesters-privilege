@@ -4,6 +4,10 @@
 #   npm run lighthouse -- /styleguide/paintings.html /404.html
 # Then prints each page's figures (scripts/lighthouse-summary.ts), so a
 # budget miss shows by how much and from which bytes.
+#
+# The first page measured takes the runner's warm-up: `/`'s blocking time on CI
+# has read 3168, 214, 19 ms across three runs of one build. So `/` runs once
+# first, unmeasured.
 set -euo pipefail
 
 args=()
@@ -15,7 +19,10 @@ for page in "$@"; do
   args+=("--collect.url=http://localhost${page}")
 done
 
-# Reports from an earlier run would mix into the summary.
+# A warm-up that fails isn't the verdict: the run below reports the cause.
+npx lhci collect --collect.url=http://localhost/ --collect.numberOfRuns=1 >/dev/null || true
+
+# Reports from an earlier run, or the warm-up, would mix into the summary.
 rm -rf .lighthouseci
 status=0
 npx lhci autorun ${args[@]+"${args[@]}"} || status=$?
