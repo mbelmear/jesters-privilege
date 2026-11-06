@@ -88,7 +88,7 @@ To try it locally, put Turnstile's always-pass test secret in `.dev.vars` (`TURN
 These Cloudflare settings can only be made by a human in the dashboard. Nothing in the repo sets them, and an agent can't see them without Cloudflare access.
 
 - **workers.dev subdomain**: `jestersprivilege`, under **Workers & Pages › Your subdomain**. Without one, the first preview run fails. Previews are served from it, at `pr-<n>-jesters-privilege.jestersprivilege.workers.dev`.
-- **Always Use HTTPS**: on, under **SSL/TLS › Edge Certificates** for `jestersprivilegepodcast.com`. Off, `http://` addresses aren't redirected to `https://`, and no build or deploy step fails to say so.
+- **Always Use HTTPS**: on, under **SSL/TLS › Edge Certificates** for `jestersprivilegepodcast.com`. Off, `http://` addresses aren't redirected to `https://`, and the smoke check fails the deploy run.
 - **Email Routing destination**: `thejestersprivilegepodcast@gmail.com` added and verified, under **Compute › Email Service › Email Routing › Destination Addresses**. The Worker's `send_email` binding can only deliver to a verified destination, and Submissions fail with `delivery` until it is.
 - **Routing rule**: `hello@jestersprivilegepodcast.com` forwards to that Gmail, and to no other inbox (decided 2026-11-03, #113), under **Compute › Email Service › Email Routing › Routing Rules**. Cloudflare keeps a rule disabled until its destination is verified.
 - **API token permissions**: `CLOUDFLARE_API_TOKEN` needs **Account › Workers Scripts: Edit** and, for the custom domains, **Zone › Workers Routes: Edit** and **Zone › DNS: Edit** on `jestersprivilegepodcast.com`.

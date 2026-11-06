@@ -14,6 +14,7 @@ Issues and specs for this repo live as GitHub issues. Use the `gh` CLI for all o
 - **Count open blockers**: `gh api repos/<owner>/<repo>/issues/<n> --jq .issue_dependencies_summary.blocked_by` (open blockers only; 0 means startable). `gh issue view <n> --json blockedBy` also lists closed blockers, so filter it: `--jq '[.blockedBy.nodes[] | select(.state == "OPEN")] | length'`.
 - **List every ticket ready to start**: `npm run ready` (one query; skips the parent spec issue and shows who has claimed each ticket). Prefer it over counting blockers issue by issue.
 - **Comment on an issue**: `gh issue comment <number> --body "..."`
+- **Change a ticket's criteria**: edit its body (`gh issue edit <number> --body-file -`), and comment why. The body is what the implementer and the reviewer work from; #45's two extra criteria sat in a comment asking for them to be added, until Michael named them when starting it.
 - **Apply / remove labels**: `gh issue edit <number> --add-label "..."` / `--remove-label "..."`
 - **Close**: post the explanation with `gh issue comment <number> --body "..."`, then `gh issue close <number>`. On an already-closed issue, `gh issue close --comment` drops the comment and still exits 0.
 

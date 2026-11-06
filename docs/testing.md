@@ -232,6 +232,6 @@ npm run review-passed -- <pr-number> <reviewed full SHA>   # after /code-review 
 npm run merge -- <pr-number>
 ```
 
-It waits for pending checks, stops at the first failure, and refuses a pull request with no checks or whose latest passed review names an older commit. Each push after a review needs its own review first (`AGENTS.md`, Merging). `scripts/merge-on-green.sh` has the details.
+It waits for pending checks, stops at the first failure, and refuses a pull request with no checks or whose latest passed review names an older commit. Once the checks pass, it also refuses if main has meanwhile gained commits in the PR's files (`scripts/main-overlap.sh`), listing them; read them, then rerun with the `--overlap-read <sha>` it prints, or merge `origin/main` in and review again. Each push after a review needs its own review first (`AGENTS.md`, Merging). `scripts/merge-on-green.sh` has the details.
 
 Visual pull requests go to a Jester instead: `npm run mark-ready -- <pr-number>` refuses a head without a passed review, as `merge` does (`scripts/require-review.sh`), then labels it once its checks and preview pass. See `AGENTS.md`.
