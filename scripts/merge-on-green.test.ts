@@ -6,6 +6,7 @@ import {
   chmodSync,
   mkdirSync,
   mkdtempSync,
+  readFileSync,
   realpathSync,
   rmSync,
   writeFileSync,
@@ -15,6 +16,13 @@ import { delimiter, join } from "node:path";
 
 const script = join(__dirname, "merge-on-green.sh");
 
+// Run by a stand-in, in the clone, while the script waits.
+const CONFLICTING_PUSH = `printf 'top\\nmiddle\\nmain line\\n' > deploy.md
+git add -A
+git commit --quiet -m Conflicting
+git push --quiet origin main
+`;
+
 // Git run from a hook inherits GIT_DIR and GIT_INDEX_FILE, which point every
 // git command at the real repository (merge-holds-branch.test.ts tells that
 // story), so every git here drops them.
@@ -23,14 +31,21 @@ for (const name of Object.keys(env)) {
   if (name.startsWith("GIT_")) delete env[name];
 }
 
-// A clone of a throwaway origin, and a stand-in for gh on the PATH: GitHub
-// reports the PR's head as reviewed and its checks as passed, and a merge
-// prints a line rather than happening.
+// A clone of a throwaway origin, and stand-ins on the PATH. GitHub reports the
+// PR's head as reviewed and its checks as passed, unless the test's `rollup` or
+// `checksExit` say otherwise, and a merge prints a line rather than happening.
+// sleep only counts, then runs what the test put in `onSleep`: what happens
+// during the wait. gh pr checks runs `onChecks` the same way.
 function repo() {
   const root = mkdtempSync(join(tmpdir(), "merge-on-green-"));
   const origin = join(root, "origin.git");
   const dir = join(root, "clone");
   const bin = join(root, "bin");
+  const rollup = join(root, "rollup");
+  const checksExit = join(root, "checks-exit");
+  const onSleep = join(root, "on-sleep");
+  const onChecks = join(root, "on-checks");
+  const sleeps = join(root, "sleeps");
   execFileSync(
     "git",
     ["init", "--quiet", "--bare", "--initial-branch=main", origin],
@@ -49,45 +64,70 @@ function repo() {
   git("config", "user.email", "test@example.com");
   git("config", "user.name", "Test");
   git("config", "commit.gpgsign", "false");
-  const commit = (text: string, message: string) => {
-    writeFileSync(join(dir, "deploy.md"), text);
+  const commit = (lines: string[], message: string) => {
+    writeFileSync(join(dir, "deploy.md"), lines.join("\n") + "\n");
     git("add", "-A");
     git("commit", "--quiet", "-m", message);
     return git("rev-parse", "HEAD");
   };
   const fakeGh = (head: string) => {
     mkdirSync(bin, { recursive: true });
+    writeFileSync(rollup, "3\n");
+    writeFileSync(checksExit, "0\n");
+    writeFileSync(onSleep, "");
+    writeFileSync(onChecks, "");
+    writeFileSync(sleeps, "");
     writeFileSync(
       join(bin, "gh"),
       `#!/bin/sh
 case "$*" in
   *headRefOid*) echo ${head} ;;
-  *statusCheckRollup*) echo 3 ;;
+  *statusCheckRollup*) cat "${rollup}" ;;
   *comments*) echo "Code review: passed at ${head}" ;;
-  "pr checks"*) ;;
+  "pr checks"*) . "${onChecks}"; echo "Build static site	pass"; exit "$(cat "${checksExit}")" ;;
   "pr merge"*) echo MERGED ;;
 esac
 `
     );
     chmodSync(join(bin, "gh"), 0o755);
+    writeFileSync(
+      join(bin, "sleep"),
+      `#!/bin/sh\necho slept >> "${sleeps}"\n. "${onSleep}"\n`
+    );
+    chmodSync(join(bin, "sleep"), 0o755);
   };
   const merge = (...args: string[]) =>
     spawnSync("bash", [script, "7", ...args], {
       cwd: dir,
       env: { ...env, PATH: `${bin}${delimiter}${env.PATH}` },
       encoding: "utf8",
+      timeout: 30_000,
     });
-  return { root, git, commit, fakeGh, merge };
+  const sleepCount = () =>
+    readFileSync(sleeps, "utf8").split("\n").filter(Boolean).length;
+  return {
+    root,
+    dir,
+    rollup,
+    checksExit,
+    onSleep,
+    onChecks,
+    git,
+    commit,
+    fakeGh,
+    merge,
+    sleepCount,
+  };
 }
 
 describe("merge-on-green", () => {
   let r: ReturnType<typeof repo>;
   beforeEach(() => {
     r = repo();
-    r.commit("start\n", "start");
+    r.commit(["top", "middle", "bottom"], "start");
     r.git("push", "--quiet", "origin", "main");
     r.git("checkout", "--quiet", "-b", "ticket");
-    const head = r.commit("the PR's line\n", "the PR");
+    const head = r.commit(["top", "middle", "the PR's line"], "the PR");
     r.git("push", "--quiet", "origin", "ticket");
     r.fakeGh(head);
     r.git("checkout", "--quiet", "main");
@@ -96,11 +136,17 @@ describe("merge-on-green", () => {
     rmSync(r.root, { recursive: true, force: true });
   });
 
-  // What main gains while the PR's checks run.
+  // What main gains while the PR's checks run: the PR's file, away from its line.
   function mainGains(message: string) {
-    const sha = r.commit(`${message}\n`, message);
+    const sha = r.commit([message, "middle", "bottom"], message);
     r.git("push", "--quiet", "origin", "main");
     return sha;
+  }
+
+  // What main gains on the PR's own line.
+  function mainConflicts() {
+    r.commit(["top", "middle", "main's line"], "Conflicting");
+    r.git("push", "--quiet", "origin", "main");
   }
 
   it("merges when main has gained nothing in the PR's files", () => {
@@ -153,6 +199,106 @@ describe("merge-on-green", () => {
 
     expect(result.status).toBe(1);
     expect(result.stderr).toContain(`${other} Smoke check`);
+  });
+
+  it("refuses when the PR conflicts with main, without offering --overlap-read", () => {
+    mainConflicts();
+
+    const result = r.merge();
+
+    expect(result.status).toBe(1);
+    expect(result.stdout).not.toContain("MERGED");
+    expect(result.stderr).toContain("conflicts with main");
+    expect(result.stderr).toContain("Merge origin/main in");
+    expect(result.stderr).not.toContain("--overlap-read");
+  });
+
+  it("stops waiting as soon as main comes to conflict, with checks still pending", () => {
+    writeFileSync(r.checksExit, "8\n");
+    writeFileSync(r.onSleep, CONFLICTING_PUSH);
+
+    const result = r.merge();
+
+    expect(result.status).toBe(1);
+    expect(result.stdout).not.toContain("MERGED");
+    expect(result.stderr).toContain("conflicts with main");
+    expect(r.sleepCount()).toBe(1);
+  });
+
+  it("names the conflict when a conflicting push never gets checks", () => {
+    writeFileSync(r.rollup, "0\n");
+    mainConflicts();
+
+    const result = r.merge();
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("conflicts with main");
+    expect(result.stderr).not.toContain("no checks reported");
+    expect(r.sleepCount()).toBe(0);
+  });
+
+  it("names the conflict when main comes to conflict as the last check passes", () => {
+    writeFileSync(r.onChecks, CONFLICTING_PUSH);
+
+    const result = r.merge();
+
+    expect(result.status).toBe(1);
+    expect(result.stdout).not.toContain("MERGED");
+    expect(result.stderr).toContain("conflicts with main");
+    expect(result.stderr).not.toContain("--overlap-read");
+  });
+
+  it("doesn't call it a conflict when the PR's head can't be fetched", () => {
+    r.fakeGh("0".repeat(40));
+
+    const result = r.merge();
+
+    expect(result.status).not.toBe(0);
+    expect(result.stdout).not.toContain("MERGED");
+    expect(result.stderr).not.toContain("conflicts with main");
+  });
+
+  it("waits for pending checks, then merges", () => {
+    writeFileSync(r.checksExit, "8\n");
+    writeFileSync(r.onSleep, `echo 0 > "${r.checksExit}"\n`);
+
+    const result = r.merge();
+
+    expect(result.stdout).toContain("MERGED");
+    expect(result.status).toBe(0);
+    expect(r.sleepCount()).toBe(1);
+  });
+
+  it("refuses, showing the checks, when one fails", () => {
+    writeFileSync(r.checksExit, "1\n");
+
+    const result = r.merge();
+
+    expect(result.status).toBe(1);
+    expect(result.stdout).not.toContain("MERGED");
+    expect(result.stdout).toContain("Build static site");
+  });
+
+  it("waits for checks to appear after a push", () => {
+    writeFileSync(r.rollup, "0\n");
+    writeFileSync(r.onSleep, `echo 3 > "${r.rollup}"\n`);
+
+    const result = r.merge();
+
+    expect(result.stdout).toContain("MERGED");
+    expect(result.status).toBe(0);
+    expect(r.sleepCount()).toBe(1);
+  });
+
+  it("refuses when checks never appear", () => {
+    writeFileSync(r.rollup, "0\n");
+
+    const result = r.merge();
+
+    expect(result.status).toBe(1);
+    expect(result.stdout).not.toContain("MERGED");
+    expect(result.stderr).toContain("no checks reported");
+    expect(r.sleepCount()).toBe(30);
   });
 
   it.each([[["--overlap-read"]], [["--overlap", "abc"]]])(
