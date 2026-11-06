@@ -33,8 +33,39 @@ jobs:
       - run: npm run typecheck
       - run: npm run test:coverage
 
+  # Is this pull request only docs/** and top-level Markdown, which nothing built
+  # or browser-tested reads? The jobs below skip if so. They skip by `if:`,
+  # not the workflow's `paths-ignore`, because main's required checks count a
+  # skipped job as passed and wait forever for one that never starts.
+  #
+  # `!cancelled()` runs them when this job was skipped (a push to main) or
+  # failed, so a broken check costs time, not coverage. The jobs after the
+  # build name its result too, because the default condition would skip them
+  # for this job, however far back in `needs` it sits (#171 showed it), and a
+  # skipped job passes as a required check. scripts/workflows.test.ts holds each
+  # job to this.
+  docs-only:
+    name: Docs-only check
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    outputs:
+      docs-only: ${{ steps.check.outputs.docs-only }}
+    steps:
+      # A pull request checks out as its merge into the base, so the first
+      # parent is the base, and each push is judged on the whole PR.
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 2
+      - id: check
+        run: |
+          result=$(scripts/docs-only.sh HEAD^1 HEAD)
+          echo "docs-only=$result" >> "$GITHUB_OUTPUT"
+
   build:
     name: Build static site
+    needs: docs-only
+    if: >-
+      !cancelled() && needs.docs-only.outputs.docs-only != 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -51,6 +82,8 @@ jobs:
   e2e:
     name: Playwright (Chromium, WebKit)
     needs: build
+    if: >-
+      !cancelled() && needs.build.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -75,8 +108,10 @@ jobs:
   # test. Its specs read the built site.
   dropped-tests:
     name: Dropped browser tests
-    if: github.event_name == 'pull_request'
     needs: build
+    if: >-
+      !cancelled() && needs.build.result == 'success' &&
+      github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -95,6 +130,9 @@ jobs:
   # if any route can't export with no Episodes, then the coming-soon journey.
   e2e-empty-feed:
     name: Playwright, empty feed (Chromium, WebKit)
+    needs: docs-only
+    if: >-
+      !cancelled() && needs.docs-only.outputs.docs-only != 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -116,6 +154,8 @@ jobs:
   lighthouse:
     name: Lighthouse (mobile budget)
     needs: build
+    if: >-
+      !cancelled() && needs.build.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5

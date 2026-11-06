@@ -36,6 +36,6 @@ export function deployReport(runUrl: string, log: string): string {
       ? failures.map((failure) => `- ${failure}`).join("\n")
       : "No failure is named: read the run's logs.",
     "",
-    "A failed smoke check means the new build is already live, so check the site. Any earlier failure means the last good deploy stays live. Close this once a deploy passes again.",
+    "A failed smoke check comes after `wrangler deploy`, so check what the site is serving. Any earlier failure means the last good deploy stays live. Close this once a deploy passes again.",
   ].join("\n");
 }

@@ -38,7 +38,7 @@ describe("deployReport", () => {
     const report = deployReport(RUN, "Z Smoke check failed: home_page_serves");
     expect(report).toContain(`The production deploy failed: ${RUN}`);
     expect(report).toContain("- Smoke check failed: home_page_serves");
-    expect(report).toContain("already live");
+    expect(report).toContain("what the site is serving");
     expect(report).toContain("last good deploy stays live");
   });
 

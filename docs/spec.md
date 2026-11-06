@@ -145,7 +145,7 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
   - a manual **Run workflow** button
 - The site publishes a small build manifest (the identity of the newest Episode it was built with, and which Episodes it had Transcripts and Episode Listen links for), which the feed check compares against.
 - If the feed can't be reached or fails validation, the build fails and the last good deploy stays live. A failed workflow emails the repo owner.
-- Every pull request gets a Cloudflare **preview URL**, posted on the pull request.
+- Every pull request gets a Cloudflare **preview URL**, posted on the pull request, except one changing only `docs/**` or top-level Markdown, which has no page to preview.
 - Review and merge policy:
   - **Logic and infrastructure** pull requests are merged by the agent only when CI is fully green and an automated `code-review` pass finds nothing serious.
   - **Visual** pull requests wait for a Jester's approval of the preview URL.
@@ -343,7 +343,7 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
   5. **Components**: rendered with React Testing Library, asserting what a user sees, including every missing-input and empty state, with jest-axe accessibility assertions.
   6. **Built site**: Playwright drives the exported site.
   7. **Build manifest** (`src/lib/build-manifest.ts`): a value in, a `BuildManifest` or a descriptive error out. The feed check reads the live site's manifest through it.
-- **Layers in CI on every pull request**:
+- **Layers in CI on every pull request** (one changing only `docs/**` or top-level Markdown runs Jest alone):
   - **Jest** with React Testing Library and jest-axe. Coverage thresholds (about 90% of lines) on logic modules.
   - **Playwright** on Chromium and WebKit at phone and desktop sizes, with axe scans of every page. Firefox runs nightly.
   - **Lighthouse CI** with a mobile performance budget, so oversized images or scripts fail the pull request.
