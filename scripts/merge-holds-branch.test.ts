@@ -23,7 +23,14 @@ for (const name of Object.keys(env)) {
 function repo() {
   const dir = mkdtempSync(join(tmpdir(), "merge-holds-branch-"));
   const git = (...args: string[]) =>
-    execFileSync("git", args, { cwd: dir, env, encoding: "utf8" }).trim();
+    execFileSync("git", args, {
+      cwd: dir,
+      env,
+      encoding: "utf8",
+      // `merge --squash` reports on stderr, whatever --quiet says, and the
+      // pre-commit hook would print it.
+      stdio: ["ignore", "pipe", "pipe"],
+    }).trim();
   git("init", "--quiet", "--initial-branch=main");
   // Refuse to go on anywhere but the throwaway repo.
   if (!git("rev-parse", "--absolute-git-dir").startsWith(realpathSync(dir))) {

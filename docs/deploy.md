@@ -23,7 +23,7 @@ Release day doesn't wait for the schedule: the **Run workflow** button deploys w
 
 Wrangler can't upload a preview version to a Worker that doesn't exist yet. If no Worker exists, the preview job first creates it with a blank placeholder page on workers.dev, with no custom domains. That happens once, before the first production deploy.
 
-If the build fails, the workflow stops before `wrangler deploy`, so the last good deploy stays live. A failed run emails the repo owner through GitHub's default Actions notifications.
+If the build fails, the workflow stops before `wrangler deploy`, so the last good deploy stays live. A failed run emails the repo owner through GitHub's default Actions notifications, and a failed **Deploy to production** job also opens an issue titled "Production deploy is failing", or comments on the one still open (`deploy-report.yml`). `npm run report-deploy -- --dry-run` prints what it would say for the newest failed one. A failed smoke check means the new build is already live.
 
 ## What production serves
 
@@ -53,7 +53,7 @@ Copy awaiting the Jesters' words is marked `draft: true` in `src/content/`. Prev
 
 `npm run launch-check` lists every draft that would go live (it reads the live feed, as production does) and exits 1 while any remain. It lists the drafts of the checkout it runs from, and warns first if that checkout is behind `origin/main`. It must pass before launch (#30).
 
-The smoke check confirms the manifest shows the commit just deployed, the home page serves, `www` redirects, and `http://` redirects to `https://`.
+`scripts/smoke-check.sh` lists what the smoke check confirms on production after each deploy.
 
 ## Submit endpoint
 

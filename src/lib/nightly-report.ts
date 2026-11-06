@@ -3,7 +3,7 @@
 
 export const NIGHTLY_ISSUE_TITLE = "Nightly is failing";
 
-const TERMINAL_COLOR = /\u001b\[[0-9;]*m/g;
+export const TERMINAL_COLOR = /\u001b\[[0-9;]*m/g;
 // The heading of Playwright's closing summary. Failures' details come first,
 // and they name a test that passed on a retry too, so only this is read.
 const FAILED_HEADING = /\s\d+ failed\s*$/;

@@ -1,0 +1,64 @@
+name: Deploy report
+
+# A failed production deploy reaches only the repo owner's email, and nobody
+# reads a red run in the Actions tab, so it opens an issue, or adds to the one
+# still open. See scripts/report-deploy.ts. It runs after Deploy rather than
+# inside it so that a pull request can preview the report without Deploy's
+# secrets.
+
+on:
+  workflow_run:
+    workflows: [Deploy]
+    types: [completed]
+    branches: [main]
+  # A pull request that changes the failure report runs it, writing nothing.
+  pull_request:
+    paths:
+      - .github/workflows/deploy-report.yml
+      - scripts/report-deploy.ts
+      - scripts/failed-run.ts
+      - src/lib/deploy-report.ts
+      - src/lib/nightly-report.ts
+
+permissions:
+  contents: read
+
+jobs:
+  report:
+    name: Report the failure
+    if: >-
+      github.event_name == 'workflow_run' &&
+      github.event.workflow_run.conclusion == 'failure'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
+      - run: npm run report-deploy -- "$RUN_ID"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+
+  report-preview:
+    name: Preview the failure report
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      issues: read
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
+      - run: npm run --silent report-deploy -- --dry-run > deploy-report.txt
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deploy-report
+          path: deploy-report.txt
+          retention-days: 7
+          if-no-files-found: error

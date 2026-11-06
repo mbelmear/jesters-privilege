@@ -3,7 +3,7 @@
 # fresh origin/main, with dependencies installed. A bare `git worktree add` has
 # no node_modules, so npx would quietly run some other copy of a tool.
 # The worktree is ../jp-<issue>; a non-number such as retro-17 works too. If npm
-# ci fails, cd in and rerun it rather than running this script again.
+# ci or typegen fails, cd in and rerun it rather than running this script again.
 # Usage: npm run worktree -- <issue> <branch>
 set -euo pipefail
 
@@ -16,6 +16,7 @@ dir="$(dirname "$main")/jp-$issue"
 
 git fetch --quiet origin
 git worktree add "$dir" -b "$branch" origin/main
-(cd "$dir" && npm ci --no-audit --no-fund)
+# typegen writes the route types, so a bare tsc agrees with npm run typecheck.
+(cd "$dir" && npm ci --no-audit --no-fund && npx next typegen)
 
 echo "Ready: $dir on $branch"

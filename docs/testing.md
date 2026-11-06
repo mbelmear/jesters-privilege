@@ -94,7 +94,7 @@ A scheduled Nightly that fails opens an issue titled "Nightly is failing", or co
 
 On each pull request, `npm run dropped-tests` adds a `::warning::` naming any browser test the base has and the head doesn't. It needs `out/`; a rename shows as a drop too.
 
-When a run fails in CI, the HTML report is attached to the workflow run as `playwright-report`. A failure that won't reproduce locally is usually timing: `gh run download <run-id> -n playwright-report`, then run `npm run trace -- data/<hash>.zip` on the failing test's trace (one zip per failure; the first line printed names the test, its browser and its viewport, or says it names no test, as when the test opened no browser) to see what loaded around the failing step. It prints one timeline: each step and page action with its start, end and error, console messages, page errors, failed requests, and screencast frames with the gap since the last one. Each frame row gives the path of its image, unzipped to a temporary folder, so open the frames around the failing step.
+When a run fails in CI, the HTML report is attached to the workflow run as `playwright-report`. A failure that won't reproduce locally is usually timing: `gh run download <run-id> -n playwright-report -D playwright-report/<run-id>` (git ignores the folder, and a download refuses to overwrite an earlier one), then run `npm run trace -- playwright-report/<run-id>/data/<hash>.zip` on the failing test's trace (one zip per failure; the first line printed names the test, its browser and its viewport, or says it names no test, as when the test opened no browser) to see what loaded around the failing step. It prints one timeline: each step and page action with its start, end and error, console messages, page errors, failed requests, and screencast frames with the gap since the last one. Each frame row gives the path of its image, unzipped to a temporary folder, so open the frames around the failing step.
 
 ## Performance (Lighthouse CI)
 
@@ -171,6 +171,8 @@ When a page is added, add its URL to `ci.collect.url` in `lighthouserc.json`. If
 
 Every image the content shows is a file under `public/` with its pixel size in the content record; `npm run images` (run by `build` and `dev`, `scripts/images.ts`) makes its responsive set in `public/images/`, AVIF and WebP at each width next/image asks for, plus a portrait crop around a painting's focal point for phones. It fails the build if a file is missing or its size doesn't match the content. A phone downloads 30 to 60 KB per painting at Lighthouse's emulated screen and up to about 150 KB on a 3× screen; the encoding settings in `src/lib/phone-budget.ts` are tuned for that, and the build fails if a painting's AVIF a phone would fetch passes 180 KB, naming every painting over it at once. "Phone" there means one held upright, up to 430 CSS px wide; turned sideways it gets the desktop layout and larger files, which aren't checked.
 
+Making them takes about 13 minutes on a CI runner, so every job that builds restores them first (`.github/actions/image-cache`). `scripts/images.ts` stamps each folder with what made it (the source, the plan, sharp's version, and the contents of `scripts/images.ts` and `src/lib/phone-budget.ts`) and remakes and rechecks any that differ, so an old cache can't ship a stale image or slip past the phone budget.
+
 To add a public-domain painting, `npm run add-painting -- "<File:… or its Commons page address>" <slug> [--detail l,t,w,h]` saves it to `public/paintings/` and prints its entry for `src/content/paintings.ts`; the build fails until its alt text, medium, collection, and focal point are written. It also writes a copy ruled in tenths to read the focal point off, and estimates what a phone would download. A sheet or print whose paper grain or hatching puts it over budget can keep just its subject with `--detail left,top,width,height` (fractions of the file), as #25 did for Holbein's Folly; the entry records the cut.
 
 ## Fonts
@@ -199,11 +201,15 @@ The pre-commit hook formats staged files with Prettier, so `format:check` only f
 
 `lint:workflows` (`scripts/actionlint.sh`) downloads the actionlint release CI pins, once, into `node_modules/.cache`. It runs shellcheck on every `run:` block only when shellcheck is installed, and says so when it isn't; CI's image has it. Nothing runs it on commit (#44), so run it before pushing a workflow change.
 
+`lint:shell` runs shellcheck on `scripts/*.sh`, which actionlint doesn't reach, failing on warnings and errors: its `info` notes here are single-quoted scripts and functions it can't see called. CI's **Lint workflows** job runs it; locally it needs shellcheck installed.
+
+A shell script with logic is tested from a `scripts/*.test.ts` that runs it for real: `merge-holds-branch.test.ts` against a throwaway repo, `smoke-check.test.ts` with stubs for `curl` and `sleep` on the `PATH`.
+
 ## In CI
 
 `.github/workflows/ci.yml` runs on every pull request and every push to `main`:
 
-1. **Lint workflows** (actionlint, as `npm run lint:workflows`)
+1. **Lint workflows** (actionlint, as `npm run lint:workflows`, and shellcheck, as `npm run lint:shell`)
 2. **Format, lint, typecheck, unit tests**, with coverage
 3. **Build static site**, shared with the jobs that test it
 4. **Playwright** on Chromium and WebKit, with browsers cached between runs, and the coming-soon journey against its own build from the empty feed

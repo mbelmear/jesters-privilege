@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # List open agent tickets whose blockers are all closed: the ones ready to start.
 # Parent issues (the spec) are skipped; their sub-issues are the work.
+# GitHub's listing lags a label change, so a ticket labelled moments ago can be
+# missing for a few seconds.
 # Usage: npm run ready
 set -euo pipefail
 
