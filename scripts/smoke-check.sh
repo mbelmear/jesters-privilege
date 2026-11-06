@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Check that production is serving the deploy we just made.
+# Check that production is serving the deploy we just made, run from the
+# checkout that built it.
 #
 # The new version can take a few seconds to reach every Cloudflare location, so
 # each check retries for up to a minute before failing the workflow.
@@ -11,17 +12,28 @@ commit="${1:?Usage: scripts/smoke-check.sh <commit-sha>}"
 domain="jestersprivilegepodcast.com"
 site="https://$domain"
 
+fail() {
+  echo "Smoke check failed: $*" >&2
+  exit 1
+}
+
 retry() {
   for _ in $(seq 12); do
     if "$@"; then return 0; fi
     sleep 5
   done
-  echo "Smoke check failed: $*" >&2
-  return 1
+  fail "$@"
 }
 
-manifest_has_commit() {
-  curl -fsS "$site/build-manifest.json" | grep -q "\"commit\":\"$commit\""
+# Comparing with a build that lost its commit would pass on any deploy of it.
+built_manifest_names_commit() {
+  grep -q "\"commit\":\"$commit\"" out/build-manifest.json
+}
+
+# The whole manifest, since a deploy the feed check started rebuilds the commit
+# already live: only its newest Episode, Listen links, or Transcripts differ.
+live_manifest_matches_build() {
+  [ "$(curl -fsS "$site/build-manifest.json")" = "$(cat out/build-manifest.json)" ]
 }
 
 home_page_serves() {
@@ -43,7 +55,8 @@ http_redirects_to_https() {
     "http://$domain/x?y=1")" = "301 $site/x?y=1" ]
 }
 
-retry manifest_has_commit
+built_manifest_names_commit || fail built_manifest_names_commit
+retry live_manifest_matches_build
 retry home_page_serves
 retry home_page_counts_visits
 retry www_redirects_to_apex
