@@ -235,7 +235,7 @@ export function summariseTrace(files: TraceFile[], imageDir: string): string {
         text: timelineRow(`${ms(step.start - began)} - ${end}`, "step", text),
       };
     });
-  const rowWithoutEnds = moments.map(({ time, kind, text, atLeast }) => {
+  const momentRows = moments.map(({ time, kind, text, atLeast }) => {
     const when = atLeast
       ? `>${Math.round(time - began)}`.padStart(6)
       : ms(time - began);
@@ -266,7 +266,7 @@ export function summariseTrace(files: TraceFile[], imageDir: string): string {
     `${title ?? "This trace names no test"}${context && ` (${context})`}`,
     `Times are ms since the trace began. A time marked > is a lower bound: Playwright records none for a test's own error. Frames are under ${imageDir}.`,
     "",
-    ...[...stepRows, ...rowWithoutEnds, ...frameRows]
+    ...[...stepRows, ...momentRows, ...frameRows]
       .sort((a, b) => a.time - b.time)
       .map(({ text }) => text),
   ].join("\n");
