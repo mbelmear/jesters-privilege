@@ -20,16 +20,21 @@ import {
 
 const PUBLIC = "public";
 const OUT = path.join(PUBLIC, IMAGE_ROOT);
+// What decides an image's files and whether they pass the phone budget. CI
+// restores older images (.github/actions/image-cache), and a set whose stamp
+// matches is neither remade nor rechecked, so an edit here must change the stamp.
+const MAKERS = ["scripts/images.ts", "src/lib/phone-budget.ts"];
 
 async function main() {
   const images = findImages(content);
+  const makers = await Promise.all(MAKERS.map((file) => readFile(file)));
   const folders = new Set<string>();
   let made = 0;
   const overBudget: string[] = [];
   for (const image of images) {
     const folder = path.join(PUBLIC, imageFolder(image.src));
     folders.add(folder);
-    const result = await makeSet(image, folder);
+    const result = await makeSet(image, folder, makers);
     if (result !== "unchanged") made += 1;
     if (typeof result === "object") overBudget.push(result.overBudget);
   }
@@ -52,7 +57,8 @@ async function main() {
 // budget gets no stamp, so the next run checks it again.
 async function makeSet(
   image: FoundImage,
-  folder: string
+  folder: string,
+  makers: readonly Buffer[]
 ): Promise<"unchanged" | "made" | { overBudget: string }> {
   const file = path.join(PUBLIC, image.src);
   const source = await readFile(file).catch(() => {
@@ -67,9 +73,10 @@ async function makeSet(
     );
   }
   const variants = planImage(image);
-  const stamp = createHash("sha256")
-    .update(source)
-    .update(JSON.stringify({ variants, ENCODING, sharp: sharp.versions }))
+  const hash = createHash("sha256").update(source);
+  for (const maker of makers) hash.update(maker);
+  const stamp = hash
+    .update(JSON.stringify({ variants, sharp: sharp.versions }))
     .digest("hex");
   const stampFile = path.join(folder, "stamp");
   if ((await readFile(stampFile, "utf8").catch(() => "")) === stamp) {

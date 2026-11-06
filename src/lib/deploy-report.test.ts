@@ -1,4 +1,5 @@
-import { deployFailures, deployReport } from "./deploy-report";
+import { readFileSync } from "node:fs";
+import { DEPLOY_JOB, deployFailures, deployReport } from "./deploy-report";
 
 const RUN = "https://github.com/mbelmear/jesters-privilege/actions/runs/1";
 
@@ -43,5 +44,17 @@ describe("deployReport", () => {
 
   it("says so when the logs name no failure", () => {
     expect(deployReport(RUN, "")).toContain("No failure is named");
+  });
+});
+
+// A rename in either file would silently stop every report.
+describe("the workflows it reads", () => {
+  it("names the production job and workflow as they are written", () => {
+    const deploy = readFileSync(".github/workflows/deploy.yml", "utf8");
+    expect(deploy).toContain(`name: ${DEPLOY_JOB}\n`);
+    expect(deploy).toMatch(/^name: Deploy$/m);
+    expect(
+      readFileSync(".github/workflows/deploy-report.yml", "utf8")
+    ).toContain("workflows: [Deploy]");
   });
 });

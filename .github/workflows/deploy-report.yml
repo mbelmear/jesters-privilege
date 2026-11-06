@@ -18,6 +18,7 @@ on:
       - scripts/report-deploy.ts
       - scripts/failed-run.ts
       - src/lib/deploy-report.ts
+      - src/lib/nightly-report.ts
 
 permissions:
   contents: read

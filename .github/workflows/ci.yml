@@ -19,7 +19,7 @@ jobs:
       - uses: docker://rhysd/actionlint:1.7.12
         with:
           args: -color
-      # The image has shellcheck; actionlint's covers only the run: blocks above.
+      # The runner has shellcheck; actionlint's covers only workflows' run: blocks.
       - run: npm run --silent lint:shell
 
   check:

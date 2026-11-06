@@ -1,10 +1,11 @@
 // What a failed production deploy tells the tracker (scripts/report-deploy.ts).
-// A failed smoke check names the check; anything else names the step's error.
+// It names a failed smoke check or a step's `::error::`. Other steps, such as the
+// build, fail with only an exit code, so the report sends the reader to the run.
 import { TERMINAL_COLOR } from "./nightly-report";
 
 export const DEPLOY_ISSUE_TITLE = "Production deploy is failing";
-// The job in deploy.yml this reports on. The feed check fails on a passing
-// outage at Spreaker and fixes itself, so it stays out of the tracker.
+// The job in deploy.yml this reports on. The feed check runs again within 2
+// hours and nothing deploys while it's red, so it stays out of the tracker.
 export const DEPLOY_JOB = "Deploy to production";
 
 const SMOKE_CHECK = /Smoke check failed: \S+/;

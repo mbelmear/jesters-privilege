@@ -171,7 +171,7 @@ When a page is added, add its URL to `ci.collect.url` in `lighthouserc.json`. If
 
 Every image the content shows is a file under `public/` with its pixel size in the content record; `npm run images` (run by `build` and `dev`, `scripts/images.ts`) makes its responsive set in `public/images/`, AVIF and WebP at each width next/image asks for, plus a portrait crop around a painting's focal point for phones. It fails the build if a file is missing or its size doesn't match the content. A phone downloads 30 to 60 KB per painting at Lighthouse's emulated screen and up to about 150 KB on a 3× screen; the encoding settings in `src/lib/phone-budget.ts` are tuned for that, and the build fails if a painting's AVIF a phone would fetch passes 180 KB, naming every painting over it at once. "Phone" there means one held upright, up to 430 CSS px wide; turned sideways it gets the desktop layout and larger files, which aren't checked.
 
-Making them takes about 13 minutes on a CI runner, so every job that builds restores them first (`.github/actions/image-cache`). `scripts/images.ts` stamps each folder with what made it (the source, the plan, the encoding, and sharp's version) and remakes any that differ, so an old cache can't ship a stale image.
+Making them takes about 13 minutes on a CI runner, so every job that builds restores them first (`.github/actions/image-cache`). `scripts/images.ts` stamps each folder with what made it (the source, the plan, sharp's version, and the contents of `scripts/images.ts` and `src/lib/phone-budget.ts`) and remakes and rechecks any that differ, so an old cache can't ship a stale image or slip past the phone budget.
 
 To add a public-domain painting, `npm run add-painting -- "<File:… or its Commons page address>" <slug> [--detail l,t,w,h]` saves it to `public/paintings/` and prints its entry for `src/content/paintings.ts`; the build fails until its alt text, medium, collection, and focal point are written. It also writes a copy ruled in tenths to read the focal point off, and estimates what a phone would download. A sheet or print whose paper grain or hatching puts it over budget can keep just its subject with `--detail left,top,width,height` (fractions of the file), as #25 did for Holbein's Folly; the entry records the cut.
 
@@ -209,7 +209,7 @@ A shell script with logic is tested from a `scripts/*.test.ts` that runs it for 
 
 `.github/workflows/ci.yml` runs on every pull request and every push to `main`:
 
-1. **Lint workflows** (actionlint, as `npm run lint:workflows`)
+1. **Lint workflows** (actionlint, as `npm run lint:workflows`, and shellcheck, as `npm run lint:shell`)
 2. **Format, lint, typecheck, unit tests**, with coverage
 3. **Build static site**, shared with the jobs that test it
 4. **Playwright** on Chromium and WebKit, with browsers cached between runs, and the coming-soon journey against its own build from the empty feed
