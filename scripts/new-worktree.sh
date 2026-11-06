@@ -4,6 +4,7 @@
 # no node_modules, so npx would quietly run some other copy of a tool.
 # The worktree is ../jp-<issue>; a non-number such as retro-17 works too. If npm
 # ci or typegen fails, cd in and rerun it rather than running this script again.
+# It also says when the session's loaded rules are older than the worktree's.
 # Usage: npm run worktree -- <issue> <branch>
 set -euo pipefail
 
@@ -20,3 +21,7 @@ git worktree add "$dir" -b "$branch" origin/main
 (cd "$dir" && npm ci --no-audit --no-fund && npx next typegen)
 
 echo "Ready: $dir on $branch"
+# A session loads the main checkout's AGENTS.md, which can lag origin/main.
+if ! cmp -s "$main/AGENTS.md" "$dir/AGENTS.md"; then
+  echo "AGENTS.md differs from the main checkout's, the one this session loaded: read $dir/AGENTS.md before starting."
+fi
