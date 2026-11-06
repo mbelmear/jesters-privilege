@@ -1,0 +1,17 @@
+{"version":10,"type":"context-options","origin":"library","browserName":"webkit","playwrightVersion":"1.64.1","options":{"viewport":{"width":1280,"height":720},"reducedMotion":"reduce"},"platform":"linux","wallTime":1793337505148,"monotonicTime":1080,"sdkLanguage":"javascript","title":"styleguide.spec.ts:82 › Reduced motion › Motion animations finish at once"}
+{"type":"before","callId":"a@3","startTime":1105,"class":"Frame","method":"goto","params":{"url":"/styleguide","waitUntil":"load"}}
+{"type":"log","callId":"a@3","time":1110,"message":"navigating to \"http://localhost:4173/styleguide\", waiting until \"load\""}
+{"type":"screencast-frame","pageId":"page@1","file":"screencast/page@1-100.jpeg","width":2560,"height":1440,"timestamp":1200,"frameSwapWallTime":1793337505807}
+{"type":"frame-snapshot","snapshot":{"callId":"a@3","phase":"before","pageId":"page@1","frameId":"frame@1","frameUrl":"about:blank","html":["HTML",{}],"viewport":{"width":1280,"height":720},"timestamp":1210,"wallTime":1793337505547,"collectionTime":2,"resourceOverrides":[],"isMainFrame":true}}
+{"type":"screencast-frame","pageId":"page@1","file":"screencast/page@1-200.jpeg","width":2560,"height":1440,"timestamp":1300,"frameSwapWallTime":1793337505907}
+{"type":"after","callId":"a@3","endTime":1400,"result":{"response":"<Response>"}}
+{"type":"console","messageType":"error","text":"Failed to load resource: the server responded with a status of 404 (Not Found)","args":[],"location":{"url":"http://localhost:4173/episodes","lineNumber":0,"columnNumber":0},"time":1460,"pageId":"page@1"}
+{"type":"console","messageType":"log","text":"hello 1","args":[{"preview":"hello","value":"hello"},{"preview":"1","value":1}],"location":{"url":"http://localhost:4173/","lineNumber":0,"columnNumber":35},"time":1470,"pageId":"page@1"}
+{"type":"event","time":1480,"class":"BrowserContext","method":"pageError","params":{"error":{"error":{"message":"boom","stack":"TypeError: boom\n    at http://localhost:4173/:1:152","name":"TypeError"}},"location":{"url":"http://localhost:4173/","line":0,"column":151}},"pageId":"page@1"}
+{"type":"event","time":1490,"class":"BrowserContext","method":"pageError","params":{"error":{"error":{"message":"plain","stack":"","name":""}},"location":{"url":"http://localhost:4173/","line":0,"column":145}},"pageId":"page@1"}
+{"type":"event","time":1495,"class":"BrowserContext","method":"page","params":{"pageId":"page@1"}}
+{"type":"before","callId":"a@8","startTime":1700,"class":"BrowserContext","method":"newPage","params":{}}
+{"type":"after","callId":"a@8","endTime":1750,"result":{"page":"<Page>"}}
+{"type":"before","callId":"a@7","startTime":2005,"class":"Frame","method":"click","params":{"selector":"internal:role=button[name=\"Replay\"i]","strict":true}}
+{"type":"input","callId":"a@7","point":{"x":565.53,"y":396},"box":{"x":532,"y":378,"width":66,"height":36}}
+{"type":"screencast-frame","pageId":"page@1","file":"screencast/page@1-1100.jpeg","width":2560,"height":1440,"timestamp":2193,"frameSwapWallTime":1793337506800}
