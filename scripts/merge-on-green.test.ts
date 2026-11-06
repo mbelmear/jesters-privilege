@@ -16,6 +16,13 @@ import { delimiter, join } from "node:path";
 
 const script = join(__dirname, "merge-on-green.sh");
 
+// Run by a stand-in, in the clone, while the script waits.
+const CONFLICTING_PUSH = `printf 'top\\nmiddle\\nmain line\\n' > deploy.md
+git add -A
+git commit --quiet -m Conflicting
+git push --quiet origin main
+`;
+
 // Git run from a hook inherits GIT_DIR and GIT_INDEX_FILE, which point every
 // git command at the real repository (merge-holds-branch.test.ts tells that
 // story), so every git here drops them.
@@ -28,7 +35,7 @@ for (const name of Object.keys(env)) {
 // PR's head as reviewed and its checks as passed, unless the test's `rollup` or
 // `checksExit` say otherwise, and a merge prints a line rather than happening.
 // sleep only counts, then runs what the test put in `onSleep`: what happens
-// during the wait.
+// during the wait. gh pr checks runs `onChecks` the same way.
 function repo() {
   const root = mkdtempSync(join(tmpdir(), "merge-on-green-"));
   const origin = join(root, "origin.git");
@@ -37,6 +44,7 @@ function repo() {
   const rollup = join(root, "rollup");
   const checksExit = join(root, "checks-exit");
   const onSleep = join(root, "on-sleep");
+  const onChecks = join(root, "on-checks");
   const sleeps = join(root, "sleeps");
   execFileSync(
     "git",
@@ -67,6 +75,7 @@ function repo() {
     writeFileSync(rollup, "3\n");
     writeFileSync(checksExit, "0\n");
     writeFileSync(onSleep, "");
+    writeFileSync(onChecks, "");
     writeFileSync(sleeps, "");
     writeFileSync(
       join(bin, "gh"),
@@ -75,7 +84,7 @@ case "$*" in
   *headRefOid*) echo ${head} ;;
   *statusCheckRollup*) cat "${rollup}" ;;
   *comments*) echo "Code review: passed at ${head}" ;;
-  "pr checks"*) echo "Build static site	pass"; exit "$(cat "${checksExit}")" ;;
+  "pr checks"*) . "${onChecks}"; echo "Build static site	pass"; exit "$(cat "${checksExit}")" ;;
   "pr merge"*) echo MERGED ;;
 esac
 `
@@ -102,6 +111,7 @@ esac
     rollup,
     checksExit,
     onSleep,
+    onChecks,
     git,
     commit,
     fakeGh,
@@ -202,14 +212,7 @@ describe("merge-on-green", () => {
 
   it("stops waiting as soon as main comes to conflict, with checks still pending", () => {
     writeFileSync(r.checksExit, "8\n");
-    writeFileSync(
-      r.onSleep,
-      `printf 'top\nmiddle\nmain line\n' > deploy.md
-git add -A
-git commit --quiet -m Conflicting
-git push --quiet origin main
-`
-    );
+    writeFileSync(r.onSleep, CONFLICTING_PUSH);
 
     const result = r.merge();
 
@@ -217,6 +220,39 @@ git push --quiet origin main
     expect(result.stdout).not.toContain("MERGED");
     expect(result.stderr).toContain("conflicts with main");
     expect(r.sleepCount()).toBe(1);
+  });
+
+  it("names the conflict when a conflicting push never gets checks", () => {
+    writeFileSync(r.rollup, "0\n");
+    mainConflicts();
+
+    const result = r.merge();
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("conflicts with main");
+    expect(result.stderr).not.toContain("no checks reported");
+    expect(r.sleepCount()).toBe(0);
+  });
+
+  it("names the conflict when main comes to conflict as the last check passes", () => {
+    writeFileSync(r.onChecks, CONFLICTING_PUSH);
+
+    const result = r.merge();
+
+    expect(result.status).toBe(1);
+    expect(result.stdout).not.toContain("MERGED");
+    expect(result.stderr).toContain("conflicts with main");
+    expect(result.stderr).not.toContain("--overlap-read");
+  });
+
+  it("doesn't call it a conflict when the PR's head can't be fetched", () => {
+    r.fakeGh("0".repeat(40));
+
+    const result = r.merge();
+
+    expect(result.status).not.toBe(0);
+    expect(result.stdout).not.toContain("MERGED");
+    expect(result.stderr).not.toContain("conflicts with main");
   });
 
   it("waits for pending checks, then merges", () => {

@@ -34,20 +34,11 @@ head=$(gh pr view "$pr" --json headRefOid --jq .headRefOid)
 
 "$(dirname "$0")/require-review.sh" "$pr" "$head" merge
 
-# Checks appear a few seconds after a push.
-for _ in $(seq 1 30); do
-  [[ $(gh pr view "$pr" --json statusCheckRollup --jq '.statusCheckRollup | length') -gt 0 ]] && break
-  sleep 5
-done
-if [[ $(gh pr view "$pr" --json statusCheckRollup --jq '.statusCheckRollup | length') -eq 0 ]]; then
-  echo "Refusing to merge #$pr: no checks reported yet. Wait for CI to start, then retry." >&2
-  exit 1
-fi
-
 refuse_if_conflicting() {
   # A failed fetch leaves the last one's answer, and the next round tries again.
   git fetch --quiet origin main "$head" || true
-  # Exit 1 is a conflict; anything higher means git couldn't tell.
+  # With a commit missing, merge-tree's exit 1 wouldn't mean a conflict.
+  git cat-file -e "$head^{commit}" 2>/dev/null && git cat-file -e origin/main 2>/dev/null || return 0
   local merged=0
   git merge-tree --write-tree --quiet origin/main "$head" >/dev/null || merged=$?
   if ((merged == 1)); then
@@ -55,6 +46,20 @@ refuse_if_conflicting() {
     exit 1
   fi
 }
+
+# Checks appear a few seconds after a push, but never on a head pushed while it
+# conflicts: GitHub skips pull_request runs then (docs/testing.md, Conflict watch).
+checks=0
+for _ in $(seq 1 30); do
+  refuse_if_conflicting
+  checks=$(gh pr view "$pr" --json statusCheckRollup --jq '.statusCheckRollup | length')
+  ((checks > 0)) && break
+  sleep 5
+done
+if ((checks == 0)); then
+  echo "Refusing to merge #$pr: no checks reported yet. Wait for CI to start, then retry." >&2
+  exit 1
+fi
 
 # gh pr checks exits 8 while checks are pending, and 1 once any has failed.
 while true; do
@@ -69,6 +74,7 @@ echo "$results"
 
 # After the wait, since that's when main moves.
 git fetch --quiet origin main "$head"
+refuse_if_conflicting
 overlap=$("$(dirname "$0")/main-overlap.sh" "$head" origin/main)
 newest=${overlap%%$'\n'*}
 newest=${newest%% *}
