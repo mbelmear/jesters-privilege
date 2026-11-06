@@ -30,15 +30,11 @@ for _ in $(seq 1 30); do
 done
 failed=0
 gh pr checks "$pr" --watch >/dev/null 2>&1 || failed=1
-checks=$({ gh pr checks "$pr" || true; } | cut -f1,2)
-echo "$checks"
+{ gh pr checks "$pr" || true; } | cut -f1,2
 
 # The deploy workflow edits one comment per PR, naming the commit it built.
 preview=""
-waits=30
-# A skipped job posts nothing (a docs-only PR, a fork's, Dependabot's).
-grep -q $'^Preview URL\tskipping$' <<<"$checks" && waits=0
-for ((i = 0; i < waits; i++)); do
+for _ in $(seq 1 30); do
   comment=$(gh pr view "$pr" --json comments \
     --jq '[.comments[].body | select(startswith("<!-- deploy-preview -->"))] | last // ""')
   if [[ "$comment" == *"Built from $head"* ]]; then

@@ -81,6 +81,7 @@ describe("docs-only", () => {
     ["a workflow", [".github/workflows/ci.yml"]],
     ["a folder whose name starts with docs", ["docs-site/index.html"]],
     ["a top-level file that isn't Markdown", ["package.json"]],
+    ["a name git quotes, which is simply a full run", ["docs/café.md"]],
   ])("says false for %s", (_, files) => {
     const head = r.commit(...files);
 

@@ -1,6 +1,6 @@
 # Testing
 
-The site is tested in three layers. Each runs locally with one command and in CI on every pull request but a docs-only one (In CI, below). Tests are written first, using the `tdd` skill; the seams they sit at are listed under "Testing Decisions" in `docs/spec.md`.
+The site is tested in three layers. Each runs locally with one command. In CI, unit tests run on every pull request, and the other two on every one but a docs-only one (In CI, below). Tests are written first, using the `tdd` skill; the seams they sit at are listed under "Testing Decisions" in `docs/spec.md`.
 
 ## Before you start
 
@@ -216,7 +216,7 @@ A shell script with logic is tested from a `scripts/*.test.ts` that runs it for 
 5. **Lighthouse** with the mobile budget
 6. **Dropped browser tests**, on pull requests only: warns, without failing, when one removes or renames a browser test
 
-A pull request changing only `docs/**` or top-level `*.md` is **docs-only** (`scripts/docs-only.sh`): it runs jobs 1 and 2 and skips the rest, along with its preview, because no build step or browser test reads those files. The whole PR is judged on each push, and a PR that also changes anything else runs every job. Main's required checks count a skipped job as passed, and `npm run merge` merges it as usual. A push to `main` always runs every job. If a test or build step starts reading a file under `docs/` or top-level Markdown, change the script's patterns with it.
+A pull request changing only `docs/**` or top-level `*.md` is **docs-only** (`scripts/docs-only.sh`): it runs jobs 1 and 2 and skips the rest, along with its preview, because no build step or browser test reads those files. The whole PR is judged on each push, and a PR that also changes anything else runs every job. Main's required checks count a skipped job as passed, and `npm run merge` merges it as usual. A push to `main` always builds and runs the browser and Lighthouse jobs. If a test or build step starts reading a file under `docs/` or top-level Markdown, change the script's patterns with it; until then, a docs-only PR that breaks it shows up only as that push's failed CI run.
 
 `.github/workflows/nightly.yml` runs the Playwright suite on Firefox every night, and can be started by hand from the Actions tab. A pull request that changes its failure report previews it against the newest failed run.
 
