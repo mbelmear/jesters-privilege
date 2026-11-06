@@ -144,26 +144,24 @@ describe("summariseTrace", () => {
   });
 
   describe("when a trace lacks part of its first line", () => {
-    const firstLine = (...contexts: object[]) =>
+    const firstLine = (context: object, name = "1-trace.trace") =>
       rows([
         {
-          name: "1-trace.trace",
-          text: contexts
-            .map((context) =>
-              JSON.stringify({
-                type: "context-options",
-                browserName: "",
-                options: {},
-                monotonicTime: 0,
-                ...context,
-              })
-            )
-            .join("\n"),
+          name,
+          text: JSON.stringify({
+            type: "context-options",
+            browserName: "",
+            options: {},
+            monotonicTime: 0,
+            ...context,
+          }),
         },
       ])[0];
 
     it("says it names no test when the test opened no browser", () => {
-      expect(firstLine({})).toBe("This trace names no test");
+      expect(firstLine({ origin: "testRunner" }, "test.trace")).toBe(
+        "This trace names no test"
+      );
     });
 
     it("still gives the browser of a trace that names no test", () => {
