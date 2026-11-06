@@ -63,7 +63,6 @@ Reviewers skip these; the rules below are the ones that need judgement.
 ## Comments and docs
 
 - **A claim that nothing checks or handles something names the ticket that would change it, or says what the visitor or Jester sees instead.** The claim goes stale without its own line changing. #156 wrote that no deploy step notices Always Use HTTPS being off, from its ticket's history; #155 had added that check by the time it merged, and `docs/deploy.md` contradicted itself.
-
 - **A note explaining why a state a visitor should see doesn't appear names the ticket that investigates it.** A surprise written up as how things behave stops anyone questioning it: the screenshot script's header said Chromium "shows Play again" when audio fails before it starts, which was the bug #29 fixed.
 
 ## Workflows

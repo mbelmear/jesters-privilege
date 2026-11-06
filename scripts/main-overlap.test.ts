@@ -2,7 +2,13 @@
  * @jest-environment node
  */
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdtempSync, realpathSync, writeFileSync } from "node:fs";
+import {
+  mkdtempSync,
+  realpathSync,
+  renameSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -40,12 +46,19 @@ function repo() {
       env,
       encoding: "utf8",
     });
-  return { git, commit, overlap };
+  return { dir, git, commit, overlap };
 }
 
 describe("main-overlap", () => {
+  let r: ReturnType<typeof repo>;
+  beforeEach(() => {
+    r = repo();
+  });
+  afterEach(() => {
+    rmSync(r.dir, { recursive: true, force: true });
+  });
+
   it("lists a commit main gained since the branch point in a file the PR changes", () => {
-    const r = repo();
     r.commit("deploy.md", "start\n", "start");
     r.git("checkout", "--quiet", "-b", "ticket");
     const head = r.commit("deploy.md", "the PR's line\n", "the PR");
@@ -59,7 +72,6 @@ describe("main-overlap", () => {
   });
 
   it("leaves out a commit that touches only other files", () => {
-    const r = repo();
     r.commit("deploy.md", "start\n", "start");
     r.git("checkout", "--quiet", "-b", "ticket");
     const head = r.commit("deploy.md", "the PR's line\n", "the PR");
@@ -70,12 +82,10 @@ describe("main-overlap", () => {
   });
 
   it("leaves out a commit the branch has already merged in", () => {
-    const r = repo();
     r.commit("deploy.md", "start\n", "start");
     r.git("checkout", "--quiet", "-b", "ticket");
     r.commit("deploy.md", "the PR's line\n", "the PR");
     r.git("checkout", "--quiet", "main");
-    r.commit("other.md", "main's line\n", "Elsewhere");
     r.commit("deploy.md", "main's line\n", "Smoke check");
     r.git("checkout", "--quiet", "ticket");
     r.git("merge", "--quiet", "--strategy-option=ours", "--no-edit", "main");
@@ -85,7 +95,6 @@ describe("main-overlap", () => {
   });
 
   it("finds a file whose name git would otherwise quote", () => {
-    const r = repo();
     r.commit("café.md", "start\n", "start");
     r.git("checkout", "--quiet", "-b", "ticket");
     const head = r.commit("café.md", "the PR's line\n", "the PR");
@@ -93,5 +102,18 @@ describe("main-overlap", () => {
     const other = r.commit("café.md", "main's line\n", "Accented");
 
     expect(r.overlap(head).stdout).toBe(`${other} Accented\n`);
+  });
+
+  it("lists a commit to the old name of a file the PR renames", () => {
+    r.commit("deploy.md", "a\nb\nc\nd\ne\n", "start");
+    r.git("checkout", "--quiet", "-b", "ticket");
+    renameSync(join(r.dir, "deploy.md"), join(r.dir, "ops.md"));
+    r.git("add", "-A");
+    r.git("commit", "--quiet", "-m", "the PR");
+    const head = r.git("rev-parse", "HEAD");
+    r.git("checkout", "--quiet", "main");
+    const other = r.commit("deploy.md", "a\nb\nc\nd\nmain's\n", "Smoke check");
+
+    expect(r.overlap(head).stdout).toBe(`${other} Smoke check\n`);
   });
 });
