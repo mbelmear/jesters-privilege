@@ -13,6 +13,7 @@
     "start": "next start",
     "lint": "next typegen && eslint",
     "lint:workflows": "scripts/actionlint.sh",
+    "lint:shell": "shellcheck scripts/*.sh",
     "prepare": "husky",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "jest",
@@ -42,6 +43,7 @@
     "pr-status": "scripts/pr-status.sh",
     "fonts": "tsx scripts/fonts.ts",
     "report-nightly": "tsx scripts/report-nightly.ts",
+    "report-deploy": "tsx scripts/report-deploy.ts",
     "dropped-tests": "tsx scripts/dropped-tests.ts"
   },
   "dependencies": {

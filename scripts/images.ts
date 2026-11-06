@@ -69,7 +69,7 @@ async function makeSet(
   const variants = planImage(image);
   const stamp = createHash("sha256")
     .update(source)
-    .update(JSON.stringify({ variants, ENCODING }))
+    .update(JSON.stringify({ variants, ENCODING, sharp: sharp.versions }))
     .digest("hex");
   const stampFile = path.join(folder, "stamp");
   if ((await readFile(stampFile, "utf8").catch(() => "")) === stamp) {

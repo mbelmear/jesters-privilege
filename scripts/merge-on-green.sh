@@ -28,3 +28,4 @@ fi
 
 gh pr checks "$pr" --watch --fail-fast
 gh pr merge "$pr" --squash --delete-branch --match-head-commit "$head"
+echo "Merged #$pr, and the production deploy has started; a failure opens an issue. Next: npm run worktree-done -- $pr"
