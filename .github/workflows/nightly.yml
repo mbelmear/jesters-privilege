@@ -10,6 +10,7 @@ on:
     paths:
       - .github/workflows/nightly.yml
       - scripts/report-nightly.ts
+      - scripts/failed-run.ts
       - src/lib/nightly-report.ts
 
 permissions:
@@ -23,6 +24,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: ./.github/actions/setup
+      - uses: ./.github/actions/image-cache
       - run: npm run build
       - uses: ./.github/actions/playwright-browsers
         with:

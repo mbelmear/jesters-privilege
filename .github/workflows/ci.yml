@@ -19,6 +19,8 @@ jobs:
       - uses: docker://rhysd/actionlint:1.7.12
         with:
           args: -color
+      # The runner has shellcheck; actionlint's covers only workflows' run: blocks.
+      - run: npm run --silent lint:shell
 
   check:
     name: Format, lint, typecheck, unit tests
@@ -37,6 +39,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: ./.github/actions/setup
+      - uses: ./.github/actions/image-cache
       - run: npm run build
       - uses: actions/upload-artifact@v4
         with:
@@ -96,6 +99,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: ./.github/actions/setup
+      - uses: ./.github/actions/image-cache
       - run: npm run build:empty-feed
       - uses: ./.github/actions/playwright-browsers
         with:

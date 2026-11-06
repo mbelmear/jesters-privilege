@@ -1,0 +1,14 @@
+name: Image cache
+description: Restore the images an earlier build made, which take about 13 minutes to make again.
+runs:
+  using: composite
+  steps:
+    # scripts/images.ts stamps each image's folder with what made it and remakes
+    # any that differ, so restoring an older cache is safe: `restore-keys` takes
+    # the newest, and the key only decides when a new one is saved. GitHub scopes
+    # caches by branch, so production never restores one a pull request saved.
+    - uses: actions/cache@v4
+      with:
+        path: public/images
+        key: images-${{ hashFiles('public/**', '!public/images/**', 'scripts/images.ts', 'src/lib/images.ts', 'src/lib/phone-budget.ts', 'src/content/**', 'package-lock.json') }}
+        restore-keys: images-
