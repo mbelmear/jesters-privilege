@@ -201,7 +201,7 @@ The pre-commit hook formats staged files with Prettier, so `format:check` only f
 
 `lint:workflows` (`scripts/actionlint.sh`) downloads the actionlint release CI pins, once, into `node_modules/.cache`. It runs shellcheck on every `run:` block only when shellcheck is installed, and says so when it isn't; CI's image has it. Nothing runs it on commit (#44), so run it before pushing a workflow change.
 
-`lint:shell` runs shellcheck on `scripts/*.sh`, which actionlint doesn't reach, failing on warnings and errors: its `info` notes here are single-quoted scripts and functions it can't see called. CI's **Lint workflows** job runs it; locally it needs shellcheck installed.
+`lint:shell` runs shellcheck on `scripts/*.sh`, which actionlint doesn't reach, failing on warnings and errors: its `info` notes here are single-quoted scripts and functions it can't see called. It downloads the shellcheck release `scripts/shellcheck.sh` pins, once, into `node_modules/.cache`. CI's **Lint workflows** job runs it.
 
 A shell script with logic is tested from a `scripts/*.test.ts` that runs it for real: `merge-holds-branch.test.ts` against a throwaway repo, `smoke-check.test.ts` with stubs for `curl` and `sleep` on the `PATH`.
 
@@ -234,6 +234,6 @@ npm run review-passed -- <pr-number> <reviewed full SHA>   # after review finds 
 npm run merge -- <pr-number>
 ```
 
-It waits for pending checks, stops at the first failure, and refuses a pull request with no checks or whose latest passed review names an older commit. Once the checks pass, it also refuses if main has meanwhile gained commits in the PR's files (`scripts/main-overlap.sh`), listing them; read them, then rerun with the `--overlap-read <sha>` it prints, or merge `origin/main` in and review again. Each push after a review needs its own review first (`AGENTS.md`, Merging). `scripts/merge-on-green.sh` has the details.
+It waits for pending checks, stops at the first failure, and refuses a pull request with no checks or whose latest passed review names an older commit. Once the checks pass, it also refuses if main has meanwhile gained commits in the PR's files (`scripts/main-overlap.sh`), listing them with the command that shows their changes; read them, then rerun with the `--overlap-read <sha>` it prints, or merge `origin/main` in and review again. Each push after a review needs its own review first (`AGENTS.md`, Merging). `scripts/merge-on-green.sh` has the details.
 
 Visual pull requests go to a Jester instead: `npm run mark-ready -- <pr-number>` refuses a head without a passed review, as `merge` does (`scripts/require-review.sh`), then labels it once its checks and preview pass. See `AGENTS.md`.
