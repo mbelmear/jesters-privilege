@@ -94,7 +94,7 @@ A scheduled Nightly that fails opens an issue titled "Nightly is failing", or co
 
 On each pull request, `npm run dropped-tests` adds a `::warning::` naming any browser test the base has and the head doesn't. It needs `out/`; a rename shows as a drop too.
 
-When a run fails in CI, the HTML report is attached to the workflow run as `playwright-report`. A failure that won't reproduce locally is usually timing: `gh run download <run-id> -n playwright-report`, then run `npm run trace -- data/<hash>.zip` on the failing test's trace (one zip per failure; the first line printed names the test, its browser and its viewport) to see what loaded around the failing step. It prints one timeline: each step and page action with its start, end and error, console messages, page errors, failed requests, and screencast frames with the gap since the last one. Each frame row gives the path of its image, unzipped to a temporary folder, so open the frames around the failing step.
+When a run fails in CI, the HTML report is attached to the workflow run as `playwright-report`. A failure that won't reproduce locally is usually timing: `gh run download <run-id> -n playwright-report`, then run `npm run trace -- data/<hash>.zip` on the failing test's trace (one zip per failure; the first line printed names the test, its browser and its viewport, or says the test opened no browser) to see what loaded around the failing step. It prints one timeline: each step and page action with its start, end and error, console messages, page errors, failed requests, and screencast frames with the gap since the last one. Each frame row gives the path of its image, unzipped to a temporary folder, so open the frames around the failing step.
 
 ## Performance (Lighthouse CI)
 

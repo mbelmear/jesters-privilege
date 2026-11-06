@@ -143,6 +143,29 @@ describe("summariseTrace", () => {
     );
   });
 
+  it("says so when the test opened no browser, as then nothing names it", () => {
+    const output = rows([
+      {
+        name: "test.trace",
+        text: '{"type":"context-options","origin":"testRunner","browserName":"","options":{},"monotonicTime":0}',
+      },
+    ]);
+    expect(output[0]).toBe(
+      "This trace names no test: the test opened no browser."
+    );
+  });
+
+  it("refuses a viewport with no height", () => {
+    expect(() =>
+      rows([
+        {
+          name: "1-trace.trace",
+          text: '{"type":"context-options","browserName":"webkit","options":{"viewport":{"width":1280}},"monotonicTime":0}',
+        },
+      ])
+    ).toThrow("1-trace.trace:1 has no number at height");
+  });
+
   it("refuses a line that isn't JSON, naming it", () => {
     expect(() =>
       rows([{ name: "1-trace.trace", text: "{}\nnot json" }])

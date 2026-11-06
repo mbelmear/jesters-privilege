@@ -93,8 +93,12 @@ function ms(time: number): string {
   return String(Math.round(time)).padStart(6);
 }
 
-const describeRow = (kind: string, text: string) =>
-  `${kind.padEnd(10)}  ${text}`;
+const timelineRow = (when: string, kind: string, text: string) =>
+  `${when}  ${kind.padEnd(10)}  ${text}`;
+
+// A row with no end time, its columns lined up with a step's.
+const momentRow = (when: string, kind: string, text: string) =>
+  timelineRow(`${when}         `, kind, text);
 
 function depth(step: Step, steps: Map<string, Step>): number {
   const parent = step.parentId && steps.get(step.parentId);
@@ -135,10 +139,10 @@ export function summariseTrace(files: TraceFile[], imageDir: string): string {
         beginnings.push(clock);
         title ??= optionalString(field(line.event, "title"));
         browser ||= stringAt(line, "browserName");
-        const size = field(field(line.event, "options"), "viewport");
-        const width = field(size, "width");
-        if (typeof width === "number") {
-          viewport = `${width}x${String(field(size, "height"))}`;
+        // A context can have no viewport, when a test turns it off.
+        const size = nested(nested(line, "options"), "viewport");
+        if (size.event) {
+          viewport = `${numberAt(size, "width")}x${numberAt(size, "height")}`;
         }
       } else if (type === "before") {
         clock = numberAt(line, "startTime");
@@ -228,14 +232,14 @@ export function summariseTrace(files: TraceFile[], imageDir: string): string {
       const text = `${indent}${step.title}${unfinished}${error}`;
       return {
         time: step.start,
-        text: `${ms(step.start - began)} - ${end}  ${describeRow("step", text)}`,
+        text: timelineRow(`${ms(step.start - began)} - ${end}`, "step", text),
       };
     });
   const momentRows = moments.map(({ time, kind, text, atLeast }) => {
     const when = atLeast
       ? `>${Math.round(time - began)}`.padStart(6)
       : ms(time - began);
-    return { time, text: `${when}           ${describeRow(kind, text)}` };
+    return { time, text: momentRow(when, kind, text) };
   });
   const lastFrame = new Map<string, number>();
   const frameRows = frames
@@ -247,13 +251,20 @@ export function summariseTrace(files: TraceFile[], imageDir: string): string {
         previous === undefined ? "" : ` (+${Math.round(time - previous)} ms)`;
       return {
         time,
-        text: `${ms(time - began)}           ${describeRow("frame", `${join(imageDir, file)}${gap}`)}`,
+        text: momentRow(
+          ms(time - began),
+          "frame",
+          `${join(imageDir, file)}${gap}`
+        ),
       };
     });
 
+  // A test that opens no browser leaves only test.trace, which names nothing.
   const context = [browser, viewport].filter(Boolean).join(", ");
   return [
-    `${title ?? "Untitled trace"} (${context})`,
+    title
+      ? `${title}${context && ` (${context})`}`
+      : "This trace names no test: the test opened no browser.",
     `Times are ms since the trace began. A time marked > is a lower bound: Playwright records none for a test's own error. Frames are under ${imageDir}.`,
     "",
     ...[...stepRows, ...momentRows, ...frameRows]
