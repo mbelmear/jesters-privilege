@@ -338,10 +338,11 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
 - **Seams**, chosen as high as possible:
   1. **Feed**: raw feed text in, validated Episodes or a descriptive error out. Fixture-driven, covering every validation rule, sanitizing, and ordering.
   2. **Transcript**: WebVTT text in, timestamped paragraphs out. Making one sits behind an injected transcriber, so the workflow's logic is tested without Whisper.
-  3. **Submit handler**: a request (plus an injected sender and Turnstile verifier) in, a response and the sent email out.
+  3. **Submit handler**: a request (plus an injected sender and Turnstile verifier) in, a response and the sent email out. It lives in the Worker (`src/worker/index.ts`), which routes `POST /api/submit` to `handleSubmit` (`src/lib/submit.ts`) and supplies the real sender and verifier.
   4. **Player store**: commands in, state out, against a fake audio adapter. Covers resume, finished marks, speed, and seeking from the Transcript.
   5. **Components**: rendered with React Testing Library, asserting what a user sees, including every missing-input and empty state, with jest-axe accessibility assertions.
   6. **Built site**: Playwright drives the exported site.
+  7. **Build manifest** (`src/lib/build-manifest.ts`): a value in, a `BuildManifest` or a descriptive error out. The feed check reads the live site's manifest through it.
 - **Layers in CI on every pull request** (one changing only `docs/**` or top-level Markdown runs Jest alone):
   - **Jest** with React Testing Library and jest-axe. Coverage thresholds (about 90% of lines) on logic modules.
   - **Playwright** on Chromium and WebKit at phone and desktop sizes, with axe scans of every page. Firefox runs nightly.
@@ -357,7 +358,12 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
   - the 404 page
   - the zero-Episodes state with an empty-feed fixture
   - closing the player stops audio, and Play afterwards resumes
-- **Prior art**: none yet; this is a new repo. The first tests of each layer set the patterns.
+- **Prior art**, the tests to copy for each layer:
+  - **Jest, logic modules**: `src/lib/feed.test.ts` and `src/lib/player.test.ts`.
+  - **Jest, Worker**: `src/worker/index.test.ts`, with a fake environment for its bindings.
+  - **Jest, components**: `src/components/site-header.test.tsx`.
+  - **Playwright**: `e2e/player.spec.ts`.
+  - **Lighthouse CI**: the budgets in `lighthouserc.json`, with `src/lib/lighthouse.test.ts` checking their URL patterns.
 
 ## Out of Scope
 
