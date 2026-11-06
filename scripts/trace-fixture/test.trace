@@ -1,0 +1,15 @@
+{"version":10,"type":"context-options","origin":"testRunner","browserName":"","playwrightVersion":"1.64.1","options":{},"platform":"linux","wallTime":1793337504994,"monotonicTime":1000,"sdkLanguage":"javascript","testTimeout":30000,"annotations":[]}
+{"type":"before","callId":"a@1","startTime":1010,"class":"Test","method":"hook","title":"Before Hooks","params":{},"stack":[]}
+{"type":"before","callId":"a@2","parentId":"a@1","startTime":1020,"class":"Test","method":"fixture","title":"Fixture \"page\"","params":{},"stack":[]}
+{"type":"after","callId":"a@2","endTime":1030,"annotations":[]}
+{"type":"after","callId":"a@1","endTime":1040,"annotations":[]}
+{"type":"before","callId":"a@3","startTime":1100,"class":"Test","method":"pw:api","title":"Navigate","subtitle":"/styleguide","params":{"url":"/styleguide"},"stack":[{"file":"/e2e/styleguide.spec.ts","line":83,"column":16}]}
+{"type":"after","callId":"a@3","endTime":1500,"annotations":[]}
+{"type":"before","callId":"a@4","startTime":1600,"class":"Test","method":"expect","title":"Expect \"poll toBe\"","params":{},"stack":[{"file":"/e2e/styleguide.spec.ts","line":102,"column":69}]}
+{"type":"before","callId":"a@5","parentId":"a@4","startTime":1610,"class":"Test","method":"expect","title":"Expect \"toBe\"","params":{},"stack":[{"file":"/e2e/styleguide.spec.ts","line":102,"column":5}]}
+{"type":"after","callId":"a@5","endTime":1620,"annotations":[],"error":{"name":"","message":"Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: \u001b[32m0\u001b[39m\nReceived: \u001b[31m-471\u001b[39m\n"}}
+{"type":"after","callId":"a@4","endTime":1900,"annotations":[]}
+{"type":"before","callId":"a@6","parentId":"a@1","startTime":1950,"class":"Test","method":"fixture","title":"Fixture \"viewport\"","params":{},"stack":[{"file":"project#webkit-desktop","line":1,"column":1}],"group":"configuration"}
+{"type":"after","callId":"a@6","endTime":1960,"annotations":[]}
+{"type":"before","callId":"a@7","startTime":2000,"class":"Test","method":"pw:api","title":"Click","subtitle":"getByRole('button', { name: 'Replay' })","params":{"locator":"getByRole('button', { name: 'Replay' })"},"stack":[{"file":"/e2e/styleguide.spec.ts","line":99,"column":16}]}
+{"type":"error","message":"\u001b[31mTest timeout of 30000ms exceeded.\u001b[39m","stack":[]}

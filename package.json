@@ -27,6 +27,7 @@
     "lighthouse:compare": "scripts/lighthouse-compare.sh",
     "lighthouse:spread": "scripts/lighthouse-spread.sh",
     "screenshots": "tsx scripts/screenshots.ts",
+    "trace": "tsx scripts/trace-summary.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "merge": "scripts/merge-on-green.sh",
