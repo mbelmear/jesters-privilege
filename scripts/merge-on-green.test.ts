@@ -119,6 +119,9 @@ describe("merge-on-green", () => {
     expect(result.stdout).not.toContain("MERGED");
     expect(result.stderr).toContain(`${other} Smoke check`);
     expect(result.stderr).toContain(`--overlap-read ${other}`);
+    expect(result.stderr).toMatch(
+      /scripts\/main-overlap\.sh --patch \w+ origin\/main/
+    );
   });
 
   it("merges once the newest such commit is passed as read", () => {

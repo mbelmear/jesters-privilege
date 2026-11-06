@@ -2,12 +2,19 @@
 # Commits main gained since a pull request branched off, in files it changes:
 # one "<full sha> <subject>" a line, newest first, nothing if there are none.
 # They merge cleanly and can still contradict what was reviewed. Used by
-# merge-on-green.sh, which holds the merge until someone has read them.
-# Usage: scripts/main-overlap.sh <pr head> <main>
+# merge-on-green.sh, which holds the merge until someone has read them; --patch
+# shows what those commits changed in those files, to read them by.
+# Usage: scripts/main-overlap.sh [--patch] <pr head> <main>
 set -euo pipefail
 
+log_output=(--format='%H %s')
+if [[ ${1:-} == --patch ]]; then
+  log_output=(--patch)
+  shift
+fi
+
 if (($# != 2)); then
-  echo "Usage: main-overlap.sh <pr head> <main>" >&2
+  echo "Usage: main-overlap.sh [--patch] <pr head> <main>" >&2
   exit 2
 fi
 head=$1
@@ -22,4 +29,4 @@ while IFS= read -r file; do files+=("$file"); done \
   < <(git -c core.quotePath=false diff --no-renames --name-only "$base" "$head")
 ((${#files[@]})) || exit 0
 
-git log --format='%H %s' "$base..$main" -- "${files[@]}"
+git log "${log_output[@]}" "$base..$main" -- "${files[@]}"

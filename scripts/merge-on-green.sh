@@ -49,7 +49,8 @@ if [[ -n "$overlap" && "$newest" != "$overlap_read" ]]; then
   {
     echo "Refusing to merge #$pr: main has gained commits in its files since it branched:"
     echo "$overlap"
-    echo "Read them against the PR. If the PR still holds:  npm run merge -- $pr --overlap-read $newest"
+    echo "Read them against the PR:  scripts/main-overlap.sh --patch $head origin/main"
+    echo "If the PR still holds:  npm run merge -- $pr --overlap-read $newest"
     echo "If it needs changing, merge origin/main in, fix it, and review again."
   } >&2
   exit 1
