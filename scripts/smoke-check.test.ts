@@ -2,15 +2,16 @@
  * @jest-environment node
  */
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 const script = join(__dirname, "smoke-check.sh");
 const COMMIT = "abc1234";
+const BUILT_MANIFEST = `{"newestEpisodeGuid":"episode-2","commit":"${COMMIT}"}`;
 
 const HEALTHY = {
-  STUB_MANIFEST: `{"newestEpisodeGuid":null,"commit":"${COMMIT}"}`,
+  STUB_MANIFEST: BUILT_MANIFEST,
   STUB_HOME: `<h1>Hi</h1><script src="https://static.cloudflareinsights.com/beacon.min.js"></script>`,
   STUB_WWW: "301 https://jestersprivilegepodcast.com/about?x=1",
   STUB_HTTP: "301 https://jestersprivilegepodcast.com/x?y=1",
@@ -46,6 +47,8 @@ beforeEach(() => {
   writeFileSync(join(dir, "curl"), CURL, { mode: 0o755 });
   // The retries' waits add up to a minute.
   writeFileSync(join(dir, "sleep"), "#!/usr/bin/env bash\n", { mode: 0o755 });
+  mkdirSync(join(dir, "out"));
+  writeFileSync(join(dir, "out", "build-manifest.json"), BUILT_MANIFEST);
 });
 
 afterEach(() => {
@@ -54,6 +57,7 @@ afterEach(() => {
 
 function smokeCheck(production: Partial<typeof HEALTHY> = {}) {
   return spawnSync("bash", [script, COMMIT], {
+    cwd: dir,
     encoding: "utf8",
     env: {
       ...process.env,
@@ -78,7 +82,43 @@ describe("smoke-check", () => {
 
   it("gives up after a minute of the previous deploy", () => {
     const result = smokeCheck({ STUB_STALE_CALLS: "12" });
-    expect(result.stderr).toContain("Smoke check failed: manifest_has_commit");
+    expect(result.stderr).toContain(
+      "Smoke check failed: live_manifest_matches_build"
+    );
+    expect(result.status).toBe(1);
+  });
+
+  // A deploy the feed check started rebuilds the commit already live.
+  it("fails when production still names the previous newest Episode", () => {
+    const result = smokeCheck({
+      STUB_MANIFEST: `{"newestEpisodeGuid":"episode-1","commit":"${COMMIT}"}`,
+    });
+    expect(result.stderr).toContain(
+      "Smoke check failed: live_manifest_matches_build"
+    );
+    expect(result.status).toBe(1);
+  });
+
+  it("fails at once when the build doesn't name the commit", () => {
+    writeFileSync(
+      join(dir, "out", "build-manifest.json"),
+      '{"newestEpisodeGuid":"episode-2","commit":null}'
+    );
+    const result = smokeCheck({
+      STUB_MANIFEST: '{"newestEpisodeGuid":"episode-2","commit":null}',
+    });
+    expect(result.stderr).toContain(
+      "Smoke check failed: built_manifest_names_commit"
+    );
+    expect(result.status).toBe(1);
+  });
+
+  it("fails at once when there is no built manifest", () => {
+    rmSync(join(dir, "out", "build-manifest.json"));
+    const result = smokeCheck();
+    expect(result.stderr).toContain(
+      "Smoke check failed: built_manifest_names_commit"
+    );
     expect(result.status).toBe(1);
   });
 
