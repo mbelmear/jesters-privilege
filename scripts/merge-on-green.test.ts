@@ -140,4 +140,25 @@ describe("merge-on-green", () => {
     expect(result.stdout).not.toContain("MERGED");
     expect(result.stderr).toContain(`--overlap-read ${newer}`);
   });
+
+  it("sees what main gained elsewhere, not just this clone's last fetch", () => {
+    const before = r.git("rev-parse", "origin/main");
+    const other = mainGains("Smoke check");
+    r.git("update-ref", "refs/remotes/origin/main", before);
+
+    const result = r.merge();
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain(`${other} Smoke check`);
+  });
+
+  it.each([[["--overlap-read"]], [["--overlap", "abc"]]])(
+    "refuses a malformed call: %j",
+    (args) => {
+      const result = r.merge(...args);
+
+      expect(result.status).toBe(2);
+      expect(result.stdout).not.toContain("MERGED");
+    }
+  );
 });
