@@ -116,4 +116,24 @@ describe("main-overlap", () => {
 
     expect(r.overlap(head).stdout).toBe(`${other} Smoke check\n`);
   });
+
+  it("--patch shows those commits' changes to the PR's files alone", () => {
+    r.commit("shared", "start\n", "Start");
+    r.git("checkout", "--quiet", "-b", "pr");
+    const head = r.commit("shared", "start\npr's\n", "PR");
+    r.git("checkout", "--quiet", "main");
+    writeFileSync(join(r.dir, "elsewhere"), "main's other file\n");
+    r.commit("shared", "main's line\nstart\n", "Smoke check");
+
+    const result = spawnSync("bash", [script, "--patch", head, "main"], {
+      cwd: r.dir,
+      env,
+      encoding: "utf8",
+    });
+
+    expect(result.stdout).toContain("Smoke check");
+    expect(result.stdout).toContain("+main's line");
+    expect(result.stdout).not.toContain("main's other file");
+    expect(result.status).toBe(0);
+  });
 });
