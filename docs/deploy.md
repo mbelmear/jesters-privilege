@@ -79,13 +79,23 @@ It answers with JSON the page uses for its success and failure states:
 | 502    | `{ "ok": false, "error": "verification" }`         | Turnstile couldn't be reached                    |
 | 502    | `{ "ok": false, "error": "delivery" }`             | The email couldn't be sent                       |
 
-Each Submission becomes one email from `submit@` to the show's Gmail, `thejestersprivilegepodcast@gmail.com`, through the `SUBMISSION_EMAIL` send_email binding. That address must be a verified destination address in **Email Routing › Destination addresses**: the binding only delivers to verified destinations, so it can't send to the `hello@` alias. The email is the only copy; nothing is stored. Failures are logged to the Worker's logs.
+Each Submission becomes one email from `submit@` to the show's Gmail, `thejestersprivilegepodcast@gmail.com`, through the `SUBMISSION_EMAIL` send_email binding. That address must be a verified destination (Account prerequisites): the binding only delivers to verified destinations, so it can't send to the `hello@` alias. The email is the only copy; nothing is stored. Failures are logged to the Worker's logs.
 
 To try it locally, put Turnstile's always-pass test secret in `.dev.vars` (`TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA`) and run `npx wrangler dev` with a built `out/`; the email binding is simulated and prints the message.
 
+## Account prerequisites
+
+These Cloudflare settings can only be made by a human in the dashboard. Nothing in the repo sets them, and an agent can't see them without Cloudflare access.
+
+- **workers.dev subdomain**: `jestersprivilege`, under **Workers & Pages › Your subdomain**. Without one, the first preview run fails. Previews are served from it, at `pr-<n>-jesters-privilege.jestersprivilege.workers.dev`.
+- **Always Use HTTPS**: on, under **SSL/TLS › Edge Certificates** for `jestersprivilegepodcast.com`. Off, `http://` addresses aren't redirected to `https://`, and no build or deploy step fails to say so.
+- **Email Routing destination**: `thejestersprivilegepodcast@gmail.com` added and verified, under **Compute › Email Service › Email Routing › Destination Addresses**. The Worker's `send_email` binding can only deliver to a verified destination, and Submissions fail with `delivery` until it is.
+- **Routing rule**: `hello@jestersprivilegepodcast.com` forwards to that Gmail, and to no other inbox (decided 2026-11-03, #113), under **Compute › Email Service › Email Routing › Routing Rules**. Cloudflare keeps a rule disabled until its destination is verified.
+- **API token permissions**: `CLOUDFLARE_API_TOKEN` needs **Account › Workers Scripts: Edit** and, for the custom domains, **Zone › Workers Routes: Edit** and **Zone › DNS: Edit** on `jestersprivilegepodcast.com`.
+
 ## Credentials
 
-GitHub secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. `TURNSTILE_SITE_KEY` goes into the Speak Freely page as it is built; every other build (CI, local) uses Turnstile's always-pass test key, and a deploy whose secret is missing fails its build (`src/lib/turnstile.ts`). The production build also sets `SITE_ENV=production` and passes the repository variable (not secret) `WEB_ANALYTICS_TOKEN`, the site's token from **Cloudflare dashboard › Analytics & Logs › Web Analytics** for `jestersprivilegepodcast.com` (manual setup, the JS snippet's `token`). Only that build loads the beacon, so previews and CI never count visits, and it fails without the token (`src/lib/analytics.ts`). The widget's hostnames in the Turnstile dashboard must include `jestersprivilegepodcast.com` and `workers.dev`, or previews can't pass it. `TURNSTILE_SECRET_KEY` is uploaded as a Worker secret with every deploy and preview version (`--secrets-file`). The token needs **Account › Workers Scripts: Edit** and, for the custom domains, **Zone › Workers Routes: Edit** and **Zone › DNS: Edit** on `jestersprivilegepodcast.com`.
+GitHub secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. `TURNSTILE_SITE_KEY` goes into the Speak Freely page as it is built; every other build (CI, local) uses Turnstile's always-pass test key, and a deploy whose secret is missing fails its build (`src/lib/turnstile.ts`). The production build also sets `SITE_ENV=production` and passes the repository variable (not secret) `WEB_ANALYTICS_TOKEN`, the site's token from **Cloudflare dashboard › Analytics & Logs › Web Analytics** for `jestersprivilegepodcast.com` (manual setup, the JS snippet's `token`). Only that build loads the beacon, so previews and CI never count visits, and it fails without the token (`src/lib/analytics.ts`). The widget's hostnames in the Turnstile dashboard must include `jestersprivilegepodcast.com` and `workers.dev`, or previews can't pass it. `TURNSTILE_SECRET_KEY` is uploaded as a Worker secret with every deploy and preview version (`--secrets-file`). The token's permissions are under Account prerequisites.
 
 ## Rolling back
 

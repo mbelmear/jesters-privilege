@@ -377,7 +377,7 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
   - the Jesters' approval of the rewritten Fools' Gallery copy and the light wit pass on working messages
   - headshots for all three Jesters
   - final logo files (SVG, transparent background, square mark, dark-background version)
-- **Human-only setup**: a Cloudflare account and domain purchase, Email Routing, a Cloudflare API token and account ID as GitHub secrets, Turnstile keys, and the Spotify key (`scripts/spotify-key-wizard.sh`, done 2026-11-05).
+- **Human-only setup**: a Cloudflare account and domain purchase; the account prerequisites in `docs/deploy.md`: the workers.dev subdomain `jestersprivilege`, Always Use HTTPS on, `thejestersprivilegepodcast@gmail.com` verified as an Email Routing destination, a routing rule forwarding `hello@` to that Gmail and no other inbox, and the API token's permissions; that token and the account ID as GitHub secrets; Turnstile keys; and the Spotify key (`scripts/spotify-key-wizard.sh`, done 2026-11-05).
 - **Build phases**:
 
   0. Human setup.
