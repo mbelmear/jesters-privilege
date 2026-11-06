@@ -20,6 +20,6 @@ if [[ "$reviewed" != "$head" ]]; then
   if [[ -n "$reviewed" ]] && git merge-base --is-ancestor "$reviewed" "$head" 2>/dev/null; then
     since=$reviewed
   fi
-  echo "Run /code-review with $since as the fixed point, then: npm run review-passed -- $pr $head" >&2
+  echo "Review it (AGENTS.md, Merging) with $since as the fixed point, then: npm run review-passed -- $pr $head" >&2
   exit 1
 fi

@@ -41,7 +41,9 @@ jobs:
   # `!cancelled()` runs them when this job was skipped (a push to main) or
   # failed, so a broken check costs time, not coverage. The jobs after the
   # build name its result too, because the default condition would skip them
-  # for this job, however far back in `needs` it sits.
+  # for this job, however far back in `needs` it sits (#171 showed it), and a
+  # skipped job passes as a required check. scripts/workflows.test.ts holds each
+  # job to this.
   docs-only:
     name: Docs-only check
     if: github.event_name == 'pull_request'
