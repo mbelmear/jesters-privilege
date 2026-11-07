@@ -1,8 +1,8 @@
 name: Deploy report
 
-# A failed production deploy reaches only the repo owner's email, and nobody
-# reads a red run in the Actions tab, so it opens an issue, or adds to the one
-# still open. See scripts/report-deploy.ts. It runs after Deploy rather than
+# A failed production deploy or feed check reaches only email, and nobody reads
+# a red run in the Actions tab, so it opens an issue, or adds to the one still
+# open. See scripts/report-deploy.ts. It runs after Deploy rather than
 # inside it so that a pull request can preview the report without Deploy's
 # secrets.
 
