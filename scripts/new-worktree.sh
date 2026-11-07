@@ -12,6 +12,17 @@ set -euo pipefail
 issue="${1:?Usage: npm run worktree -- <issue> <branch>}"
 branch="${2:?Usage: npm run worktree -- <issue> <branch>}"
 
+# Without one, git guesses from the hostname, and stops committing when that
+# changes, as it did midway through merging #179.
+if ! git config user.email >/dev/null; then
+  cat >&2 <<'MSG'
+Set your git identity first, with your name and GitHub's noreply address:
+  git config --global user.name "<name>"
+  git config --global user.email "<id>+<login>@users.noreply.github.com"
+MSG
+  exit 1
+fi
+
 # The main checkout is the first worktree; new ones sit beside it.
 main=$(git worktree list --porcelain | sed -n '1s/^worktree //p')
 dir="$(dirname "$main")/jp-$issue"

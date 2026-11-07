@@ -52,7 +52,8 @@ refuse_if_conflicting() {
 checks=0
 for _ in $(seq 1 30); do
   refuse_if_conflicting
-  checks=$(gh pr view "$pr" --json statusCheckRollup --jq '.statusCheckRollup | length')
+  # A dropped connection counts as no checks yet.
+  checks=$(gh pr view "$pr" --json statusCheckRollup --jq '.statusCheckRollup | length') || checks=0
   ((checks > 0)) && break
   sleep 5
 done
@@ -61,11 +62,10 @@ if ((checks == 0)); then
   exit 1
 fi
 
-# gh pr checks exits 8 while checks are pending, and 1 once any has failed.
 while true; do
   refuse_if_conflicting
   status=0
-  results=$(gh pr checks "$pr") || status=$?
+  results=$("$(dirname "$0")/read-checks.sh" "$pr") || status=$?
   ((status == 8)) || break
   sleep 60
 done

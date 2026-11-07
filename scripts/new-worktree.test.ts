@@ -4,6 +4,7 @@
 import { execFileSync, spawnSync } from "node:child_process";
 import {
   copyFileSync,
+  existsSync,
   mkdirSync,
   mkdtempSync,
   realpathSync,
@@ -11,7 +12,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { delimiter, join } from "node:path";
 
 // Git run from a hook inherits GIT_DIR and GIT_INDEX_FILE, which point every
 // git command at the real repository (merge-holds-branch.test.ts tells that
@@ -77,5 +78,84 @@ describe("npm run worktree", () => {
 
     expect(result.stdout).toContain("current: 104 a-branch");
     expect(result.status).toBe(0);
+  });
+});
+
+describe("new-worktree.sh", () => {
+  let root: string;
+  const script = join(__dirname, "new-worktree.sh");
+  // No machine-wide config, so only what a test sets counts. npm and npx are
+  // stand-ins: installing isn't what's tested.
+  const noConfig = {
+    ...env,
+    GIT_CONFIG_GLOBAL: "/dev/null",
+    GIT_CONFIG_NOSYSTEM: "1",
+  };
+
+  beforeEach(() => {
+    root = realpathSync(mkdtempSync(join(tmpdir(), "new-worktree-")));
+    const bin = join(root, "bin");
+    mkdirSync(bin);
+    for (const tool of ["npm", "npx"]) {
+      writeFileSync(join(bin, tool), "#!/bin/sh\n", { mode: 0o755 });
+    }
+    const origin = join(root, "origin");
+    execFileSync("git", ["init", "--quiet", "--initial-branch=main", origin], {
+      env: noConfig,
+    });
+    execFileSync(
+      "git",
+      [
+        "-c",
+        "user.email=test@example.com",
+        "-c",
+        "user.name=Test",
+        "-c",
+        "commit.gpgsign=false",
+        "commit",
+        "--quiet",
+        "--allow-empty",
+        "-m",
+        "start",
+      ],
+      { cwd: origin, env: noConfig }
+    );
+    execFileSync("git", ["clone", "--quiet", origin, join(root, "checkout")], {
+      env: noConfig,
+    });
+  });
+
+  afterEach(() => {
+    rmSync(root, { recursive: true, force: true });
+  });
+
+  const run = () =>
+    spawnSync("bash", [script, "104", "a-branch"], {
+      cwd: join(root, "checkout"),
+      env: {
+        ...noConfig,
+        PATH: `${join(root, "bin")}${delimiter}${env.PATH}`,
+      },
+      encoding: "utf8",
+    });
+
+  it("refuses a machine with no git identity, before making a worktree", () => {
+    const result = run();
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("git config --global user.email");
+    expect(existsSync(join(root, "jp-104"))).toBe(false);
+  });
+
+  it("makes the worktree once an identity is set", () => {
+    execFileSync("git", ["config", "user.email", "test@example.com"], {
+      cwd: join(root, "checkout"),
+      env: noConfig,
+    });
+
+    const result = run();
+
+    expect(result.stdout).toContain("Ready:");
+    expect(existsSync(join(root, "jp-104"))).toBe(true);
   });
 });
