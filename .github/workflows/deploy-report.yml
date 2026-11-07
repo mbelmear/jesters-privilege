@@ -7,7 +7,10 @@ name: Deploy report
 # secrets.
 
 on:
-  workflow_run:
+  # Runs main's code with a write token, whatever triggered Deploy, and checks
+  # out nothing from that run. A fork's branch can also be named main, so the
+  # job below also checks where the run came from.
+  workflow_run: # zizmor: ignore[dangerous-triggers]
     workflows: [Deploy]
     types: [completed]
     branches: [main]
@@ -28,7 +31,8 @@ jobs:
     name: Report the failure
     if: >-
       github.event_name == 'workflow_run' &&
-      github.event.workflow_run.conclusion == 'failure'
+      github.event.workflow_run.conclusion == 'failure' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -36,6 +40,8 @@ jobs:
       issues: write
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/setup
       - run: npm run report-deploy -- "$RUN_ID"
         env:
@@ -52,6 +58,8 @@ jobs:
       issues: read
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/setup
       - run: npm run --silent report-deploy -- --dry-run > deploy-report.txt
         env:

@@ -18,6 +18,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - run: scripts/audit-merge.sh "$GITHUB_SHA"
         env:
           GH_TOKEN: ${{ github.token }}

@@ -9,24 +9,33 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   workflows:
     name: Lint workflows
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       # actionlint also runs shellcheck on every `run:` block.
       - uses: docker://rhysd/actionlint:1.7.12
         with:
           args: -color
       # actionlint's shellcheck covers only workflows' run: blocks.
       - run: npm run --silent lint:shell
+      # Template injection, permissions, and credentials left in a checkout.
+      - run: npm run --silent lint:zizmor
 
   check:
     name: Format, lint, typecheck, unit tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/setup
       - run: npm run format:check
       - run: npm run lint
@@ -55,6 +64,7 @@ jobs:
       # parent is the base, and each push is judged on the whole PR.
       - uses: actions/checkout@v5
         with:
+          persist-credentials: false
           fetch-depth: 2
       - id: check
         run: |
@@ -69,6 +79,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/setup
       - uses: ./.github/actions/image-cache
       - run: npm run build
@@ -87,6 +99,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/setup
       - uses: actions/download-artifact@v4
         with:
@@ -115,14 +129,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/setup
       - uses: actions/download-artifact@v4
         with:
           name: site
           path: out/
+      # The token is here for when the repo is private (#145); git reads it
+      # through gh, only in this step.
       - run: |
+          gh auth setup-git
           git fetch --quiet --depth=1 origin "$BASE"
-          npm run dropped-tests -- "$BASE"
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          GH_TOKEN: ${{ github.token }}
+      - run: npm run dropped-tests -- "$BASE"
         env:
           BASE: ${{ github.event.pull_request.base.sha }}
 
@@ -136,6 +158,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/setup
       - uses: ./.github/actions/image-cache
       - run: npm run build:empty-feed
@@ -159,6 +183,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/setup
       - uses: actions/download-artifact@v4
         with:

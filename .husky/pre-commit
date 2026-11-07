@@ -1,2 +1,4 @@
-npx lint-staged
+scripts/no-conflict-markers.sh
+# One at a time: Prettier rewrites the files the linters read.
+npx lint-staged --concurrent false
 npm run check
