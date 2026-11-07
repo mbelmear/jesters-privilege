@@ -71,6 +71,24 @@ describe("read-checks", () => {
     expect(f.sleepCount()).toBe(2);
   });
 
+  // The first three are what gh printed with the network cut off (gh 2.103.3).
+  it.each([
+    "error connecting to api.github.com",
+    'Post "https://api.github.com/graphql": dial tcp 127.0.0.1:1: connect: connection refused',
+    'Post "https://api.github.com/graphql": dial tcp 10.255.255.1:443: i/o timeout',
+    'Post "https://api.github.com/graphql": read tcp: connection reset by peer',
+    'Post "https://api.github.com/graphql": EOF',
+    "net/http: TLS handshake timeout",
+  ])("reads again after: %s", (error) => {
+    f = fakes([`1 ERR ${error}`, "0 Lint workflows\tpass"]);
+
+    const result = f.run();
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toBe("Lint workflows\tpass\n");
+    expect(f.sleepCount()).toBe(1);
+  });
+
   it("reports a failed check at once, as gh exits 1 for it too", () => {
     f = fakes(["1 Lint workflows\tfail"]);
 

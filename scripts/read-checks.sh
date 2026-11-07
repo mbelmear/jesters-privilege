@@ -14,7 +14,7 @@ trap 'rm -f "$errors"' EXIT
 for ((attempt = 1; attempt <= attempts; attempt++)); do
   status=0
   results=$(gh pr checks "$pr" 2>"$errors") || status=$?
-  if ! grep -q 'error connecting to' "$errors"; then
+  if ! grep -Eq 'error connecting to|dial tcp|connection reset|timeout|EOF' "$errors"; then
     cat "$errors" >&2
     [[ -z $results ]] || echo "$results"
     exit "$status"
