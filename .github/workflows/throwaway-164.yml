@@ -1,0 +1,27 @@
+name: Throwaway 164
+on: pull_request
+permissions:
+  contents: read
+jobs:
+  write-path:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - run: npm run report-deploy -- 41899722981
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - run: sleep 20
+      - run: npm run report-deploy -- 41899722981
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - run: sleep 20
+      - run: npm run report-deploy -- 42326441585
+        env:
+          GH_TOKEN: ${{ github.token }}
