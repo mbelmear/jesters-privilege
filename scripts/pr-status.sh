@@ -28,9 +28,15 @@ for _ in $(seq 1 30); do
   [[ $(gh pr view "$pr" --json statusCheckRollup --jq '.statusCheckRollup | length') -gt 0 ]] && break
   sleep 5
 done
+while true; do
+  status=0
+  checks=$("$(dirname "$0")/read-checks.sh" "$pr") || status=$?
+  ((status == 8)) || break
+  sleep 60
+done
 failed=0
-gh pr checks "$pr" --watch >/dev/null 2>&1 || failed=1
-checks=$({ gh pr checks "$pr" || true; } | cut -f1,2)
+((status == 0)) || failed=1
+checks=$(cut -f1,2 <<<"$checks")
 echo "$checks"
 
 # A skipped job posts nothing: a docs-only PR's, a fork's, Dependabot's.
