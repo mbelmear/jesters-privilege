@@ -149,7 +149,7 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
 - Review and merge policy:
   - **Logic and infrastructure** pull requests are merged by the agent only when CI is fully green and an automated `code-review` pass finds nothing serious.
   - **Visual** pull requests wait for a Jester's approval of the preview URL.
-  - The repo is private on GitHub Free, so branch protection isn't enforced. The green-CI rule is enforced by a scripted check before merging, documented in `docs/testing.md`. Upgrade to GitHub Pro if it ever slips.
+  - The repo is public for now, so GitHub enforces main's ruleset: a pull request, squash merges only, and six required checks, with no bypass. `npm run merge` also requires a passed review, which no ruleset can (`docs/testing.md`, Merging). Once the repo goes private on GitHub Free, the ruleset stops being enforced and that scripted check is what's left (#145). Upgrade to GitHub Pro if it ever slips.
 
 ### Feed and Episodes
 
