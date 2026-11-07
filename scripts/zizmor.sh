@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Runs the zizmor this repo pins, here and in CI, so a workflow's secret scope,
-# template injection, and `permissions` are checked whatever the machine has
-# installed. Downloads the release binary once into node_modules/.cache and
+# Runs the zizmor this repo pins, here and in CI, so template injection,
+# `permissions`, and credentials left in a checkout are checked whatever the
+# machine has installed. Downloads the release binary once into node_modules/.cache and
 # checks it against the checksum below, the digest GitHub lists for the release.
 # Usage: scripts/zizmor.sh <zizmor args>
 set -euo pipefail

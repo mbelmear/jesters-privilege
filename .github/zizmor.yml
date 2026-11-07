@@ -6,11 +6,11 @@ rules:
       policies:
         # GitHub's own actions may float on a major version tag, so they keep
         # taking its fixes without a stream of update PRs, each waiting on CI.
-        # Anyone else's must be pinned to a commit.
+        # Anyone else's action must be pinned to a commit. This doesn't cover
+        # `docker://` images, such as CI's actionlint, which stays on its version tag.
         actions/*: ref-pin
         "*": hash-pin
   # `$/` (July 2026) guards against an action cloned at runtime by an earlier
-  # step. No workflow here clones one, and actionlint's pinned version may not
-  # read the syntax.
+  # step. No workflow here clones one, and actionlint 1.7.12 rejects the syntax.
   self-repository:
     disable: true

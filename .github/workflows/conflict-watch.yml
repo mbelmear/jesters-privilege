@@ -28,7 +28,8 @@ jobs:
     if: github.event_name == 'push' || contains(github.event.pull_request.labels.*.name, 'ready-for-human')
     runs-on: ubuntu-latest
     steps:
-      # flag-conflicts.sh runs git ls-remote, which needs the token once the repo is private (#145).
+      # flag-conflicts.sh runs git ls-remote, which needs the token once the repo
+      # is private (#145). This job installs nothing that could read it.
       - uses: actions/checkout@v5 # zizmor: ignore[artipacked]
       # PR is empty on a push to main, which checks every waiting PR.
       - run: scripts/flag-conflicts.sh ${PR:+"$PR"}

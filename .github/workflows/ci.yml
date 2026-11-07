@@ -26,7 +26,7 @@ jobs:
           args: -color
       # actionlint's shellcheck covers only workflows' run: blocks.
       - run: npm run --silent lint:shell
-      # Secret scope, template injection, and permissions, which actionlint doesn't check.
+      # Template injection, permissions, and credentials left in a checkout.
       - run: npm run --silent lint:zizmor
 
   check:
@@ -128,18 +128,23 @@ jobs:
       github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
-      # Fetches the base commit below, which needs the token once the repo is private (#145).
-      - uses: actions/checkout@v5 # zizmor: ignore[artipacked]
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/setup
       - uses: actions/download-artifact@v4
         with:
           name: site
           path: out/
+      # The token is here for when the repo is private (#145); git reads it
+      # through gh, only in this step.
       - run: |
+          gh auth setup-git
           git fetch --quiet --depth=1 origin "$BASE"
           npm run dropped-tests -- "$BASE"
         env:
           BASE: ${{ github.event.pull_request.base.sha }}
+          GH_TOKEN: ${{ github.token }}
 
   # The site before Episode 1: a full build from the empty feed, which fails
   # if any route can't export with no Episodes, then the coming-soon journey.

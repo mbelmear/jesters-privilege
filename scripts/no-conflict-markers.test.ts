@@ -81,6 +81,19 @@ describe("the check for leftover conflict markers", () => {
     expect(check().status).toBe(0);
   });
 
+  it("fails, rather than passing, when git can't read the staged changes", () => {
+    const notRepo = realpathSync(mkdtempSync(join(tmpdir(), "not-a-repo-")));
+
+    const result = spawnSync(script, [], {
+      cwd: notRepo,
+      env,
+      encoding: "utf8",
+    });
+    rmSync(notRepo, { recursive: true, force: true });
+
+    expect(result.status).not.toBe(0);
+  });
+
   it("ignores markers that aren't staged", () => {
     write("<<<<<<< HEAD\n");
 

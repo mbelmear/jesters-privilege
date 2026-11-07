@@ -44,11 +44,17 @@ jobs:
     env:
       FEED: live
     steps:
-      # Pushes to the transcripts branch.
-      - uses: actions/checkout@v5 # zizmor: ignore[artipacked]
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - uses: ./.github/actions/setup
+      # git reads the token through gh, only in a step that sets GH_TOKEN, so
+      # `npm ci` and the Whisper build can't. This one, and the push below, do.
       - name: Check out the transcripts branch
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
+          gh auth setup-git
           dir="$RUNNER_TEMP/transcripts"
           echo "TRANSCRIPTS_DIR=$dir" >> "$GITHUB_ENV"
           if git ls-remote --exit-code --heads origin transcripts >/dev/null; then
@@ -103,6 +109,8 @@ jobs:
         if: >-
           !cancelled() && github.event_name != 'pull_request' &&
           steps.plan.outputs.needed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           cd "$TRANSCRIPTS_DIR"
           git add -A

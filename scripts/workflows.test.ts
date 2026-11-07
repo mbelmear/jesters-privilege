@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
  */
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 
 // A job's own `if:` decides whether it runs, but without `!cancelled()` GitHub
 // also skips it when any job before it, however far back, was skipped (#171).
@@ -114,6 +114,75 @@ describe("reading a workflow", () => {
       },
       { name: "third", needs: ["first", "second"], condition: "" },
     ]);
+  });
+});
+
+// A secret in a workflow's or a job's `env` reaches every step under it, `npm ci`
+// install scripts included (#8), and zizmor doesn't flag it, so this does. See
+// CODING_STANDARDS.md, Secrets.
+function secretsAboveSteps(text: string): string[] {
+  const found: string[] = [];
+  let envIndent = -1;
+  for (const line of text.split("\n")) {
+    const trimmed = line.trimStart();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const indent = line.length - trimmed.length;
+    if (envIndent >= 0 && indent <= envIndent) envIndent = -1;
+    if (/^(?: {4})?env:/.test(line)) envIndent = indent;
+    if (envIndent >= 0 && /\bsecrets\b/.test(line)) found.push(trimmed);
+  }
+  return found;
+}
+
+describe("a workflow's secrets", () => {
+  it.each(readdirSync(".github/workflows"))(
+    "%s hands them only to steps",
+    (file) => {
+      expect(
+        secretsAboveSteps(readFileSync(`.github/workflows/${file}`, "utf8"))
+      ).toEqual([]);
+    }
+  );
+
+  it("refuses one in the workflow's env", () => {
+    const text = [
+      "env:",
+      "  KEY: ${{ secrets.KEY }}",
+      "jobs:",
+      "  deploy:",
+      "    steps:",
+      "      - run: npm ci",
+    ].join("\n");
+
+    expect(secretsAboveSteps(text)).toEqual(["KEY: ${{ secrets.KEY }}"]);
+  });
+
+  it("refuses one in a job's env", () => {
+    const text = [
+      "jobs:",
+      "  deploy:",
+      "    env:",
+      "      KEY: ${{ secrets.KEY }}",
+      "    steps:",
+      "      - run: npm ci",
+    ].join("\n");
+
+    expect(secretsAboveSteps(text)).toEqual(["KEY: ${{ secrets.KEY }}"]);
+  });
+
+  it("passes one in a step's env, and a job's env without one", () => {
+    const text = [
+      "jobs:",
+      "  deploy:",
+      "    env:",
+      "      FEED: live",
+      "    steps:",
+      "      - run: wrangler deploy",
+      "        env:",
+      "          KEY: ${{ secrets.KEY }}",
+    ].join("\n");
+
+    expect(secretsAboveSteps(text)).toEqual([]);
   });
 });
 

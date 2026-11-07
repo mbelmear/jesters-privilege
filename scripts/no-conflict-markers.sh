@@ -6,7 +6,13 @@
 # which Prettier fixes and a Markdown line break needs, so only the markers count.
 set -euo pipefail
 
-markers=$(git diff --cached --check | grep 'leftover conflict marker$' || true)
+# git exits 2 when it finds a problem, and above that when it can't look.
+status=0
+report=$(git diff --cached --check) || status=$?
+if ((status != 0 && status != 2)); then
+  exit "$status"
+fi
+markers=$(grep 'leftover conflict marker$' <<<"$report" || true)
 if [[ -n $markers ]]; then
   echo "$markers" >&2
   echo "Resolve the conflict, stage the result, and commit again." >&2
