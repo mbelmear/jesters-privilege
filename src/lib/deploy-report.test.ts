@@ -1,5 +1,11 @@
 import { readFileSync } from "node:fs";
-import { DEPLOY_JOB, deployFailures, deployReport } from "./deploy-report";
+import {
+  DEPLOY_JOB,
+  FEED_CHECK_JOB,
+  deployFailures,
+  deployReport,
+  feedCheckReport,
+} from "./deploy-report";
 
 const RUN = "https://github.com/mbelmear/jesters-privilege/actions/runs/1";
 
@@ -47,11 +53,34 @@ describe("deployReport", () => {
   });
 });
 
+describe("feedCheckReport", () => {
+  it("links the run, names the cause, and says what a red feed check means", () => {
+    const report = feedCheckReport(
+      RUN,
+      "2026-11-04T19:45:00.0000000Z ##[error]Feed check failed, so the live site stays as it is: Build manifest is missing episodeListenLinks"
+    );
+    expect(report).toContain(`The feed check failed: ${RUN}`);
+    expect(report).toContain(
+      "- Feed check failed, so the live site stays as it is: Build manifest is missing episodeListenLinks"
+    );
+    expect(report).toContain(
+      "no new Episode, Episode Listen link, or Transcript deploys"
+    );
+    expect(report).toContain("the live site stays as it is. Close this");
+    expect(report).toContain("once a feed check passes again");
+  });
+
+  it("says so when the logs name no failure", () => {
+    expect(feedCheckReport(RUN, "")).toContain("No failure is named");
+  });
+});
+
 // A rename in either file would silently stop every report.
 describe("the workflows it reads", () => {
-  it("names the production job and workflow as they are written", () => {
+  it("names the reported jobs and workflow as they are written", () => {
     const deploy = readFileSync(".github/workflows/deploy.yml", "utf8");
     expect(deploy).toContain(`name: ${DEPLOY_JOB}\n`);
+    expect(deploy).toContain(`name: ${FEED_CHECK_JOB}\n`);
     expect(deploy).toMatch(/^name: Deploy$/m);
     expect(
       readFileSync(".github/workflows/deploy-report.yml", "utf8")
