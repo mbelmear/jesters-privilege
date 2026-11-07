@@ -17,9 +17,11 @@ const script = join(__dirname, "pr-status.sh");
 const HEAD = "a".repeat(40);
 
 // Stand-ins for gh and sleep on the PATH: an open PR at HEAD that merges
-// cleanly, with the checks and comment each test gives, and a sleep that only
-// counts. Run outside any checkout, so wait-pushed-head.sh takes GitHub's head.
-function fakes(checks: string, comment = "") {
+// cleanly, with the checks and comment each test gives, exiting as gh pr checks
+// does, and a sleep that only counts, then swaps in the `afterSleep` checks. A
+// `drop` file makes the next read of the checks a dropped connection. Run outside
+// any checkout, so wait-pushed-head.sh takes GitHub's head.
+function fakes(checks: string, comment = "", afterSleep = "") {
   const root = mkdtempSync(join(tmpdir(), "pr-status-"));
   const bin = join(root, "bin");
   const sleeps = join(root, "sleeps");
@@ -31,6 +33,7 @@ function fakes(checks: string, comment = "") {
   };
   writeFileSync(join(root, "checks"), checks);
   writeFileSync(join(root, "comment"), comment);
+  writeFileSync(join(root, "after-sleep"), afterSleep);
   tool(
     "gh",
     `case "$*" in
@@ -40,11 +43,26 @@ function fakes(checks: string, comment = "") {
   *mergeable*) echo MERGEABLE ;;
   *comments*) cat "${join(root, "comment")}" ;;
   *state*) echo OPEN ;;
-  "pr checks"*) cat "${join(root, "checks")}" ;;
+  "pr checks"*)
+    if [ -e "${join(root, "drop")}" ]; then
+      rm "${join(root, "drop")}"
+      echo "error connecting to api.github.com" >&2
+      exit 1
+    fi
+    cat "${join(root, "checks")}"
+    if grep -q fail "${join(root, "checks")}"; then exit 1; fi
+    if grep -q pending "${join(root, "checks")}"; then exit 8; fi
+    ;;
   *) echo "pr-status.test.ts has no answer for: gh $*" >&2; exit 1 ;;
 esac`
   );
-  tool("sleep", `echo slept >> "${sleeps}"`);
+  tool(
+    "sleep",
+    `echo slept >> "${sleeps}"
+if [ -s "${join(root, "after-sleep")}" ]; then
+  cp "${join(root, "after-sleep")}" "${join(root, "checks")}"
+fi`
+  );
   const run = () =>
     spawnSync("bash", [script, "7"], {
       cwd: root,
@@ -60,6 +78,48 @@ describe("pr-status", () => {
   let f: ReturnType<typeof fakes>;
   afterEach(() => {
     rmSync(f.root, { recursive: true, force: true });
+  });
+
+  const SKIPPED_PREVIEW = "Preview URL\tskipping\t0\n";
+
+  it("waits for pending checks, then reports them", () => {
+    f = fakes(
+      `Lint workflows\tpending\t0\n${SKIPPED_PREVIEW}`,
+      "",
+      `Lint workflows\tpass\t8s\n${SKIPPED_PREVIEW}`
+    );
+
+    const result = f.run();
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("Lint workflows\tpass\n");
+    expect(f.sleepCount()).toBe(1);
+  });
+
+  it("waits for every check to finish after one fails, then fails", () => {
+    f = fakes(
+      `Lint workflows\tfail\t8s\nBuild\tpending\t0\n${SKIPPED_PREVIEW}`,
+      "",
+      `Lint workflows\tfail\t8s\nBuild\tpass\t9s\n${SKIPPED_PREVIEW}`
+    );
+
+    const result = f.run();
+
+    expect(result.status).toBe(1);
+    expect(result.stdout).toContain("Build\tpass\n");
+    expect(result.stdout).not.toContain("pending");
+    expect(f.sleepCount()).toBe(1);
+  });
+
+  it("reads through a dropped connection", () => {
+    f = fakes(`Lint workflows\tpass\t8s\n${SKIPPED_PREVIEW}`);
+    writeFileSync(join(f.root, "drop"), "");
+
+    const result = f.run();
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("Lint workflows\tpass\n");
+    expect(f.sleepCount()).toBe(1);
   });
 
   it("doesn't wait for a preview whose job was skipped", () => {

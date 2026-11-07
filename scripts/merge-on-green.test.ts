@@ -279,6 +279,28 @@ describe("merge-on-green", () => {
     expect(result.stdout).toContain("Build static site");
   });
 
+  it("waits through a network drop while checks run, then merges", () => {
+    writeFileSync(
+      r.onChecks,
+      `[ -e "${r.root}/dropped" ] || { touch "${r.root}/dropped"; echo "error connecting to api.github.com" >&2; exit 1; }\n`
+    );
+
+    const result = r.merge();
+
+    expect(result.stdout).toContain("MERGED");
+    expect(result.status).toBe(0);
+  });
+
+  it("waits through a network drop before checks appear, then merges", () => {
+    rmSync(r.rollup);
+    writeFileSync(r.onSleep, `echo 3 > "${r.rollup}"\n`);
+
+    const result = r.merge();
+
+    expect(result.stdout).toContain("MERGED");
+    expect(result.status).toBe(0);
+  });
+
   it("waits for checks to appear after a push", () => {
     writeFileSync(r.rollup, "0\n");
     writeFileSync(r.onSleep, `echo 3 > "${r.rollup}"\n`);
