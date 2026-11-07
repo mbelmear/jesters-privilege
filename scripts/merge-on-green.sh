@@ -5,8 +5,8 @@
 # main's ruleset requires a pull request and passing checks, but nothing on
 # GitHub requires the review comment, so this script is that enforcement. It
 # refuses to merge unless:
-#   1. the newest "Code review: passed at <sha>" comment names the PR's head
-#      (require-review.sh),
+#   1. the newest "Code review: passed at <sha>" comment names the PR's head, or
+#      only clean merges of main came after it (require-review.sh),
 #   2. the PR has at least one check (it waits for them to appear after a push),
 #   3. it merges cleanly with main, checked throughout the wait, since a conflict
 #      would only send the checks round again (#165 waited 45 minutes on one),
