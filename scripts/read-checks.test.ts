@@ -15,7 +15,8 @@ import { delimiter, join } from "node:path";
 const script = join(__dirname, "read-checks.sh");
 
 // Stand-ins on the PATH: gh answers with the next line of `answers`, each
-// "<exit> <output>", repeating the last, and sleep only counts.
+// "<exit> <stdout>", or "<exit> ERR <stderr>", or just "<exit>" for a dropped
+// connection, repeating the last, and sleep only counts.
 function fakes(answers: string[]) {
   const root = mkdtempSync(join(tmpdir(), "read-checks-"));
   const count = join(root, "count");
@@ -30,8 +31,14 @@ n=$(($(cat "${count}") + 1))
 echo "$n" > "${count}"
 line=$(sed -n "$n"p "${root}/answers")
 [[ -n $line ]] || line=$(tail -1 "${root}/answers")
-[[ -n \${line#* } && \${line#* } != "$line" ]] && echo "\${line#* }"
-[[ \${line#* } == "$line" ]] && echo "error connecting to api.github.com" >&2
+text=\${line#* }
+if [[ $text == "$line" ]]; then
+  echo "error connecting to api.github.com" >&2
+elif [[ $text == ERR* ]]; then
+  echo "\${text#ERR }" >&2
+else
+  echo "$text"
+fi
 exit "\${line%% *}"
 `
   );
@@ -74,6 +81,16 @@ describe("read-checks", () => {
     expect(f.sleepCount()).toBe(0);
   });
 
+  it("stops at once at any other error, passing it on", () => {
+    f = fakes(["1 ERR no checks reported on the 'ticket' branch"]);
+
+    const result = f.run();
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("no checks reported");
+    expect(f.sleepCount()).toBe(0);
+  });
+
   it("passes on gh's exit 8 for pending checks", () => {
     f = fakes(["8 Lint workflows\tpending"]);
 
@@ -89,7 +106,7 @@ describe("read-checks", () => {
     const result = f.run();
 
     expect(result.status).toBe(1);
-    expect(result.stderr).toContain("Couldn't read #7's checks");
+    expect(result.stderr).toContain("Couldn't reach GitHub");
     expect(f.sleepCount()).toBe(29);
   });
 });

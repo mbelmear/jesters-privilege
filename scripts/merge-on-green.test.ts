@@ -282,7 +282,7 @@ describe("merge-on-green", () => {
   it("waits through a network drop while checks run, then merges", () => {
     writeFileSync(
       r.onChecks,
-      `[ -e "${r.root}/dropped" ] || { touch "${r.root}/dropped"; exit 1; }\n`
+      `[ -e "${r.root}/dropped" ] || { touch "${r.root}/dropped"; echo "error connecting to api.github.com" >&2; exit 1; }\n`
     );
 
     const result = r.merge();

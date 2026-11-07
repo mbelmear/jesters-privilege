@@ -28,10 +28,11 @@ for _ in $(seq 1 30); do
   [[ $(gh pr view "$pr" --json statusCheckRollup --jq '.statusCheckRollup | length') -gt 0 ]] && break
   sleep 5
 done
+# Until every check finishes: gh exits 1 as soon as one fails, with others pending.
 while true; do
   status=0
   checks=$("$(dirname "$0")/read-checks.sh" "$pr") || status=$?
-  ((status == 8)) || break
+  cut -f2 <<<"$checks" | grep -qx pending || break
   sleep 60
 done
 failed=0
@@ -47,7 +48,7 @@ else
   preview=""
   for _ in $(seq 1 30); do
     comment=$(gh pr view "$pr" --json comments \
-      --jq '[.comments[].body | select(startswith("<!-- deploy-preview -->"))] | last // ""')
+      --jq '[.comments[].body | select(startswith("<!-- deploy-preview -->"))] | last // ""') || comment=""
     if [[ "$comment" == *"Built from $head"* ]]; then
       preview=$(grep -oE 'https://[a-z0-9.-]+\.workers\.dev' <<<"$comment" | head -1 || true)
       break

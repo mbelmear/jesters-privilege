@@ -9,7 +9,8 @@ pr="${1:?Usage: scripts/wait-mergeable.sh <pr-number>}"
 
 state=UNKNOWN
 for _ in $(seq 1 10); do
-  state=$(gh pr view "$pr" --json mergeable --jq .mergeable)
+  # A dropped connection counts as GitHub not having worked it out yet.
+  state=$(gh pr view "$pr" --json mergeable --jq .mergeable) || state=UNKNOWN
   [[ "$state" != UNKNOWN ]] && break
   sleep 6
 done
