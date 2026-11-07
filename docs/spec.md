@@ -144,12 +144,12 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
   - a feed check **every 2 hours**, which rebuilds when the newest Episode differs from what's deployed, or when an Episode has gained a Transcript or an Episode Listen link since (ADR 0003)
   - a manual **Run workflow** button
 - The site publishes a small build manifest (the identity of the newest Episode it was built with, and which Episodes it had Transcripts and Episode Listen links for), which the feed check compares against.
-- If the feed can't be reached or fails validation, the build fails and the last good deploy stays live. A failed workflow emails whoever triggered it (`docs/deploy.md`).
+- If the feed can't be reached or fails validation, the build fails and the last good deploy stays live. A failed workflow emails whoever GitHub notifies for that run (`docs/deploy.md`, Triggers).
 - Every pull request gets a Cloudflare **preview URL**, posted on the pull request, except one changing only `docs/**` or top-level Markdown, which has no page to preview.
 - Review and merge policy:
   - **Logic and infrastructure** pull requests are merged by the agent only when CI is fully green and an automated `code-review` pass finds nothing serious.
   - **Visual** pull requests wait for a Jester's approval of the preview URL.
-  - The repo is private on GitHub Free, so branch protection isn't enforced. The green-CI rule is enforced by a scripted check before merging, documented in `AGENTS.md`. Upgrade to GitHub Pro if it ever slips.
+  - The repo is private on GitHub Free, so branch protection isn't enforced. The green-CI rule is enforced by a scripted check before merging, documented in `docs/testing.md`. Upgrade to GitHub Pro if it ever slips.
 
 ### Feed and Episodes
 

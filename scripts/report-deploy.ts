@@ -3,7 +3,7 @@
 // The logic is src/lib/deploy-report.ts;
 // scripts/failed-run.ts wires in `gh`. --dry-run prints the report for the newest
 // such run of each job and writes nothing, which is how a pull request that
-// changes this shows it working.
+// changes this shows what it would say.
 // Usage: npm run report-deploy -- <run-id> | --dry-run
 import {
   FEED_CHECK_ISSUE_TITLE,
@@ -56,6 +56,9 @@ for (const { job, title, report } of REPORTED_JOBS) {
   fileReport(title, report(runUrl(runId), jobLogs(jobs)), dryRun);
 }
 
-if (!dryRun && passedJobs(argument).some((j) => j.name === FEED_CHECK_JOB)) {
+if (
+  !dryRun &&
+  passedJobs(argument).some((job) => job.name === FEED_CHECK_JOB)
+) {
   closeReport(FEED_CHECK_ISSUE_TITLE, feedCheckPassed(runUrl(argument)));
 }

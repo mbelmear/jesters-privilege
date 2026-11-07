@@ -9,7 +9,7 @@ Website for the Jester's Privilege podcast. The agreed v1 spec is `docs/spec.md`
 - **Test first.** Build logic with the `tdd` skill (Jest + React Testing Library + jest-axe). Browser behavior is covered by Playwright; performance by Lighthouse CI. How to run each layer: `docs/testing.md`.
 - **Design principle.** Modern construction, deliberate historical callbacks. Respect reduced motion.
 - **Content lives in content files**, never hard-coded in components. Every sentence a visitor reads is a `Copy`, marked `draft: true`, written at realistic length, until `docs/spec.md` quotes it or the Jesters supply or approve it. Text rewritten after a Jester approved it is draft again, so a ticket names the pieces that stay draft. Bare interface labels ("Play", "Episode") are final as written. Before drafting copy, read the copy principle (`docs/spec.md`, Content) and the Jesters' inputs on #6 and in `docs/inputs/`.
-- **Merging.** Before opening a PR, read `docs/testing.md`, Merging. Every PR passes `/code-review` first. A logic or infra PR then merges with `npm run merge`; a visual PR (anything a visitor sees that the diff changes) waits for a Jester's approval.
+- **Merging.** Before opening a PR, read `docs/testing.md`, Merging. Every PR passes review first. A logic or infra PR then merges with `npm run merge`; a visual PR (anything a visitor sees that the diff changes) waits for a Jester's approval.
 
 ## Agent skills
 

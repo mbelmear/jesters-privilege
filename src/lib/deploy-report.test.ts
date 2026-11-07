@@ -105,8 +105,12 @@ describe("the workflows it reads", () => {
     expect(deploy).toContain(`name: ${DEPLOY_JOB}\n`);
     expect(deploy).toContain(`name: ${FEED_CHECK_JOB}\n`);
     expect(deploy).toMatch(/^name: Deploy$/m);
-    expect(
-      readFileSync(".github/workflows/deploy-report.yml", "utf8")
-    ).toContain("workflows: [Deploy]");
+    const report = readFileSync(".github/workflows/deploy-report.yml", "utf8");
+    expect(report).toContain("workflows: [Deploy]");
+    // A run where the feed check passes and nothing deploys ends in success, and
+    // the report job has to run for it, or the feed check's issue never closes.
+    expect(report).toMatch(
+      /conclusion == 'success' &&\s+github\.event\.workflow_run\.event == 'schedule'/
+    );
   });
 });

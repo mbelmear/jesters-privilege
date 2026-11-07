@@ -1,9 +1,10 @@
 import { execFileSync } from "node:child_process";
 import { closeReport, failedJobs, fileReport, passedJobs } from "./failed-run";
 
-// Fakes the process call itself, so no test here can reach GitHub. A stub `gh`
-// on the PATH can't do this: Jest's `process.env` is a copy that child processes
-// never see, so the first version of this file opened real issues.
+// Fakes the process call itself, so no test here can reach GitHub. failed-run.ts
+// spawns `gh` without an `env`, so a stub on a PATH set in Jest, whose
+// `process.env` is a copy, is never found: the first version of this file opened
+// real issues.
 jest.mock("node:child_process", () => ({ execFileSync: jest.fn() }));
 
 const TITLE = "Feed check is failing";
