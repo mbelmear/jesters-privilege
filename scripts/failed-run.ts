@@ -1,18 +1,21 @@
-// The `gh` wiring a failed run's report shares: which jobs failed, their logs,
+// The `gh` wiring a failed run's report shares: how its jobs ended, their logs,
 // and the one open issue that tracks it. Used by report-nightly and report-deploy.
 import { execFileSync } from "node:child_process";
 
 export const gh = (...args: string[]) =>
   execFileSync("gh", args, { encoding: "utf8", maxBuffer: 1 << 28 });
 
-export type FailedJob = { readonly id: string; readonly name: string };
+export type Job = { readonly id: string; readonly name: string };
 
-export function failedJobs(runId: string): FailedJob[] {
+function jobsThatEnded(
+  runId: string,
+  conclusion: "failure" | "success"
+): Job[] {
   return gh(
     "api",
     "--paginate",
     `repos/{owner}/{repo}/actions/runs/${runId}/jobs`,
-    '--jq=.jobs[] | select(.conclusion == "failure") | "\\(.id)\\t\\(.name)"'
+    `--jq=.jobs[] | select(.conclusion == "${conclusion}") | "\\(.id)\\t\\(.name)"`
   )
     .split("\n")
     .filter(Boolean)
@@ -22,10 +25,13 @@ export function failedJobs(runId: string): FailedJob[] {
     });
 }
 
+export const failedJobs = (runId: string) => jobsThatEnded(runId, "failure");
+export const passedJobs = (runId: string) => jobsThatEnded(runId, "success");
+
 // Logs job by job: a report can run inside the failed run, and `gh run view
 // --log-failed` refuses a run still in progress. A report without names still
 // beats no report, so unreadable logs don't stop it.
-export function jobLogs(jobs: readonly FailedJob[]): string {
+export function jobLogs(jobs: readonly Job[]): string {
   try {
     return jobs
       .map((job) =>
@@ -48,10 +54,9 @@ export function runUrl(runId: string): string {
   return gh("run", "view", runId, "--json=url", "--jq=.url").trim();
 }
 
-/** Opens an issue with this title, or adds to the one already open. */
-export function fileReport(title: string, report: string, dryRun: boolean) {
+function openIssue(title: string): string {
   // The search matches loosely, so the title is checked exactly.
-  const open = gh(
+  return gh(
     "issue",
     "list",
     "--state=open",
@@ -59,6 +64,11 @@ export function fileReport(title: string, report: string, dryRun: boolean) {
     "--json=number,title",
     `--jq=map(select(.title == "${title}"))[0].number // empty`
   ).trim();
+}
+
+/** Opens an issue with this title, or adds to the one already open. */
+export function fileReport(title: string, report: string, dryRun: boolean) {
+  const open = openIssue(title);
 
   if (dryRun) {
     console.log(open ? `Would comment on #${open}:` : "Would open an issue:");
@@ -74,4 +84,10 @@ export function fileReport(title: string, report: string, dryRun: boolean) {
       "--label=needs-triage"
     );
   }
+}
+
+/** Closes the open issue with this title, if there is one. */
+export function closeReport(title: string, comment: string) {
+  const open = openIssue(title);
+  if (open) gh("issue", "close", open, `--comment=${comment}`);
 }

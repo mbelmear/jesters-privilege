@@ -144,12 +144,12 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
   - a feed check **every 2 hours**, which rebuilds when the newest Episode differs from what's deployed, or when an Episode has gained a Transcript or an Episode Listen link since (ADR 0003)
   - a manual **Run workflow** button
 - The site publishes a small build manifest (the identity of the newest Episode it was built with, and which Episodes it had Transcripts and Episode Listen links for), which the feed check compares against.
-- If the feed can't be reached or fails validation, the build fails and the last good deploy stays live. A failed workflow emails the repo owner.
+- If the feed can't be reached or fails validation, the build fails and the last good deploy stays live. A failed workflow emails whoever GitHub notifies for that run (`docs/deploy.md`, Triggers).
 - Every pull request gets a Cloudflare **preview URL**, posted on the pull request, except one changing only `docs/**` or top-level Markdown, which has no page to preview.
 - Review and merge policy:
   - **Logic and infrastructure** pull requests are merged by the agent only when CI is fully green and an automated `code-review` pass finds nothing serious.
   - **Visual** pull requests wait for a Jester's approval of the preview URL.
-  - The repo is private on GitHub Free, so branch protection isn't enforced. The green-CI rule is enforced by a scripted check before merging, documented in `AGENTS.md`. Upgrade to GitHub Pro if it ever slips.
+  - The repo is private on GitHub Free, so branch protection isn't enforced. The green-CI rule is enforced by a scripted check before merging, documented in `docs/testing.md`. Upgrade to GitHub Pro if it ever slips.
 
 ### Feed and Episodes
 
@@ -343,6 +343,7 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
   5. **Components**: rendered with React Testing Library, asserting what a user sees, including every missing-input and empty state, with jest-axe accessibility assertions.
   6. **Built site**: Playwright drives the exported site.
   7. **Build manifest** (`src/lib/build-manifest.ts`): a value in, a `BuildManifest` or a descriptive error out. The feed check reads the live site's manifest through it.
+  8. **Script logic**: what a script in `scripts/` decides lives in `src/lib/`, text in and text out. What it writes through `gh` is tested against a mocked `child_process` (`scripts/failed-run.test.ts`).
 - **Layers in CI on every pull request** (one changing only `docs/**` or top-level Markdown runs Jest alone):
   - **Jest** with React Testing Library and jest-axe. Coverage thresholds (about 90% of lines) on logic modules.
   - **Playwright** on Chromium and WebKit at phone and desktop sizes, with axe scans of every page. Firefox runs nightly.

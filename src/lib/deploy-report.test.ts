@@ -2,8 +2,10 @@ import { readFileSync } from "node:fs";
 import {
   DEPLOY_JOB,
   FEED_CHECK_JOB,
+  REPORTED_JOBS,
   deployFailures,
   deployReport,
+  feedCheckPassed,
   feedCheckReport,
 } from "./deploy-report";
 
@@ -66,12 +68,33 @@ describe("feedCheckReport", () => {
     expect(report).toContain(
       "no new Episode, Episode Listen link, or Transcript deploys"
     );
-    expect(report).toContain("the live site stays as it is. Close this");
-    expect(report).toContain("once a feed check passes again");
+    expect(report).toContain("the live site stays as it is.");
+    expect(report).toContain("closes itself once a feed check passes");
   });
 
   it("says so when the logs name no failure", () => {
     expect(feedCheckReport(RUN, "")).toContain("No failure is named");
+  });
+});
+
+describe("feedCheckPassed", () => {
+  it("links the run that passed", () => {
+    expect(feedCheckPassed(RUN)).toBe(`A feed check passed: ${RUN}`);
+  });
+});
+
+describe("REPORTED_JOBS", () => {
+  it.each([
+    [
+      "Deploy to production",
+      "Production deploy is failing",
+      "The production deploy failed",
+    ],
+    ["Feed check", "Feed check is failing", "The feed check failed"],
+  ])("gives %s its own title and report", (job, title, headline) => {
+    const reported = REPORTED_JOBS.find((entry) => entry.job === job);
+    expect(reported?.title).toBe(title);
+    expect(reported?.report(RUN, "")).toContain(headline);
   });
 });
 
@@ -82,8 +105,12 @@ describe("the workflows it reads", () => {
     expect(deploy).toContain(`name: ${DEPLOY_JOB}\n`);
     expect(deploy).toContain(`name: ${FEED_CHECK_JOB}\n`);
     expect(deploy).toMatch(/^name: Deploy$/m);
-    expect(
-      readFileSync(".github/workflows/deploy-report.yml", "utf8")
-    ).toContain("workflows: [Deploy]");
+    const report = readFileSync(".github/workflows/deploy-report.yml", "utf8");
+    expect(report).toContain("workflows: [Deploy]");
+    // A run where the feed check passes and nothing deploys ends in success, and
+    // the report job has to run for it, or the feed check's issue never closes.
+    expect(report).toMatch(
+      /conclusion == 'success' &&\s+github\.event\.workflow_run\.event == 'schedule'/
+    );
   });
 });

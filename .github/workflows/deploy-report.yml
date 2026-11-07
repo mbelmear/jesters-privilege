@@ -2,8 +2,8 @@ name: Deploy report
 
 # A failed production deploy or feed check reaches only email, and nobody reads
 # a red run in the Actions tab, so it opens an issue, or adds to the one still
-# open. See scripts/report-deploy.ts. It runs after Deploy rather than
-# inside it so that a pull request can preview the report without Deploy's
+# open, and a passing feed check closes its own. See scripts/report-deploy.ts.
+# It runs after Deploy rather than inside it so that a pull request can preview the report without Deploy's
 # secrets.
 
 on:
@@ -28,10 +28,14 @@ permissions:
 
 jobs:
   report:
-    name: Report the failure
+    name: Report the run
+    # A scheduled run that passes still runs this: it closes the feed check's
+    # issue. Other runs that pass have no feed check to report.
     if: >-
       github.event_name == 'workflow_run' &&
-      github.event.workflow_run.conclusion == 'failure' &&
+      (github.event.workflow_run.conclusion == 'failure' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'schedule')) &&
       github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-latest
     permissions:
