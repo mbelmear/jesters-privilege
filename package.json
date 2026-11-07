@@ -14,6 +14,7 @@
     "lint": "next typegen && eslint",
     "lint:workflows": "scripts/actionlint.sh",
     "lint:shell": "scripts/shellcheck.sh --severity=warning scripts/*.sh",
+    "lint:zizmor": "scripts/zizmor.sh --offline --no-progress .github",
     "prepare": "husky",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "jest",

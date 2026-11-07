@@ -9,6 +9,7 @@ These are non-negotiable, and a commit or pull request that breaks them is refus
 - **Tests are green.** The commit and merge hooks and CI run Jest; CI also runs Playwright and Lighthouse. Logic in `src/lib/` keeps at least 90% line coverage.
 - **No `any`, explicit or implicit.** `strict` TypeScript rejects implicit `any`; ESLint rejects written `any`, any value that carries `any` in from a library (`JSON.parse`, `response.json()`), non-null assertions (`!`), and type assertions other than `as const` outside tests.
 - **Formatting.** Prettier, checked in CI.
+- **Workflows and shell scripts pass their linters.** actionlint and zizmor check `.github`, and shellcheck checks `scripts/*.sh`, in the commit hook and CI.
 - **Colors and fonts come from design tokens.** ESLint rejects literal colors (hex, `rgb()`/`hsl()`/`oklch()` and friends), Tailwind's built-in palette (`bg-black`, `text-red-500`), Tailwind arbitrary color and font-family values, and inline `font`/`fontFamily` styles anywhere in `src/` outside tests. It also rejects `text-brand`: orange text uses `text-brand-display` (large) or `text-brand-ink` (small). Tokens live in `src/app/globals.css`.
 - **No empty-text assertions.** ESLint rejects `toHaveTextContent("")` in Jest and `toContainText("")` in Playwright, which pass whatever the element holds; an empty element is checked with `toBeEmptyDOMElement()` or `toBeEmpty()`.
 - **Browser tests poll for at least a second.** ESLint rejects a sub-second `expect.poll` timeout in `e2e/`.

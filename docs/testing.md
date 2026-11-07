@@ -195,15 +195,19 @@ npm run format:check        # what CI runs
 npm run lint
 npm run typecheck
 npm run lint:workflows      # actionlint on .github/workflows, as CI's Lint workflows job runs it
+npm run lint:shell          # shellcheck on scripts/*.sh
+npm run lint:zizmor         # zizmor on .github: secret scope, template injection, permissions
 ```
 
 `lint` and `typecheck` both run `next typegen` first: type-aware lint rules need the generated `next-env.d.ts` (gitignored), which types imports such as `import logo from "….webp"`.
 
-The pre-commit hook formats staged files with Prettier, so `format:check` only fails for files committed without the hook.
+The pre-commit hook formats staged files with Prettier, so `format:check` only fails for files committed without the hook. It also refuses staged conflict markers (`scripts/no-conflict-markers.sh`), and `.lintstagedrc` runs each linter below on the staged files it covers.
 
-`lint:workflows` (`scripts/actionlint.sh`) downloads the actionlint release CI pins, once, into `node_modules/.cache`. It runs shellcheck on every `run:` block only when shellcheck is installed, and says so when it isn't; CI's image has it. Nothing runs it on commit (#44), so run it before pushing a workflow change.
+`lint:workflows` (`scripts/actionlint.sh`) downloads the actionlint release CI pins, once, into `node_modules/.cache`, and runs shellcheck on every `run:` block through `scripts/shellcheck.sh`.
 
 `lint:shell` runs shellcheck on `scripts/*.sh`, which actionlint doesn't reach, failing on warnings and errors: its `info` notes here are single-quoted scripts and functions it can't see called. It downloads the shellcheck release `scripts/shellcheck.sh` pins, once, into `node_modules/.cache`. CI's **Lint workflows** job runs it.
+
+`lint:zizmor` (`scripts/zizmor.sh`) downloads the zizmor release that script pins the same way, and CI's **Lint workflows** job runs it too. It runs offline, so it skips the audits that ask GitHub about an action. `.github/zizmor.yml` holds this repo's rules. A finding that's safe in one place gets an inline `# zizmor: ignore[rule]` with its reason alongside.
 
 A shell script with logic is tested from a `scripts/*.test.ts` that runs it for real: `merge-holds-branch.test.ts` against a throwaway repo, `smoke-check.test.ts` with stubs for `curl` and `sleep` on the `PATH`.
 
@@ -211,7 +215,7 @@ A shell script with logic is tested from a `scripts/*.test.ts` that runs it for 
 
 `.github/workflows/ci.yml` runs on every pull request and every push to `main`:
 
-1. **Lint workflows** (actionlint, as `npm run lint:workflows`, and shellcheck, as `npm run lint:shell`)
+1. **Lint workflows** (actionlint, as `npm run lint:workflows`, shellcheck, as `npm run lint:shell`, and zizmor, as `npm run lint:zizmor`)
 2. **Format, lint, typecheck, unit tests**, with coverage
 3. **Build static site**, shared with the jobs that test it
 4. **Playwright** on Chromium and WebKit, with browsers cached between runs, and the coming-soon journey against its own build from the empty feed

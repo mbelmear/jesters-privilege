@@ -1,0 +1,16 @@
+# zizmor's rules for this repo; scripts/zizmor.sh runs it. A finding that's safe
+# in one place gets an inline `# zizmor: ignore[rule]` with its reason alongside.
+rules:
+  unpinned-uses:
+    config:
+      policies:
+        # GitHub's own actions may float on a major version tag, so they keep
+        # taking its fixes without a stream of update PRs, each waiting on CI.
+        # Anyone else's must be pinned to a commit.
+        actions/*: ref-pin
+        "*": hash-pin
+  # `$/` (July 2026) guards against an action cloned at runtime by an earlier
+  # step. No workflow here clones one, and actionlint's pinned version may not
+  # read the syntax.
+  self-repository:
+    disable: true

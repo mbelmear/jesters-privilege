@@ -17,8 +17,12 @@ runs:
         key: playwright-${{ runner.os }}-${{ steps.version.outputs.playwright }}-${{ inputs.browsers }}
     - if: steps.cache.outputs.cache-hit != 'true'
       shell: bash
-      run: npx playwright install --with-deps ${{ inputs.browsers }}
+      run: npx playwright install --with-deps $BROWSERS
+      env:
+        BROWSERS: ${{ inputs.browsers }}
     # The cache holds the browsers but not their system libraries.
     - if: steps.cache.outputs.cache-hit == 'true'
       shell: bash
-      run: npx playwright install-deps ${{ inputs.browsers }}
+      run: npx playwright install-deps $BROWSERS
+      env:
+        BROWSERS: ${{ inputs.browsers }}

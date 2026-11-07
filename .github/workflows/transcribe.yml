@@ -44,7 +44,8 @@ jobs:
     env:
       FEED: live
     steps:
-      - uses: actions/checkout@v5
+      # Pushes to the transcripts branch.
+      - uses: actions/checkout@v5 # zizmor: ignore[artipacked]
       - uses: ./.github/actions/setup
       - name: Check out the transcripts branch
         run: |
