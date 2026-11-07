@@ -7,19 +7,21 @@ export const LIVE_FEED_URL =
   "https://www.spreaker.com/show/7523831/episodes/feed";
 
 // Typed as the record, not its literal values, so a test can swap in other
-// links with jest.replaceProperty.
+// links with jest.replaceProperty. All without the share-tracking query strings
+// the apps add.
 const listen: Site["listen"] = {
   "apple-podcasts":
     "https://podcasts.apple.com/us/podcast/jesters-privilege/id6830338936",
   spotify: "https://open.spotify.com/show/6a7KnKe6ohzrMGZwJDc5Ti",
   "amazon-music":
     "https://music.amazon.com/podcasts/581f57eb-1503-4a04-b10d-5431bb5029b9/jesters-privilege",
+  youtube: "https://www.youtube.com/@thejestersprivilegepodcast",
 };
 
-// Without Instagram's share-tracking query string.
 const social: Site["social"] = {
   instagram: "https://www.instagram.com/jestersprivilegepod/",
   linkedin: "https://www.linkedin.com/company/jester-s-privilege",
+  tiktok: "https://www.tiktok.com/@jestersprivilegepod",
 };
 
 // Each Listen and social link appears on the site as soon as it's filled in.

@@ -174,7 +174,7 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
   - **Apple Podcasts**: Apple's public lookup (`itunes.apple.com/lookup?id=<show>&entity=podcastEpisode`), matched exactly on the Episode's feed GUID (`episodeGuid`). No key.
   - **Spotify**: the Spotify Web API with a client-credentials key stored as GitHub secrets, matched on exact title and a release date within a day of the Episode's (Spotify dates by day, with no time zone). Spotify runs the key's developer app only while its owner (Michael) has Spotify Premium.
   - **Amazon Music**: no lookup, so each Episode's Amazon Music link opens the show.
-  - **YouTube**: once the show is on YouTube; how to match is decided then.
+  - **YouTube**: no lookup, so each Episode's YouTube link opens the show's channel.
   - Until an app lists an Episode, or when a lookup fails, its Listen link opens the show instead. A lookup never fails the build; the build log names the Episode and the app.
 
 ### Transcripts
@@ -380,7 +380,6 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
 ## Further Notes
 
 - **Pending inputs** (none block starting):
-  - the YouTube link
   - the Jesters' approval of the rewritten Fools' Gallery copy and the light wit pass on working messages
   - headshots for all three Jesters
   - final logo files (SVG, transparent background, square mark, dark-background version)
