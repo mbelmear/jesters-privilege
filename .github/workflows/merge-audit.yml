@@ -2,7 +2,7 @@ name: Merge audit
 
 # Fails when a commit reaches main without the agreed review: a passed
 # /code-review comment naming the PR's head, or the ready-for-human label for
-# visual PRs. See scripts/audit-merge.sh and AGENTS.md (Merging).
+# visual PRs. See scripts/audit-merge.sh and docs/testing.md (Merging).
 
 on:
   push:

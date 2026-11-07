@@ -1,27 +1,25 @@
 // Opens an issue when a run of Deploy fails in its production or feed check job,
-// or adds to the one already open. The logic is src/lib/deploy-report.ts;
+// or adds to the one already open, and closes the feed check's once one passes.
+// The logic is src/lib/deploy-report.ts;
 // scripts/failed-run.ts wires in `gh`. --dry-run prints the report for the newest
 // such run of each job and writes nothing, which is how a pull request that
 // changes this shows it working.
 // Usage: npm run report-deploy -- <run-id> | --dry-run
 import {
-  DEPLOY_ISSUE_TITLE,
-  DEPLOY_JOB,
   FEED_CHECK_ISSUE_TITLE,
   FEED_CHECK_JOB,
-  deployReport,
-  feedCheckReport,
+  REPORTED_JOBS,
+  feedCheckPassed,
 } from "@/lib/deploy-report";
-import { failedJobs, fileReport, gh, jobLogs, runUrl } from "./failed-run";
-
-const REPORTED_JOBS = [
-  { job: DEPLOY_JOB, title: DEPLOY_ISSUE_TITLE, report: deployReport },
-  {
-    job: FEED_CHECK_JOB,
-    title: FEED_CHECK_ISSUE_TITLE,
-    report: feedCheckReport,
-  },
-];
+import {
+  closeReport,
+  failedJobs,
+  fileReport,
+  gh,
+  jobLogs,
+  passedJobs,
+  runUrl,
+} from "./failed-run";
 
 const argument = process.argv[2];
 if (!argument) {
@@ -56,4 +54,8 @@ for (const { job, title, report } of REPORTED_JOBS) {
     continue;
   }
   fileReport(title, report(runUrl(runId), jobLogs(jobs)), dryRun);
+}
+
+if (!dryRun && passedJobs(argument).some((j) => j.name === FEED_CHECK_JOB)) {
+  closeReport(FEED_CHECK_ISSUE_TITLE, feedCheckPassed(runUrl(argument)));
 }

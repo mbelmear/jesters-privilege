@@ -54,6 +54,20 @@ export function feedCheckReport(runUrl: string, log: string): string {
     "",
     failureList(log),
     "",
-    "While the feed check is red, no new Episode, Episode Listen link, or Transcript deploys on its own, and the live site stays as it is. Close this once a feed check passes again.",
+    "While the feed check is red, no new Episode, Episode Listen link, or Transcript deploys on its own, and the live site stays as it is. This issue closes itself once a feed check passes.",
   ].join("\n");
 }
+
+/** The comment that closes the feed check's issue. */
+export function feedCheckPassed(runUrl: string): string {
+  return `A feed check passed: ${runUrl}`;
+}
+
+export const REPORTED_JOBS = [
+  { job: DEPLOY_JOB, title: DEPLOY_ISSUE_TITLE, report: deployReport },
+  {
+    job: FEED_CHECK_JOB,
+    title: FEED_CHECK_ISSUE_TITLE,
+    report: feedCheckReport,
+  },
+];
