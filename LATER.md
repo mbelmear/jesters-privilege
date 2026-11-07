@@ -9,6 +9,7 @@ Good ideas deliberately left out of v1.
 - **The Jester's Library.** Books mentioned on the show and recommended reading.
 - **Topics and series.** Browse the Episode archive by subject.
 - **A link preview per Fool.** Each Fool is a section of the Gallery page, so a shared Fool shows the Gallery's card. A card of their own (their painting cropped to the focal point, with a placard strip) needs an address of their own, such as a page per Fool at `/gallery/<slug>`. Draw the card in `src/app/cards/[...card]/route.ts`, beside the Episode cards: Next can't place `opengraph-image` files under a catch-all route.
+- **YouTube links to each Episode's video.** An Episode's YouTube link opens the show's channel for now. Matching videos to Episodes would need a YouTube API key and a rule for matching them.
 - **Share from a timestamp.** Links that open an Episode playing at a given moment.
 - **Proofread Transcripts.** Review the machine Transcripts of key Episodes.
 - **Newsletter and merch.**

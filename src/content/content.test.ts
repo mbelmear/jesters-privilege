@@ -22,20 +22,22 @@ describe("content", () => {
   // The show's pages as the Jesters gave them (#6), without share-tracking
   // query strings.
   // The RSS feed stays in the page head only; the Jesters dropped its button.
-  it("links to the show on Apple Podcasts, Spotify, and Amazon Music", () => {
+  it("links to the show on Apple Podcasts, Spotify, Amazon Music, and YouTube", () => {
     expect(content.site.listen).toEqual({
       "apple-podcasts":
         "https://podcasts.apple.com/us/podcast/jesters-privilege/id6830338936",
       spotify: "https://open.spotify.com/show/6a7KnKe6ohzrMGZwJDc5Ti",
       "amazon-music":
         "https://music.amazon.com/podcasts/581f57eb-1503-4a04-b10d-5431bb5029b9/jesters-privilege",
+      youtube: "https://www.youtube.com/@thejestersprivilegepodcast",
     });
   });
 
-  it("links to the show's Instagram and LinkedIn", () => {
+  it("links to the show's Instagram, LinkedIn, and TikTok", () => {
     expect(content.site.social).toEqual({
       instagram: "https://www.instagram.com/jestersprivilegepod/",
       linkedin: "https://www.linkedin.com/company/jester-s-privilege",
+      tiktok: "https://www.tiktok.com/@jestersprivilegepod",
     });
   });
 
@@ -179,9 +181,11 @@ describe("content", () => {
     );
   });
 
-  // Not until the show is on YouTube (#116).
-  it("sends newcomers to podcast apps the show is on", () => {
-    expect(content.microcopy.newToPodcasts.text).not.toMatch(/YouTube/);
+  // Michael is a deacon and Dan a discipleship pastor (#6).
+  it("doesn't say the Jesters seek no office in the church", () => {
+    expect(content.about.whyAJester.paragraphs.join(" ")).not.toMatch(
+      /no office in it/
+    );
   });
 
   // Scripture is quoted from the ESV (docs/spec.md, Content), so the site's
