@@ -117,9 +117,9 @@ describe("reading a workflow", () => {
   });
 });
 
-// A secret in a workflow's or a job's `env` reaches every step under it, `npm ci`
-// install scripts included (#8), and zizmor doesn't flag it, so this does. See
-// CODING_STANDARDS.md, Secrets.
+// A secret or the GitHub token in a workflow's or a job's `env` reaches every
+// step under it, `npm ci` install scripts included (#8), and zizmor doesn't flag
+// it, so this does. See CODING_STANDARDS.md, Secrets.
 function secretsAboveSteps(text: string): string[] {
   const found: string[] = [];
   let envIndent = -1;
@@ -129,7 +129,8 @@ function secretsAboveSteps(text: string): string[] {
     const indent = line.length - trimmed.length;
     if (envIndent >= 0 && indent <= envIndent) envIndent = -1;
     if (/^(?: {4})?env:/.test(line)) envIndent = indent;
-    if (envIndent >= 0 && /\bsecrets\b/.test(line)) found.push(trimmed);
+    if (envIndent >= 0 && /\bsecrets\b|\bgithub\.token\b/.test(line))
+      found.push(trimmed);
   }
   return found;
 }
@@ -168,6 +169,19 @@ describe("a workflow's secrets", () => {
     ].join("\n");
 
     expect(secretsAboveSteps(text)).toEqual(["KEY: ${{ secrets.KEY }}"]);
+  });
+
+  it("refuses the GitHub token in a job's env", () => {
+    const text = [
+      "jobs:",
+      "  deploy:",
+      "    env:",
+      "      GH_TOKEN: ${{ github.token }}",
+      "    steps:",
+      "      - run: npm ci",
+    ].join("\n");
+
+    expect(secretsAboveSteps(text)).toEqual(["GH_TOKEN: ${{ github.token }}"]);
   });
 
   it("passes one in a step's env, and a job's env without one", () => {
