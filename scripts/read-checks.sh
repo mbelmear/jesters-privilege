@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Print a pull request's checks, and exit as gh pr checks does: 0 when all pass,
-# 8 while any is pending, and 1 once any has failed or on another error. It reads
-# again when gh can't connect, for up to half an hour, rather than ending a long
-# wait over a dropped connection or a laptop's sleep.
+# 8 while any is pending, and 1 once any has failed or on another error. Unlike
+# gh, it also exits 1 once any was cancelled, naming it. It reads again when gh
+# can't connect, for up to half an hour, rather than ending a long wait over a
+# dropped connection or a laptop's sleep.
 # Usage: scripts/read-checks.sh <pr-number>
 set -euo pipefail
 
@@ -17,6 +18,12 @@ for ((attempt = 1; attempt <= attempts; attempt++)); do
   if ! grep -Eq 'error connecting to|dial tcp|connection reset|timeout|EOF' "$errors"; then
     cat "$errors" >&2
     [[ -z $results ]] || echo "$results"
+    # gh counts a cancelled check as neither failed nor pending, so exits 0.
+    cancelled=$(awk -F'\t' '$2 == "cancel" { print $1 " was cancelled. Rerun it from its run: " $4 }' <<<"$results")
+    if [[ -n $cancelled ]]; then
+      echo "$cancelled" >&2
+      exit 1
+    fi
     exit "$status"
   fi
   ((attempt == attempts)) || sleep 60
