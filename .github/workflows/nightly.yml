@@ -6,8 +6,8 @@ on:
     - cron: "0 9 * * *"
   workflow_dispatch:
   # A pull request that changes the failure report runs it, writing nothing.
-  # One that changes the Email Routing check, or the address it checks, runs
-  # that too: it only reads.
+  # One that changes the Email Routing check's files, listed last, or the
+  # address it checks (wrangler.jsonc) runs that too: it only reads.
   pull_request:
     paths:
       - .github/workflows/nightly.yml
@@ -16,6 +16,7 @@ on:
       - src/lib/nightly-report.ts
       - scripts/email-routing-check.ts
       - src/lib/email-routing-check.ts
+      - src/lib/email-destination.ts
       - wrangler.jsonc
 
 permissions:

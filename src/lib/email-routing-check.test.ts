@@ -264,7 +264,7 @@ describe("runEmailRoutingCheck", () => {
       code: 1,
       lines: [
         failure(
-          "The token can't see the zone jestersprivilegepodcast.com, so it lacks Zone › Zone: Read"
+          "The token can't see the zone jestersprivilegepodcast.com: CLOUDFLARE_READ_TOKEN needs Zone › Zone: Read on it (docs/deploy.md, Account prerequisites)."
         ),
       ],
     });
@@ -281,6 +281,25 @@ describe("runEmailRoutingCheck", () => {
       lines: [
         failure(
           `Email Routing rules ${API}${RULES}?page=1&per_page=50 has no result list`
+        ),
+      ],
+    });
+  });
+
+  it("names a rule it can't read by its page", async () => {
+    const odd = () =>
+      reply(200, {
+        success: true,
+        errors: [],
+        messages: [],
+        result: [{ matchers: [], actions: [] }],
+      });
+    const fetch = cloudflare([verified(GMAIL)], [], { [RULES]: odd });
+    expect(await check(fetch)).toEqual({
+      code: 1,
+      lines: [
+        failure(
+          `Email Routing rules ${API}${RULES}?page=1&per_page=50 result 0 has no enabled`
         ),
       ],
     });

@@ -1,10 +1,11 @@
 // The deploy's Email Routing check (#114): the Worker's send_email binding
 // only delivers to a verified Email Routing destination, so a production
 // deploy first asks the Cloudflare API whether wrangler.jsonc's
-// destination_address is one. Nothing else could tell: Jest fakes the sender,
-// a preview accepts any address, and the smoke check can't pass Turnstile.
-// Run by scripts/email-destination.ts in .github/workflows/deploy.yml.
-// Nightly's Email Routing check (src/lib/email-routing-check.ts) reads
+// destination_address is one. No test or deploy step could tell otherwise:
+// Jest fakes the sender, a preview accepts any address, and the smoke check
+// can't pass Turnstile. Run by scripts/email-destination.ts in
+// .github/workflows/deploy.yml. Nightly's Email Routing check
+// (src/lib/email-routing-check.ts) checks it again between deploys, reading
 // wrangler.jsonc and Cloudflare's lists through the same functions.
 import JSON5 from "json5";
 import { errorMessage, type Fetch, type TextResponse } from "./download";
@@ -123,17 +124,18 @@ export type CloudflareApi = {
 const PER_PAGE = 50;
 
 // Every destination address on the account.
-export async function destinationList(
+export function destinationList(
   api: CloudflareApi,
   accountId: string
 ): Promise<Destination[]> {
-  const list = await cloudflareList(api, {
-    what: "Email Routing addresses",
-    path: `/accounts/${accountId}/email/routing/addresses`,
-    permission: "Account › Email Routing Addresses: Read",
-  });
-  return list.items.map((item, i) =>
-    destination(item, `${list.source} result ${i}`)
+  return cloudflareList(
+    api,
+    {
+      what: "Email Routing addresses",
+      path: `/accounts/${accountId}/email/routing/addresses`,
+      permission: "Account › Email Routing Addresses: Read",
+    },
+    destination
   );
 }
 
@@ -146,36 +148,32 @@ export type CloudflareListRequest = {
   permission: string;
 };
 
-// Every item of a list, read a page at a time until a page comes back short,
-// and the list's URL, to name in errors about an item.
-export async function cloudflareList(
+// Every item of a list, each narrowed by `parse` (given the item and how to
+// name it in an error), read a page at a time until a page comes back short.
+export async function cloudflareList<T>(
   api: CloudflareApi,
-  request: CloudflareListRequest
-): Promise<{ items: unknown[]; source: string }> {
-  const list = new URL(`https://api.cloudflare.com/client/v4${request.path}`);
-  const items: unknown[] = [];
+  request: CloudflareListRequest,
+  parse: (item: unknown, source: string) => T
+): Promise<T[]> {
+  const items: T[] = [];
   for (let page = 1; page <= MAX_PAGES; page++) {
-    const url = new URL(list);
+    const url = new URL(`https://api.cloudflare.com/client/v4${request.path}`);
     url.searchParams.set("page", String(page));
     url.searchParams.set("per_page", String(PER_PAGE));
-    const result = await cloudflarePage(
-      api,
-      request,
-      url.href,
-      `${request.what} ${url.href}`
+    const source = `${request.what} ${url.href}`;
+    const result = await cloudflarePage(api, request, url.href, source);
+    items.push(
+      ...result.map((item, i) => parse(item, `${source} result ${i}`))
     );
-    items.push(...result);
-    if (result.length < PER_PAGE) {
-      return { items, source: `${request.what} ${list.href}` };
-    }
+    if (result.length < PER_PAGE) return items;
   }
   throw new Error(
     `${request.what} listed more than ${MAX_PAGES} pages of ${PER_PAGE}, so the API's paging can't be trusted`
   );
 }
 
-// Far more destination addresses than the show will ever have: an API that
-// ignored `page` would otherwise be read until the job timed out.
+// Far more items than the show will ever have: an API that ignored `page`
+// would otherwise be read until the job timed out.
 const MAX_PAGES = 20;
 
 // The statuses Cloudflare answers a token it won't take with: 400 for one it

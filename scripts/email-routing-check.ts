@@ -6,6 +6,7 @@
 // The token is read-only (docs/deploy.md, Account prerequisites).
 import { readFileSync } from "node:fs";
 import { site } from "@/content/site";
+import { errorMessage } from "@/lib/download";
 import {
   EMAIL_ROUTING_FAILURE,
   runEmailRoutingCheck,
@@ -20,20 +21,27 @@ if (!apiToken || !accountId) {
   );
   process.exitCode = 1;
 } else {
-  runEmailRoutingCheck(readFileSync("wrangler.jsonc", "utf8"), {
-    fetch: (url, init) =>
-      fetch(url, { ...init, signal: AbortSignal.timeout(30_000) }),
-    apiToken,
-    accountId,
-    alias: site.contactEmail,
-    log: (line) => console.log(line),
-  }).then(
-    (code) => {
+  // A crash keeps the failure prefix, so the nightly report names it.
+  const crashed = (error: unknown) => {
+    console.log(`::error::${EMAIL_ROUTING_FAILURE}: ${errorMessage(error)}`);
+    process.exitCode = 1;
+  };
+  let config: string | undefined;
+  try {
+    config = readFileSync("wrangler.jsonc", "utf8");
+  } catch (error: unknown) {
+    crashed(error);
+  }
+  if (config !== undefined) {
+    runEmailRoutingCheck(config, {
+      fetch: (url, init) =>
+        fetch(url, { ...init, signal: AbortSignal.timeout(30_000) }),
+      apiToken,
+      accountId,
+      alias: site.contactEmail,
+      log: (line) => console.log(line),
+    }).then((code) => {
       process.exitCode = code;
-    },
-    (error: unknown) => {
-      console.error(error);
-      process.exitCode = 1;
-    }
-  );
+    }, crashed);
+  }
 }

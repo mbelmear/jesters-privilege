@@ -37,12 +37,20 @@ type RoutingRule = {
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
-function strings(value: unknown, source: string): string[] {
-  const list: unknown[] = Array.isArray(value) ? value : [];
-  if (!Array.isArray(value) || list.some((item) => typeof item !== "string")) {
-    throw new Error(`${source} isn't a list of text`);
+// A list's items, or null when `value` isn't a list.
+const listOrNull = (value: unknown): unknown[] | null =>
+  Array.isArray(value) ? value : null;
+
+function routingAction(action: unknown, source: string): RoutingAction {
+  if (!isRecord(action) || typeof action.type !== "string") {
+    throw new Error(`${source} has no type`);
   }
-  return list.map(String);
+  // A drop has no value; a forward's lists its addresses.
+  const value = action.value === undefined ? [] : listOrNull(action.value);
+  if (!value?.every((to) => typeof to === "string")) {
+    throw new Error(`${source}'s value isn't a list of addresses`);
+  }
+  return { type: action.type, value: value.map(String) };
 }
 
 function routingRule(item: unknown, source: string): RoutingRule {
@@ -50,9 +58,9 @@ function routingRule(item: unknown, source: string): RoutingRule {
   if (typeof item.enabled !== "boolean") {
     throw new Error(`${source} has no enabled`);
   }
-  const matchers: unknown[] = Array.isArray(item.matchers) ? item.matchers : [];
-  const actions: unknown[] = Array.isArray(item.actions) ? item.actions : [];
-  if (!Array.isArray(item.matchers) || !Array.isArray(item.actions)) {
+  const matchers = listOrNull(item.matchers);
+  const actions = listOrNull(item.actions);
+  if (!matchers || !actions) {
     throw new Error(`${source} has no matchers or actions`);
   }
   const literal = matchers.find(
@@ -65,45 +73,57 @@ function routingRule(item: unknown, source: string): RoutingRule {
       isRecord(literal) && typeof literal.value === "string"
         ? literal.value
         : null,
-    actions: actions.map((action, i) => {
-      if (!isRecord(action) || typeof action.type !== "string") {
-        throw new Error(`${source} action ${i} has no type`);
-      }
-      return {
-        type: action.type,
-        value: strings(action.value ?? [], `${source} action ${i}'s value`),
-      };
-    }),
+    actions: actions.map((action, i) =>
+      routingAction(action, `${source} action ${i}`)
+    ),
   };
 }
 
-async function zoneId(api: CloudflareApi, zone: string): Promise<string> {
+// A zone from the API's list: its name and id.
+function zone(item: unknown, source: string): { name: string; id: string } {
+  if (
+    !isRecord(item) ||
+    typeof item.name !== "string" ||
+    typeof item.id !== "string"
+  ) {
+    throw new Error(`${source} has no name or id`);
+  }
+  return { name: item.name, id: item.id };
+}
+
+async function zoneId(api: CloudflareApi, name: string): Promise<string> {
   const permission = "Zone › Zone: Read";
-  const { items, source } = await cloudflareList(api, {
-    what: "Zones",
-    path: `/zones?name=${encodeURIComponent(zone)}`,
-    permission,
-  });
-  const found = items.find((item) => isRecord(item) && item.name === zone);
-  if (!isRecord(found)) {
+  const zones = await cloudflareList(
+    api,
+    {
+      what: "Zones",
+      path: `/zones?name=${encodeURIComponent(name)}`,
+      permission,
+    },
+    zone
+  );
+  const found = zones.find((item) => item.name === name);
+  if (!found) {
     throw new Error(
-      `The token can't see the zone ${zone}, so it lacks ${permission}`
+      `The token can't see the zone ${name}: ${api.tokenName} needs ${permission} on it (docs/deploy.md, Account prerequisites).`
     );
   }
-  if (typeof found.id !== "string") throw new Error(`${source} has no id`);
   return found.id;
 }
 
 async function routingRules(
   api: CloudflareApi,
-  zone: string
+  zoneName: string
 ): Promise<RoutingRule[]> {
-  const { items, source } = await cloudflareList(api, {
-    what: "Email Routing rules",
-    path: `/zones/${await zoneId(api, zone)}/email/routing/rules`,
-    permission: "Zone › Email Routing Rules: Read",
-  });
-  return items.map((item, i) => routingRule(item, `${source} result ${i}`));
+  return cloudflareList(
+    api,
+    {
+      what: "Email Routing rules",
+      path: `/zones/${await zoneId(api, zoneName)}/email/routing/rules`,
+      permission: "Zone › Email Routing Rules: Read",
+    },
+    routingRule
+  );
 }
 
 const sameAddress = (a: string, b: string) =>
