@@ -3,8 +3,8 @@
 # worktree, and delete its branch here and on GitHub. Pull requests are
 # squash-merged, so git can't tell the branch is merged (`git branch -d`
 # refuses); instead merge-holds-branch.sh checks the merge commit holds the
-# branch's work, and this refuses otherwise, or when the worktree holds
-# uncommitted changes. `npm run merge` already deletes the GitHub branch, so
+# branch's work, and this refuses otherwise, when the worktree holds
+# uncommitted changes, or when its folder survives removal. `npm run merge` already deletes the GitHub branch, so
 # that step matters mostly for PRs merged in GitHub's UI, such as visual ones.
 # Usage: npm run worktree-done -- <pr-number>
 set -euo pipefail
@@ -42,8 +42,21 @@ for head in $local_head $remote_head; do
   "$holds" "$head" "$merge" || exit 1
 done
 
+# A folder git fails to delete stops being a worktree all the same (#175's
+# kept 29 entries, node_modules among them), so the branch's config remembers
+# it: a rerun, which git lists no worktree for, still checks it's gone.
+# `git branch -D` drops the record with the branch.
 if [[ -n "$dir" ]]; then
-  git worktree remove "$dir"
+  git config "branch.$branch.worktree-folder" "$dir"
+  git worktree remove "$dir" || true
+else
+  dir=$(git config "branch.$branch.worktree-folder" || true)
+fi
+if [[ -n "$dir" && -e "$dir" ]]; then
+  echo "Refusing: $dir is still there. Close whatever has it open, delete it, and rerun." >&2
+  exit 1
+fi
+if [[ -n "$dir" ]]; then
   echo "Removed $dir"
 fi
 if [[ -n "$local_head" ]]; then
