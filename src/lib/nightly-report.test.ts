@@ -53,4 +53,31 @@ describe("nightlyReport", () => {
     expect(report).toContain(RUN);
     expect(report).toContain("No test is named");
   });
+
+  // The Email Routing job's log, as GitHub prints its ::error:: lines.
+  const EMAIL_ROUTING_LOG = [
+    "2026-11-09T09:01:12.0000000Z ##[error]Email Routing check failed: thejestersprivilegepodcast@gmail.com is a destination address but isn't verified",
+    "2026-11-09T09:01:12.1000000Z ##[error]Process completed with exit code 1.",
+  ].join("\n");
+
+  it("names a failed Email Routing check, and where its fix is", () => {
+    const report = nightlyReport(RUN, EMAIL_ROUTING_LOG);
+    expect(report).toContain(
+      "- Email Routing check failed: thejestersprivilegepodcast@gmail.com is a destination address but isn't verified"
+    );
+    expect(report).toContain("docs/deploy.md, Account prerequisites");
+    expect(report).not.toContain("No test is named");
+  });
+
+  it("names failed tests and Email Routing together", () => {
+    const report = nightlyReport(RUN, `${LOG}\n${EMAIL_ROUTING_LOG}`);
+    expect(report).toContain("- Email Routing check failed:");
+    expect(report).toContain(
+      "- [firefox-desktop] e2e/player.spec.ts:137:7 › Persistent player › works by keyboard, with every control named"
+    );
+  });
+
+  it("leaves the Email Routing fix out when only tests failed", () => {
+    expect(nightlyReport(RUN, LOG)).not.toContain("Account prerequisites");
+  });
 });
