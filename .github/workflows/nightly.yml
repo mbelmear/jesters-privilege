@@ -20,7 +20,7 @@ jobs:
   firefox:
     name: Playwright (Firefox)
     if: github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
         with:
@@ -55,7 +55,7 @@ jobs:
     name: Report the failure
     needs: firefox
     if: failure() && github.event_name == 'schedule'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       actions: read
@@ -72,7 +72,7 @@ jobs:
   report-preview:
     name: Preview the failure report
     if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       actions: read
