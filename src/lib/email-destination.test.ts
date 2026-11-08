@@ -228,6 +228,22 @@ describe("runEmailDestinationCheck", () => {
       ]);
     });
 
+    it("when the API's pages never end", async () => {
+      const full = Array.from({ length: 50 }, (_, i) => ({
+        email: `listener${i}@example.com`,
+        verified: "2026-10-20T10:00:00Z",
+      }));
+      // An API that ignores `page` answers every request with the first.
+      const first = cloudflare(full);
+      const endless: Fetch = (url, init) =>
+        first(url.replace(/page=\d+/, "page=1"), init);
+      const { code, lines } = await run(endless);
+      expect(code).toBe(1);
+      expect(lines).toEqual([
+        "::error::Email Routing check failed, so nothing deploys: Email Routing addresses listed more than 20 pages of 50, so the API's paging can't be trusted",
+      ]);
+    });
+
     it("when the API's answer isn't a list of addresses", async () => {
       const garbled: Fetch = async () => ({
         ...reply(200, {}),

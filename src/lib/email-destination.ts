@@ -105,7 +105,7 @@ type Destination = { email: string; verified: boolean };
 const PERMISSION_HINT =
   "CLOUDFLARE_API_TOKEN needs Account › Email Routing Addresses: Read (docs/deploy.md, Account prerequisites).";
 
-// The API's largest page.
+// The API's largest page (its docs' per_page maximum).
 const PER_PAGE = 50;
 
 // Every destination address on the account, read a page at a time until a
@@ -114,12 +114,19 @@ async function destinationList(
   env: EmailDestinationEnv
 ): Promise<Destination[]> {
   const listed: Destination[] = [];
-  for (let page = 1; ; page++) {
+  for (let page = 1; page <= MAX_PAGES; page++) {
     const destinations = await destinationPage(env, page);
     listed.push(...destinations);
     if (destinations.length < PER_PAGE) return listed;
   }
+  throw new Error(
+    `Email Routing addresses listed more than ${MAX_PAGES} pages of ${PER_PAGE}, so the API's paging can't be trusted`
+  );
 }
+
+// Far more destination addresses than the show will ever have: an API that
+// ignored `page` would otherwise be read until the job timed out.
+const MAX_PAGES = 20;
 
 // The statuses Cloudflare answers a token it won't take with: 400 for one it
 // can't authenticate, 403 for one without the permission.
