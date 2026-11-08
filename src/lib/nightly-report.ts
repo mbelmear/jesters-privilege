@@ -1,5 +1,6 @@
 // What a failed scheduled Nightly tells the tracker (scripts/report-nightly.ts):
 // nobody reads a red run in the Actions tab, so it opens an issue.
+import { EMAIL_ROUTING_FAILURE } from "./email-routing-check";
 
 export const NIGHTLY_ISSUE_TITLE = "Nightly is failing";
 
@@ -23,17 +24,35 @@ export function failedTests(log: string): string[] {
   return tests;
 }
 
+const EMAIL_ROUTING_ERROR = new RegExp(
+  `##\\[error\\](${EMAIL_ROUTING_FAILURE}: .+?)\\s*$`
+);
+
+/** Each problem a job's log names from the Email Routing check. */
+function emailRoutingFailures(log: string): string[] {
+  return log
+    .replace(TERMINAL_COLOR, "")
+    .split("\n")
+    .flatMap((line) => EMAIL_ROUTING_ERROR.exec(line)?.[1] ?? []);
+}
+
 /** The issue text for a failed run, from the logs of its failed jobs. */
 export function nightlyReport(runUrl: string, log: string): string {
   const tests = failedTests(log);
-  const failures = tests.length
-    ? tests.map((test) => `- ${test}`).join("\n")
-    : "No test is named: the run stopped before its tests finished, or its logs couldn't be read.";
+  const emailRouting = emailRoutingFailures(log);
+  const failures = [...tests, ...emailRouting];
   return [
     `Nightly failed: ${runUrl}`,
     "",
-    failures,
+    failures.length
+      ? failures.map((failure) => `- ${failure}`).join("\n")
+      : "No test is named: the run stopped before its tests finished, or its logs couldn't be read.",
     "",
+    ...(emailRouting.length
+      ? [
+          "docs/deploy.md, Account prerequisites, says how Email Routing should be set up in the Cloudflare dashboard.",
+        ]
+      : []),
     "If it passes locally but not in CI, docs/testing.md says where to look first. Close this once Nightly passes again.",
   ].join("\n");
 }

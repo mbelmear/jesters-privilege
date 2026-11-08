@@ -46,7 +46,8 @@
     "fonts": "tsx scripts/fonts.ts",
     "report-nightly": "tsx scripts/report-nightly.ts",
     "report-deploy": "tsx scripts/report-deploy.ts",
-    "dropped-tests": "tsx scripts/dropped-tests.ts"
+    "dropped-tests": "tsx scripts/dropped-tests.ts",
+    "email-routing-check": "tsx scripts/email-routing-check.ts"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",

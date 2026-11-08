@@ -6,12 +6,18 @@ on:
     - cron: "0 9 * * *"
   workflow_dispatch:
   # A pull request that changes the failure report runs it, writing nothing.
+  # One that changes the Email Routing check's files, listed last, or the
+  # address it checks (wrangler.jsonc) runs that too: it only reads.
   pull_request:
     paths:
       - .github/workflows/nightly.yml
       - scripts/report-nightly.ts
       - scripts/failed-run.ts
       - src/lib/nightly-report.ts
+      - scripts/email-routing-check.ts
+      - src/lib/email-routing-check.ts
+      - src/lib/email-destination.ts
+      - wrangler.jsonc
 
 permissions:
   contents: read
@@ -49,11 +55,32 @@ jobs:
           retention-days: 14
           if-no-files-found: error
 
+  # The Email Routing prerequisites only the Cloudflare dashboard shows
+  # (docs/deploy.md, Account prerequisites): an unverified Gmail fails every
+  # Submission, and nothing else notices until a visitor tries (#159).
+  # Dependabot's and forks' pull requests run without the repo's secrets.
+  email-routing:
+    name: Email Routing
+    if: >-
+      github.event_name != 'pull_request' ||
+      (github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.user.login != 'dependabot[bot]')
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - run: npm run email-routing-check
+        env:
+          CLOUDFLARE_READ_TOKEN: ${{ secrets.CLOUDFLARE_READ_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
   # Nobody reads a red run in the Actions tab, so a scheduled failure opens an
   # issue, or adds to the one still open. See scripts/report-nightly.ts.
   report:
     name: Report the failure
-    needs: firefox
+    needs: [firefox, email-routing]
     if: failure() && github.event_name == 'schedule'
     runs-on: ubuntu-24.04
     permissions:

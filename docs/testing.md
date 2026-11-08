@@ -90,7 +90,7 @@ Browsers report a failed `<audio>` differently: Chromium fires `error` and then 
 
 Sessions on this machine build and test in parallel. Each worktree serves its build on its own port (derived from its path in `playwright.config.ts`), and a run fails if that port is taken rather than testing whatever already listens there; stop the stray server (`lsof -nP -iTCP:<port> -sTCP:LISTEN`) and rerun. When tests a change didn't touch time out locally, check `uptime` before suspecting the code: a load average far above the core count slows every browser.
 
-A scheduled Nightly that fails opens an issue titled "Nightly is failing", or comments on the one still open, naming each failed test and the run. `npm run report-nightly -- --dry-run` prints what it would say for the newest failed run.
+A scheduled Nightly that fails opens an issue titled "Nightly is failing", or comments on the one still open, naming each failed test, each Email Routing problem, and the run. `npm run report-nightly -- --dry-run` prints what it would say for the newest failed run.
 
 On each pull request that builds, `npm run dropped-tests` adds a `::warning::` naming any browser test the base has and the head doesn't. It needs `out/`; a rename shows as a drop too.
 
@@ -224,7 +224,7 @@ A shell script with logic is tested from a `scripts/*.test.ts` that runs it for 
 
 A pull request changing only `docs/**` or top-level `*.md` is **docs-only** (`scripts/docs-only.sh`): it runs jobs 1 and 2 and skips the rest, along with its preview, because no build step or browser test reads those files. The whole PR is judged on each push, and a PR that also changes anything else runs every job. Main's required checks count a skipped job as passed, and `npm run merge` merges it as usual. A push to `main` always builds and runs the browser and Lighthouse jobs. If a test or build step starts reading a file under `docs/` or top-level Markdown, change the script's patterns with it; until then, a docs-only PR that breaks it first fails after merging, on that push's CI run (and its deploy, for a build step).
 
-`.github/workflows/nightly.yml` runs the Playwright suite on Firefox every night, and can be started by hand from the Actions tab. A pull request that changes its failure report previews it against the newest failed run.
+`.github/workflows/nightly.yml` runs the Playwright suite on Firefox every night, and checks the Email Routing prerequisites with a read-only Cloudflare token (`npm run email-routing-check`; `docs/deploy.md`, Account prerequisites). It can be started by hand from the Actions tab. A pull request that changes its failure report previews it against the newest failed run, and one that changes the Email Routing check's files (`scripts/email-routing-check.ts`, `src/lib/email-routing-check.ts`, `src/lib/email-destination.ts`) or `wrangler.jsonc` runs the check.
 
 Two more run on every push to `main`:
 
