@@ -7,14 +7,18 @@ inputs:
 runs:
   using: composite
   steps:
+    # Browsers are built per OS release, so the key names the runner image
+    # (ImageOS, such as ubuntu24): one image's WebKit fails to launch on the next (#196).
     - id: version
       shell: bash
-      run: echo "playwright=$(npx playwright --version | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
+      run: |
+        echo "playwright=$(npx playwright --version | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
+        echo "image=${ImageOS:?ImageOS is unset, so the browser cache can't name the runner image}" >> "$GITHUB_OUTPUT"
     - id: cache
       uses: actions/cache@v4
       with:
         path: ~/.cache/ms-playwright
-        key: playwright-${{ runner.os }}-${{ steps.version.outputs.playwright }}-${{ inputs.browsers }}
+        key: playwright-${{ steps.version.outputs.image }}-${{ steps.version.outputs.playwright }}-${{ inputs.browsers }}
     - if: steps.cache.outputs.cache-hit != 'true'
       shell: bash
       run: npx playwright install --with-deps $BROWSERS
