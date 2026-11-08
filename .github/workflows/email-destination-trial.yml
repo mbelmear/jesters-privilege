@@ -1,0 +1,26 @@
+name: Email Routing check trial (throwaway, #194)
+
+# Throwaway: runs the production deploy's Email Routing check with the real
+# secrets, which its own PR can't (CODING_STANDARDS.md, Workflows). Never
+# merged; its draft PR is closed once read.
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  trial:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - name: Check the Submission email's destination is verified
+        run: npm run email-destination
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
