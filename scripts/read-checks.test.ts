@@ -16,7 +16,8 @@ const script = join(__dirname, "read-checks.sh");
 
 // Stand-ins on the PATH: gh answers with the next line of `answers`, each
 // "<exit> <stdout>", or "<exit> ERR <stderr>", or just "<exit>" for a dropped
-// connection, repeating the last, and sleep only counts.
+// connection, repeating the last, and sleep only counts. A "\\n" in stdout
+// starts another row.
 function fakes(answers: string[]) {
   const root = mkdtempSync(join(tmpdir(), "read-checks-"));
   const count = join(root, "count");
@@ -37,7 +38,7 @@ if [[ $text == "$line" ]]; then
 elif [[ $text == ERR* ]]; then
   echo "\${text#ERR }" >&2
 else
-  echo "$text"
+  printf '%b\\n' "$text"
 fi
 exit "\${line%% *}"
 `
@@ -97,6 +98,29 @@ describe("read-checks", () => {
     expect(result.status).toBe(1);
     expect(result.stdout).toBe("Lint workflows\tfail\n");
     expect(f.sleepCount()).toBe(0);
+  });
+
+  // gh exits 0 when every check passed or was cancelled (gh 2.103.3).
+  it("refuses a cancelled check, naming it, though gh exits 0", () => {
+    f = fakes(["0 Lint workflows\tpass\\nBuild static site\tcancel"]);
+
+    const result = f.run();
+
+    expect(result.status).toBe(1);
+    expect(result.stdout).toBe(
+      "Lint workflows\tpass\nBuild static site\tcancel\n"
+    );
+    expect(result.stderr).toContain("Build static site was cancelled");
+    expect(f.sleepCount()).toBe(0);
+  });
+
+  it("passes a skipped check", () => {
+    f = fakes(["0 Lint workflows\tpass\\nPreview URL\tskipping"]);
+
+    const result = f.run();
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe("");
   });
 
   it("stops at once at any other error, passing it on", () => {

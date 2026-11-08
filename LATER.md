@@ -13,3 +13,4 @@ Good ideas deliberately left out of v1.
 - **Share from a timestamp.** Links that open an Episode playing at a given moment.
 - **Proofread Transcripts.** Review the machine Transcripts of key Episodes.
 - **Newsletter and merch.**
+- **Run CI on ubuntu-26.04.** Every job is pinned to `ubuntu-24.04` (#196). Move once Playwright ships WebKit for Ubuntu 26.04, in a PR whose Playwright jobs pass on it.

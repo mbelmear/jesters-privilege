@@ -200,6 +200,20 @@ describe("a workflow's secrets", () => {
   });
 });
 
+// ubuntu-latest moved to ubuntu-26.04 on 2026-11-08 without a commit here, and
+// WebKit stopped launching (#196). A runner image changes only in a PR.
+describe("a workflow's runners", () => {
+  it.each(readdirSync(".github/workflows"))("%s names its image", (file) => {
+    const runners = readFileSync(`.github/workflows/${file}`, "utf8").match(
+      /^ +runs-on: .*$/gm
+    );
+
+    expect(runners?.map((line) => line.trim())).toEqual(
+      runners?.map(() => "runs-on: ubuntu-24.04")
+    );
+  });
+});
+
 describe("the names scripts read", () => {
   // pr-status.sh reads this one; a rename brings back its wait for a preview.
   it("keeps the preview job's name", () => {
