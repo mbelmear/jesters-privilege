@@ -201,6 +201,19 @@ describe("runEmailRoutingCheck", () => {
     });
   });
 
+  it("fails when hello@ forwards to nobody", async () => {
+    expect(
+      await check(cloudflare([verified(GMAIL)], [forward(ALIAS)]))
+    ).toEqual({
+      code: 1,
+      lines: [
+        failure(
+          `${ALIAS} forwards to nobody; it should forward to ${GMAIL} alone`
+        ),
+      ],
+    });
+  });
+
   it("names both problems when both prerequisites are missing", async () => {
     expect((await check(cloudflare([], []))).lines).toEqual([
       failure(`${GMAIL} isn't an Email Routing destination address`),

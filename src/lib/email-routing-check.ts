@@ -3,6 +3,7 @@
 // failed: the show's Gmail is a verified destination, and hello@ forwards to
 // it alone (#113). The logic is here; scripts/email-routing-check.ts wires in
 // Cloudflare's API with a read-only token, which never reaches this module.
+import { errorMessage } from "./download";
 
 /** What Cloudflare's API answered a GET with: the status and parsed JSON. */
 export type CloudflareAnswer = { status: number; body: unknown };
@@ -183,16 +184,19 @@ function problems(
     actions.every(
       (action) =>
         action.type === "forward" &&
+        action.value.length > 0 &&
         action.value.every((to) => sameAddress(to, env.destination))
     );
   if (aliasRules.length === 0) {
     found.push(`${env.alias} has no enabled routing rule`);
   } else if (!alone) {
-    const sends = actions.map((action) =>
-      action.type === "forward"
-        ? `forwards to ${action.value.join(", ")}`
-        : `has a ${action.type} action`
-    );
+    const sends = actions.length
+      ? actions.map((action) =>
+          action.type !== "forward"
+            ? `has a ${action.type} action`
+            : `forwards to ${action.value.join(", ") || "nobody"}`
+        )
+      : ["has no actions"];
     found.push(
       `${env.alias} ${sends.join(", and ")}; it should forward to ${env.destination} alone`
     );
@@ -202,9 +206,6 @@ function problems(
 
 /** Exactly what the failure lines start with, for the nightly report. */
 export const EMAIL_ROUTING_FAILURE = "Email Routing check failed";
-
-const errorMessage = (error: unknown) =>
-  error instanceof Error ? error.message : String(error);
 
 // Logs each problem as an `::error::` and returns the exit code: 1 when Email
 // Routing isn't ready or Cloudflare couldn't be read, so Nightly fails and

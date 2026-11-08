@@ -8,6 +8,7 @@
 import { readFileSync } from "node:fs";
 import ts from "typescript";
 import { site } from "@/content/site";
+import { errorMessage } from "@/lib/download";
 import {
   EMAIL_ROUTING_FAILURE,
   runEmailRoutingCheck,
@@ -59,8 +60,7 @@ main().then(
     process.exitCode = code;
   },
   (error: unknown) => {
-    const message = error instanceof Error ? error.message : String(error);
-    console.log(`::error::${EMAIL_ROUTING_FAILURE}: ${message}`);
+    console.log(`::error::${EMAIL_ROUTING_FAILURE}: ${errorMessage(error)}`);
     process.exitCode = 1;
   }
 );
