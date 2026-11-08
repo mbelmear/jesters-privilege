@@ -23,7 +23,7 @@ Release day doesn't wait for the schedule: the **Run workflow** button deploys w
 
 Wrangler can't upload a preview version to a Worker that doesn't exist yet. If no Worker exists, the preview job first creates it with a blank placeholder page on workers.dev, with no custom domains. That happens once, before the first production deploy.
 
-If the build fails, the workflow stops before `wrangler deploy`, so the last good deploy stays live. A failed run emails as Triggers says, and a failed **Deploy to production** job also opens an issue titled "Production deploy is failing", or comments on the one still open (`deploy-report.yml`). `npm run report-deploy -- --dry-run` prints what it would say for the newest failed one, and for the newest failed feed check. A failed smoke check comes after `wrangler deploy`, so the new build may be live or may not have arrived.
+Before it builds, the deploy job checks that `wrangler.jsonc`'s `send_email` destination is a verified Email Routing destination address, asking the Cloudflare API (`npm run email-destination`, `src/lib/email-destination.ts`). Unlisted, not yet verified, or unreadable (the token lacking its permission included), it fails with an `::error::` naming the address and where to fix it, and nothing deploys: until 2026-11-03 every Submission failed with `delivery` because the Worker sent to an address that wasn't one, and no test, preview, or smoke check could see it (#114). If the build fails, the workflow stops before `wrangler deploy`, so the last good deploy stays live. A failed run emails as Triggers says, and a failed **Deploy to production** job also opens an issue titled "Production deploy is failing", or comments on the one still open (`deploy-report.yml`). `npm run report-deploy -- --dry-run` prints what it would say for the newest failed one, and for the newest failed feed check. A failed smoke check comes after `wrangler deploy`, so the new build may be live or may not have arrived.
 
 ## What production serves
 
@@ -89,9 +89,9 @@ These Cloudflare settings can only be made by a human in the dashboard. Nothing 
 
 - **workers.dev subdomain**: `jestersprivilege`, under **Workers & Pages › Your subdomain**. Without one, the first preview run fails. Previews are served from it, at `pr-<n>-jesters-privilege.jestersprivilege.workers.dev`.
 - **Always Use HTTPS**: on, under **SSL/TLS › Edge Certificates** for `jestersprivilegepodcast.com`. Off, `http://` addresses aren't redirected to `https://`, and the smoke check fails the deploy run.
-- **Email Routing destination**: `thejestersprivilegepodcast@gmail.com` added and verified, under **Compute › Email Service › Email Routing › Destination Addresses**. The Worker's `send_email` binding can only deliver to a verified destination, and Submissions fail with `delivery` until it is.
+- **Email Routing destination**: `thejestersprivilegepodcast@gmail.com` added and verified, under **Compute › Email Service › Email Routing › Destination Addresses**. The Worker's `send_email` binding can only deliver to a verified destination, and Submissions fail with `delivery` until it is, so the deploy job refuses to deploy until it is.
 - **Routing rule**: `hello@jestersprivilegepodcast.com` forwards to that Gmail, and to no other inbox (decided 2026-11-03, #113), under **Compute › Email Service › Email Routing › Routing Rules**. Cloudflare keeps a rule disabled until its destination is verified.
-- **API token permissions**: `CLOUDFLARE_API_TOKEN` needs **Account › Workers Scripts: Edit** and, for the custom domains, **Zone › Workers Routes: Edit** and **Zone › DNS: Edit** on `jestersprivilegepodcast.com`.
+- **API token permissions**: `CLOUDFLARE_API_TOKEN` needs **Account › Workers Scripts: Edit**; **Account › Email Routing Addresses: Read**, for the deploy's Email Routing check, which fails without it; and, for the custom domains, **Zone › Workers Routes: Edit** and **Zone › DNS: Edit** on `jestersprivilegepodcast.com`.
 
 ## Credentials
 
