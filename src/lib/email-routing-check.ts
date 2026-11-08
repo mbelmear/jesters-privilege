@@ -1,236 +1,198 @@
 // Nightly's check of the Email Routing prerequisites (docs/deploy.md, Account
 // prerequisites) that nothing else would notice until a visitor's Submission
-// failed: the show's Gmail is a verified destination, and hello@ forwards to
-// it alone (#113). The logic is here; scripts/email-routing-check.ts wires in
-// Cloudflare's API with a read-only token, which never reaches this module.
-import { errorMessage } from "./download";
-
-/** What Cloudflare's API answered a GET with: the status and parsed JSON. */
-export type CloudflareAnswer = { status: number; body: unknown };
+// failed: wrangler.jsonc's send_email destination is still a verified
+// destination between deploys, and hello@ forwards to it alone (#113, #159).
+// It reads wrangler.jsonc and Cloudflare's lists with the deploy's check
+// (src/lib/email-destination.ts); scripts/email-routing-check.ts wires in the
+// network and the read-only token.
+import { errorMessage, type Fetch } from "./download";
+import {
+  cloudflareList,
+  destinationAddresses,
+  destinationList,
+  type CloudflareApi,
+  type Destination,
+} from "./email-destination";
 
 export type EmailRoutingCheckEnv = {
+  fetch: Fetch;
+  // Sent only in the Authorization header; never logged.
+  apiToken: string;
   accountId: string;
-  /** The zone whose routing rules hold the alias. */
-  zone: string;
-  /** The public address, such as hello@. */
+  // The public address, such as hello@; its domain is the zone.
   alias: string;
-  /** Where Submissions go and the alias forwards (wrangler.jsonc). */
-  destination: string;
-  /** A GET of a path under https://api.cloudflare.com/client/v4. */
-  get: (path: string) => Promise<CloudflareAnswer>;
+  // Workflow-command log lines (::notice::, ::error::).
   log: (line: string) => void;
 };
 
-type DestinationAddress = { email: string; verified: boolean };
+// What a routing rule does with the mail it matches.
+type RoutingAction = { type: string; value: string[] };
 type RoutingRule = {
   enabled: boolean;
-  /** The address a literal `to` matcher names; null for any other rule. */
+  // The address a literal `to` matcher names; null for any other rule.
   to: string | null;
-  actions: { type: string; value: string[] }[];
+  actions: RoutingAction[];
 };
-
-const PER_PAGE = 50;
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
-function list(value: unknown, what: string): unknown[] {
-  if (!Array.isArray(value)) throw new Error(`${what} isn't a list`);
-  const items: unknown[] = value;
-  return items;
-}
-
-function text(value: unknown, what: string): string {
-  if (typeof value !== "string") throw new Error(`${what} isn't text`);
-  return value;
-}
-
-// Cloudflare's envelope: { success, errors, result, result_info }.
-async function read(
-  env: EmailRoutingCheckEnv,
-  path: string
-): Promise<{ result: unknown; totalPages: number }> {
-  const { status, body } = await env.get(path);
-  if (!isRecord(body)) {
-    throw new Error(`Cloudflare answered ${path} with ${status} and no JSON`);
+function strings(value: unknown, source: string): string[] {
+  const list: unknown[] = Array.isArray(value) ? value : [];
+  if (!Array.isArray(value) || list.some((item) => typeof item !== "string")) {
+    throw new Error(`${source} isn't a list of text`);
   }
-  if (status < 200 || status >= 300 || body.success !== true) {
-    const reasons = Array.isArray(body.errors)
-      ? list(body.errors, "errors")
-          .map((error) => (isRecord(error) ? error.message : undefined))
-          .filter((message) => typeof message === "string")
-      : [];
-    throw new Error(
-      `Cloudflare answered ${path} with ${status}${reasons.length ? `: ${reasons.join("; ")}` : ""}`
-    );
+  return list.map(String);
+}
+
+function routingRule(item: unknown, source: string): RoutingRule {
+  if (!isRecord(item)) throw new Error(`${source} isn't an object`);
+  if (typeof item.enabled !== "boolean") {
+    throw new Error(`${source} has no enabled`);
   }
-  const info = body.result_info;
-  const totalPages =
-    isRecord(info) && typeof info.total_pages === "number"
-      ? info.total_pages
-      : 1;
-  return { result: body.result, totalPages };
-}
-
-// Every page of a list, PER_PAGE at a time.
-async function readAll(
-  env: EmailRoutingCheckEnv,
-  path: string
-): Promise<unknown[]> {
-  const items: unknown[] = [];
-  for (let page = 1; ; page++) {
-    const pagePath = `${path}?page=${page}&per_page=${PER_PAGE}`;
-    const { result, totalPages } = await read(env, pagePath);
-    items.push(...list(result, `Cloudflare's answer to ${pagePath}`));
-    if (page >= totalPages) return items;
+  const matchers: unknown[] = Array.isArray(item.matchers) ? item.matchers : [];
+  const actions: unknown[] = Array.isArray(item.actions) ? item.actions : [];
+  if (!Array.isArray(item.matchers) || !Array.isArray(item.actions)) {
+    throw new Error(`${source} has no matchers or actions`);
   }
-}
-
-async function zoneId(env: EmailRoutingCheckEnv): Promise<string> {
-  const path = `/zones?name=${env.zone}`;
-  const zones = list(
-    (await read(env, path)).result,
-    `Cloudflare's answer to ${path}`
-  );
-  const zone = zones.find((item) => isRecord(item) && item.name === env.zone);
-  if (!isRecord(zone)) {
-    throw new Error(`The token can't see the zone ${env.zone}`);
-  }
-  return text(zone.id, `The zone ${env.zone}'s id`);
-}
-
-function destinationAddress(item: unknown): DestinationAddress {
-  if (!isRecord(item)) throw new Error("A destination address isn't an object");
-  return {
-    email: text(item.email, "A destination address's email"),
-    // A timestamp once verified, null until then.
-    verified: typeof item.verified === "string",
-  };
-}
-
-function routingRule(item: unknown): RoutingRule {
-  if (!isRecord(item)) throw new Error("A routing rule isn't an object");
-  const literal = list(item.matchers ?? [], "A routing rule's matchers").find(
+  const literal = matchers.find(
     (matcher) =>
       isRecord(matcher) && matcher.type === "literal" && matcher.field === "to"
   );
   return {
-    enabled: item.enabled === true,
+    enabled: item.enabled,
     to:
       isRecord(literal) && typeof literal.value === "string"
         ? literal.value
         : null,
-    actions: list(item.actions ?? [], "A routing rule's actions").map(
-      (action) => {
-        if (!isRecord(action)) {
-          throw new Error("A routing rule's action isn't an object");
-        }
-        return {
-          type: text(action.type, "A routing rule's action type"),
-          value: list(action.value ?? [], "A routing rule's action value").map(
-            (value) => text(value, "A routing rule's action value")
-          ),
-        };
+    actions: actions.map((action, i) => {
+      if (!isRecord(action) || typeof action.type !== "string") {
+        throw new Error(`${source} action ${i} has no type`);
       }
-    ),
+      return {
+        type: action.type,
+        value: strings(action.value ?? [], `${source} action ${i}'s value`),
+      };
+    }),
   };
 }
 
-/** The address wrangler.jsonc's SUBMISSION_EMAIL binding delivers to. */
-export function submissionDestination(wranglerConfig: unknown): string {
-  const bindings: unknown[] =
-    isRecord(wranglerConfig) && Array.isArray(wranglerConfig.send_email)
-      ? wranglerConfig.send_email
-      : [];
-  const binding = bindings.find(
-    (item) => isRecord(item) && item.name === "SUBMISSION_EMAIL"
-  );
-  if (!isRecord(binding) || typeof binding.destination_address !== "string") {
+async function zoneId(api: CloudflareApi, zone: string): Promise<string> {
+  const permission = "Zone › Zone: Read";
+  const { items, source } = await cloudflareList(api, {
+    what: "Zones",
+    path: `/zones?name=${encodeURIComponent(zone)}`,
+    permission,
+  });
+  const found = items.find((item) => isRecord(item) && item.name === zone);
+  if (!isRecord(found)) {
     throw new Error(
-      "wrangler.jsonc has no SUBMISSION_EMAIL binding with a destination_address"
+      `The token can't see the zone ${zone}, so it lacks ${permission}`
     );
   }
-  return binding.destination_address;
+  if (typeof found.id !== "string") throw new Error(`${source} has no id`);
+  return found.id;
+}
+
+async function routingRules(
+  api: CloudflareApi,
+  zone: string
+): Promise<RoutingRule[]> {
+  const { items, source } = await cloudflareList(api, {
+    what: "Email Routing rules",
+    path: `/zones/${await zoneId(api, zone)}/email/routing/rules`,
+    permission: "Zone › Email Routing Rules: Read",
+  });
+  return items.map((item, i) => routingRule(item, `${source} result ${i}`));
 }
 
 const sameAddress = (a: string, b: string) =>
   a.toLowerCase() === b.toLowerCase();
 
-/** What's wrong with Email Routing, one line each; none when it's ready. */
-function problems(
-  env: EmailRoutingCheckEnv,
-  addresses: readonly DestinationAddress[],
+// What's wrong with the destinations: unlisted or not yet verified.
+function destinationProblems(
+  addresses: readonly string[],
+  listed: readonly Destination[]
+): string[] {
+  return addresses.flatMap((address) => {
+    const found = listed.find(({ email }) => sameAddress(email, address));
+    if (!found)
+      return [`${address} isn't an Email Routing destination address`];
+    if (!found.verified) {
+      return [`${address} is a destination address but isn't verified`];
+    }
+    return [];
+  });
+}
+
+// What's wrong with the alias's rules: none enabled, or one that sends its
+// mail anywhere but the destinations.
+function aliasProblems(
+  alias: string,
+  addresses: readonly string[],
   rules: readonly RoutingRule[]
 ): string[] {
-  const found: string[] = [];
-  const address = addresses.find((item) =>
-    sameAddress(item.email, env.destination)
-  );
-  if (!address) {
-    found.push(`${env.destination} isn't an Email Routing destination address`);
-  } else if (!address.verified) {
-    found.push(
-      `${env.destination} is a destination address but isn't verified`
-    );
-  }
-
   const aliasRules = rules.filter(
-    (rule) =>
-      rule.enabled && rule.to !== null && sameAddress(rule.to, env.alias)
+    (rule) => rule.enabled && rule.to !== null && sameAddress(rule.to, alias)
   );
+  if (aliasRules.length === 0) return [`${alias} has no enabled routing rule`];
   const actions = aliasRules.flatMap((rule) => rule.actions);
-  const alone =
-    actions.length > 0 &&
-    actions.every(
-      (action) =>
-        action.type === "forward" &&
-        action.value.length > 0 &&
-        action.value.every((to) => sameAddress(to, env.destination))
+  const toDestinations = (action: RoutingAction) =>
+    action.type === "forward" &&
+    action.value.length > 0 &&
+    action.value.every((to) =>
+      addresses.some((address) => sameAddress(to, address))
     );
-  if (aliasRules.length === 0) {
-    found.push(`${env.alias} has no enabled routing rule`);
-  } else if (!alone) {
-    const sends = actions.length
-      ? actions.map((action) =>
-          action.type !== "forward"
-            ? `has a ${action.type} action`
-            : `forwards to ${action.value.join(", ") || "nobody"}`
-        )
-      : ["has no actions"];
-    found.push(
-      `${env.alias} ${sends.join(", and ")}; it should forward to ${env.destination} alone`
-    );
-  }
-  return found;
+  if (actions.length > 0 && actions.every(toDestinations)) return [];
+  const sends = actions.length
+    ? actions.map((action) =>
+        action.type === "forward"
+          ? `forwards to ${action.value.join(", ") || "nobody"}`
+          : `has a ${action.type} action`
+      )
+    : ["has no actions"];
+  return [
+    `${alias} ${sends.join(", and ")}; it should forward to ${addresses.join(", ")} alone`,
+  ];
 }
 
 /** Exactly what the failure lines start with, for the nightly report. */
 export const EMAIL_ROUTING_FAILURE = "Email Routing check failed";
 
 // Logs each problem as an `::error::` and returns the exit code: 1 when Email
-// Routing isn't ready or Cloudflare couldn't be read, so Nightly fails and
-// opens its issue.
+// Routing isn't ready, or wrangler.jsonc (`config`, its text) or Cloudflare
+// couldn't be read, so Nightly fails and opens its issue.
 export async function runEmailRoutingCheck(
+  config: string,
   env: EmailRoutingCheckEnv
 ): Promise<number> {
-  let found: string[];
+  const api: CloudflareApi = {
+    fetch: env.fetch,
+    apiToken: env.apiToken,
+    tokenName: "CLOUDFLARE_READ_TOKEN",
+  };
+  let addresses: string[];
+  let problems: string[];
   try {
-    const addresses = (
-      await readAll(env, `/accounts/${env.accountId}/email/routing/addresses`)
-    ).map(destinationAddress);
-    const rules = (
-      await readAll(env, `/zones/${await zoneId(env)}/email/routing/rules`)
-    ).map(routingRule);
-    found = problems(env, addresses, rules);
+    addresses = destinationAddresses(config);
+    const zone = env.alias.slice(env.alias.indexOf("@") + 1);
+    problems = [
+      ...destinationProblems(
+        addresses,
+        await destinationList(api, env.accountId)
+      ),
+      ...aliasProblems(env.alias, addresses, await routingRules(api, zone)),
+    ];
   } catch (error: unknown) {
-    found = [errorMessage(error)];
+    env.log(`::error::${EMAIL_ROUTING_FAILURE}: ${errorMessage(error)}`);
+    return 1;
   }
-  for (const problem of found) {
+  for (const problem of problems) {
     env.log(`::error::${EMAIL_ROUTING_FAILURE}: ${problem}`);
   }
-  if (found.length > 0) return 1;
+  if (problems.length > 0) return 1;
   env.log(
-    `::notice::Email Routing is ready: ${env.destination} is a verified destination, and ${env.alias} forwards to it alone`
+    `::notice::Email Routing is ready: ${addresses.join(", ")} is a verified destination, and ${env.alias} forwards to it alone`
   );
   return 0;
 }

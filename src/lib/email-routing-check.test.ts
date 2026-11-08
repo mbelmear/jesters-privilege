@@ -1,14 +1,22 @@
-import {
-  runEmailRoutingCheck,
-  submissionDestination,
-  type CloudflareAnswer,
-  type EmailRoutingCheckEnv,
-} from "./email-routing-check";
+import type { Fetch } from "./download";
+import { runEmailRoutingCheck } from "./email-routing-check";
 
 const ACCOUNT = "0123456789abcdef0123456789abcdef";
 const ZONE_ID = "fedcba9876543210fedcba9876543210";
+const TOKEN = "cf-read-token-not-real";
 const GMAIL = "thejestersprivilegepodcast@gmail.com";
 const ALIAS = "hello@jestersprivilegepodcast.com";
+const API = "https://api.cloudflare.com/client/v4";
+const ADDRESSES = `/accounts/${ACCOUNT}/email/routing/addresses`;
+const RULES = `/zones/${ZONE_ID}/email/routing/rules`;
+
+// wrangler.jsonc as it is written: comments and trailing commas.
+const CONFIG = `{
+  // Submit emails go only to the show's Gmail.
+  "send_email": [
+    { "name": "SUBMISSION_EMAIL", "destination_address": "${GMAIL}", },
+  ],
+}`;
 
 type Address = { email: string; verified: string | null };
 type Rule = {
@@ -27,51 +35,67 @@ const forward = (to: string, ...destinations: string[]): Rule => ({
   actions: [{ type: "forward", value: destinations }],
 });
 
-const ok = (result: unknown, totalPages = 1): CloudflareAnswer => ({
-  status: 200,
-  body: {
-    success: true,
-    errors: [],
-    result,
-    result_info: { page: 1, total_pages: totalPages },
-  },
-});
-
-// Cloudflare's API as the account stands: one page of each list unless a test
-// splits them. Any other path is a bug in the check.
-function cloudflare(
-  addresses: Address[],
-  rules: Rule[],
-  answers: Record<string, CloudflareAnswer> = {}
-): EmailRoutingCheckEnv["get"] {
-  const pages: Record<string, CloudflareAnswer> = {
-    [`/zones?name=jestersprivilegepodcast.com`]: ok([
-      { id: ZONE_ID, name: "jestersprivilegepodcast.com" },
-    ]),
-    [`/accounts/${ACCOUNT}/email/routing/addresses?page=1&per_page=50`]:
-      ok(addresses),
-    [`/zones/${ZONE_ID}/email/routing/rules?page=1&per_page=50`]: ok(rules),
-    ...answers,
-  };
-  return async (path) => {
-    const answer = pages[path];
-    if (!answer) throw new Error(`Unexpected request for ${path}`);
-    return answer;
+function reply(status: number, body: unknown) {
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    statusText: status === 200 ? "OK" : "Forbidden",
+    text: async () => JSON.stringify(body),
   };
 }
 
-async function check(get: EmailRoutingCheckEnv["get"]) {
+// Cloudflare's API as the account stands, paging each list by 50 as the real
+// API does. `answers` replaces what a path answers. Any other path is a bug in
+// the check.
+function cloudflare(
+  addresses: Address[],
+  rules: Rule[],
+  answers: Record<string, () => ReturnType<typeof reply>> = {}
+): Fetch {
+  const lists: Record<string, unknown[]> = {
+    "/zones": [{ id: ZONE_ID, name: "jestersprivilegepodcast.com" }],
+    [ADDRESSES]: addresses,
+    [RULES]: rules,
+  };
+  return async (url, init) => {
+    const parsed = new URL(url);
+    const path = parsed.pathname.replace("/client/v4", "");
+    if (init?.headers?.Authorization !== `Bearer ${TOKEN}`) {
+      return reply(403, { success: false, errors: [], messages: [] });
+    }
+    const answer = answers[path];
+    if (answer) return answer();
+    const list = lists[path];
+    if (!list) throw new Error(`Unexpected fetch of ${url}`);
+    if (path === "/zones") {
+      expect(parsed.searchParams.get("name")).toBe(
+        "jestersprivilegepodcast.com"
+      );
+    }
+    const page = Number(parsed.searchParams.get("page") ?? "1");
+    return reply(200, {
+      success: true,
+      errors: [],
+      messages: [],
+      result: list.slice((page - 1) * 50, page * 50),
+    });
+  };
+}
+
+async function check(fetch: Fetch, config = CONFIG) {
   const lines: string[] = [];
-  const code = await runEmailRoutingCheck({
+  const code = await runEmailRoutingCheck(config, {
+    fetch,
+    apiToken: TOKEN,
     accountId: ACCOUNT,
-    zone: "jestersprivilegepodcast.com",
     alias: ALIAS,
-    destination: GMAIL,
-    get,
     log: (line) => lines.push(line),
   });
   return { code, lines };
 }
+
+const failure = (problem: string) =>
+  `::error::Email Routing check failed: ${problem}`;
 
 describe("runEmailRoutingCheck", () => {
   it("passes when the Gmail is verified and hello@ forwards to it alone", async () => {
@@ -84,9 +108,6 @@ describe("runEmailRoutingCheck", () => {
       ],
     });
   });
-
-  const failure = (problem: string) =>
-    `::error::Email Routing check failed: ${problem}`;
 
   it("fails while the Gmail waits to be verified", async () => {
     const unverified = { email: GMAIL, verified: null };
@@ -110,37 +131,27 @@ describe("runEmailRoutingCheck", () => {
   });
 
   it("reads every page of destination addresses", async () => {
-    const page = (n: number) =>
-      `/accounts/${ACCOUNT}/email/routing/addresses?page=${n}&per_page=50`;
-    const get = cloudflare([], [forward(ALIAS, GMAIL)], {
-      [page(1)]: ok([verified("someone@example.com")], 2),
-      [page(2)]: ok([verified(GMAIL)], 2),
-    });
-    expect((await check(get)).code).toBe(0);
+    const others = Array.from({ length: 50 }, (_, i) =>
+      verified(`listener${i}@example.com`)
+    );
+    const fetch = cloudflare(
+      [...others, verified(GMAIL)],
+      [forward(ALIAS, GMAIL)]
+    );
+    expect((await check(fetch)).code).toBe(0);
   });
 
   it("matches addresses whatever their case", async () => {
-    expect(
-      (
-        await check(
-          cloudflare(
-            [verified(GMAIL.toUpperCase())],
-            [forward("Hello@JestersPrivilegePodcast.com", GMAIL)]
-          )
-        )
-      ).code
-    ).toBe(0);
+    const fetch = cloudflare(
+      [verified(GMAIL.toUpperCase())],
+      [forward("Hello@JestersPrivilegePodcast.com", GMAIL)]
+    );
+    expect((await check(fetch)).code).toBe(0);
   });
 
   it("fails when hello@ has only a disabled rule", async () => {
-    expect(
-      await check(
-        cloudflare(
-          [verified(GMAIL)],
-          [{ ...forward(ALIAS, GMAIL), enabled: false }]
-        )
-      )
-    ).toEqual({
+    const disabled = { ...forward(ALIAS, GMAIL), enabled: false };
+    expect(await check(cloudflare([verified(GMAIL)], [disabled]))).toEqual({
       code: 1,
       lines: [failure(`${ALIAS} has no enabled routing rule`)],
     });
@@ -152,31 +163,23 @@ describe("runEmailRoutingCheck", () => {
       matchers: [{ type: "all" }],
       actions: [{ type: "drop", value: [] }],
     };
-    expect(
-      (
-        await check(
-          cloudflare(
-            [verified(GMAIL)],
-            [
-              catchAll,
-              forward("press@jestersprivilegepodcast.com", "a@example.com"),
-              forward(ALIAS, GMAIL),
-            ]
-          )
-        )
-      ).code
-    ).toBe(0);
+    const fetch = cloudflare(
+      [verified(GMAIL)],
+      [
+        catchAll,
+        forward("press@jestersprivilegepodcast.com", "a@example.com"),
+        forward(ALIAS, GMAIL),
+      ]
+    );
+    expect((await check(fetch)).code).toBe(0);
   });
 
   it("fails when hello@ forwards to another inbox too", async () => {
-    expect(
-      await check(
-        cloudflare(
-          [verified(GMAIL)],
-          [forward(ALIAS, GMAIL), forward(ALIAS, "michael@example.com")]
-        )
-      )
-    ).toEqual({
+    const fetch = cloudflare(
+      [verified(GMAIL)],
+      [forward(ALIAS, GMAIL), forward(ALIAS, "michael@example.com")]
+    );
+    expect(await check(fetch)).toEqual({
       code: 1,
       lines: [
         failure(
@@ -214,6 +217,16 @@ describe("runEmailRoutingCheck", () => {
     });
   });
 
+  it("fails when hello@'s rule has no actions", async () => {
+    const empty: Rule = { ...forward(ALIAS), actions: [] };
+    expect(await check(cloudflare([verified(GMAIL)], [empty]))).toEqual({
+      code: 1,
+      lines: [
+        failure(`${ALIAS} has no actions; it should forward to ${GMAIL} alone`),
+      ],
+    });
+  });
+
   it("names both problems when both prerequisites are missing", async () => {
     expect((await check(cloudflare([], []))).lines).toEqual([
       failure(`${GMAIL} isn't an Email Routing destination address`),
@@ -221,83 +234,96 @@ describe("runEmailRoutingCheck", () => {
     ]);
   });
 
-  it("fails with Cloudflare's reason when the token is refused", async () => {
-    const path = `/accounts/${ACCOUNT}/email/routing/addresses?page=1&per_page=50`;
-    const get = cloudflare([verified(GMAIL)], [forward(ALIAS, GMAIL)], {
-      [path]: {
-        status: 403,
-        body: {
-          success: false,
-          errors: [{ code: 10000, message: "Authentication error" }],
-          result: null,
-        },
-      },
+  it("names the permission a refused token lacks", async () => {
+    const refused = () =>
+      reply(403, {
+        success: false,
+        errors: [{ code: 10000, message: "Authentication error" }],
+        messages: [],
+      });
+    const fetch = cloudflare([verified(GMAIL)], [forward(ALIAS, GMAIL)], {
+      [RULES]: refused,
     });
-    expect(await check(get)).toEqual({
+    expect(await check(fetch)).toEqual({
       code: 1,
       lines: [
-        failure(`Cloudflare answered ${path} with 403: Authentication error`),
+        failure(
+          `Email Routing rules ${API}${RULES}?page=1&per_page=50 answered 403 Forbidden: 10000 Authentication error. CLOUDFLARE_READ_TOKEN needs Zone › Email Routing Rules: Read (docs/deploy.md, Account prerequisites).`
+        ),
       ],
     });
   });
 
   it("fails when the token can't see the zone", async () => {
-    const get = cloudflare([verified(GMAIL)], [forward(ALIAS, GMAIL)], {
-      ["/zones?name=jestersprivilegepodcast.com"]: ok([]),
+    const noZones = () =>
+      reply(200, { success: true, errors: [], messages: [], result: [] });
+    const fetch = cloudflare([verified(GMAIL)], [forward(ALIAS, GMAIL)], {
+      "/zones": noZones,
     });
-    expect(await check(get)).toEqual({
+    expect(await check(fetch)).toEqual({
       code: 1,
       lines: [
-        failure("The token can't see the zone jestersprivilegepodcast.com"),
+        failure(
+          "The token can't see the zone jestersprivilegepodcast.com, so it lacks Zone › Zone: Read"
+        ),
       ],
     });
   });
 
   it("fails when Cloudflare's answer isn't the shape it documents", async () => {
-    const get = cloudflare([verified(GMAIL)], [forward(ALIAS, GMAIL)], {
-      [`/zones/${ZONE_ID}/email/routing/rules?page=1&per_page=50`]: ok({}),
+    const notAList = () =>
+      reply(200, { success: true, errors: [], messages: [], result: {} });
+    const fetch = cloudflare([verified(GMAIL)], [forward(ALIAS, GMAIL)], {
+      [RULES]: notAList,
     });
-    expect(await check(get)).toEqual({
+    expect(await check(fetch)).toEqual({
       code: 1,
       lines: [
         failure(
-          `Cloudflare's answer to /zones/${ZONE_ID}/email/routing/rules?page=1&per_page=50 isn't a list`
+          `Email Routing rules ${API}${RULES}?page=1&per_page=50 has no result list`
         ),
       ],
     });
   });
 
   it("fails when Cloudflare can't be reached", async () => {
-    const get = async () => {
+    const unreachable: Fetch = async () => {
       throw new Error("fetch failed");
     };
-    expect(await check(get)).toEqual({
+    expect(await check(unreachable)).toEqual({
       code: 1,
-      lines: [failure("fetch failed")],
+      lines: [
+        failure(
+          `Email Routing addresses ${API}${ADDRESSES}?page=1&per_page=50 couldn't be reached: fetch failed`
+        ),
+      ],
     });
   });
-});
 
-describe("submissionDestination", () => {
-  it("is the address wrangler.jsonc's SUBMISSION_EMAIL binding delivers to", () => {
-    expect(
-      submissionDestination({
-        send_email: [
-          { name: "OTHER", destination_address: "a@example.com" },
-          { name: "SUBMISSION_EMAIL", destination_address: GMAIL },
-        ],
-      })
-    ).toBe(GMAIL);
+  it("fails when wrangler.jsonc has no send_email destination", async () => {
+    const fetch = cloudflare([verified(GMAIL)], [forward(ALIAS, GMAIL)]);
+    expect(await check(fetch, "{}")).toEqual({
+      code: 1,
+      lines: [
+        failure(
+          "wrangler.jsonc has no send_email binding with a destination_address"
+        ),
+      ],
+    });
   });
 
-  it("fails when the binding has no destination", () => {
-    expect(() =>
-      submissionDestination({ send_email: [{ name: "SUBMISSION_EMAIL" }] })
-    ).toThrow(
-      "wrangler.jsonc has no SUBMISSION_EMAIL binding with a destination_address"
-    );
-    expect(() => submissionDestination({})).toThrow(
-      "wrangler.jsonc has no SUBMISSION_EMAIL binding with a destination_address"
-    );
+  it("never logs the token, passing or failing", async () => {
+    const runs = await Promise.all([
+      check(cloudflare([verified(GMAIL)], [forward(ALIAS, GMAIL)])),
+      check(cloudflare([], [])),
+      check(
+        cloudflare([], [], {
+          [ADDRESSES]: () => reply(403, { success: false, errors: [] }),
+        })
+      ),
+    ]);
+    const lines = runs.flatMap((run) => run.lines);
+    expect(lines).toHaveLength(4);
+    expect(lines.filter((line) => line.includes(TOKEN))).toEqual([]);
   });
 });

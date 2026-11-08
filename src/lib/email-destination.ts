@@ -4,6 +4,8 @@
 // destination_address is one. Nothing else could tell: Jest fakes the sender,
 // a preview accepts any address, and the smoke check can't pass Turnstile.
 // Run by scripts/email-destination.ts in .github/workflows/deploy.yml.
+// Nightly's Email Routing check (src/lib/email-routing-check.ts) reads
+// wrangler.jsonc and Cloudflare's lists through the same functions.
 import JSON5 from "json5";
 import { errorMessage, type Fetch, type TextResponse } from "./download";
 
@@ -31,7 +33,14 @@ export async function runEmailDestinationCheck(
   let listed: Destination[];
   try {
     addresses = destinationAddresses(config);
-    listed = await destinationList(env);
+    listed = await destinationList(
+      {
+        fetch: env.fetch,
+        apiToken: env.apiToken,
+        tokenName: "CLOUDFLARE_API_TOKEN",
+      },
+      env.accountId
+    );
   } catch (error: unknown) {
     env.log(
       `::error::Email Routing check failed, so nothing deploys: ${errorMessage(error)}`
@@ -59,7 +68,7 @@ const CONSEQUENCE = "so every Submission would fail with the delivery error";
 
 // Every send_email binding's destination_address, or an error saying why
 // there's none to check.
-function destinationAddresses(config: string): string[] {
+export function destinationAddresses(config: string): string[] {
   let value: unknown;
   try {
     value = JSON5.parse(config);
@@ -99,28 +108,69 @@ function destinationAddresses(config: string): string[] {
 }
 
 // A destination address, and whether its owner has verified it.
-type Destination = { email: string; verified: boolean };
+export type Destination = { email: string; verified: boolean };
 
-// What a refused token lacks, added to the error.
-const PERMISSION_HINT =
-  "CLOUDFLARE_API_TOKEN needs Account › Email Routing Addresses: Read (docs/deploy.md, Account prerequisites).";
+// How to read the Cloudflare API: the token goes only in the Authorization
+// header, never into a log line or error.
+export type CloudflareApi = {
+  fetch: Fetch;
+  apiToken: string;
+  // The secret the token comes from, named when Cloudflare refuses it.
+  tokenName: string;
+};
 
 // The API's largest page (its docs' per_page maximum).
 const PER_PAGE = 50;
 
-// Every destination address on the account, read a page at a time until a
-// page comes back short.
-async function destinationList(
-  env: EmailDestinationEnv
+// Every destination address on the account.
+export async function destinationList(
+  api: CloudflareApi,
+  accountId: string
 ): Promise<Destination[]> {
-  const listed: Destination[] = [];
+  const list = await cloudflareList(api, {
+    what: "Email Routing addresses",
+    path: `/accounts/${accountId}/email/routing/addresses`,
+    permission: "Account › Email Routing Addresses: Read",
+  });
+  return list.items.map((item, i) =>
+    destination(item, `${list.source} result ${i}`)
+  );
+}
+
+// One list the API pages: what it is (named in errors), its path under
+// /client/v4 (a query string allowed), and the permission a refused token
+// lacks.
+export type CloudflareListRequest = {
+  what: string;
+  path: string;
+  permission: string;
+};
+
+// Every item of a list, read a page at a time until a page comes back short,
+// and the list's URL, to name in errors about an item.
+export async function cloudflareList(
+  api: CloudflareApi,
+  request: CloudflareListRequest
+): Promise<{ items: unknown[]; source: string }> {
+  const list = new URL(`https://api.cloudflare.com/client/v4${request.path}`);
+  const items: unknown[] = [];
   for (let page = 1; page <= MAX_PAGES; page++) {
-    const destinations = await destinationPage(env, page);
-    listed.push(...destinations);
-    if (destinations.length < PER_PAGE) return listed;
+    const url = new URL(list);
+    url.searchParams.set("page", String(page));
+    url.searchParams.set("per_page", String(PER_PAGE));
+    const result = await cloudflarePage(
+      api,
+      request,
+      url.href,
+      `${request.what} ${url.href}`
+    );
+    items.push(...result);
+    if (result.length < PER_PAGE) {
+      return { items, source: `${request.what} ${list.href}` };
+    }
   }
   throw new Error(
-    `Email Routing addresses listed more than ${MAX_PAGES} pages of ${PER_PAGE}, so the API's paging can't be trusted`
+    `${request.what} listed more than ${MAX_PAGES} pages of ${PER_PAGE}, so the API's paging can't be trusted`
   );
 }
 
@@ -132,16 +182,16 @@ const MAX_PAGES = 20;
 // can't authenticate, 403 for one without the permission.
 const TOKEN_REFUSED = [400, 401, 403];
 
-async function destinationPage(
-  env: EmailDestinationEnv,
-  page: number
-): Promise<Destination[]> {
-  const url = `https://api.cloudflare.com/client/v4/accounts/${env.accountId}/email/routing/addresses?page=${page}&per_page=${PER_PAGE}`;
-  const source = `Email Routing addresses ${url}`;
+async function cloudflarePage(
+  api: CloudflareApi,
+  request: CloudflareListRequest,
+  url: string,
+  source: string
+): Promise<unknown[]> {
   let response: TextResponse;
   try {
-    response = await env.fetch(url, {
-      headers: { Authorization: `Bearer ${env.apiToken}` },
+    response = await api.fetch(url, {
+      headers: { Authorization: `Bearer ${api.apiToken}` },
     });
   } catch (error: unknown) {
     throw new Error(`${source} couldn't be reached: ${errorMessage(error)}`);
@@ -149,13 +199,13 @@ async function destinationPage(
   const text = await response.text();
   if (!response.ok) {
     const hint = TOKEN_REFUSED.includes(response.status)
-      ? `. ${PERMISSION_HINT}`
+      ? `. ${api.tokenName} needs ${request.permission} (docs/deploy.md, Account prerequisites).`
       : "";
     throw new Error(
       `${source} answered ${response.status} ${response.statusText}: ${describeErrors(apiErrors(text))}${hint}`
     );
   }
-  return parseAddresses(text, source);
+  return parseResult(text, source);
 }
 
 // An answer's errors list, or none when the answer isn't the API's JSON.
@@ -170,9 +220,9 @@ function apiErrors(text: string): unknown {
   }
 }
 
-// The destination addresses in one page of the API's answer, or an error
-// naming `source` and what was wrong with it.
-function parseAddresses(text: string, source: string): Destination[] {
+// The result list in one page of the API's answer, or an error naming
+// `source` and what was wrong with it.
+function parseResult(text: string, source: string): unknown[] {
   let value: unknown;
   try {
     value = JSON.parse(text);
@@ -191,24 +241,25 @@ function parseAddresses(text: string, source: string): Destination[] {
     throw new Error(`${source} has no result list`);
   }
   const items: unknown[] = result;
-  return items.map((item, i) => {
-    if (
-      typeof item !== "object" ||
-      item === null ||
-      !("email" in item) ||
-      typeof item.email !== "string"
-    ) {
-      throw new Error(`${source} result ${i} has no email`);
-    }
-    // A timestamp once verified; null until then.
-    const verified: unknown = "verified" in item ? item.verified : null;
-    if (verified !== null && typeof verified !== "string") {
-      throw new Error(
-        `${source} result ${i} has a verified that's neither a date nor null`
-      );
-    }
-    return { email: item.email, verified: verified !== null };
-  });
+  return items;
+}
+
+// One destination address from the API's list, or an error naming `source`.
+function destination(item: unknown, source: string): Destination {
+  if (
+    typeof item !== "object" ||
+    item === null ||
+    !("email" in item) ||
+    typeof item.email !== "string"
+  ) {
+    throw new Error(`${source} has no email`);
+  }
+  // A timestamp once verified; null until then.
+  const verified: unknown = "verified" in item ? item.verified : null;
+  if (verified !== null && typeof verified !== "string") {
+    throw new Error(`${source} has a verified that's neither a date nor null`);
+  }
+  return { email: item.email, verified: verified !== null };
 }
 
 // The API's errors as "code message" pairs, for an error message.
