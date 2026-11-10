@@ -269,14 +269,19 @@ describe("merge-on-green", () => {
     expect(r.sleepCount()).toBe(1);
   });
 
-  it("refuses, showing the checks, when one fails", () => {
+  it("refuses, showing the checks and why one failed, when one fails", () => {
     writeFileSync(r.checksExit, "1\n");
+    writeFileSync(
+      r.onChecks,
+      `printf 'Unit tests\\tfail\\t1m\\thttps://github.com/o/r/actions/runs/1/job/9\\t\\n'\n`
+    );
 
     const result = r.merge();
 
     expect(result.status).toBe(1);
     expect(result.stdout).not.toContain("MERGED");
     expect(result.stdout).toContain("Build static site");
+    expect(result.stdout).toContain("Unit tests failed:");
   });
 
   it("waits through a network drop while checks run, then merges", () => {

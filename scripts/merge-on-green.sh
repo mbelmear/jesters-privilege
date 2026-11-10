@@ -70,7 +70,10 @@ while true; do
   sleep 60
 done
 echo "$results"
-((status == 0)) || exit "$status"
+if ((status != 0)); then
+  "$(dirname "$0")/explain-failed-checks.sh" <<<"$results"
+  exit "$status"
+fi
 
 # After the wait, since that's when main moves.
 git fetch --quiet origin main "$head"

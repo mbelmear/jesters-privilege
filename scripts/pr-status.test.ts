@@ -108,6 +108,7 @@ describe("pr-status", () => {
     expect(result.status).toBe(1);
     expect(result.stdout).toContain("Build\tpass\n");
     expect(result.stdout).not.toContain("pending");
+    expect(result.stdout).toContain("Lint workflows failed:");
     expect(f.sleepCount()).toBe(1);
   });
 
