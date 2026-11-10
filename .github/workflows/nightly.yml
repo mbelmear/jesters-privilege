@@ -14,6 +14,7 @@ on:
       - scripts/report-nightly.ts
       - scripts/failed-run.ts
       - src/lib/nightly-report.ts
+      - src/lib/near-timeout.ts
       - scripts/email-routing-check.ts
       - src/lib/email-routing-check.ts
       - src/lib/email-destination.ts
@@ -46,7 +47,11 @@ jobs:
           pulseaudio --start --exit-idle-time=-1
           pactl load-module module-null-sink sink_name=silence
           pactl set-default-sink silence
+      # A test that passes near its timeout fails the run, so the report
+      # below names it before a slower runner times it out (#199).
       - run: npm run test:e2e:firefox
+        env:
+          NEAR_TIMEOUT_FAILS: "true"
       - if: failure()
         uses: actions/upload-artifact@v4
         with:

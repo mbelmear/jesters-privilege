@@ -23,7 +23,13 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  reporter: process.env.CI ? [["github"], ["html", { open: "never" }]] : "list",
+  reporter: process.env.CI
+    ? [
+        ["github"],
+        ["html", { open: "never" }],
+        ["./e2e/near-timeout-reporter.ts"],
+      ]
+    : "list",
   use: {
     baseURL: `http://localhost:${port}`,
     trace: "on-first-retry",

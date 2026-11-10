@@ -1,6 +1,7 @@
 // What a failed scheduled Nightly tells the tracker (scripts/report-nightly.ts):
 // nobody reads a red run in the Actions tab, so it opens an issue.
 import { EMAIL_ROUTING_FAILURE } from "./email-routing-check";
+import { NEAR_TIMEOUT } from "./near-timeout";
 
 export const NIGHTLY_ISSUE_TITLE = "Nightly is failing";
 
@@ -24,23 +25,42 @@ export function failedTests(log: string): string[] {
   return tests;
 }
 
-const EMAIL_ROUTING_ERROR = new RegExp(
-  `##\\[error\\](${EMAIL_ROUTING_FAILURE}: .+?)\\s*$`
-);
+const TIMESTAMP = /^\d{4}-\d\d-\d\dT\S+Z ?/;
 
-/** Each problem a job's log names from the Email Routing check. */
-function emailRoutingFailures(log: string): string[] {
+/**
+ * A failed test's first error, from its detail ("1) [project] › test", then
+ * the error), so a timeout reads as one: #199's "keeps its contrast" failed
+ * on a timeout, not on contrast.
+ */
+function firstError(log: string, test: string): string | undefined {
+  const heading = `) ${test.replace(/^(\[[a-z]+-[a-z]+\]) /, "$1 › ")}`;
+  const lines = log
+    .replace(TERMINAL_COLOR, "")
+    .split("\n")
+    .map((line) => line.replace(TIMESTAMP, "").trim());
+  const start = lines.findIndex((line) => line.endsWith(heading));
+  if (start === -1) return undefined;
+  return lines.slice(start + 1).find((line) => line !== "");
+}
+
+/** Each ::error:: line in a job's log that starts with the given words. */
+function errorsStarting(words: string, log: string): string[] {
+  const error = new RegExp(`##\\[error\\](${words}: .+?)\\s*$`);
   return log
     .replace(TERMINAL_COLOR, "")
     .split("\n")
-    .flatMap((line) => EMAIL_ROUTING_ERROR.exec(line)?.[1] ?? []);
+    .flatMap((line) => error.exec(line)?.[1] ?? []);
 }
 
 /** The issue text for a failed run, from the logs of its failed jobs. */
 export function nightlyReport(runUrl: string, log: string): string {
-  const tests = failedTests(log);
-  const emailRouting = emailRoutingFailures(log);
-  const failures = [...tests, ...emailRouting];
+  const tests = failedTests(log).map((test) => {
+    const error = firstError(log, test);
+    return error ? `${test}: ${error}` : test;
+  });
+  const nearTimeout = errorsStarting(NEAR_TIMEOUT, log);
+  const emailRouting = errorsStarting(EMAIL_ROUTING_FAILURE, log);
+  const failures = [...tests, ...nearTimeout, ...emailRouting];
   return [
     `Nightly failed: ${runUrl}`,
     "",
@@ -48,6 +68,11 @@ export function nightlyReport(runUrl: string, log: string): string {
       ? failures.map((failure) => `- ${failure}`).join("\n")
       : "No test is named: the run stopped before its tests finished, or its logs couldn't be read.",
     "",
+    ...(nearTimeout.length
+      ? [
+          "A test near its timeout passed this time and fails on a slower runner. CODING_STANDARDS.md, Browser tests, says how to give it the time it needs.",
+        ]
+      : []),
     ...(emailRouting.length
       ? [
           "docs/deploy.md, Account prerequisites, says how Email Routing should be set up in the Cloudflare dashboard.",
