@@ -14,6 +14,7 @@
     "lint": "next typegen && eslint",
     "lint:workflows": "scripts/actionlint.sh",
     "lint:shell": "scripts/shellcheck.sh --severity=warning scripts/*.sh",
+    "lint:actions": "tsx scripts/shellcheck-actions.ts .github/actions",
     "lint:zizmor": "scripts/zizmor.sh --offline --no-progress .github",
     "prepare": "husky",
     "typecheck": "next typegen && tsc --noEmit",
@@ -99,7 +100,8 @@
     "tsx": "^4.23.15",
     "typescript": "^5",
     "typescript-eslint": "^8.72.1",
-    "wrangler": "^4.155.0"
+    "wrangler": "^4.155.0",
+    "yaml": "^2.9.1"
   },
   "overrides": {
     "compression": "^1.8.2",

@@ -4,6 +4,9 @@
     "scripts/actionlint.sh",
     "scripts/zizmor.sh --offline --no-progress"
   ],
-  ".github/actions/**/*.{yml,yaml}": "scripts/zizmor.sh --offline --no-progress",
+  ".github/actions/**/*.{yml,yaml}": [
+    "scripts/zizmor.sh --offline --no-progress",
+    "tsx scripts/shellcheck-actions.ts"
+  ],
   "scripts/*.sh": "scripts/shellcheck.sh --severity=warning"
 }

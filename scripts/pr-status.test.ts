@@ -37,7 +37,8 @@ function fakes(checks: string, comment = "", afterSleep = "") {
   tool(
     "gh",
     `case "$*" in
-  "api "*/logs) echo api >> "${join(root, "api-calls")}"; echo "##[error] the cause" ;;
+  "api -X GET "*) echo failure ;;
+  "api "*) echo api >> "${join(root, "api-calls")}"; echo "##[error] the cause" ;;
   *headRefName*) echo ticket ;;
   *headRefOid*) echo ${HEAD} ;;
   *statusCheckRollup*) echo 3 ;;
@@ -109,6 +110,9 @@ describe("pr-status", () => {
     expect(result.status).toBe(1);
     expect(result.stdout).toContain("Build\tpass\n");
     expect(result.stdout).not.toContain("pending");
+    expect(result.stderr).toContain(
+      "Lint workflows: main's head fails it too, so the cause is likely CI"
+    );
     expect(f.sleepCount()).toBe(1);
   });
 
@@ -129,10 +133,6 @@ describe("pr-status", () => {
     );
     expect(f.sleepCount()).toBe(1);
     expect(readFileSync(join(f.root, "api-calls"), "utf8")).toBe("api\n");
-    // main-fails-too.sh runs too; this fake can't answer its lookups.
-    expect(result.stderr).toContain(
-      "Couldn't check main's newest run for Lint workflows"
-    );
   });
 
   it("reads through a dropped connection", () => {

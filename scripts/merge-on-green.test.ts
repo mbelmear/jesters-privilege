@@ -92,9 +92,7 @@ case "$*" in
   *statusCheckRollup*) cat "${rollup}" ;;
   *comments*) echo "Code review: passed at ${head}" ;;
   "pr checks"*) . "${onChecks}"; echo "Build static site	pass"; [ -s "${failedRow}" ] && cat "${failedRow}"; exit "$(cat "${checksExit}")" ;;
-  "api "*/runs/4) echo 9 ;;
-  "run list"*) printf '77\\thttps://github.com/o/r/actions/runs/77\\n' ;;
-  "api "*/runs/77/jobs*) echo "Lint workflows" ;;
+  "api -X GET "*) echo failure ;;
   "api "*) echo "##[error] the cause" ;;
   "pr merge"*) . "${onMerge}"; echo MERGED ;;
 esac
@@ -306,9 +304,8 @@ describe("merge-on-green", () => {
     expect(result.stderr).toContain(
       "Lint workflows failed:\n##[error] the cause"
     );
-    // main's newest finished run (77) fails it too.
     expect(result.stderr).toContain(
-      "main's newest finished push run of this workflow fails Lint workflows too (https://github.com/o/r/actions/runs/77)"
+      "Lint workflows: main's head fails it too, so the cause is likely CI"
     );
   });
 
