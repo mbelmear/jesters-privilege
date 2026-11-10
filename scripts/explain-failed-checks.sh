@@ -7,24 +7,36 @@
 # Usage: scripts/read-checks.sh <pr> | scripts/explain-failed-checks.sh
 set -euo pipefail
 
-lines=15
+# Playwright puts the cause about seven lines into an annotation.
+shown=3 # annotations per check
+lines=10 # lines per annotation
 
-while IFS=$'\t' read -r name bucket _ link _; do
-  [[ $bucket == fail ]] || continue
+# cut keeps a blank column, where read with IFS=$'\t' would collapse it.
+while IFS= read -r row; do
+  [[ $(cut -f2 <<<"$row") == fail ]] || continue
+  name=$(cut -f1 <<<"$row")
+  link=$(cut -f4 <<<"$row")
   echo
   echo "$name failed:"
+  # gh's own jq shapes the text, so this needs no jq of its own.
+  read_ok=1
   annotations=""
   if [[ $link =~ /job/([0-9]+) ]]; then
     # The runner adds "Process completed with exit code N." to every failure.
     annotations=$(gh api "repos/{owner}/{repo}/check-runs/${BASH_REMATCH[1]}/annotations" \
-      --jq '.[] | select(.annotation_level == "failure") | .message
-        | select(test("^Process completed with exit code [0-9]+\\.$") | not)' 2>/dev/null) || annotations=""
+      --jq "[.[] | select(.annotation_level == \"failure\") | .message
+        | select(test(\"^Process completed with exit code [0-9]+\\\\.$\") | not)]
+        | (.[:$shown][] | split(\"\\n\") | (.[:$lines] + if length > $lines then [\"...\"] else [] end)[]),
+          (if length > $shown then \"(\\(length - $shown) more)\" else empty end)" 2>&1) || read_ok=0
   fi
-  if [[ -n $annotations ]]; then
-    head -n "$lines" <<<"$annotations" | sed 's/^/  /'
-    (($(wc -l <<<"$annotations") <= lines)) || echo "  ... the rest: $link"
-  else
+  if ((read_ok == 0)); then
+    echo "  Couldn't read its annotations; read its log: $link"
+    sed 's/^/    /' <<<"$annotations"
+  elif [[ -z $annotations ]]; then
     echo "  no failure annotations; read its log: $link"
+  else
+    sed 's/^/  /' <<<"$annotations"
+    echo "  Full log: $link"
   fi
   main=$(gh api -X GET "repos/{owner}/{repo}/commits/main/check-runs" -f check_name="$name" \
     --jq 'if (.check_runs | length) == 0 then "none"

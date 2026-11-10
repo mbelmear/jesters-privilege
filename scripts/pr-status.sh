@@ -37,13 +37,12 @@ while true; do
 done
 failed=0
 ((status == 0)) || failed=1
-results=$checks
-checks=$(cut -f1,2 <<<"$checks")
-echo "$checks"
-((failed == 0)) || "$(dirname "$0")/explain-failed-checks.sh" <<<"$results"
+buckets=$(cut -f1,2 <<<"$checks")
+echo "$buckets"
+((failed == 0)) || "$(dirname "$0")/explain-failed-checks.sh" <<<"$checks"
 
 # A skipped job posts nothing: a docs-only PR's, a fork's, Dependabot's.
-if grep -q $'^Preview URL\tskipping$' <<<"$checks"; then
+if grep -q $'^Preview URL\tskipping$' <<<"$buckets"; then
   echo "Preview: none, its job was skipped"
 else
   # The deploy workflow edits one comment per PR, naming the commit it built.

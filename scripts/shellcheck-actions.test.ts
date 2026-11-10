@@ -55,6 +55,35 @@ describe("shellcheck-actions", () => {
     expect(result.status).toBe(0);
   });
 
+  it("reads an expression holding a brace as one word", () => {
+    action(
+      "format",
+      "    - shell: bash\n      run: echo \"${{ format('{0}', inputs.x) }}\"\n"
+    );
+
+    expect(run(root).status).toBe(0);
+  });
+
+  it.each([
+    ["bash with its own options", "bash -e {0}", "bash"],
+    ["sh", "sh", "sh"],
+  ])("checks a block run by %s", (_, shell) => {
+    action("other", `    - shell: ${shell}\n      run: echo "unclosed\n`);
+
+    expect(run(root).status).not.toBe(0);
+  });
+
+  // An unchecked block passing quietly is #181's gap again.
+  it("refuses a shell it can't check, naming it", () => {
+    action("python", "    - shell: python\n      run: print('hi')\n");
+
+    const result = run(root);
+
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain("python/action.yml, step 1");
+    expect(result.stderr).toContain("python");
+  });
+
   it("passes the repo's own actions", () => {
     const result = run(".github/actions");
 

@@ -101,17 +101,58 @@ describe("explain-failed-checks", () => {
     expect(result.stdout).not.toContain("Lint workflows");
   });
 
-  it("keeps a long annotation to its first lines", () => {
-    const lines = Array.from({ length: 40 }, (_, i) => `line ${i + 1}`);
-    f.fixture("annotations-42", [failure(lines.join("\n"))]);
+  it("keeps each annotation to its first lines, and shows several", () => {
+    const lines = (tag: string) =>
+      Array.from({ length: 40 }, (_, i) => `${tag} line ${i + 1}`).join("\n");
+    f.fixture("annotations-42", [
+      failure(lines("first")),
+      failure(lines("second")),
+    ]);
     f.fixture("main-Unit tests", { check_runs: [mainRun("success")] });
 
     const result = f.run(`Unit tests\tfail\t1m\t${link(42)}\t\n`);
 
-    expect(result.stdout).toContain("line 15");
-    expect(result.stdout).not.toContain("line 16");
+    expect(result.stdout).toContain("first line 10\n");
+    expect(result.stdout).not.toContain("first line 11\n");
+    expect(result.stdout).toContain("second line 10\n");
+    expect(result.stdout).not.toContain("second line 11\n");
     expect(result.stdout).toContain(link(42));
     expect(result.stdout).toContain("main's head passes it");
+  });
+
+  it("names how many annotations it left out", () => {
+    f.fixture(
+      "annotations-42",
+      Array.from({ length: 8 }, (_, i) => failure(`failure ${i + 1}`))
+    );
+    f.fixture("main-Unit tests", { check_runs: [mainRun("success")] });
+
+    const result = f.run(`Unit tests\tfail\t1m\t${link(42)}\t\n`);
+
+    expect(result.stdout).toContain("failure 3\n");
+    expect(result.stdout).not.toContain("failure 4");
+    expect(result.stdout).toContain("(5 more)");
+  });
+
+  // gh pr checks leaves elapsed blank for a check that never started.
+  it("finds the link when a column before it is blank", () => {
+    f.fixture("annotations-42", [failure("boom")]);
+    f.fixture("main-Unit tests", { check_runs: [mainRun("success")] });
+
+    const result = f.run(`Unit tests\tfail\t\t${link(42)}\t\n`);
+
+    expect(result.stdout).toContain("boom");
+  });
+
+  it("says so when it can't read the annotations", () => {
+    f.fixture("main-Unit tests", { check_runs: [mainRun("success")] });
+
+    const result = f.run(`Unit tests\tfail\t1m\t${link(42)}\t\n`);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain(
+      `Couldn't read its annotations; read its log: ${link(42)}`
+    );
   });
 
   it("reads main's newest run of the check", () => {
@@ -129,6 +170,7 @@ describe("explain-failed-checks", () => {
   });
 
   it("reports cleanly with no annotations and no run on main", () => {
+    f.fixture("annotations-42", []);
     f.fixture("main-Unit tests", { check_runs: [] });
 
     const result = f.run(`Unit tests\tfail\t1m\t${link(42)}\t\n`);
