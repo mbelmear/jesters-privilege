@@ -73,6 +73,7 @@ done
 echo "$results"
 if ((status != 0)); then
   "$(dirname "$0")/failed-job-logs.sh" <<<"$results" >&2
+  "$(dirname "$0")/failed-on-main.sh" <<<"$results" >&2
   exit "$status"
 fi
 

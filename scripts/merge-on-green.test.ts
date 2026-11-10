@@ -92,6 +92,7 @@ case "$*" in
   *statusCheckRollup*) cat "${rollup}" ;;
   *comments*) echo "Code review: passed at ${head}" ;;
   "pr checks"*) . "${onChecks}"; echo "Build static site	pass"; [ -s "${failedRow}" ] && cat "${failedRow}"; exit "$(cat "${checksExit}")" ;;
+  "api -X GET "*) echo failure ;;
   "api "*) echo "##[error] the cause" ;;
   "pr merge"*) . "${onMerge}"; echo MERGED ;;
 esac
@@ -302,6 +303,9 @@ describe("merge-on-green", () => {
     expect(result.status).toBe(1);
     expect(result.stderr).toContain(
       "Lint workflows failed:\n##[error] the cause"
+    );
+    expect(result.stderr).toContain(
+      "Lint workflows: main's head fails it too, so the cause is likely CI"
     );
   });
 

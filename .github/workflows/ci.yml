@@ -24,7 +24,8 @@ jobs:
       - uses: docker://rhysd/actionlint:1.7.12
         with:
           args: -color
-      # actionlint's shellcheck covers only workflows' run: blocks.
+      # actionlint's shellcheck covers only workflows' run: blocks. The unit
+      # tests check composite actions' (scripts/shellcheck-actions.test.ts).
       - run: npm run --silent lint:shell
       # Template injection, permissions, and credentials left in a checkout.
       - run: npm run --silent lint:zizmor
