@@ -86,6 +86,7 @@ case "$*" in
   *comments*) echo "Code review: passed at ${head}" ;;
   "pr checks"*) . "${onChecks}"; echo "Build static site	pass"; exit "$(cat "${checksExit}")" ;;
   "pr merge"*) echo MERGED ;;
+  *jobs/222/logs*) echo "2026-11-08T20:12:12.0Z ##[error]WebKit didn't launch" ;;
 esac
 `
     );
@@ -277,6 +278,21 @@ describe("merge-on-green", () => {
     expect(result.status).toBe(1);
     expect(result.stdout).not.toContain("MERGED");
     expect(result.stdout).toContain("Build static site");
+  });
+
+  it("explains a failed check from its job's log", () => {
+    writeFileSync(r.checksExit, "1\n");
+    writeFileSync(
+      r.onChecks,
+      `printf 'Playwright\\tfail\\t2m\\thttps://github.com/o/r/actions/runs/111/job/222\\n'\n`
+    );
+
+    const result = r.merge();
+
+    expect(result.status).toBe(1);
+    expect(result.stdout).toContain(
+      "Playwright failed with:\nWebKit didn't launch"
+    );
   });
 
   it("waits through a network drop while checks run, then merges", () => {

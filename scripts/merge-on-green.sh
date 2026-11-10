@@ -10,7 +10,8 @@
 #   2. the PR has at least one check (it waits for them to appear after a push),
 #   3. it merges cleanly with main, checked throughout the wait, since a conflict
 #      would only send the checks round again (#165 waited 45 minutes on one),
-#   4. every check passes (it waits for pending ones, stops at the first failure),
+#   4. every check passes (it waits for pending ones, stops at the first failure,
+#      and explains it with explain-failed-checks.sh),
 #   5. nothing main gained meanwhile touches the PR's files, or the newest such
 #      commit is the one passed to --overlap-read. Those commits merge cleanly
 #      and can still contradict what was reviewed, as #155 did #156's new line.
@@ -70,7 +71,10 @@ while true; do
   sleep 60
 done
 echo "$results"
-((status == 0)) || exit "$status"
+if ((status != 0)); then
+  "$(dirname "$0")/explain-failed-checks.sh" <<<"$results"
+  exit "$status"
+fi
 
 # After the wait, since that's when main moves.
 git fetch --quiet origin main "$head"
