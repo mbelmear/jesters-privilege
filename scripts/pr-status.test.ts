@@ -37,7 +37,7 @@ function fakes(checks: string, comment = "", afterSleep = "") {
   tool(
     "gh",
     `case "$*" in
-  "api "*) echo api >> "${join(root, "api-calls")}"; echo "##[error] the cause" ;;
+  "api "*/logs) echo api >> "${join(root, "api-calls")}"; echo "##[error] the cause" ;;
   *headRefName*) echo ticket ;;
   *headRefOid*) echo ${HEAD} ;;
   *statusCheckRollup*) echo 3 ;;

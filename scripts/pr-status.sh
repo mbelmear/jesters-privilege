@@ -39,6 +39,7 @@ failed=0
 if ((status != 0)); then
   failed=1
   "$(dirname "$0")/failed-job-logs.sh" <<<"$checks" >&2
+  "$(dirname "$0")/main-fails-too.sh" <<<"$checks" >&2
 fi
 checks=$(cut -f1,2 <<<"$checks")
 echo "$checks"
