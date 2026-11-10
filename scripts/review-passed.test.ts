@@ -128,13 +128,15 @@ describe("review-passed", () => {
     );
   });
 
-  it("refuses when the merge of main touches the PR's files", () => {
+  it("refuses when the merge of main touches the PR's files, naming the lighter review", () => {
     mergeMainGaining("page.tsx", "main's line\n");
 
     const result = r.reviewPassed(reviewed);
 
     expect(result.status).toBe(1);
-    expect(result.stderr).toContain("Review the new commits first.");
+    expect(result.stderr).toContain(
+      `a merge since ${reviewed} changes the PR's files. Review it with ${reviewed} as the fixed point (docs/testing.md, Merging: a merge of main that changes the PR's files)`
+    );
     expect(r.postedComment()).toBe("");
   });
 
@@ -144,6 +146,7 @@ describe("review-passed", () => {
     const result = r.reviewPassed(reviewed);
 
     expect(result.status).toBe(1);
+    expect(result.stderr).toContain("Review the new commits first.");
     expect(r.postedComment()).toBe("");
   });
 });

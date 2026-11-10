@@ -33,7 +33,14 @@ if [[ "$reviewed" != "$head" ]]; then
 fi
 if [[ "$reviewed" != "$head" ]] &&
   ! "$(dirname "$0")/merged-main-only.sh" "$reviewed" "$head" origin/main; then
-  echo "Refusing: #$pr's head is $head, but the review was of $reviewed. Review the new commits first." >&2
+  # Only merges since the review, but they change the PR's files: main's
+  # change, or the merge's own, needs the lighter review, not a hand-diff (#114).
+  if git merge-base --is-ancestor "$reviewed" "$head" 2>/dev/null &&
+    [[ -z "$(git rev-list --no-merges "$reviewed..$head" --not origin/main)" ]]; then
+    echo "Refusing: #$pr's head is $head, and a merge since $reviewed changes the PR's files. Review it with $reviewed as the fixed point (docs/testing.md, Merging: a merge of main that changes the PR's files), then record that review at $head." >&2
+  else
+    echo "Refusing: #$pr's head is $head, but the review was of $reviewed. Review the new commits first." >&2
+  fi
   exit 1
 fi
 
