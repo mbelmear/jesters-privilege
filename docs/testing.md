@@ -196,6 +196,7 @@ npm run lint
 npm run typecheck
 npm run lint:workflows      # actionlint on .github/workflows, as CI's Lint workflows job runs it
 npm run lint:shell          # shellcheck on scripts/*.sh
+npm run lint:actions        # shellcheck on each bash run: block in .github/actions
 npm run lint:zizmor         # zizmor on .github: template injection, permissions, credentials left in a checkout
 ```
 
@@ -203,9 +204,11 @@ npm run lint:zizmor         # zizmor on .github: template injection, permissions
 
 The pre-commit hook formats staged files with Prettier, so `format:check` only fails for files committed without the hook. It also refuses staged conflict markers (`scripts/no-conflict-markers.sh`), and `.lintstagedrc` runs each linter below on the staged files it covers.
 
-`lint:workflows` (`scripts/actionlint.sh`) downloads the actionlint release CI pins, once, into `node_modules/.cache`, and runs shellcheck on every `run:` block in a workflow through `scripts/shellcheck.sh`. It doesn't read composite actions, so nothing shellchecks theirs (#181).
+`lint:workflows` (`scripts/actionlint.sh`) downloads the actionlint release CI pins, once, into `node_modules/.cache`, and runs shellcheck on every `run:` block in a workflow through `scripts/shellcheck.sh`. It doesn't read composite actions; `lint:actions` covers theirs.
 
 `lint:shell` runs shellcheck on `scripts/*.sh`, which actionlint doesn't reach, failing on warnings and errors: its `info` notes here are single-quoted scripts and functions it can't see called. It downloads the shellcheck release `scripts/shellcheck.sh` pins, once, into `node_modules/.cache`. CI's **Lint workflows** job runs it.
+
+`lint:actions` (`scripts/shellcheck-actions.ts`) shellchecks each bash `run:` block in `.github/actions` the same way, reading every `${{ }}` expression as a plain word, as actionlint does (#181). The commit hook runs it on a staged action, and CI's unit tests run it on the whole tree (`scripts/shellcheck-actions.test.ts`), since the **Lint workflows** job installs no packages.
 
 `lint:zizmor` (`scripts/zizmor.sh`) downloads the zizmor release that script pins the same way, and CI's **Lint workflows** job runs it too. It runs offline, so nothing checks an action against GitHub's advisories (#178). `.github/zizmor.yml` holds this repo's rules. A finding that's safe in one place gets an inline `# zizmor: ignore[rule]` with its reason alongside. zizmor doesn't flag a secret in a workflow's or job's `env`, so `scripts/workflows.test.ts` does.
 
