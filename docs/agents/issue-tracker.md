@@ -5,6 +5,7 @@ Issues and specs for this repo live as GitHub issues. Use the `gh` CLI for all o
 ## Conventions
 
 - **Create an issue**: `gh issue create --title "..." --body "..."`. Use a heredoc for multi-line bodies.
+- **Search before filing**: `gh issue list --state open --search "<subject words>"` first. When an open ticket covers the same ground, extend it, or link the two with a blocking edge (**Blocking** below). #159 asked for #114's verified-destination check two days after it was filed, and two sessions built it at once until a merge caught the overlap.
 - **Push workflow changes**: pushing anything under `.github/workflows/` needs the `workflow` OAuth scope. If GitHub rejects the push for it, ask the human to run `! gh auth refresh -h github.com -s workflow`, then push again.
 - **Read an issue**: `gh issue view <number> --json number,title,body,labels,comments`.
 - **List issues**: `gh issue list --state open --json number,title,body,labels,comments --jq '[.[] | {number, title, body, labels: [.labels[].name], comments: [.comments[].body]}]'` with appropriate `--label` and `--state` filters.

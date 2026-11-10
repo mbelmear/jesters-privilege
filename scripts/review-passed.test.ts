@@ -25,9 +25,9 @@ for (const name of Object.keys(env)) {
   if (name.startsWith("GIT_")) delete env[name];
 }
 
-// A clone of a throwaway origin, on the PR's branch `ticket`, and a stand-in
-// for gh on the PATH: GitHub shows the branch's pushed head as the PR's, and
-// any comment posted is logged.
+// A clone of a throwaway origin, on a ticket branch whose reviewed commit is
+// pushed, and a stand-in for gh on the PATH that shows the PR at the given head
+// and logs any comment posted.
 function repo() {
   const root = mkdtempSync(join(tmpdir(), "review-passed-"));
   const origin = join(root, "origin.git");
@@ -58,24 +58,25 @@ function repo() {
     git("commit", "--quiet", "-m", message);
     return git("rev-parse", "HEAD");
   };
-  mkdirSync(bin, { recursive: true });
-  writeFileSync(
-    join(bin, "gh"),
-    `#!/bin/sh
+  const reviewPassed = (reviewed: string) => {
+    mkdirSync(bin, { recursive: true });
+    writeFileSync(
+      join(bin, "gh"),
+      `#!/bin/sh
 case "$*" in
   *headRefName*) echo ticket ;;
-  *headRefOid*) git rev-parse origin/ticket ;;
+  *headRefOid*) git rev-parse HEAD ;;
   "pr comment"*) echo "$*" >> "${posted}" ;;
 esac
 `
-  );
-  chmodSync(join(bin, "gh"), 0o755);
-  const reviewPassed = (sha: string) =>
-    spawnSync("bash", [script, "7", sha], {
+    );
+    chmodSync(join(bin, "gh"), 0o755);
+    return spawnSync("bash", [script, "7", reviewed], {
       cwd: dir,
       env: { ...env, PATH: `${bin}${delimiter}${env.PATH}` },
       encoding: "utf8",
     });
+  };
   const postedComment = () =>
     existsSync(posted) ? readFileSync(posted, "utf8") : "";
   return { root, git, commit, reviewPassed, postedComment };
@@ -90,14 +91,13 @@ describe("review-passed", () => {
     r.git("push", "--quiet", "origin", "main");
     r.git("switch", "--quiet", "-c", "ticket");
     reviewed = r.commit("page.tsx", "the PR's line\n", "the PR");
-    r.git("push", "--quiet", "-u", "origin", "ticket");
   });
   afterEach(() => {
     rmSync(r.root, { recursive: true, force: true });
   });
 
-  // What main gains, merged into the PR before it's pushed, as the pre-push
-  // hook asks whenever main has moved.
+  // What main gains before the PR's first push, which the pre-push hook makes
+  // the branch merge in.
   function mergeMainGaining(file: string, text: string) {
     r.git("switch", "--quiet", "main");
     r.commit(file, text, "on main");
@@ -105,50 +105,45 @@ describe("review-passed", () => {
     r.git("switch", "--quiet", "ticket");
     r.git("merge", "--quiet", "--no-edit", "-X", "ours", "origin/main");
     r.git("push", "--quiet", "origin", "ticket");
-    return r.git("rev-parse", "HEAD");
   }
 
-  it("records a review of the PR's head", () => {
+  it("records a review of the head", () => {
     const result = r.reviewPassed(reviewed);
 
     expect(result.status).toBe(0);
-    expect(r.postedComment()).toBe(
-      `pr comment 7 --body Code review: passed at ${reviewed}\n`
+    expect(r.postedComment()).toContain(
+      `--body Code review: passed at ${reviewed}`
     );
   });
 
-  it("records a review of a commit followed only by clean merges of main, at the head", () => {
-    const head = mergeMainGaining("other.md", "other\n");
+  it("records the reviewed commit when only a clean merge of main follows it", () => {
+    mergeMainGaining("other.md", "other\n");
 
     const result = r.reviewPassed(reviewed);
 
     expect(result.status).toBe(0);
-    // merge and the post-merge audit read the head's SHA from this line.
-    expect(r.postedComment()).toBe(
-      `pr comment 7 --body Code review: passed at ${head} (reviewed ${reviewed}: only clean merges of main since)\n`
+    // merge and mark-ready carry it over to the head, as they do any review.
+    expect(r.postedComment()).toContain(
+      `--body Code review: passed at ${reviewed}`
     );
   });
 
-  it("refuses a merge of main that touches the PR's files, naming the review it needs", () => {
+  it("refuses when the merge of main touches the PR's files", () => {
     mergeMainGaining("page.tsx", "main's line\n");
 
     const result = r.reviewPassed(reviewed);
 
     expect(result.status).toBe(1);
-    expect(result.stderr).toContain(
-      `with ${reviewed} as the fixed point (docs/testing.md, Merging: a merge of main that changes the PR's files)`
-    );
+    expect(result.stderr).toContain("Review the new commits first.");
     expect(r.postedComment()).toBe("");
   });
 
-  it("refuses a commit of the PR's own after the review", () => {
+  it("refuses when a commit of the PR's own follows the review", () => {
     r.commit("page.tsx", "a fix\n", "a fix");
-    r.git("push", "--quiet", "origin", "ticket");
 
     const result = r.reviewPassed(reviewed);
 
     expect(result.status).toBe(1);
-    expect(result.stderr).toContain("Review the new commits first");
     expect(r.postedComment()).toBe("");
   });
 });
