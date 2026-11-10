@@ -97,7 +97,8 @@ describe("nightlyReport", () => {
     );
   });
 
-  // e2e/near-timeout-reporter.ts's ::error:: line, as GitHub prints it.
+  // e2e/near-timeout-reporter.ts's ::error:: line, in the form GitHub prints
+  // Email Routing's above, since no Nightly has printed one yet.
   const NEAR_TIMEOUT_LOG = [
     "2026-11-11T09:08:00.0000000Z   421 passed (6.2m)",
     "2026-11-11T09:08:00.1000000Z ##[error]Near its timeout: [firefox-phone] e2e/sweep.spec.ts:114:9 › Every button › keeps its contrast while hovered (dark) took 29.5 s of 30 s",

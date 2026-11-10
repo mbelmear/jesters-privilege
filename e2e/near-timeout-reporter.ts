@@ -20,12 +20,15 @@ export default class NearTimeoutReporter implements Reporter {
 
   onTestEnd(test: TestCase, result: TestResult) {
     // Playwright sets test.timeout to the test's own, after test.setTimeout.
-    const attempt = { status: result.status, duration: result.duration };
-    if (!nearTimeout({ ...attempt, timeout: test.timeout })) return;
+    const attempt = {
+      status: result.status,
+      duration: result.duration,
+      timeout: test.timeout,
+    };
+    if (!nearTimeout(attempt)) return;
     this.lines.push(
       nearTimeoutLine({
         ...attempt,
-        timeout: test.timeout,
         project: test.parent.project()?.name ?? "",
         file: path.relative(this.root, test.location.file),
         line: test.location.line,
@@ -37,7 +40,7 @@ export default class NearTimeoutReporter implements Reporter {
   }
 
   async onEnd() {
-    const fails = Boolean(process.env.NEAR_TIMEOUT_FAILS);
+    const fails = process.env.NEAR_TIMEOUT_FAILS === "true";
     for (const line of this.lines) {
       console.log(`::${fails ? "error" : "warning"}::${line}`);
     }
