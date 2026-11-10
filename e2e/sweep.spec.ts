@@ -105,6 +105,11 @@ test.describe("Every page", () => {
   });
 });
 
+// One scan per button, so the time grows with the style guide: CI's Firefox
+// took about 1.1 s a button and timed out on the 29th (#199).
+const BASE_MS = 10_000;
+const MS_PER_BUTTON = 2_000;
+
 test.describe("Every button", () => {
   // Hover changes a fill's color, and axe sees only the state a page is in.
   for (const colorScheme of ["light", "dark"] as const) {
@@ -116,7 +121,9 @@ test.describe("Every button", () => {
       const buttons = page.locator(
         '[data-slot="button"]:visible:not(:disabled)'
       );
-      expect(await buttons.count()).toBeGreaterThan(0);
+      const count = await buttons.count();
+      expect(count).toBeGreaterThan(0);
+      test.setTimeout(BASE_MS + count * MS_PER_BUTTON);
       for (const button of await buttons.all()) {
         await button.hover();
         // Let the color's transition land before axe samples it.
@@ -127,6 +134,11 @@ test.describe("Every button", () => {
         const results = await new AxeBuilder({ page })
           .include("[data-hovered]")
           .withRules(["color-contrast"])
+          // A button holds no frames, and frame mode opens and closes a
+          // blank page on every scan, about 450 ms of each in CI's Firefox.
+          // axe's README calls legacy mode a last resort; the timeout alone
+          // would pass, so drop this line if a release removes the option.
+          .setLegacyMode()
           .analyze();
         expect(results.violations).toEqual([]);
         await button.evaluate((el) => el.removeAttribute("data-hovered"));
