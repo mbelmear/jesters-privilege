@@ -105,8 +105,10 @@ test.describe("Every page", () => {
   });
 });
 
-// About twice what CI's Firefox took for each button before #199.
-const SECONDS_PER_BUTTON = 2;
+// One scan per button, so the time grows with the style guide: CI's Firefox
+// took about 1.1 s a button and timed out on the 29th (#199).
+const BASE_MS = 10_000;
+const MS_PER_BUTTON = 2_000;
 
 test.describe("Every button", () => {
   // Hover changes a fill's color, and axe sees only the state a page is in.
@@ -121,9 +123,7 @@ test.describe("Every button", () => {
       );
       const count = await buttons.count();
       expect(count).toBeGreaterThan(0);
-      // One scan per button, so the time grows with the style guide: CI's
-      // Firefox took about 1.1 s a button and timed out at the 28th (#199).
-      test.setTimeout(10_000 + count * SECONDS_PER_BUTTON * 1000);
+      test.setTimeout(BASE_MS + count * MS_PER_BUTTON);
       for (const button of await buttons.all()) {
         await button.hover();
         // Let the color's transition land before axe samples it.
@@ -136,6 +136,8 @@ test.describe("Every button", () => {
           .withRules(["color-contrast"])
           // A button holds no frames, and frame mode opens and closes a
           // blank page on every scan, about 450 ms of each in CI's Firefox.
+          // axe's README calls legacy mode a last resort; the timeout alone
+          // would pass, so drop this line if a release removes the option.
           .setLegacyMode()
           .analyze();
         expect(results.violations).toEqual([]);
