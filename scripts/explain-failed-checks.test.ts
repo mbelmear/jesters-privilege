@@ -10,9 +10,11 @@ const script = join(__dirname, "explain-failed-checks.sh");
 
 const RUN = "https://github.com/o/r/actions/runs/111/job/222";
 
-// gh pr checks' lines: name, state, time, URL, tab-separated.
+// gh pr checks' lines: name, state, time, URL, and a description that's
+// empty for an Actions job, tab-separated, as gh 2.x printed #194's on
+// 2026-11-10 ("Build static site\tpass\t54s\thttps://…/job/128859934766\t").
 const checks = (...lines: string[][]) =>
-  lines.map((line) => line.join("\t")).join("\n") + "\n";
+  lines.map((line) => [...line, ""].join("\t")).join("\n") + "\n";
 
 // What CI's job log holds: colored, timestamped lines, as the API sends them.
 // A test's error repeats for each retry; the cause is the line under it.
@@ -30,18 +32,44 @@ const LOG = [
   "    Error: expect(locator).toBeVisible() failed",
 ].join("\n");
 
-// A stand-in for gh: job 222's log is LOG, run 111 belongs to workflow 9,
-// and main's newest finished run of it (333) failed the jobs in `mainFailed`.
-function run(input: string, mainFailed: string[]) {
+// A stand-in for gh: every job's log is LOG, run 111 belongs to workflow 9,
+// and main's newest run of it that wasn't cancelled (333) failed the jobs in
+// `mainFailed`.
+function run(
+  input: string,
+  mainFailed: string[],
+  mainConclusion = mainFailed.length > 0 ? "failure" : "success",
+  log = LOG
+) {
   const root = mkdtempSync(join(tmpdir(), "explain-failed-checks-"));
-  writeFileSync(join(root, "log"), LOG);
+  writeFileSync(join(root, "log"), log);
+  // main's newest push runs, newest first: ci.yml cancels a run superseded
+  // by the next push, so the newest is often cancelled.
+  writeFileSync(
+    join(root, "runs.json"),
+    JSON.stringify([
+      {
+        databaseId: 444,
+        url: "https://github.com/o/r/actions/runs/444",
+        conclusion: "cancelled",
+      },
+      {
+        databaseId: 333,
+        url: "https://github.com/o/r/actions/runs/333",
+        conclusion: mainConclusion,
+      },
+    ])
+  );
   writeFileSync(
     join(root, "gh"),
     `#!/bin/sh
 case "$*" in
-  *jobs/222/logs*) cat "${join(root, "log")}" ;;
+  */logs*) cat "${join(root, "log")}" ;;
   *runs/111*) echo 9 ;;
-  "run list"*) printf '333\\thttps://github.com/o/r/actions/runs/333\\n' ;;
+  "run list"*)
+    # Apply the script's own --jq filter, as gh does.
+    for arg; do [ "$prev" = --jq ] && filter=$arg; prev=$arg; done
+    jq -r "$filter" "${join(root, "runs.json")}" ;;
   *runs/333/jobs*) printf '${mainFailed.join("\\n")}\\n' ;;
   *) echo "unexpected gh $*" >&2; exit 1 ;;
 esac
@@ -69,7 +97,9 @@ describe("explain-failed-checks", () => {
   );
 
   it("prints each failed test once, with the error under it, without color", () => {
-    const result = run(failing, []);
+    // A passing check whose log and main's run would both be printed, were it
+    // explained, so its absence below can fail.
+    const result = run(failing, ["Lint workflows"]);
 
     expect(result.status).toBe(0);
     expect(result.stdout).toContain(
@@ -86,11 +116,25 @@ describe("explain-failed-checks", () => {
     expect(result.stdout).not.toContain("Lint workflows");
   });
 
-  it("says when main's newest finished run fails the same check", () => {
+  it("shows 10 failed tests, and counts the rest", () => {
+    const log = Array.from(
+      { length: 12 },
+      (_, i) => `2026-11-08T20:12:12.0Z ##[error]  ${i + 1}) test ${i + 1}`
+    ).join("\n");
+
+    const result = run(failing, [], "success", log);
+
+    expect(result.stdout).toContain(
+      "  10) test 10\n  …and 2 more in the job's log: " + RUN
+    );
+    expect(result.stdout).not.toContain("11) test 11");
+  });
+
+  it("says when main's newest finished run fails the same check, passing over cancelled ones", () => {
     const result = run(failing, ["Playwright (Chromium, WebKit)"]);
 
     expect(result.stdout).toContain(
-      "main's newest finished run of this workflow fails Playwright (Chromium, WebKit) too (https://github.com/o/r/actions/runs/333), so this PR may not be the cause. Look for an open issue (gh issue list) before rerunning it."
+      "main's newest finished push run of this workflow fails Playwright (Chromium, WebKit) too (https://github.com/o/r/actions/runs/333), so this PR may not be the cause. Look for an open issue (gh issue list) before rerunning it."
     );
   });
 
