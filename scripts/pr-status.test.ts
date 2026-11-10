@@ -129,6 +129,10 @@ describe("pr-status", () => {
     );
     expect(f.sleepCount()).toBe(1);
     expect(readFileSync(join(f.root, "api-calls"), "utf8")).toBe("api\n");
+    // main-fails-too.sh runs too; this fake can't answer its lookups.
+    expect(result.stderr).toContain(
+      "Couldn't check main's newest run for Lint workflows"
+    );
   });
 
   it("reads through a dropped connection", () => {

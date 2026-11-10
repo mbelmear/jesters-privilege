@@ -22,7 +22,7 @@ const RUNS = "https://github.com/mbelmear/jesters-privilege/actions/runs/";
 // the second's conclusion the test's (it was a success). ci.yml cancels a run
 // superseded by the next push, so the newest is often cancelled. The second
 // failed the jobs in `mainFailed`.
-function run(checks: string, mainFailed: string[]) {
+function run(checks: string, mainFailed: string[], runsReadable = true) {
   const root = mkdtempSync(join(tmpdir(), "main-fails-too-"));
   writeFileSync(
     join(root, "runs.json"),
@@ -45,6 +45,7 @@ function run(checks: string, mainFailed: string[]) {
 case "$*" in
   *runs/111*) echo 9 ;;
   "run list"*)
+    ${runsReadable ? "" : 'echo "HTTP 403: Resource not accessible by integration" >&2; exit 1'}
     # Apply the script's own --jq filter, as gh does.
     for arg; do [ "$prev" = --jq ] && filter=$arg; prev=$arg; done
     jq -r "$filter" "${join(root, "runs.json")}" ;;
@@ -80,6 +81,15 @@ describe("main-fails-too", () => {
     const result = run(`${PASSED}\n`, ["Lint workflows"]);
 
     expect(result.stdout).toBe("");
+  });
+
+  it("says so when main's runs can't be read, rather than seeming to pass", () => {
+    const result = run(`${FAILED}\n`, ["Playwright (Chromium, WebKit)"], false);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toBe(
+      "Couldn't check main's newest run for Playwright (Chromium, WebKit): https://github.com/o/r/actions/runs/111/job/222\n"
+    );
   });
 
   it("says nothing when main passes the check", () => {
