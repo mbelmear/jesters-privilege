@@ -21,7 +21,9 @@ while IFS=$'\t' read -r name state _ url _; do
     sed $'s/\x1b\\[[0-9;]*m//g' | awk -v url="$url" '
       /^[0-9-]+T[0-9:.]+Z / {
         wanted = 0
-        if (sub(/^[^ ]* ##\[error\]/, "") && !seen[$0]++ && shown++ < 10) {
+        # The step'"'"'s own closing error isn'"'"'t a failed test.
+        if (sub(/^[^ ]* ##\[error\]/, "") && !/^Process completed with exit code/ &&
+          !seen[$0]++ && shown++ < 10) {
           print
           wanted = 1
         }

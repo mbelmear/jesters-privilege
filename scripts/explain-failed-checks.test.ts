@@ -30,11 +30,12 @@ const LOG = [
   "    Error: browserType.launch: Target page, context or browser has been closed",
   "2026-11-08T20:12:13.0Z ##[error]  2) [webkit-phone] › e2e/coming-soon.spec.ts:23:7 › the navigation",
   "    Error: expect(locator).toBeVisible() failed",
+  "2026-11-08T20:12:40.0Z ##[error]Process completed with exit code 1.",
 ].join("\n");
 
 // A stand-in for gh: every job's log is LOG, run 111 belongs to workflow 9,
-// and main's newest run of it that wasn't cancelled (333) failed the jobs in
-// `mainFailed`.
+// and main's newest run of it that wasn't cancelled (42524177084) failed the
+// jobs in `mainFailed`.
 function run(
   input: string,
   mainFailed: string[],
@@ -43,19 +44,21 @@ function run(
 ) {
   const root = mkdtempSync(join(tmpdir(), "explain-failed-checks-"));
   writeFileSync(join(root, "log"), log);
-  // main's newest push runs, newest first: ci.yml cancels a run superseded
-  // by the next push, so the newest is often cancelled.
+  // main's newest push runs, newest first, as gh run list gave two of CI's on
+  // 2026-11-10; the second's conclusion is the test's (it was a success).
+  // ci.yml cancels a run superseded by the next push, so the newest is often
+  // cancelled.
   writeFileSync(
     join(root, "runs.json"),
     JSON.stringify([
       {
-        databaseId: 444,
-        url: "https://github.com/o/r/actions/runs/444",
+        databaseId: 42525786397,
+        url: "https://github.com/mbelmear/jesters-privilege/actions/runs/42525786397",
         conclusion: "cancelled",
       },
       {
-        databaseId: 333,
-        url: "https://github.com/o/r/actions/runs/333",
+        databaseId: 42524177084,
+        url: "https://github.com/mbelmear/jesters-privilege/actions/runs/42524177084",
         conclusion: mainConclusion,
       },
     ])
@@ -70,7 +73,7 @@ case "$*" in
     # Apply the script's own --jq filter, as gh does.
     for arg; do [ "$prev" = --jq ] && filter=$arg; prev=$arg; done
     jq -r "$filter" "${join(root, "runs.json")}" ;;
-  *runs/333/jobs*) printf '${mainFailed.join("\\n")}\\n' ;;
+  *runs/42524177084/jobs*) printf '${mainFailed.join("\\n")}\\n' ;;
   *) echo "unexpected gh $*" >&2; exit 1 ;;
 esac
 `
@@ -113,6 +116,8 @@ describe("explain-failed-checks", () => {
       ].join("\n")
     );
     expect(result.stdout).not.toContain("\u001b");
+    // The job's own last error line isn't a failed test.
+    expect(result.stdout).not.toContain("Process completed");
     expect(result.stdout).not.toContain("Lint workflows");
   });
 
@@ -134,7 +139,7 @@ describe("explain-failed-checks", () => {
     const result = run(failing, ["Playwright (Chromium, WebKit)"]);
 
     expect(result.stdout).toContain(
-      "main's newest finished push run of this workflow fails Playwright (Chromium, WebKit) too (https://github.com/o/r/actions/runs/333), so this PR may not be the cause. Look for an open issue (gh issue list) before rerunning it."
+      "main's newest finished push run of this workflow fails Playwright (Chromium, WebKit) too (https://github.com/mbelmear/jesters-privilege/actions/runs/42524177084), so this PR may not be the cause. Look for an open issue (gh issue list) before rerunning it."
     );
   });
 
