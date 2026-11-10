@@ -14,7 +14,8 @@
 #   5. nothing main gained meanwhile touches the PR's files, or the newest such
 #      commit is the one passed to --overlap-read. Those commits merge cleanly
 #      and can still contradict what was reviewed, as #155 did #156's new line.
-# The merge is pinned to the reviewed commit, so a push during the wait fails it.
+# The merge is pinned to the reviewed commit, so a push during the wait fails it;
+# GitHub's "Head branch was modified" with the head unchanged gets one retry.
 #
 # Usage: npm run merge -- <pr-number> [--overlap-read <sha>]
 set -euo pipefail
@@ -71,7 +72,8 @@ while true; do
 done
 echo "$results"
 if ((status != 0)); then
-  "$(dirname "$0")/explain-failed-checks.sh" <<<"$results"
+  "$(dirname "$0")/failed-job-logs.sh" <<<"$results" >&2
+  "$(dirname "$0")/failed-on-main.sh" <<<"$results" >&2
   exit "$status"
 fi
 
@@ -92,5 +94,23 @@ if [[ -n "$overlap" && "$newest" != "$overlap_read" ]]; then
   exit 1
 fi
 
-gh pr merge "$pr" --squash --delete-branch --match-head-commit "$head"
+# GitHub once refused #193's merge with "Head branch was modified" while its
+# head stood still, and merged it at the next try, so the retro of #177 gave
+# that refusal of an unchanged head one more, after a pause for GitHub to
+# settle; any other refusal stops here.
+merge_pr() { gh pr merge "$pr" --squash --delete-branch --match-head-commit "$head"; }
+errors=$(mktemp)
+trap 'rm -f "$errors"' EXIT
+if ! merge_pr 2>"$errors"; then
+  cat "$errors" >&2
+  grep -q "Head branch was modified" "$errors" || exit 1
+  now=$(gh pr view "$pr" --json headRefOid --jq .headRefOid)
+  if [[ "$now" != "$head" ]]; then
+    echo "Refusing to merge #$pr: its head moved to $now during the merge. Review it, then rerun." >&2
+    exit 1
+  fi
+  echo "#$pr's head is still ${head:0:7}; trying the merge once more." >&2
+  sleep 10
+  merge_pr
+fi
 echo "Merged #$pr, and the production deploy has started; a failure opens an issue. Next: npm run worktree-done -- $pr"

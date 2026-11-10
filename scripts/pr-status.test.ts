@@ -37,6 +37,8 @@ function fakes(checks: string, comment = "", afterSleep = "") {
   tool(
     "gh",
     `case "$*" in
+  "api -X GET "*) echo failure ;;
+  "api "*) echo api >> "${join(root, "api-calls")}"; echo "##[error] the cause" ;;
   *headRefName*) echo ticket ;;
   *headRefOid*) echo ${HEAD} ;;
   *statusCheckRollup*) echo 3 ;;
@@ -108,8 +110,29 @@ describe("pr-status", () => {
     expect(result.status).toBe(1);
     expect(result.stdout).toContain("Build\tpass\n");
     expect(result.stdout).not.toContain("pending");
-    expect(result.stdout).toContain("Lint workflows failed:");
+    expect(result.stderr).toContain(
+      "Lint workflows: main's head fails it too, so the cause is likely CI"
+    );
     expect(f.sleepCount()).toBe(1);
+  });
+
+  it("prints a failed job's errors once, after every check finishes", () => {
+    const failed =
+      "Lint workflows\tfail\t8s\thttps://github.com/o/r/actions/runs/4/job/42";
+    f = fakes(
+      `${failed}\nBuild\tpending\t0\n${SKIPPED_PREVIEW}`,
+      "",
+      `${failed}\nBuild\tpass\t9s\n${SKIPPED_PREVIEW}`
+    );
+
+    const result = f.run();
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain(
+      "Lint workflows failed:\n##[error] the cause"
+    );
+    expect(f.sleepCount()).toBe(1);
+    expect(readFileSync(join(f.root, "api-calls"), "utf8")).toBe("api\n");
   });
 
   it("reads through a dropped connection", () => {
