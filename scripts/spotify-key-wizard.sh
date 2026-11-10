@@ -200,6 +200,13 @@ finish() {
 
 run_wizard() {
 
+# Every stage waits for typed input. Claude Code's `!` prefix gives a script no
+# keyboard, so the first prompt would read nothing and stop (#159's retro).
+if [[ ! -t 0 ]]; then
+  warn "Run this in your own terminal: it needs typed input."
+  exit 1
+fi
+
 TOTAL_STAGES=5
 
 # gh secret set writes to the repository of the current directory.
