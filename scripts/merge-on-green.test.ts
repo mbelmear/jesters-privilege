@@ -35,7 +35,8 @@ for (const name of Object.keys(env)) {
 // PR's head as reviewed and its checks as passed, unless the test's `rollup` or
 // `checksExit` say otherwise, and a merge prints a line rather than happening.
 // sleep only counts, then runs what the test put in `onSleep`: what happens
-// during the wait. gh pr checks runs `onChecks` the same way.
+// during the wait. gh pr checks runs `onChecks` the same way, and gh pr merge
+// `onMerge`. GitHub's head is read from `headFile`.
 function repo() {
   const root = mkdtempSync(join(tmpdir(), "merge-on-green-"));
   const origin = join(root, "origin.git");
@@ -45,6 +46,8 @@ function repo() {
   const checksExit = join(root, "checks-exit");
   const onSleep = join(root, "on-sleep");
   const onChecks = join(root, "on-checks");
+  const onMerge = join(root, "on-merge");
+  const headFile = join(root, "head");
   const sleeps = join(root, "sleeps");
   execFileSync(
     "git",
@@ -76,16 +79,18 @@ function repo() {
     writeFileSync(checksExit, "0\n");
     writeFileSync(onSleep, "");
     writeFileSync(onChecks, "");
+    writeFileSync(onMerge, "");
+    writeFileSync(headFile, `${head}\n`);
     writeFileSync(sleeps, "");
     writeFileSync(
       join(bin, "gh"),
       `#!/bin/sh
 case "$*" in
-  *headRefOid*) echo ${head} ;;
+  *headRefOid*) cat "${headFile}" ;;
   *statusCheckRollup*) cat "${rollup}" ;;
   *comments*) echo "Code review: passed at ${head}" ;;
   "pr checks"*) . "${onChecks}"; echo "Build static site	pass"; exit "$(cat "${checksExit}")" ;;
-  "pr merge"*) echo MERGED ;;
+  "pr merge"*) . "${onMerge}"; echo MERGED ;;
 esac
 `
     );
@@ -112,6 +117,8 @@ esac
     checksExit,
     onSleep,
     onChecks,
+    onMerge,
+    headFile,
     git,
     commit,
     fakeGh,
@@ -277,6 +284,46 @@ describe("merge-on-green", () => {
     expect(result.status).toBe(1);
     expect(result.stdout).not.toContain("MERGED");
     expect(result.stdout).toContain("Build static site");
+  });
+
+  // What gh printed when GitHub refused #193's merge with its head unchanged.
+  const MODIFIED =
+    "GraphQL: Head branch was modified. Review and try the merge again. (mergePullRequest)";
+
+  it("tries the merge once more when GitHub calls an unchanged head modified", () => {
+    writeFileSync(
+      r.onMerge,
+      `[ -e "${r.root}/refused" ] || { touch "${r.root}/refused"; echo "${MODIFIED}" >&2; exit 1; }\n`
+    );
+
+    const result = r.merge();
+
+    expect(result.stdout).toContain("MERGED");
+    expect(result.status).toBe(0);
+    expect(result.stderr).toContain("trying the merge once more");
+  });
+
+  it("stops when GitHub refuses the merge a second time", () => {
+    writeFileSync(r.onMerge, `echo "${MODIFIED}" >&2; exit 1\n`);
+
+    const result = r.merge();
+
+    expect(result.status).toBe(1);
+    expect(result.stdout).not.toContain("MERGED");
+    expect(result.stderr).toContain(MODIFIED);
+  });
+
+  it("stops without retrying when the head really was pushed to", () => {
+    writeFileSync(
+      r.onMerge,
+      `echo merge >> "${r.root}/merges"; echo ${"b".repeat(40)} > "${r.headFile}"; echo "${MODIFIED}" >&2; exit 1\n`
+    );
+
+    const result = r.merge();
+
+    expect(result.status).toBe(1);
+    expect(result.stdout).not.toContain("MERGED");
+    expect(readFileSync(join(r.root, "merges"), "utf8")).toBe("merge\n");
   });
 
   it("waits through a network drop while checks run, then merges", () => {
