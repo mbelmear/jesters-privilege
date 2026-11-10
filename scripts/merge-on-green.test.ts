@@ -48,6 +48,7 @@ function repo() {
   const onChecks = join(root, "on-checks");
   const onMerge = join(root, "on-merge");
   const headFile = join(root, "head");
+  const failedRow = join(root, "failed-row");
   const sleeps = join(root, "sleeps");
   execFileSync(
     "git",
@@ -80,6 +81,7 @@ function repo() {
     writeFileSync(onSleep, "");
     writeFileSync(onChecks, "");
     writeFileSync(onMerge, "");
+    writeFileSync(failedRow, "");
     writeFileSync(headFile, `${head}\n`);
     writeFileSync(sleeps, "");
     writeFileSync(
@@ -89,7 +91,8 @@ case "$*" in
   *headRefOid*) cat "${headFile}" ;;
   *statusCheckRollup*) cat "${rollup}" ;;
   *comments*) echo "Code review: passed at ${head}" ;;
-  "pr checks"*) . "${onChecks}"; echo "Build static site	pass"; exit "$(cat "${checksExit}")" ;;
+  "pr checks"*) . "${onChecks}"; echo "Build static site	pass"; [ -s "${failedRow}" ] && cat "${failedRow}"; exit "$(cat "${checksExit}")" ;;
+  "api "*) echo "##[error] the cause" ;;
   "pr merge"*) . "${onMerge}"; echo MERGED ;;
 esac
 `
@@ -119,6 +122,7 @@ esac
     onChecks,
     onMerge,
     headFile,
+    failedRow,
     git,
     commit,
     fakeGh,
@@ -286,6 +290,21 @@ describe("merge-on-green", () => {
     expect(result.stdout).toContain("Build static site");
   });
 
+  it("refuses, printing the failed job's errors", () => {
+    writeFileSync(r.checksExit, "1\n");
+    writeFileSync(
+      r.failedRow,
+      "Lint workflows\tfail\t8s\thttps://github.com/o/r/actions/runs/4/job/42\n"
+    );
+
+    const result = r.merge();
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain(
+      "Lint workflows failed:\n##[error] the cause"
+    );
+  });
+
   // What gh printed when GitHub refused #193's merge with its head unchanged.
   const MODIFIED =
     "GraphQL: Head branch was modified. Review and try the merge again. (mergePullRequest)";
@@ -304,13 +323,16 @@ describe("merge-on-green", () => {
   });
 
   it("stops when GitHub refuses the merge a second time", () => {
-    writeFileSync(r.onMerge, `echo "${MODIFIED}" >&2; exit 1\n`);
+    writeFileSync(
+      r.onMerge,
+      `echo merge >> "${r.root}/merges"; echo "${MODIFIED}" >&2; exit 1\n`
+    );
 
     const result = r.merge();
 
     expect(result.status).toBe(1);
-    expect(result.stdout).not.toContain("MERGED");
     expect(result.stderr).toContain(MODIFIED);
+    expect(readFileSync(join(r.root, "merges"), "utf8")).toBe("merge\nmerge\n");
   });
 
   it("stops without retrying when the head really was pushed to", () => {

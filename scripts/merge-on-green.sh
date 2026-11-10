@@ -71,7 +71,10 @@ while true; do
   sleep 60
 done
 echo "$results"
-((status == 0)) || exit "$status"
+if ((status != 0)); then
+  "$(dirname "$0")/failed-job-logs.sh" <<<"$results" >&2
+  exit "$status"
+fi
 
 # After the wait, since that's when main moves.
 git fetch --quiet origin main "$head"
@@ -91,8 +94,9 @@ if [[ -n "$overlap" && "$newest" != "$overlap_read" ]]; then
 fi
 
 # GitHub once refused #193's merge with "Head branch was modified" while its
-# head stood still, and merged it at the next try, so that refusal of an
-# unchanged head gets one more.
+# head stood still, and merged it at the next try, so the retro of #177 gave
+# that refusal of an unchanged head one more, after a pause for GitHub to
+# settle; any other refusal stops here.
 merge_pr() { gh pr merge "$pr" --squash --delete-branch --match-head-commit "$head"; }
 errors=$(mktemp)
 trap 'rm -f "$errors"' EXIT

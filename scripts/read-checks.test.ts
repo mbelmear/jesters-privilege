@@ -100,42 +100,6 @@ describe("read-checks", () => {
     expect(f.sleepCount()).toBe(0);
   });
 
-  // Trimmed from the log of the job that stopped #193's merge (job 128846841853).
-  const FAILED =
-    "1 Playwright, empty feed\tfail\t2m30s\thttps://github.com/o/r/actions/runs/4/job/42\t";
-  const LOG = [
-    "2026-11-08T20:10:31.0Z Running 56 tests using 2 workers",
-    "2026-11-08T20:10:32.6Z ##[error]  1) [webkit-phone] › e2e/coming-soon.spec.ts:13:9 › Coming soon",
-    "    Error: browserType.launch: Target page, context or browser has been closed",
-    "    [pid=5804][err] MiniBrowser: error while loading shared libraries: libicudata.so.74",
-  ].join("\\n");
-
-  it("prints a failed job's errors from its log", () => {
-    f = fakes([FAILED, `0 ${LOG}`]);
-
-    const result = f.run();
-
-    expect(result.status).toBe(1);
-    expect(result.stderr).toContain("Playwright, empty feed failed:");
-    expect(result.stderr).toContain(
-      "##[error]  1) [webkit-phone] › e2e/coming-soon.spec.ts:13:9"
-    );
-    expect(result.stderr).toContain("libicudata.so.74");
-    expect(result.stderr).not.toContain("Running 56 tests");
-  });
-
-  it("says so when a failed job's log can't be read, still failing", () => {
-    f = fakes([FAILED, "1 ERR HTTP 404: Not Found"]);
-
-    const result = f.run();
-
-    expect(result.status).toBe(1);
-    expect(result.stdout).toContain("Playwright, empty feed\tfail");
-    expect(result.stderr).toContain(
-      "Couldn't read Playwright, empty feed's log: https://github.com/o/r/actions/runs/4/job/42"
-    );
-  });
-
   // gh exits 0 when every check passed or was cancelled (gh 2.103.3).
   it("refuses a cancelled check, naming it, though gh exits 0", () => {
     f = fakes(["0 Lint workflows\tpass\\nBuild static site\tcancel"]);
