@@ -19,7 +19,6 @@ const eras = [
       paragraphs: [
         "Before there were jesters in castles, there were fools in the church. Paul boasted that the apostles were \"fools for Christ's sake,\" and the saints after him took him at his word: friars sang as God's minstrels, and holy men walked naked through Russian winters to tell tsars what their courtiers wouldn't.",
       ],
-      draft: true,
     },
   },
   {
@@ -32,7 +31,6 @@ const eras = [
       paragraphs: [
         "In the great households of medieval Europe, the fool held a strange place at court. He wore the motley and the cap with its bells, he ate at the lord's table, and he alone could mock the lord without losing his head. Some fools were simple, kept for the laughs they couldn't help; others were sharp as knives.",
       ],
-      draft: true,
     },
   },
   {
@@ -45,7 +43,6 @@ const eras = [
       paragraphs: [
         "The Renaissance was the jester's golden age. Kings in Poland, France, and England kept fools at their elbows, some for their wit and at least one for his lack of it. In 1511 Erasmus handed Folly herself the floor for a speech in her own praise, and she spared neither popes nor theologians.",
       ],
-      draft: true,
     },
   },
   {
@@ -58,7 +55,6 @@ const eras = [
       paragraphs: [
         "As Europe argued over the gospel, the fools argued too, and paid for it: an English queen had her comic actor taken away for making her laugh too hard, and an archbishop got the king's fool thrown out of court. In Spain, Velázquez painted Philip IV's fools with a dignity their masters rarely gave them.",
       ],
-      draft: true,
     },
   },
 ] as const satisfies readonly Era[];
@@ -76,7 +72,6 @@ const fools = [
         'The church at Corinth grew proud of its wisdom, and Paul answered with an irony any court fool would envy: "We are fools for Christ\'s sake, but you are wise in Christ. We are weak, but you are strong." Later, made to defend himself against rivals who boasted of their credentials, he played the fool on purpose. He boasted of beatings, shipwrecks, and being let down the wall of Damascus in a basket. "I have been a fool!" he wrote. "You forced me to it."',
         "Valentin de Boulogne painted him at his desk, pen in hand, with a letter half written. Every holy fool after him took Paul's phrase as a calling: to look foolish to the world for the sake of a truth the world couldn't see.",
       ],
-      draft: true,
     },
     painting: paintings["saint-paul"],
   },
@@ -93,7 +88,6 @@ const fools = [
         "He never minded looking ridiculous. He sang God's praises in French as he walked the roads, preached to anyone who would listen, and called his brothers the Lord's jongleurs: God's minstrels, he said, whose work was to lift people's hearts and move them to spiritual joy.",
         "In the upper church at Assisi, the painter of his life shows him bending toward a flock of birds by the roadside while a brother friar holds back in wonder. His first biographer says the birds stretched out their necks and listened, and didn't fly until Francis blessed them and gave them leave to go.",
       ],
-      draft: true,
     },
     painting: paintings["sermon-to-the-birds"],
   },
@@ -121,7 +115,6 @@ const fools = [
         },
       ],
       coda: 'The words, Horsey wrote, "made the Emperor to tremble," and Fletcher says the fool "saved a great many men\'s lives at that time."',
-      draft: true,
     },
     painting: paintings.yurodivy,
   },
@@ -153,10 +146,9 @@ const fools = [
           line: "They're skinning you worse than me, king: Smolensk has been torn away from you, and you say nothing.",
         },
       ],
-      // The coda is Michael's approved line (2026-11-03, #116); the rest of
-      // the story is the Gallery rewrite's draft (#123).
+      // The coda is Michael's approved line (2026-11-03, #116); he approved
+      // the rest of the story, the Gallery rewrite's (#123), on 2026-11-11 (#6).
       coda: "It's Michael's favorite painting, and it helped name this show: a fool who sees the truth while the court dances on without him.",
-      draft: true,
     },
     painting: paintings.stanczyk,
   },
@@ -188,7 +180,6 @@ const fools = [
           line: "Thank you kindly, cousin, but would you be so good as to hang him a quarter of an hour before?",
         },
       ],
-      draft: true,
     },
     painting: paintings.triboulet,
   },
@@ -214,7 +205,6 @@ const fools = [
           line: "Harry, says he, what is it, that the lesser it is, the more it is to be feared? … it was a little bridge over a deep river.",
         },
       ],
-      draft: true,
     },
     painting: paintings["will-somers"],
   },
@@ -246,7 +236,6 @@ const fools = [
           line: "Sometimes a fool may speak a word in season … Wherefore farewell, clap your hands, live and drink lustily, my most excellent disciples of Folly.",
         },
       ],
-      draft: true,
     },
     painting: paintings["folly-in-the-pulpit"],
   },
@@ -277,7 +266,6 @@ const fools = [
           line: "… neither the Queen nor the sculler hath a fellow.",
         },
       ],
-      draft: true,
     },
     painting: paintings["richard-tarlton"],
   },
@@ -309,7 +297,6 @@ const fools = [
         },
       ],
       coda: "The complaint went straight to the Council, and that same day the king and Council had Archy's coat pulled over his head and put him out of the king's service and the court.",
-      draft: true,
     },
     painting: paintings["archibald-armstrong"],
   },
@@ -326,7 +313,6 @@ const fools = [
         "What survives is his portrait by Velázquez. He stands in black on a ground with no floor, no wall, and no horizon, one arm flung out as if in the middle of a speech. When Édouard Manet saw it in the Prado in 1865, he called it perhaps the most astonishing piece of painting ever done: the background disappears, he wrote, and air surrounds the man.",
         "In Las Meninas, two of the court's dwarfs stand beside the princess among her maids of honor. The court kept such people as curiosities; Velázquez painted them as he painted the king himself, as people who look back at us.",
       ],
-      draft: true,
     },
     painting: paintings["pablo-de-valladolid"],
   },
@@ -342,7 +328,6 @@ const fools = [
         "Juan Martín Martín, known at court as Calabacillas, came to Philip IV's household from the service of the king's brother, the Cardinal-Infante Ferdinand, and stayed until his death in 1639. Where Pablo de Valladolid seems to have been kept for his wit, Calabacillas seems to have been kept for his simplicity: one of the fools the court laughed at rather than with.",
         "Velázquez painted him sitting on the floor between two gourds, calabazas, a pun on his nickname and the old Spanish emblem of an empty head. He squints and grins, and the painter's loose, quick brush refuses to make a joke of him. For centuries the canvas was misnamed The Simpleton of Coria, as if the man in it didn't need a name of his own.",
       ],
-      draft: true,
     },
     painting: paintings.calabacillas,
   },

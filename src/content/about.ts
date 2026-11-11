@@ -4,7 +4,6 @@ export const about = {
   title: "About",
   intro: {
     text: "Who we are, and why the show is called Jester's Privilege: three fools for Christ, in the motley each week to call the church to listen to her King.",
-    draft: true,
   },
   whyAJester: {
     title: 'Why "Jester\'s Privilege"?',
@@ -17,11 +16,9 @@ export const about = {
     ],
     // Michael cut "We seek no platform in the church and no office in it" (#6):
     // draft until a Jester approves the sentence as it now reads.
-    draft: true,
   },
   independence: {
     text: "Jester's Privilege is our own project. No church or ministry stands behind it, so if we say something foolish, blame the fools.",
-    draft: true,
   },
   jestersTitle: "The Jesters",
   whatWeBelieve: {

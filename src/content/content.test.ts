@@ -173,7 +173,7 @@ describe("content", () => {
     });
   });
 
-  // The rest of his story is the Gallery rewrite's (#123), still draft.
+  // The rest of his story is the Gallery rewrite's (#123), approved with the rest of the copy (#6).
   it("closes Stańczyk's story with the approved line", () => {
     const fools: readonly Fool[] = content.gallery.fools;
     expect(fools.find((fool) => fool.slug === "stanczyk")?.story.coda).toBe(
@@ -249,36 +249,11 @@ describe("content", () => {
   });
 });
 
-// The wit pass on the working messages (#124): the rewritten ones await the
-// Jesters' approval; the ones it left alone stay final.
-describe("working messages", () => {
-  it("marks the rewritten ones draft and leaves the rest final", () => {
-    const { player, footer } = content.shell;
-    const { problems, failed, sent, privacyNote } = content.speakFreely;
-    const { share } = content.episodePage;
-
-    expect({
-      player: findDrafts(player.failed),
-      footer: findDrafts(footer.privacyNote),
-      share: findDrafts(share),
-      problems: findDrafts(problems),
-      failed: findDrafts(failed),
-      sent: findDrafts(sent),
-      privacyNote: findDrafts(privacyNote),
-    }).toEqual({
-      player: [""],
-      footer: [""],
-      share: ["copied", "failed"],
-      problems: [
-        "message-missing",
-        "message-too-long",
-        "name-invalid",
-        "unverified",
-      ],
-      failed: ["delivery"],
-      sent: ["text"],
-      privacyNote: [],
-    });
+// Michael approved every remaining draft, the wit pass on the working
+// messages (#124) included, on 2026-11-11 (#6).
+describe("launch copy", () => {
+  it("has no draft left", () => {
+    expect(findDrafts(content)).toEqual([]);
   });
 });
 
