@@ -1,8 +1,7 @@
 import type { Shell } from "@/lib/content";
 
 // The frame around every page: header, mobile menu, and footer. Section names
-// follow GLOSSARY.md; the player's failure and the footer's privacy note,
-// rewritten in #124's wit pass, await the Jesters' approval.
+// follow GLOSSARY.md.
 export const shell = {
   // Aaron's logo set (public/brand/), trimmed to the artwork.
   logo: {

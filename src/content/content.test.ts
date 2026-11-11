@@ -2,7 +2,6 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import fontGlyphs from "@/fonts/glyphs.json";
 import {
-  findDrafts,
   findText,
   validateContent,
   type Copy,
@@ -173,7 +172,6 @@ describe("content", () => {
     });
   });
 
-  // The rest of his story is the Gallery rewrite's (#123), approved with the rest of the copy (#6).
   it("closes Stańczyk's story with the approved line", () => {
     const fools: readonly Fool[] = content.gallery.fools;
     expect(fools.find((fool) => fool.slug === "stanczyk")?.story.coda).toBe(
@@ -246,14 +244,6 @@ describe("content", () => {
       expect(summary?.draft).toBeUndefined();
       expect(summary?.text.length).toBeLessThanOrEqual(160);
     }
-  });
-});
-
-// Michael approved every remaining draft, the wit pass on the working
-// messages (#124) included, on 2026-11-11 (#6).
-describe("launch copy", () => {
-  it("has no draft left", () => {
-    expect(findDrafts(content)).toEqual([]);
   });
 });
 

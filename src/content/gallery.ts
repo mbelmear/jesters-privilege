@@ -146,8 +146,7 @@ const fools = [
           line: "They're skinning you worse than me, king: Smolensk has been torn away from you, and you say nothing.",
         },
       ],
-      // The coda is Michael's approved line (2026-11-03, #116); he approved
-      // the rest of the story, the Gallery rewrite's (#123), on 2026-11-11 (#6).
+      // The coda is Michael's approved line (2026-11-03, #116).
       coda: "It's Michael's favorite painting, and it helped name this show: a fool who sees the truth while the court dances on without him.",
     },
     painting: paintings.stanczyk,

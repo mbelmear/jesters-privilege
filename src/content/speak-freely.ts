@@ -1,8 +1,7 @@
 import type { SpeakFreelyPage } from "@/lib/content";
 
 // Speak Freely, where listeners send the Jesters a Submission. The field labels, the consent line, and the name and email
-// hints are the spec's words. The working messages #124's wit pass rewrote
-// await the Jesters' approval; the rest are final.
+// hints are the spec's words.
 export const speakFreely = {
   title: "Speak Freely",
   intro: {
