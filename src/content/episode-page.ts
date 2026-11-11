@@ -26,11 +26,9 @@ export const episodePage = {
     button: "Share",
     copied: {
       text: "Link copied. Paste it anywhere to share this Episode: the more who laugh, the more who listen.",
-      draft: true,
     },
     failed: {
       text: "Your browser wouldn't copy the link, so do it the old-fashioned way: copy this page's address to share it.",
-      draft: true,
     },
   },
 } as const satisfies EpisodePage;

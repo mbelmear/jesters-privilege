@@ -16,7 +16,6 @@ export const home = {
     title: gallery.title,
     intro: {
       text: "Long before this show, there were fools who told kings the truth: Stańczyk brooding while the Polish court danced, the holy fools who rebuked tsars barefoot in the snow, and Triboulet, a simple fool whose name later collected other fools' jokes. Walk through their history, painting by painting.",
-      draft: true,
     },
     link: { text: "Enter the Fools' Gallery" },
   },

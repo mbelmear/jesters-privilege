@@ -1,8 +1,7 @@
 import type { SpeakFreelyPage } from "@/lib/content";
 
 // Speak Freely, where listeners send the Jesters a Submission. The field labels, the consent line, and the name and email
-// hints are the spec's words. The working messages #124's wit pass rewrote
-// await the Jesters' approval; the rest are final.
+// hints are the spec's words.
 export const speakFreely = {
   title: "Speak Freely",
   intro: {
@@ -36,15 +35,12 @@ export const speakFreely = {
     },
     "message-missing": {
       text: "Write your message before you send it. Even jesters need material.",
-      draft: true,
     },
     "message-too-long": {
       text: "Keep your message to 5,000 characters or fewer. Brevity is the soul of wit; save the rest for a second Submission.",
-      draft: true,
     },
     "name-invalid": {
       text: "Keep your name to one line of 100 characters or fewer, so we can say it on the show in one breath.",
-      draft: true,
     },
     "email-invalid": {
       text: "That email address doesn't look complete. Check it, or leave it blank.",
@@ -54,7 +50,6 @@ export const speakFreely = {
     },
     unverified: {
       text: "We're still checking this comes from a person, not a robot in motley. Wait for the check above the Send button to finish, then send again.",
-      draft: true,
     },
   },
   failed: {
@@ -63,7 +58,6 @@ export const speakFreely = {
     },
     delivery: {
       text: "Your Submission didn't reach the Jesters' inbox, so nothing was sent: our messenger stumbled, not you. Everything you wrote is still here; try again in a few minutes.",
-      draft: true,
     },
     invalid: {
       text: "Something in the form didn't pass our checks, so nothing was sent. Look over each field and send it again.",
@@ -76,7 +70,6 @@ export const speakFreely = {
     title: "Received",
     text: {
       text: "Thank you. Your Submission is in the Jesters' inbox, and you've spoken more freely than most courtiers ever dared. If we use it on the show, we'll say your name the way you wrote it, or keep you anonymous if you left it blank.",
-      draft: true,
     },
     again: "Send another",
   },

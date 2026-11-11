@@ -4,7 +4,6 @@ export const about = {
   title: "About",
   intro: {
     text: "Who we are, and why the show is called Jester's Privilege: three fools for Christ, in the motley each week to call the church to listen to her King.",
-    draft: true,
   },
   whyAJester: {
     title: 'Why "Jester\'s Privilege"?',
@@ -15,13 +14,10 @@ export const about = {
       "Christ is our King, and he needs no jester. He is never flattered and never wrong. But he has entrusted real authority to his church: he gave her the keys of the kingdom and sent her to speak in his name. Wherever there is authority, courtiers gather. The church has her own: celebrity pastors, passing fads and voices that tell her only what she wants to hear. She is dearly loved, yet she can wander, and when she does, those who lead in her name lead others astray with her.",
       "So we take up the jester's place. We are simply three of her members, which is why we can say plainly what flatterers won't. Paul says we are \"fools for Christ's sake\" (1 Corinthians 4:10), and like the best fools of old, we speak because we love the one we serve, and we love his bride. So we laugh at ourselves first, speak the truth in love and call the church back to listen to her King.",
     ],
-    // Michael cut "We seek no platform in the church and no office in it" (#6):
-    // draft until a Jester approves the sentence as it now reads.
-    draft: true,
+    // Michael cut "We seek no platform in the church and no office in it" (#6).
   },
   independence: {
     text: "Jester's Privilege is our own project. No church or ministry stands behind it, so if we say something foolish, blame the fools.",
-    draft: true,
   },
   jestersTitle: "The Jesters",
   whatWeBelieve: {
