@@ -200,3 +200,28 @@ jobs:
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 14
+
+  probe-2cpu:
+    name: PROBE 2 CPUs (workers ${{ matrix.workers }})
+    needs: build
+    if: >-
+      !cancelled() && needs.build.result == 'success'
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        workers: [1, 2]
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - uses: actions/download-artifact@v4
+        with:
+          name: site
+          path: out/
+      - uses: ./.github/actions/playwright-browsers
+        with:
+          browsers: chromium webkit
+      - run: nproc && taskset -c 0,1 nproc && taskset -c 0,1 npm run test:e2e
+        env:
+          PW_WORKERS: ${{ matrix.workers }}
