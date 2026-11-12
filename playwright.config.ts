@@ -1,5 +1,14 @@
 import { createHash } from "node:crypto";
 import { defineConfig, devices } from "@playwright/test";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
+
+// Tests serve the built site in out/. Without one, the run waited out the 60 s
+// webServer timeout and named the server, not the build (#217).
+if (!existsSync(join(__dirname, "out", "index.html")))
+  throw new Error(
+    "out/ has no build: run `npm run build` first (`npm run build:empty-feed` for FEED=empty)"
+  );
 
 // Each worktree serves its own out/ on its own port, picked from its path in
 // a range clear of common dev servers, so parallel sessions never test one
