@@ -1,5 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page, type ViewportSize } from "@playwright/test";
 import { indexable } from "./built-pages";
 import { scrollDown, scrollThrough } from "./hero-story";
 import {
@@ -18,6 +18,10 @@ const everyPage = [...indexable, "/no-such-page"];
 
 // The narrowest phones still in use; the phone projects are wider.
 const NARROWEST_PHONE = { width: 320, height: 568 };
+
+// A phone project is one narrower than Tailwind's md breakpoint, as the Mobile
+// menu's tests tell them apart: Firefox's phone project isn't isMobile.
+const isPhone = (viewport: ViewportSize | null) => (viewport?.width ?? 0) < 768;
 
 const overflow = (page: Page) =>
   page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
@@ -83,7 +87,9 @@ test.describe("Every page", () => {
         expect(await endlessAnimations(page)).toBe(0);
       });
 
-      test("fits the narrowest phone", async ({ page }) => {
+      test("fits the narrowest phone", async ({ page, viewport }) => {
+        // A desktop project at 320 px only copies the phone projects (#210).
+        test.skip(!isPhone(viewport), "The phone projects cover phone width");
         await page.setViewportSize(NARROWEST_PHONE);
         await page.goto(path);
         await seeAll(page, path);
@@ -111,6 +117,10 @@ const BASE_MS = 10_000;
 const MS_PER_BUTTON = 2_000;
 
 test.describe("Every button", () => {
+  // Phones report no hover, so Tailwind's hover styles never apply there and
+  // the scan would only repeat the page scans' resting colors (#210).
+  test.skip(({ viewport }) => isPhone(viewport), "Phones have no hover");
+
   // Hover changes a fill's color, and axe sees only the state a page is in.
   for (const colorScheme of ["light", "dark"] as const) {
     test(`keeps its contrast while hovered (${colorScheme})`, async ({
@@ -148,6 +158,13 @@ test.describe("Every button", () => {
 });
 
 test.describe("The player, in each of its states", () => {
+  // Each state is checked at the narrowest phone, which a desktop project
+  // at 320 px only copies (#210).
+  test.skip(
+    ({ viewport }) => !isPhone(viewport),
+    "The phone projects cover phone width"
+  );
+
   test.beforeEach(async ({ page }) => {
     await serveEpisodeAudio(page);
   });
