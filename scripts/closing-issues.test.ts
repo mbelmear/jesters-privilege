@@ -15,7 +15,8 @@ function pr(
   title: string,
   body: string | null,
   closes: number[],
-  commitMessages: string[] = []
+  // A whole message, or gh's [messageHeadline, messageBody] as it prints them.
+  commitMessages: (string | [string, string])[] = []
 ) {
   const root = mkdtempSync(join(tmpdir(), "closing-issues-"));
   const fixture = join(root, "pr.json");
@@ -37,22 +38,33 @@ function pr(
         url: `https://github.com/mbelmear/jesters-privilege/issues/${number}`,
       })),
       // Shaped as `gh pr view 213 --json commits` answered on 12 November
-      // 2026, which splits each message at its first line.
-      commits: commitMessages.map((message, i) => ({
-        authoredDate: "2026-11-12T01:03:03Z",
-        authors: [
-          {
-            email: "jester@example.com",
-            id: "MDQ6VXNlcjkwMDA4MDU1",
-            login: "jester",
-            name: "A Jester",
-          },
-        ],
-        committedDate: "2026-11-12T01:03:03Z",
-        messageBody: message.split("\n").slice(2).join("\n"),
-        messageHeadline: message.split("\n")[0],
-        oid: String(i).padStart(40, "0"),
-      })),
+      // 2026. It splits a message at its first line, dropping the blank line
+      // after it, and cuts a long first line with "…", which then also opens
+      // the body ("…merge's re…", "…fusal tested").
+      commits: commitMessages.map((message, i) => {
+        const [messageHeadline, messageBody] =
+          typeof message === "string"
+            ? [
+                message.split("\n")[0],
+                message.split("\n").slice(1).join("\n").replace(/^\n/, ""),
+              ]
+            : message;
+        return {
+          authoredDate: "2026-11-12T01:03:03Z",
+          authors: [
+            {
+              email: "jester@example.com",
+              id: "MDQ6VXNlcjkwMDA4MDU1",
+              login: "jester",
+              name: "A Jester",
+            },
+          ],
+          committedDate: "2026-11-12T01:03:03Z",
+          messageBody,
+          messageHeadline,
+          oid: String(i).padStart(40, "0"),
+        };
+      }),
     })
   );
   writeFileSync(
@@ -127,6 +139,33 @@ describe("closing-issues.sh", () => {
       expect(pr("A fix (#158)", "", [], [`A fix\n\n${line}`]).status).toBe(1);
     }
   );
+
+  it.each([
+    "Fixes mbelmear/jesters-privilege#209",
+    "Fixes https://github.com/mbelmear/jesters-privilege/issues/209",
+  ])("reads the issue %s names", (line) => {
+    expect(pr("A fix (#158)", "", [], [`A fix\n\n${line}`]).stderr).toContain(
+      "closes #209"
+    );
+  });
+
+  it("reads a keyword gh cut across the first line and the body", () => {
+    const cut: [string, string] = [
+      "A first line long enough that gh cuts it, and it fix…",
+      "…es #209 on the way",
+    ];
+    expect(pr("A fix (#158)", "", [], [cut]).stderr).toContain("closes #209");
+  });
+
+  it("reads a first line with no blank line after it", () => {
+    expect(pr("A fix (#158)", "", [], ["A fix\nFixes #209"]).status).toBe(1);
+  });
+
+  it("tells #1580 from the #158 a title names", () => {
+    expect(
+      pr("A fix (#158)", "", [], ["A fix\n\nFixes #1580"]).stderr
+    ).toContain("closes #1580");
+  });
 
   it.each(["prefix #209", "fixing #209", "closer to #209"])(
     "reads no keyword in %s",
