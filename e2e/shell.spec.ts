@@ -125,23 +125,30 @@ test.describe("Mobile menu", () => {
     await page.keyboard.press("Escape");
     await expect(menu).toBeHidden();
 
-    // How far the panel sits from its resting place, frame by frame.
-    const offsets = await page.evaluate(async () => {
-      document
-        .querySelector<HTMLButtonElement>('button[aria-haspopup="dialog"]')
-        ?.click();
-      const seen: number[] = [];
-      const start = performance.now();
-      while (performance.now() - start < 600) {
-        await new Promise(requestAnimationFrame);
-        const panel = document.querySelector('[role="dialog"]');
-        if (panel)
-          seen.push(new DOMMatrix(getComputedStyle(panel).transform).m41);
-      }
-      return seen;
-    });
-    expect(Math.max(...offsets)).toBeGreaterThan(0);
-    expect(offsets.at(-1)).toBe(0);
+    // How far the panel sits from its resting place as it enters the page,
+    // read before any frame is drawn. Sampling frames instead failed on a busy
+    // WebKit, which can draw none until the 200 ms slide is over (#209).
+    const start = await page.evaluate(
+      () =>
+        new Promise<number>((resolve) => {
+          const observer = new MutationObserver(() => {
+            const panel = document.querySelector('[role="dialog"]');
+            if (!panel) return;
+            observer.disconnect();
+            resolve(new DOMMatrix(getComputedStyle(panel).transform).m41);
+          });
+          observer.observe(document.body, { childList: true, subtree: true });
+          document
+            .querySelector<HTMLButtonElement>('button[aria-haspopup="dialog"]')
+            ?.click();
+        })
+    );
+    expect(start).toBeGreaterThan(0);
+    await expect
+      .poll(() =>
+        menu.evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).m41)
+      )
+      .toBe(0);
   });
 
   test("slides with Motion, and appears at once under reduced motion", async ({
