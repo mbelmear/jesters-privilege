@@ -16,7 +16,7 @@ pr="${1:?$usage}"
 action="${2:?$usage}"
 
 unnamed=$(gh pr view "$pr" --json title,body,closingIssuesReferences --jq '
-  (.title + "\n" + (.body | split("\n")[0])) as $named
+  (.title + "\n" + (.body // "" | split("\n")[0])) as $named
   | [.closingIssuesReferences[].number
      | select(. as $n | $named | test("#\($n)([^0-9]|$)") | not)
      | "#\(.)"]

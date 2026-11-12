@@ -11,7 +11,7 @@ const script = join(__dirname, "closing-issues.sh");
 // A stand-in gh that answers `gh pr view` from a fixture, filtered by the
 // caller's own --jq through the real jq. gh's --jq is gojq, whose regexes
 // have no lookahead where jq's do, so the filter keeps to what both read.
-function pr(title: string, body: string, closes: number[]) {
+function pr(title: string, body: string | null, closes: number[]) {
   const root = mkdtempSync(join(tmpdir(), "closing-issues-"));
   const fixture = join(root, "pr.json");
   writeFileSync(
@@ -19,7 +19,18 @@ function pr(title: string, body: string, closes: number[]) {
     JSON.stringify({
       title,
       body,
-      closingIssuesReferences: closes.map((number) => ({ number })),
+      // Each as `gh pr view 211 --json closingIssuesReferences` answered on
+      // 12 November 2026.
+      closingIssuesReferences: closes.map((number) => ({
+        id: "I_kwDOVZ_PPc8AAAABed5_xA",
+        number,
+        repository: {
+          id: "R_kgDOVZ_PPQ",
+          name: "jesters-privilege",
+          owner: { id: "MDQ6VXNlcjkwMDA4MDU1", login: "mbelmear" },
+        },
+        url: `https://github.com/mbelmear/jesters-privilege/issues/${number}`,
+      })),
     })
   );
   writeFileSync(
@@ -69,6 +80,10 @@ describe("closing-issues.sh", () => {
       "Refusing to merge #211: merging it closes #209"
     );
     expect(result.stderr).not.toContain("#158");
+  });
+
+  it("reads a PR with no body", () => {
+    expect(pr("A fix (#158)", null, [158]).status).toBe(0);
   });
 
   it("tells #20 from #209", () => {
