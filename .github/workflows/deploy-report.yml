@@ -38,6 +38,7 @@ jobs:
       github.event.workflow_run.event == 'schedule')) &&
       github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-24.04
+    timeout-minutes: 10
     permissions:
       contents: read
       actions: read
@@ -56,6 +57,7 @@ jobs:
     name: Preview the failure report
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-24.04
+    timeout-minutes: 10
     permissions:
       contents: read
       actions: read
