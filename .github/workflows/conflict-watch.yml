@@ -27,6 +27,7 @@ jobs:
     name: Flag conflicts with main
     if: github.event_name == 'push' || contains(github.event.pull_request.labels.*.name, 'ready-for-human')
     runs-on: ubuntu-24.04
+    timeout-minutes: 5
     steps:
       # flag-conflicts.sh runs git ls-remote, which needs the token once the repo
       # is private (#145). This job installs nothing that could read it.

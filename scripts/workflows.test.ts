@@ -8,7 +8,12 @@ import { readdirSync, readFileSync } from "node:fs";
 // A skipped job passes as a required check, so the failure looks like success:
 // a job after the docs-only check would stop running on every push to main.
 
-type Job = { name: string; needs: string[]; condition: string };
+type Job = {
+  name: string;
+  needs: string[];
+  condition: string;
+  timeout?: number;
+};
 
 function jobsIn(text: string): Job[] {
   const [, jobs = ""] = text.split(/^jobs:\n/m);
@@ -26,10 +31,12 @@ function jobsIn(text: string): Job[] {
       const needs = /^ {4}needs: \[?([^\]\n]+)\]?$/m.exec(block)?.[1] ?? "";
       // An `if:` runs on over its indented lines, to the job's next key.
       const condition = /^ {4}if: (.*(?:\n {6,}.*)*)/m.exec(block)?.[1] ?? "";
+      const timeout = /^ {4}timeout-minutes: (\d+)$/m.exec(block)?.[1];
       return {
         name,
         needs: needs ? needs.split(/,\s*/) : [],
         condition,
+        timeout: timeout ? Number(timeout) : undefined,
       };
     })
     .filter((job) => job.name);
@@ -114,6 +121,12 @@ describe("reading a workflow", () => {
       },
       { name: "third", needs: ["first", "second"], condition: "" },
     ]);
+  });
+
+  it("reads a job's time limit", () => {
+    expect(
+      jobsIn("jobs:\n  first:\n    runs-on: x\n    timeout-minutes: 15\n")
+    ).toEqual([{ name: "first", needs: [], condition: "", timeout: 15 }]);
   });
 });
 
@@ -212,6 +225,21 @@ describe("a workflow's runners", () => {
       runners?.map(() => "runs-on: ubuntu-24.04")
     );
   });
+
+  // A job left to GitHub's default runs up to 6 hours. From 4 to 7 November a
+  // slow apt mirror held Playwright's system-package install 35-60 minutes (#158); once the
+  // repo is private (#145), every one of those minutes is billed.
+  it.each(readdirSync(".github/workflows"))(
+    "%s gives each job a time limit",
+    (file) => {
+      const jobs = jobsIn(readFileSync(`.github/workflows/${file}`, "utf8"));
+
+      expect(jobs.length).toBeGreaterThan(0);
+      expect(
+        jobs.filter((job) => job.timeout === undefined).map((job) => job.name)
+      ).toEqual([]);
+    }
+  );
 });
 
 describe("the names scripts read", () => {

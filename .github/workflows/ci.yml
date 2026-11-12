@@ -16,6 +16,7 @@ jobs:
   workflows:
     name: Lint workflows
     runs-on: ubuntu-24.04
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v5
         with:
@@ -33,6 +34,7 @@ jobs:
   check:
     name: Format, lint, typecheck, unit tests
     runs-on: ubuntu-24.04
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
         with:
@@ -58,6 +60,7 @@ jobs:
     name: Docs-only check
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-24.04
+    timeout-minutes: 5
     outputs:
       docs-only: ${{ steps.check.outputs.docs-only }}
     steps:
@@ -78,6 +81,7 @@ jobs:
     if: >-
       !cancelled() && needs.docs-only.outputs.docs-only != 'true'
     runs-on: ubuntu-24.04
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v5
         with:
@@ -98,6 +102,7 @@ jobs:
     if: >-
       !cancelled() && needs.build.result == 'success'
     runs-on: ubuntu-24.04
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v5
         with:
@@ -128,6 +133,7 @@ jobs:
       !cancelled() && needs.build.result == 'success' &&
       github.event_name == 'pull_request'
     runs-on: ubuntu-24.04
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v5
         with:
@@ -157,6 +163,7 @@ jobs:
     if: >-
       !cancelled() && needs.docs-only.outputs.docs-only != 'true'
     runs-on: ubuntu-24.04
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v5
         with:
@@ -182,6 +189,7 @@ jobs:
     if: >-
       !cancelled() && needs.build.result == 'success'
     runs-on: ubuntu-24.04
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v5
         with:
