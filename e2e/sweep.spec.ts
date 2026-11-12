@@ -117,9 +117,14 @@ const BASE_MS = 10_000;
 const MS_PER_BUTTON = 2_000;
 
 test.describe("Every button", () => {
-  // Phones report no hover, so Tailwind's hover styles never apply there and
-  // the scan would only repeat the page scans' resting colors (#210).
-  test.skip(({ viewport }) => isPhone(viewport), "Phones have no hover");
+  // The emulated phones report no hover, so Tailwind's hover styles never
+  // apply there and the scan would only repeat the page scans' resting colors.
+  // Firefox's phone project is a desktop browser that does hover, but its
+  // desktop project covers the same styles (#210).
+  test.skip(
+    ({ viewport }) => isPhone(viewport),
+    "The desktop projects cover hover"
+  );
 
   // Hover changes a fill's color, and axe sees only the state a page is in.
   for (const colorScheme of ["light", "dark"] as const) {
