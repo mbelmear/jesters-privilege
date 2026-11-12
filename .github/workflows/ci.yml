@@ -208,3 +208,28 @@ jobs:
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 14
+
+  probe-2cpu:
+    name: PROBE 2 CPUs (workers 2)
+    needs: build
+    if: >-
+      !cancelled() && needs.build.result == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - uses: actions/download-artifact@v4
+        with:
+          name: site
+          path: out/
+      - uses: ./.github/actions/playwright-browsers
+        with:
+          browsers: chromium webkit
+      - name: Full suite, 2 workers on 2 CPUs
+        run: nproc && taskset -c 0,1 nproc && taskset -c 0,1 npx playwright test --project='chromium-*' --project='webkit-*' --workers=2
+      - name: Motion test alone, 20 times, no retries, 2 workers on 2 CPUs
+        if: ${{ !cancelled() }}
+        run: taskset -c 0,1 npx playwright test e2e/shell.spec.ts -g "slides in with Motion" --project='webkit-phone' --project='chromium-phone' --workers=2 --repeat-each=20 --retries=0
