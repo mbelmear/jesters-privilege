@@ -49,6 +49,8 @@ function repo() {
   const onMerge = join(root, "on-merge");
   const headFile = join(root, "head");
   const failedRow = join(root, "failed-row");
+  // What closing-issues.sh's --jq prints: the issues it would close unnamed.
+  const unnamedCloses = join(root, "unnamed-closes");
   const sleeps = join(root, "sleeps");
   execFileSync(
     "git",
@@ -82,12 +84,14 @@ function repo() {
     writeFileSync(onChecks, "");
     writeFileSync(onMerge, "");
     writeFileSync(failedRow, "");
+    writeFileSync(unnamedCloses, "");
     writeFileSync(headFile, `${head}\n`);
     writeFileSync(sleeps, "");
     writeFileSync(
       join(bin, "gh"),
       `#!/bin/sh
 case "$*" in
+  *closingIssuesReferences*) cat "${unnamedCloses}" ;;
   *headRefOid*) cat "${headFile}" ;;
   *statusCheckRollup*) cat "${rollup}" ;;
   *comments*) echo "Code review: passed at ${head}" ;;
@@ -124,6 +128,7 @@ esac
     onMerge,
     headFile,
     failedRow,
+    unnamedCloses,
     git,
     commit,
     fakeGh,
@@ -166,6 +171,17 @@ describe("merge-on-green", () => {
 
     expect(result.stdout).toContain("MERGED");
     expect(result.status).toBe(0);
+  });
+
+  it("refuses, before waiting on checks, when it would close an issue it doesn't name", () => {
+    writeFileSync(r.unnamedCloses, "#209\n");
+
+    const result = r.merge();
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("merging it closes #209");
+    expect(result.stdout).not.toContain("MERGED");
+    expect(r.sleepCount()).toBe(0);
   });
 
   it("refuses, naming the commit, when main has gained one in the PR's files", () => {
