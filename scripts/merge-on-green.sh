@@ -7,11 +7,13 @@
 # refuses to merge unless:
 #   1. the newest "Code review: passed at <sha>" comment names the PR's head, or
 #      only clean merges of main came after it (require-review.sh),
-#   2. the PR has at least one check (it waits for them to appear after a push),
-#   3. it merges cleanly with main, checked throughout the wait, since a conflict
+#   2. it closes only issues its title or body's first line names
+#      (closing-issues.sh), since "Fix #209 before #145." closed #209 (#211),
+#   3. the PR has at least one check (it waits for them to appear after a push),
+#   4. it merges cleanly with main, checked throughout the wait, since a conflict
 #      would only send the checks round again (#165 waited 45 minutes on one),
-#   4. every check passes (it waits for pending ones, stops at the first failure),
-#   5. nothing main gained meanwhile touches the PR's files, or the newest such
+#   5. every check passes (it waits for pending ones, stops at the first failure),
+#   6. nothing main gained meanwhile touches the PR's files, or the newest such
 #      commit is the one passed to --overlap-read. Those commits merge cleanly
 #      and can still contradict what was reviewed, as #155 did #156's new line.
 # The merge is pinned to the reviewed commit, so a push during the wait fails it;
@@ -34,6 +36,7 @@ fi
 head=$(gh pr view "$pr" --json headRefOid --jq .headRefOid)
 
 "$(dirname "$0")/require-review.sh" "$pr" "$head" merge
+"$(dirname "$0")/closing-issues.sh" "$pr" merge
 
 refuse_if_conflicting() {
   # A failed fetch leaves the last one's answer, and the next round tries again.
