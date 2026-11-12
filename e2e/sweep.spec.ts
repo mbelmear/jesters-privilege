@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type Page, type ViewportSize } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
+import { isPhone } from "./breakpoints";
 import { indexable } from "./built-pages";
 import { scrollDown, scrollThrough } from "./hero-story";
 import {
@@ -18,10 +19,6 @@ const everyPage = [...indexable, "/no-such-page"];
 
 // The narrowest phones still in use; the phone projects are wider.
 const NARROWEST_PHONE = { width: 320, height: 568 };
-
-// A phone project is one narrower than Tailwind's md breakpoint, as the Mobile
-// menu's tests tell them apart: Firefox's phone project isn't isMobile.
-const isPhone = (viewport: ViewportSize | null) => (viewport?.width ?? 0) < 768;
 
 const overflow = (page: Page) =>
   page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);

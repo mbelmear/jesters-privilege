@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Locator, type Page } from "@playwright/test";
+import { isWide, LG, MD } from "./breakpoints";
 
 // The Fools' Gallery: eras in turn, the Renaissance opening with a painting
 // band, Stańczyk framed beside his story, and the closing section.
@@ -24,8 +25,6 @@ const zooms = (img: Locator) =>
   img.evaluate(
     (el) => el.getAnimations().filter((a) => a instanceof CSSAnimation).length
   );
-const isWide = (page: Page, min: number) =>
-  (page.viewportSize()?.width ?? 0) >= min;
 
 test.describe("Fools' Gallery", () => {
   test("walks through the eras to why this show wears the motley", async ({
@@ -78,7 +77,7 @@ test.describe("Fools' Gallery", () => {
     await expect
       .poll(() => img.evaluate((el: HTMLImageElement) => el.currentSrc))
       .toMatch(
-        isWide(page, 768)
+        isWide(page, MD)
           ? /\/the-ambassadors\/\d+\.\w+$/
           : /\/the-ambassadors\/portrait-\d+\.\w+$/
       );
@@ -87,7 +86,7 @@ test.describe("Fools' Gallery", () => {
   test("the band slowly zooms on desktops only", async ({ page }) => {
     await page.goto(PAGE);
     const img = await band(page);
-    expect(await zooms(img)).toBe(isWide(page, 1024) ? 1 : 0);
+    expect(await zooms(img)).toBe(isWide(page, LG) ? 1 : 0);
   });
 
   test("has no horizontal scroll", async ({ page }) => {
