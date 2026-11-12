@@ -31,6 +31,7 @@
     "lighthouse:spread": "scripts/lighthouse-spread.sh",
     "screenshots": "tsx scripts/screenshots.ts",
     "trace": "tsx scripts/trace-summary.ts",
+    "ci-times": "tsx scripts/ci-times.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "merge": "scripts/merge-on-green.sh",
