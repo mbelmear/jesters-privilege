@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
+import { isWide, LG, MD } from "./breakpoints";
 
 // The style guide's paintings page: a painting band on the first screen and
 // framed paintings below, as the Fools' Gallery will show them.
@@ -10,8 +11,6 @@ const zooms = async (page: Page) => {
   await expect(band(page)).toBeVisible();
   return band(page).evaluate((img) => img.getAnimations().length);
 };
-const isWide = (page: Page, min: number) =>
-  (page.viewportSize()?.width ?? 0) >= min;
 
 test.describe("Paintings", () => {
   test("every painting loads from the build's image set", async ({ page }) => {
@@ -43,12 +42,12 @@ test.describe("Paintings", () => {
       .poll(() =>
         band(page).evaluate((img: HTMLImageElement) => img.currentSrc)
       )
-      .toMatch(isWide(page, 768) ? /\/\d+\.\w+$/ : /\/portrait-\d+\.\w+$/);
+      .toMatch(isWide(page, MD) ? /\/\d+\.\w+$/ : /\/portrait-\d+\.\w+$/);
   });
 
   test("the band slowly zooms on desktops only", async ({ page }) => {
     await page.goto(PAGE);
-    expect(await zooms(page)).toBe(isWide(page, 1024) ? 1 : 0);
+    expect(await zooms(page)).toBe(isWide(page, LG) ? 1 : 0);
   });
 
   test("has no horizontal scroll", async ({ page }) => {

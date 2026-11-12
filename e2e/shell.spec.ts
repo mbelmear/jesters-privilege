@@ -1,6 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import { microcopy } from "../src/content/microcopy";
+import { isPhone } from "./breakpoints";
 
 // Axe samples colors as rendered, so let an opening animation finish first.
 const settled = (locator: Locator) =>
@@ -64,11 +65,10 @@ test.describe("Header", () => {
 });
 
 test.describe("Mobile menu", () => {
-  // Below Tailwind's md breakpoint, where the header's links give way to the
-  // menu. By width, not isMobile, which Firefox's phone project lacks.
+  // On phones the header's links give way to the menu.
   test.beforeEach(({ viewport }) => {
     test.skip(
-      (viewport?.width ?? 0) >= 768,
+      !isPhone(viewport),
       "The menu replaces the header links on phones"
     );
   });
