@@ -4,8 +4,8 @@
 
 type Timed = {
   readonly name: string;
-  readonly startedAt: string | null;
-  readonly completedAt: string | null;
+  readonly startedAt: string;
+  readonly completedAt: string;
 };
 
 export type Run = {
@@ -14,6 +14,8 @@ export type Run = {
   readonly event: string;
   readonly conclusion: string;
   readonly createdAt: string;
+  // A re-run keeps the jobs it didn't repeat, timed from the first attempt.
+  readonly attempt: number;
   readonly jobs: readonly (Timed & {
     readonly conclusion: string;
     readonly steps: readonly Timed[];
@@ -26,6 +28,7 @@ export type RunSummary = {
   readonly event: string;
   readonly conclusion: string;
   readonly createdAt: string;
+  readonly attempts: number;
   readonly minutes: number | undefined;
   readonly queuedSeconds: number | undefined;
   readonly jobs: readonly {
@@ -48,9 +51,9 @@ export function readRun(json: unknown): Run {
     const found = at(value, key);
     return typeof found === "string" ? found : fail("string", path);
   };
-  const time = (value: unknown, key: string, path: string): string | null => {
+  const number = (value: unknown, key: string): number => {
     const found = at(value, key);
-    return found === null ? null : string(value, key, path);
+    return typeof found === "number" ? found : fail("number", key);
   };
   const list = (value: unknown, key: string, path = key): unknown[] => {
     const found = at(value, key);
@@ -58,20 +61,17 @@ export function readRun(json: unknown): Run {
   };
   const timed = (value: unknown, path: string) => ({
     name: string(value, "name", `${path}.name`),
-    startedAt: time(value, "startedAt", `${path}.startedAt`),
-    completedAt: time(value, "completedAt", `${path}.completedAt`),
+    startedAt: string(value, "startedAt", `${path}.startedAt`),
+    completedAt: string(value, "completedAt", `${path}.completedAt`),
   });
 
-  const databaseId = at(json, "databaseId");
   return {
-    databaseId:
-      typeof databaseId === "number"
-        ? databaseId
-        : fail("number", "databaseId"),
+    databaseId: number(json, "databaseId"),
     headBranch: string(json, "headBranch"),
     event: string(json, "event"),
     conclusion: string(json, "conclusion"),
     createdAt: string(json, "createdAt"),
+    attempt: number(json, "attempt"),
     jobs: list(json, "jobs").map((job, j) => ({
       ...timed(job, `jobs.${j}`),
       conclusion: string(job, "conclusion", `jobs.${j}.conclusion`),
@@ -82,26 +82,32 @@ export function readRun(json: unknown): Run {
   };
 }
 
-// GitHub writes the year 1 for a time that never happened, such as a step
-// that didn't run.
-const time = (iso: string | null) =>
-  iso && !iso.startsWith("0001-") ? Date.parse(iso) : undefined;
+// `gh run view` prints the year 1 for a time that hasn't happened: a step
+// that didn't run, or a job still running.
+const epochMs = (iso: string) =>
+  iso.startsWith("0001-") ? undefined : Date.parse(iso);
 
 const seconds = ({ startedAt, completedAt }: Timed) => {
-  const start = time(startedAt);
-  const end = time(completedAt);
+  const start = epochMs(startedAt);
+  const end = epochMs(completedAt);
   return start === undefined || end === undefined
     ? undefined
     : Math.round((end - start) / 1000);
 };
 
 export function summariseRun(run: Run, slowStepSeconds: number): RunSummary {
-  const finished = run.jobs.filter(
-    (job) => job.conclusion !== "skipped" && seconds(job) !== undefined
-  );
+  const finished = run.jobs.flatMap((job) => {
+    const start = epochMs(job.startedAt);
+    const end = epochMs(job.completedAt);
+    return job.conclusion !== "skipped" &&
+      start !== undefined &&
+      end !== undefined
+      ? [{ ...job, start, end }]
+      : [];
+  });
   const created = Date.parse(run.createdAt);
-  const ends = finished.map((job) => time(job.completedAt) ?? created);
-  const starts = finished.map((job) => time(job.startedAt) ?? created);
+  const ends = finished.map((job) => job.end);
+  const starts = finished.map((job) => job.start);
 
   return {
     id: run.databaseId,
@@ -109,6 +115,7 @@ export function summariseRun(run: Run, slowStepSeconds: number): RunSummary {
     event: run.event,
     conclusion: run.conclusion,
     createdAt: run.createdAt,
+    attempts: run.attempt,
     minutes: finished.length
       ? Math.round((Math.max(...ends) - created) / 60_000)
       : undefined,
@@ -117,7 +124,7 @@ export function summariseRun(run: Run, slowStepSeconds: number): RunSummary {
       : undefined,
     jobs: finished.map((job) => ({
       name: job.name,
-      minutes: Math.round((seconds(job) ?? 0) / 60),
+      minutes: Math.round((job.end - job.start) / 60_000),
       slowSteps: job.steps.flatMap((step) => {
         const took = seconds(step);
         return took !== undefined && took > slowStepSeconds
@@ -138,7 +145,7 @@ export function formatCiTimes(
       const took =
         run.minutes === undefined
           ? "no finished job"
-          : `${run.minutes} min, queued ${run.queuedSeconds} s`;
+          : `${run.minutes} min${run.attempts > 1 ? ` over ${run.attempts} attempts` : ""}, queued ${run.queuedSeconds} s`;
       const jobs = run.jobs
         .filter(
           (job) =>

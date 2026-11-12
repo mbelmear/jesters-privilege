@@ -12,6 +12,7 @@ const run: Run = {
   event: "pull_request",
   conclusion: "success",
   createdAt: "2026-11-11T22:00:00Z",
+  attempt: 1,
   jobs: [
     {
       name: "Build static site",
@@ -38,7 +39,8 @@ const run: Run = {
       startedAt: "2026-11-11T22:21:00Z",
       completedAt: "2026-11-11T22:33:00Z",
       steps: [
-        // GitHub writes a step that never ran with the year 1 as its times.
+        // `gh run view` prints the year 1 for a time that hasn't happened, as
+        // run 43127413358 did for a job still running (12 November 2026).
         step("Upload report", "0001-01-01T00:00:00Z", "0001-01-01T00:00:00Z"),
       ],
     },
@@ -81,7 +83,7 @@ describe("summariseRun", () => {
           name: "Lighthouse (mobile budget)",
           conclusion: "",
           startedAt: "2026-11-11T22:21:00Z",
-          completedAt: null,
+          completedAt: "0001-01-01T00:00:00Z",
           steps: [],
         },
       ],
@@ -131,6 +133,14 @@ describe("formatCiTimes", () => {
     );
   });
 
+  it("marks a re-run, whose total spans the wait before it", () => {
+    expect(
+      formatCiTimes([summariseRun({ ...run, attempt: 2 }, 60)], "none")
+    ).toBe(
+      "11-11 22:00  some-branch (pull_request, success)  33 min over 2 attempts, queued 30 s  #42"
+    );
+  });
+
   it("marks a run with no finished job", () => {
     expect(formatCiTimes([summariseRun({ ...run, jobs: [] }, 60)])).toBe(
       "11-11 22:00  some-branch (pull_request, success)  no finished job  #42"
@@ -152,6 +162,9 @@ describe("readRun", () => {
     ).toThrow("gh run view printed no string at jobs.0.steps.0.name");
     expect(() => readRun({ ...run, jobs: "none" })).toThrow(
       "gh run view printed no list at jobs"
+    );
+    expect(() => readRun({ ...run, attempt: "1" })).toThrow(
+      "gh run view printed no number at attempt"
     );
     expect(() => readRun(null)).toThrow(
       "gh run view printed no number at databaseId"

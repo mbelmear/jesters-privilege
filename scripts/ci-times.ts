@@ -3,9 +3,9 @@
 // is src/lib/ci-times.ts; this reads the runs through `gh`, newest first.
 // Usage: npm run ci-times -- [--workflow ci.yml] [--limit 20] [--branch <b>]
 //          [--job <part of a job's name>] [--slow <seconds, default 60>]
-import { execFileSync } from "node:child_process";
 import { parseArgs } from "node:util";
 import { formatCiTimes, readRun, summariseRun } from "@/lib/ci-times";
+import { gh } from "./failed-run";
 
 const { values } = parseArgs({
   options: {
@@ -17,8 +17,10 @@ const { values } = parseArgs({
   },
 });
 
-const gh = (...args: string[]) =>
-  execFileSync("gh", args, { encoding: "utf8", maxBuffer: 1 << 28 });
+const slow = Number(values.slow);
+if (!Number.isFinite(slow) || slow < 0) {
+  throw new Error(`--slow takes a number of seconds, not "${values.slow}"`);
+}
 
 const ids = gh(
   "run",
@@ -38,7 +40,7 @@ const runs = ids.map((id) => {
       "run",
       "view",
       id,
-      "--json=databaseId,headBranch,event,conclusion,createdAt,jobs"
+      "--json=databaseId,headBranch,event,conclusion,createdAt,attempt,jobs"
     )
   );
   return readRun(json);
@@ -46,7 +48,7 @@ const runs = ids.map((id) => {
 
 console.log(
   formatCiTimes(
-    runs.map((run) => summariseRun(run, Number(values.slow))),
+    runs.map((run) => summariseRun(run, slow)),
     values.job
   )
 );
