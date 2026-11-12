@@ -46,6 +46,7 @@ import { chromium, type Page } from "@playwright/test";
 import { serveEpisodeAudio } from "../e2e/player";
 import { answerSubmit, passTurnstile } from "../e2e/speak-freely";
 import { buildFreshness, type SourceFile } from "../src/lib/build-freshness";
+import { MISSING_BUILD } from "../src/lib/missing-build";
 import {
   parseScreenshotArgs,
   type ScreenshotStep,
@@ -88,7 +89,7 @@ async function refuseUnbuiltSite(): Promise<void> {
   const freshness = buildFreshness(built, sources);
   switch (freshness.kind) {
     case "missing":
-      throw new Error("out/ has no build: run `npm run build` first");
+      throw new Error(MISSING_BUILD);
     case "stale":
       throw new Error(
         `out/ is older than ${freshness.newest}: run \`npm run build\` again`

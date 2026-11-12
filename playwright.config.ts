@@ -1,5 +1,8 @@
 import { createHash } from "node:crypto";
 import { defineConfig, devices } from "@playwright/test";
+import { refuseMissingBuild } from "./src/lib/missing-build";
+
+refuseMissingBuild(__dirname);
 
 // Each worktree serves its own out/ on its own port, picked from its path in
 // a range clear of common dev servers, so parallel sessions never test one
