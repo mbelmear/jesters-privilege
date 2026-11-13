@@ -1,6 +1,6 @@
 # Jester's Privilege
 
-Website for the Jester's Privilege podcast. The agreed v1 spec is `docs/spec.md` (it supersedes the starting brief in `docs/brief.md`). Deferred ideas go in `LATER.md`, not into the build.
+Website for the Jester's Privilege podcast. The agreed v1 spec is `docs/spec.md` (it supersedes the starting brief in `docs/brief.md`). Deferred ideas go in `LATER.md`, not into the build; work a ticket's decisions don't cover becomes a follow-up ticket.
 
 ## Working rules
 
