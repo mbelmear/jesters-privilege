@@ -1,8 +1,6 @@
-/* The style guide's CSS module specimen (#92). A module is plain CSS: tokens
-   on :root through var(--…), no Tailwind syntax (src/css-modules.test.ts).
-   A @theme variable such as --radius-sm would reach every page's stylesheet,
-   since Tailwind scans this file too. Each style here is one no utility on
-   the style guide gives, so the browser test can tell the module applied. */
+/* The style guide's CSS module specimen (#92), plain CSS on :root's tokens
+   (src/css-modules.test.ts). Each style here is one no utility on the style
+   guide gives, so the browser test can tell the module applied. */
 
 .proclamation {
   border: 4px double var(--border);
