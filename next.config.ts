@@ -23,7 +23,11 @@ const nextConfig: NextConfig = {
   ],
   turbopack: {
     rules: {
+      // Tailwind compiles the global stylesheets. CSS modules are left to
+      // Next's own module handling: through this loader, a module built as an
+      // unhashed global stylesheet whose import gave no class names (#92, #26).
       "*.css": {
+        condition: { not: { path: "*.module.css" } },
         loaders: ["@tailwindcss/turbopack"],
         as: "*.css",
       },

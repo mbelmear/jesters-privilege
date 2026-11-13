@@ -1,0 +1,25 @@
+/* The style guide's CSS module specimen (#92). A module is plain CSS: tokens
+   on :root through var(--…), no Tailwind syntax (src/css-modules.test.ts).
+   A @theme variable such as --radius-sm would reach every page's stylesheet,
+   since Tailwind scans this file too. Each style here is one no utility on
+   the style guide gives, so the browser test can tell the module applied. */
+
+.proclamation {
+  border: 4px double var(--border);
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+  font-variant-caps: small-caps;
+  letter-spacing: 0.04em;
+  transition: border-color 150ms ease;
+}
+
+.proclamation:hover {
+  border-color: var(--brand-display);
+}
+
+/* md */
+@media (min-width: 48rem) {
+  .proclamation {
+    border-width: 6px;
+  }
+}

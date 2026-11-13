@@ -4,6 +4,7 @@ import { DraftRibbon } from "@/components/draft-ribbon";
 import { shell } from "@/content/shell";
 import { site } from "@/content/site";
 import { styleguide } from "@/content/styleguide";
+import { ModuleSpecimen } from "./module-specimen";
 import { Specimen } from "./specimen";
 
 // An internal page for checking the design system, kept out of search.
@@ -37,6 +38,7 @@ export default function Styleguide() {
         <Specimen scheme="light" copy={styleguide} />
         <Specimen scheme="dark" copy={styleguide} />
       </div>
+      <ModuleSpecimen copy={styleguide.cssModule} />
     </div>
   );
 }

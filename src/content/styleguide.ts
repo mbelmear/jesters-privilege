@@ -38,6 +38,12 @@ export const styleguide = {
       rss: "https://www.spreaker.com/",
     },
   },
+  // The specimen styled only by a CSS module beside it (#92).
+  cssModule: {
+    heading: "CSS module",
+    proclamation: "Hear ye: a fool's licence, granted by the court.",
+    note: "Styled only by module-specimen.module.css beside it: a double rule and small capitals no utility on this page gives, a hover state, and a heavier rule from the md breakpoint up. Its rules load on this page and no other.",
+  },
   sections: {
     colors: "Colors",
     type: "Typefaces",
