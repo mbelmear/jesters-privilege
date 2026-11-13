@@ -56,7 +56,7 @@ function errorsStarting(words: string, log: string): string[] {
 export function nightlyReport(
   runUrl: string,
   log: string,
-  failedJobs: readonly string[] = []
+  failedJobNames: readonly string[] = []
 ): string {
   const tests = failedTests(log).map((test) => {
     const error = firstError(log, test);
@@ -70,8 +70,8 @@ export function nightlyReport(
     "",
     failures.length
       ? failures.map((failure) => `- ${failure}`).join("\n")
-      : failedJobs.length
-        ? `No test is named in the failed jobs' logs (${failedJobs.join(", ")}): a job failed outside a test, stopped before its tests finished, or its log couldn't be read.`
+      : failedJobNames.length
+        ? `No test is named in the failed jobs' logs (${failedJobNames.join(", ")}): a job failed outside a test, stopped before its tests finished, or its log couldn't be read.`
         : "No test is named: the run stopped before its tests finished, or its logs couldn't be read.",
     "",
     ...(nearTimeout.length
