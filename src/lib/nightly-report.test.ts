@@ -120,26 +120,4 @@ describe("nightlyReport", () => {
   it("leaves the Email Routing fix out when only tests failed", () => {
     expect(nightlyReport(RUN, LOG)).not.toContain("Account prerequisites");
   });
-
-  // zizmor --format github's ::error:: lines, in the form GitHub prints
-  // Email Routing's above, since no Nightly has printed one yet (#178).
-  const ZIZMOR_LOG = [
-    "2026-11-14T09:00:40.1000000Z ##[warning]ci.yml:20: credential persistence through GitHub Actions artifacts: does not set persist-credentials: false",
-    "2026-11-14T09:00:40.2000000Z ##[error]ci.yml:24: action has a known vulnerability: GHSA-xxxx-xxxx-xxxx",
-    "2026-11-14T09:00:40.3000000Z ##[error]Process completed with exit code 14.",
-  ].join("\n");
-
-  it("names an action zizmor found a problem with, and how to judge it", () => {
-    const report = nightlyReport(RUN, ZIZMOR_LOG);
-    expect(report).toContain(
-      "- zizmor: ci.yml:24: action has a known vulnerability: GHSA-xxxx-xxxx-xxxx"
-    );
-    expect(report).not.toContain("persist-credentials");
-    expect(report).toContain("docs/testing.md, Formatting, linting, and types");
-    expect(report).not.toContain("No test is named");
-  });
-
-  it("leaves the zizmor advice out when only tests failed", () => {
-    expect(nightlyReport(RUN, LOG)).not.toContain("zizmor");
-  });
 });

@@ -260,10 +260,10 @@ describe("Nightly's failure report", () => {
     const scheduled = jobs.filter(
       (job) =>
         job.name !== "report" &&
-        !/^github\.event_name == 'pull_request'$/.test(job.condition)
+        job.condition !== "github.event_name == 'pull_request'"
     );
 
-    expect(report?.needs.sort()).toEqual(
+    expect([...(report?.needs ?? [])].sort()).toEqual(
       scheduled.map((job) => job.name).sort()
     );
   });
