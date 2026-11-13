@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Locator } from "@playwright/test";
+import { styleguide } from "../src/content/styleguide";
 
 // Axe samples colors as rendered, so let an opening fade finish first.
 const settled = (locator: Locator) =>
@@ -26,6 +27,21 @@ test.describe("Style guide", () => {
       "content",
       /noindex/
     );
+  });
+
+  // next.config.ts once sent *.module.css through Tailwind's loader as global
+  // CSS, so a module's import gave no class names (#92, #26). Jest can't see
+  // that, since next/jest maps every module to an identity proxy.
+  test("builds its CSS module specimen as a module", async ({ page }) => {
+    await page.goto("/styleguide");
+    const specimen = page.getByText(styleguide.cssModule.proclamation);
+    // A hashed class name, not the bare source name or none.
+    await expect(specimen).toHaveAttribute(
+      "class",
+      /^(?!proclamation$)\S+proclamation\S*$/
+    );
+    await expect(specimen).toHaveCSS("border-top-style", "double");
+    await expect(specimen).toHaveCSS("font-variant-caps", "small-caps");
   });
 
   test("has no horizontal scroll", async ({ page }) => {
