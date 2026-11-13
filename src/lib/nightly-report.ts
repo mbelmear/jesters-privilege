@@ -52,6 +52,21 @@ function errorsStarting(words: string, log: string): string[] {
     .flatMap((line) => error.exec(line)?.[1] ?? []);
 }
 
+// zizmor --format github's finding as GitHub prints it: its file and line,
+// then the problem. The rule's name, the annotation's title, isn't printed.
+const ZIZMOR_FINDING = /##\[error\]([\w.-]+\.ya?ml:\d+: .+?)\s*$/;
+
+/** Each finding zizmor's annotations put in a job's log as an error. */
+function zizmorFindings(log: string): string[] {
+  return log
+    .replace(TERMINAL_COLOR, "")
+    .split("\n")
+    .flatMap((line) => {
+      const finding = ZIZMOR_FINDING.exec(line)?.[1];
+      return finding ? [`zizmor: ${finding}`] : [];
+    });
+}
+
 /** The issue text for a failed run, from the logs of its failed jobs. */
 export function nightlyReport(runUrl: string, log: string): string {
   const tests = failedTests(log).map((test) => {
@@ -60,7 +75,8 @@ export function nightlyReport(runUrl: string, log: string): string {
   });
   const nearTimeout = errorsStarting(NEAR_TIMEOUT, log);
   const emailRouting = errorsStarting(EMAIL_ROUTING_FAILURE, log);
-  const failures = [...tests, ...nearTimeout, ...emailRouting];
+  const zizmor = zizmorFindings(log);
+  const failures = [...tests, ...nearTimeout, ...emailRouting, ...zizmor];
   return [
     `Nightly failed: ${runUrl}`,
     "",
@@ -76,6 +92,11 @@ export function nightlyReport(runUrl: string, log: string): string {
     ...(emailRouting.length
       ? [
           "docs/deploy.md, Account prerequisites, says how Email Routing should be set up in the Cloudflare dashboard.",
+        ]
+      : []),
+    ...(zizmor.length
+      ? [
+          "docs/testing.md, Formatting, linting, and types, says how to fix a zizmor finding or mark one safe.",
         ]
       : []),
     "If it passes locally but not in CI, docs/testing.md says where to look first. Close this once Nightly passes again.",

@@ -6,11 +6,11 @@ on:
     - cron: "0 9 * * *"
   workflow_dispatch:
   # A pull request that changes the failure report runs it, writing nothing.
-  # One that changes the Email Routing check's files, listed last, or the
-  # address it checks (wrangler.jsonc) runs that too: it only reads.
+  # One that changes the Email Routing check's files, listed next, or the
+  # address it checks (wrangler.jsonc) runs that too: it only reads. One that
+  # changes .github runs everything but Firefox: the zizmor audit is the point.
   pull_request:
     paths:
-      - .github/workflows/nightly.yml
       - scripts/report-nightly.ts
       - scripts/failed-run.ts
       - src/lib/nightly-report.ts
@@ -19,6 +19,7 @@ on:
       - src/lib/email-routing-check.ts
       - src/lib/email-destination.ts
       - wrangler.jsonc
+      - .github/**
 
 permissions:
   contents: read
@@ -83,11 +84,28 @@ jobs:
           CLOUDFLARE_READ_TOKEN: ${{ secrets.CLOUDFLARE_READ_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
+  # zizmor online: an action with a GitHub security advisory, or a pinned
+  # commit that isn't the action's own. Lint workflows and the commit hook run
+  # it offline, so nothing else checks GitHub (#178). Nightly isn't a required
+  # check, so an advisory or an outage can't block an unrelated merge. Its
+  # findings are annotations, which the failure report names.
+  zizmor:
+    name: zizmor (online)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - run: scripts/zizmor.sh --no-progress --format github .github
+        env:
+          GH_TOKEN: ${{ github.token }}
+
   # Nobody reads a red run in the Actions tab, so a scheduled failure opens an
   # issue, or adds to the one still open. See scripts/report-nightly.ts.
   report:
     name: Report the failure
-    needs: [firefox, email-routing]
+    needs: [firefox, email-routing, zizmor]
     if: failure() && github.event_name == 'schedule'
     runs-on: ubuntu-24.04
     timeout-minutes: 10

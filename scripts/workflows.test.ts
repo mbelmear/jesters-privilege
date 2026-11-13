@@ -250,3 +250,21 @@ describe("the names scripts read", () => {
     );
   });
 });
+
+// Nightly's report opens an issue only for a job it needs; one left out fails
+// in the Actions tab, where nobody looks (#178).
+describe("Nightly's failure report", () => {
+  it("needs every job that runs on schedule", () => {
+    const jobs = jobsIn(readFileSync(".github/workflows/nightly.yml", "utf8"));
+    const report = jobs.find((job) => job.name === "report");
+    const scheduled = jobs.filter(
+      (job) =>
+        job.name !== "report" &&
+        !/^github\.event_name == 'pull_request'$/.test(job.condition)
+    );
+
+    expect(report?.needs.sort()).toEqual(
+      scheduled.map((job) => job.name).sort()
+    );
+  });
+});
