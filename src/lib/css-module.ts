@@ -13,7 +13,9 @@ export function tailwindIn(css: string, theme: Set<string>): string[] {
 }
 
 /** The variables a stylesheet's `@theme` blocks would emit when used. */
-export function themeVariables(css: string): Set<string> {
+export function themeVariables(stylesheet: string): Set<string> {
+  // Comments can hold braces, which would end a block early.
+  const css = stylesheet.replace(/\/\*[\s\S]*?\*\//g, "");
   const names = new Set<string>();
   for (const start of css.matchAll(/@theme\b([^{]*)\{/g)) {
     // Tailwind never emits a reference block's variables.

@@ -10,20 +10,38 @@ import { tailwindIn, themeVariables } from "@/lib/css-module";
 // (#92), so Tailwind syntax in one reaches the browser uncompiled; and since
 // Tailwind still scans modules for names, a theme variable one uses lands in
 // every page's stylesheet (#92's first specimen, with `--radius-sm`). next/jest
-// maps every module to an identity proxy, so only this check sees either.
+// maps every module to an identity proxy, so before a lighthouse:compare run
+// only this check sees either.
 const src = __dirname;
 const modules = globSync("**/*.module.css", { cwd: src }).sort();
 
 // Read by path: under Jest, resolving a .css file gives Next's style mock.
 const read = (path: string) => readFileSync(join(src, path), "utf8");
-const theme = new Set([
-  ...themeVariables(read("app/globals.css")),
-  ...themeVariables(read("../node_modules/tailwindcss/theme.css")),
-]);
+const globals = read("app/globals.css");
+// The stylesheet holding the theme of each package globals.css imports.
+const imported: Record<string, string> = {
+  tailwindcss: "tailwindcss/theme.css",
+  "tw-animate-css": "tw-animate-css/dist/tw-animate.css",
+  "shadcn/tailwind.css": "shadcn/dist/tailwind.css",
+};
+const theme = new Set(
+  [
+    globals,
+    ...Object.values(imported).map((f) => read(`../node_modules/${f}`)),
+  ].flatMap((css) => [...themeVariables(css)])
+);
 
-test("knows the site's and Tailwind's theme variables", () => {
+test("reads the theme of every package globals.css imports", () => {
+  const imports = [...globals.matchAll(/@import\s+"([^"]+)"/g)].map(
+    ([, name]) => name
+  );
+  expect(imports.sort()).toEqual(Object.keys(imported).sort());
+});
+
+test("knows the site's and its packages' theme variables", () => {
   expect(theme).toContain("--radius-sm");
   expect(theme).toContain("--spacing");
+  expect(theme).toContain("--animate-in");
   expect(theme).not.toContain("--radius");
 });
 

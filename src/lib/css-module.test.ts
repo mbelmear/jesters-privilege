@@ -61,3 +61,8 @@ describe("themeVariables", () => {
     ]);
   });
 });
+
+test("themeVariables reads past a brace in a comment", () => {
+  const css = "@theme { /* closes with } */ --after-comment: 1px; }";
+  expect([...themeVariables(css)]).toEqual(["--after-comment"]);
+});
