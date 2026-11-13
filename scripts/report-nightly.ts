@@ -29,8 +29,13 @@ if (!runId) {
   process.exit(0);
 }
 
+const failed = failedJobs(runId);
 fileReport(
   NIGHTLY_ISSUE_TITLE,
-  nightlyReport(runUrl(runId), jobLogs(failedJobs(runId))),
+  nightlyReport(
+    runUrl(runId),
+    jobLogs(failed),
+    failed.map((job) => job.name)
+  ),
   dryRun
 );

@@ -74,6 +74,17 @@ describe("nightlyReport", () => {
     expect(report).toContain("No test is named");
   });
 
+  // #178's zizmor job fails without a test, so the report names which job.
+  // The names are the jobs' `name:` in nightly.yml, as GitHub's API lists them.
+  it("names each failed job when no test is", () => {
+    const report = nightlyReport(RUN, "zizmor found a problem", [
+      "zizmor (online)",
+    ]);
+    expect(report).toContain(
+      "No test is named in the failed jobs' logs (zizmor (online))"
+    );
+  });
+
   // The Email Routing job's log, as GitHub prints its ::error:: lines.
   const EMAIL_ROUTING_LOG = [
     "2026-11-09T09:01:12.0000000Z ##[error]Email Routing check failed: thejestersprivilegepodcast@gmail.com is a destination address but isn't verified",

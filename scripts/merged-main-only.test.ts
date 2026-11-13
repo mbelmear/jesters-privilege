@@ -19,7 +19,14 @@ for (const name of Object.keys(env)) {
 function repo() {
   const dir = mkdtempSync(join(tmpdir(), "merged-main-only-"));
   const git = (...args: string[]) =>
-    execFileSync("git", args, { cwd: dir, env, encoding: "utf8" }).trim();
+    // Piped, so a merge's chatter on stderr ("Automatic merge went well")
+    // stays out of every test run; a failed git still throws with it.
+    execFileSync("git", args, {
+      cwd: dir,
+      env,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    }).trim();
   git("init", "--quiet", "--initial-branch=main");
   // Refuse to go on anywhere but the throwaway repo.
   if (!git("rev-parse", "--absolute-git-dir").startsWith(realpathSync(dir))) {
