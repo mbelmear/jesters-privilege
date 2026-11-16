@@ -8,5 +8,5 @@
     "scripts/zizmor.sh --offline --no-progress",
     "tsx scripts/shellcheck-actions.ts"
   ],
-  "scripts/*.sh": "scripts/shellcheck.sh --severity=warning"
+  "scripts/*.sh": "scripts/lint-shell.sh"
 }

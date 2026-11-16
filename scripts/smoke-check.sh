@@ -33,7 +33,11 @@ built_manifest_names_commit() {
 # The whole manifest, since a deploy the feed check started rebuilds the commit
 # already live: only its newest Episode, Listen links, or Transcripts differ.
 live_manifest_matches_build() {
-  [ "$(curl -fsS "$site/build-manifest.json")" = "$(cat out/build-manifest.json)" ]
+  local live built
+  # Each read first: two failed reads would compare equal, as empty.
+  live=$(curl -fsS "$site/build-manifest.json") || return
+  built=$(cat out/build-manifest.json) || return
+  [ "$live" = "$built" ]
 }
 
 home_page_serves() {
@@ -46,13 +50,15 @@ home_page_counts_visits() {
 }
 
 www_redirects_to_apex() {
-  [ "$(curl -sS -o /dev/null -w '%{http_code} %{redirect_url}' \
-    "https://www.$domain/about?x=1")" = "301 $site/about?x=1" ]
+  local got
+  got=$(curl -sS -o /dev/null -w '%{http_code} %{redirect_url}' "https://www.$domain/about?x=1") || return
+  [ "$got" = "301 $site/about?x=1" ]
 }
 
 http_redirects_to_https() {
-  [ "$(curl -sS -o /dev/null -w '%{http_code} %{redirect_url}' \
-    "http://$domain/x?y=1")" = "301 $site/x?y=1" ]
+  local got
+  got=$(curl -sS -o /dev/null -w '%{http_code} %{redirect_url}' "http://$domain/x?y=1") || return
+  [ "$got" = "301 $site/x?y=1" ]
 }
 
 built_manifest_names_commit || fail built_manifest_names_commit

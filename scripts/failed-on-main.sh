@@ -9,7 +9,9 @@
 # Usage: scripts/failed-on-main.sh < <checks>
 set -euo pipefail
 
+failed=$(awk -F'\t' '$2 == "fail" { print $1 }')
 while IFS= read -r name; do
+  [[ -n "$name" ]] || continue
   main=$(gh api -X GET "repos/{owner}/{repo}/commits/main/check-runs" -f check_name="$name" \
     --jq 'if (.check_runs | length) == 0 then "none"
       else .check_runs | max_by(.started_at) | .conclusion // "pending" end' 2>/dev/null) || main=""
@@ -21,5 +23,5 @@ while IFS= read -r name; do
     unknown) echo "$name: couldn't read main's run of it." ;;
     *) echo "$name: main's head ended it as $main." ;;
   esac
-done < <(awk -F'\t' '$2 == "fail" { print $1 }')
+done <<<"$failed"
 exit 0

@@ -8,6 +8,7 @@ set -euo pipefail
 
 version=1.32.0
 
+# shellcheck disable=SC2312 # uname's output is the answer; a failure falls to *)
 case "$(uname -s)-$(uname -m)" in
   Darwin-arm64)
     platform=aarch64-apple-darwin
@@ -22,6 +23,7 @@ case "$(uname -s)-$(uname -m)" in
     checksum=bb110cc765eca9cd7efb2e284a956be5974c60027b0970f16397d86208a9957b
     ;;
   *)
+    # shellcheck disable=SC2312 # only the message uses it
     echo "No zizmor download for $(uname -s) $(uname -m); see https://github.com/zizmorcore/zizmor" >&2
     exit 1
     ;;

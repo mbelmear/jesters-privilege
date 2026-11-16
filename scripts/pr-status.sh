@@ -18,13 +18,16 @@ echo "#$pr at ${head:0:7}"
 
 # A PR that already conflicts would only be refused after the checks, so say
 # so now. Main can still move during the wait, so it's checked again at the end.
-if [[ $("$(dirname "$0")/wait-mergeable.sh" "$pr") == CONFLICTING ]]; then
+mergeable=$("$(dirname "$0")/wait-mergeable.sh" "$pr")
+if [[ $mergeable == CONFLICTING ]]; then
   echo "Merges cleanly with main: no (CONFLICTING); merge origin/main in and push first."
   exit 1
 fi
 
 # Checks appear a few seconds after a push.
 for _ in $(seq 1 30); do
+  # A dropped connection reads as no checks yet, and the loop asks again.
+  # shellcheck disable=SC2312
   [[ $(gh pr view "$pr" --json statusCheckRollup --jq '.statusCheckRollup | length') -gt 0 ]] && break
   sleep 5
 done
@@ -63,6 +66,7 @@ else
 fi
 
 mergeable=$("$(dirname "$0")/wait-mergeable.sh" "$pr")
+# shellcheck disable=SC2312 # only echo runs inside
 echo "Merges cleanly with main: $([[ $mergeable == MERGEABLE ]] && echo yes || echo "no ($mergeable)")"
 
 [[ $failed -eq 0 && $mergeable == MERGEABLE ]]

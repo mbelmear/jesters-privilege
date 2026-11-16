@@ -18,7 +18,9 @@ head=$2
 main=$3
 
 changed() {
-  git diff --name-only --no-renames "$(git merge-base "$1" "$main")" "$1"
+  local base
+  base=$(git merge-base "$1" "$main") || return
+  git diff --name-only --no-renames "$base" "$1"
 }
 # Each list first, not in a process substitution, whose failure set -e can't
 # see: a head git can't read would otherwise list every file as restored.
