@@ -25,6 +25,10 @@
       "destination_address": "thejestersprivilegepodcast@gmail.com",
     },
   ],
+  // Workers Logs keep the Worker's logs, a failed Submission's among them,
+  // for a Jester to read in the dashboard. Cloudflare's default turns them on
+  // only for newly created Workers, so they're set here (#46, docs/deploy.md).
+  "observability": { "enabled": true },
   // workers.dev must stay on for per-PR preview URLs.
   "workers_dev": true,
   "preview_urls": true,
