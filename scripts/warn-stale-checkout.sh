@@ -11,6 +11,8 @@
 set -euo pipefail
 
 main=$(git worktree list --porcelain | sed -n '1s/^worktree //p')
+# Outside a checkout there's nothing to warn about.
+# shellcheck disable=SC2312
 [[ "$(git rev-parse --show-toplevel)" == "$main" ]] || exit 0
 
 if ! GIT_TERMINAL_PROMPT=0 git fetch --quiet origin main 2>/dev/null; then

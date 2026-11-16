@@ -76,6 +76,7 @@ measure() {
   local urls=() page
   if $named; then
     for page in "${pages[@]}"; do
+      # shellcheck disable=SC2312 # page_file only echoes a path
       if [[ -f "$(page_file "$1" "$page")" ]]; then
         urls+=("--collect.url=http://localhost${page}")
       else
@@ -127,7 +128,9 @@ echo "Stylesheet rules changed (${base} → HEAD), on pages both builds have:"
 changed=false
 # Guarded: bash 3.2 calls an empty array unbound under set -u.
 for page in ${pages[@]+"${pages[@]}"}; do
+  # shellcheck disable=SC2312 # page_file only echoes a path
   [[ -f "$(page_file "$scratch/base" "$page")" ]] || continue
+  # shellcheck disable=SC2312
   [[ -f "$(page_file "$root" "$page")" ]] || continue
   stylesheets "$scratch/base" "$page" "$scratch/base.css"
   stylesheets "$root" "$page" "$scratch/head.css"
@@ -149,6 +152,7 @@ for page in ${pages[@]+"${pages[@]}"}; do
 done
 if $changed; then
   for pages_file in "$scratch"/css-*.pages; do
+    # shellcheck disable=SC2312 # the glob found the file; only the report reads it
     echo " $(cat "$pages_file")"
     sed 's/^/    /' "${pages_file%.pages}.diff"
   done

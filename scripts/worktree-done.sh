@@ -12,9 +12,10 @@ set -euo pipefail
 pr="${1:?Usage: npm run worktree-done -- <pr-number>}"
 holds="$(cd "$(dirname "$0")" && pwd)/merge-holds-branch.sh"
 
-read -r state branch merge < <(gh pr view "$pr" \
+info=$(gh pr view "$pr" \
   --json state,headRefName,mergeCommit \
   -q '"\(.state) \(.headRefName) \(.mergeCommit.oid // "-")"')
+read -r state branch merge <<<"$info"
 if [[ "$state" != MERGED ]]; then
   echo "Refusing: #$pr is $state, not MERGED." >&2
   exit 1
@@ -33,7 +34,10 @@ dir=$(git worktree list --porcelain | awk -v ref="branch refs/heads/$branch" '
 local_head=$(git rev-parse --verify --quiet "refs/heads/$branch" || true)
 remote_head=$(git rev-parse --verify --quiet "refs/remotes/origin/$branch" || true)
 
-if [[ -n "$dir" && -n "$(git -C "$dir" status --porcelain)" ]]; then
+# Read first: a failed git status would read as a clean worktree.
+uncommitted=""
+if [[ -n "$dir" ]]; then uncommitted=$(git -C "$dir" status --porcelain); fi
+if [[ -n "$uncommitted" ]]; then
   echo "Refusing: $dir has uncommitted changes." >&2
   exit 1
 fi

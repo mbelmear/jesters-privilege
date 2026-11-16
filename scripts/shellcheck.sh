@@ -8,6 +8,7 @@ set -euo pipefail
 
 version=0.11.0
 
+# shellcheck disable=SC2312 # uname's output is the answer; a failure falls to *)
 case "$(uname -s)-$(uname -m)" in
   Darwin-arm64)
     platform=darwin.aarch64
@@ -22,6 +23,7 @@ case "$(uname -s)-$(uname -m)" in
     checksum=b7af85e41cc99489dcc21d66c6d5f3685138f06d34651e6d34b42ec6d54fe6f6
     ;;
   *)
+    # shellcheck disable=SC2312 # only the message uses it
     echo "No shellcheck download for $(uname -s) $(uname -m); see https://github.com/koalaman/shellcheck" >&2
     exit 1
     ;;

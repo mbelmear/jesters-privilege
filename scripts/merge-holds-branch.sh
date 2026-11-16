@@ -18,15 +18,20 @@ base=$(git merge-base "$head" "$merge^")
 # numbers, so another PR editing the same file elsewhere doesn't count.
 # Verbatim, so a merge that lost the branch's whitespace still differs.
 patch_id() { git diff "$1" "$2" | git patch-id --verbatim | cut -d' ' -f1; }
-if [[ "$(patch_id "$base" "$head")" == "$(patch_id "$merge^" "$merge")" ]]; then
+# Each read first: two failed reads would compare equal, as empty.
+branch_patch=$(patch_id "$base" "$head")
+merged_patch=$(patch_id "$merge^" "$merge")
+if [[ "$branch_patch" == "$merged_patch" ]]; then
   exit 0
 fi
 
 # Otherwise, the merge commit's version of every file the branch changed.
 changed=()
 # Raw names: a quoted one (an accented path) would match no file.
-while IFS= read -r file; do changed+=("$file"); done \
-  < <(git -c core.quotePath=false diff --name-only "$base" "$head")
+names=$(git -c core.quotePath=false diff --name-only "$base" "$head")
+while IFS= read -r file; do
+  if [[ -n "$file" ]]; then changed+=("$file"); fi
+done <<<"$names"
 if ((${#changed[@]})) &&
   ! git diff --quiet "$head" "$merge" -- "${changed[@]}"; then
   echo "Refusing: ${head:0:7} differs from the merge commit ${merge:0:7} in the files it changed:" >&2

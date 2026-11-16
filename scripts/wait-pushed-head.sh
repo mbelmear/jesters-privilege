@@ -11,6 +11,8 @@ pr="${1:?Usage: scripts/wait-pushed-head.sh <pr-number>}"
 
 branch=$(gh pr view "$pr" --json headRefName --jq .headRefName)
 local_head=""
+# Run outside the branch's checkout, there's no local head to wait for.
+# shellcheck disable=SC2312
 if [[ $(git rev-parse --abbrev-ref HEAD 2>/dev/null) == "$branch" ]]; then
   local_head=$(git rev-parse HEAD)
 fi

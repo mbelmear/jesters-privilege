@@ -8,6 +8,7 @@
 # Usage: scripts/failed-job-logs.sh < <checks>
 set -euo pipefail
 
+# shellcheck disable=SC2312 # the awk below only filters this script's stdin
 while IFS=$'\t' read -r name url; do
   # https://github.com/<owner>/<repo>/actions/runs/<run>/job/<job>
   job_logs=$(sed -E 's#^https://github.com/([^/]+/[^/]+)/actions/runs/[0-9]+/job/([0-9]+).*#repos/\1/actions/jobs/\2/logs#' <<<"$url")

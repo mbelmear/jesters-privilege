@@ -25,6 +25,11 @@ own=$(git rev-list --no-merges "$reviewed..$head" --not "$main")
 [[ -z "$own" ]] || exit 1
 
 changes() {
-  git diff --raw --no-renames --abbrev=40 "$(git merge-base "$1" "$main")" "$1"
+  local base
+  base=$(git merge-base "$1" "$main") || return
+  git diff --raw --no-renames --abbrev=40 "$base" "$1"
 }
-[[ "$(changes "$reviewed")" == "$(changes "$head")" ]]
+# Each read first: two failed reads would compare equal, as empty.
+was=$(changes "$reviewed")
+now=$(changes "$head")
+[[ "$was" == "$now" ]]

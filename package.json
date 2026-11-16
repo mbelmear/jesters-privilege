@@ -13,7 +13,7 @@
     "start": "next start",
     "lint": "next typegen && eslint",
     "lint:workflows": "scripts/actionlint.sh",
-    "lint:shell": "scripts/shellcheck.sh --severity=warning scripts/*.sh",
+    "lint:shell": "scripts/lint-shell.sh scripts/*.sh",
     "lint:actions": "tsx scripts/shellcheck-actions.ts .github/actions",
     "lint:zizmor": "scripts/zizmor.sh --offline --no-progress .github",
     "prepare": "husky",

@@ -12,6 +12,7 @@ set -euo pipefail
 # Wizard library: delightful, consistent UX, identical across every wizard.
 # ──────────────────────────────────────────────────────────────────────────
 
+# shellcheck disable=SC2312 # tput's failure already reads as no colours
 if [[ -t 1 ]] && command -v tput >/dev/null 2>&1 && [[ "$(tput colors 2>/dev/null || echo 0)" -ge 8 ]]; then
   BOLD=$(tput bold); DIM=$(tput dim); RESET=$(tput sgr0)
   BLUE=$(tput setaf 4); GREEN=$(tput setaf 2); YELLOW=$(tput setaf 3)
@@ -210,7 +211,9 @@ fi
 TOTAL_STAGES=5
 
 # gh secret set writes to the repository of the current directory.
-cd "$(git rev-parse --show-toplevel)"
+# Read first: cd "" succeeds where it stands, which could be another repository.
+top=$(git rev-parse --show-toplevel)
+cd "$top"
 
 banner "Spotify key for Episode Listen links (#122)"
 

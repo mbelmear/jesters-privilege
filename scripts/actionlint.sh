@@ -10,11 +10,13 @@ set -euo pipefail
 # Keep in step with the docker://rhysd/actionlint tag in .github/workflows/ci.yml.
 version=1.7.12
 
+# shellcheck disable=SC2312 # uname's output is the answer; a failure falls to *)
 case "$(uname -s)-$(uname -m)" in
   Darwin-arm64) platform=darwin_arm64 ;;
   Darwin-x86_64) platform=darwin_amd64 ;;
   Linux-x86_64) platform=linux_amd64 ;;
   *)
+    # shellcheck disable=SC2312 # only the message uses it
     echo "No actionlint download for $(uname -s) $(uname -m); see https://github.com/rhysd/actionlint" >&2
     exit 1
     ;;

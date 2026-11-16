@@ -37,7 +37,8 @@ if ! grep -q '^Preview: https://' <<<"$status"; then
   echo "Refusing to label #$pr: no preview built from its head yet." >&2
   exit 1
 fi
-if [[ $(gh pr view "$pr" --json headRefOid --jq .headRefOid) != "$head" ]]; then
+now=$(gh pr view "$pr" --json headRefOid --jq .headRefOid)
+if [[ "$now" != "$head" ]]; then
   echo "Refusing to label #$pr: its head moved while checks ran; run it again." >&2
   exit 1
 fi

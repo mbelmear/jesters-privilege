@@ -25,8 +25,12 @@ base=$(git merge-base "$head" "$main")
 files=()
 # Raw names: a quoted one (an accented path) would match no file. Both sides
 # of a rename: main can still be editing the old name.
-while IFS= read -r file; do files+=("$file"); done \
-  < <(git -c core.quotePath=false diff --no-renames --name-only "$base" "$head")
+# Listed first, so a failed git diff stops the script rather than reading as
+# no files in common.
+names=$(git -c core.quotePath=false diff --no-renames --name-only "$base" "$head")
+while IFS= read -r file; do
+  if [[ -n "$file" ]]; then files+=("$file"); fi
+done <<<"$names"
 ((${#files[@]})) || exit 0
 
 git log "${log_output[@]}" "$base..$main" -- "${files[@]}"

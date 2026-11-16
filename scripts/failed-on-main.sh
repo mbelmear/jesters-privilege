@@ -9,6 +9,7 @@
 # Usage: scripts/failed-on-main.sh < <checks>
 set -euo pipefail
 
+# shellcheck disable=SC2312 # the awk below only filters this script's stdin
 while IFS= read -r name; do
   main=$(gh api -X GET "repos/{owner}/{repo}/commits/main/check-runs" -f check_name="$name" \
     --jq 'if (.check_runs | length) == 0 then "none"
