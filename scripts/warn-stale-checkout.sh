@@ -11,7 +11,7 @@
 set -euo pipefail
 
 main=$(git worktree list --porcelain | sed -n '1s/^worktree //p')
-# Outside a checkout there's nothing to warn about.
+# Once git worktree list has read the checkout, rev-parse can't fail in it.
 # shellcheck disable=SC2312
 [[ "$(git rev-parse --show-toplevel)" == "$main" ]] || exit 0
 

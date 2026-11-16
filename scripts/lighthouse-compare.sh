@@ -130,7 +130,7 @@ changed=false
 for page in ${pages[@]+"${pages[@]}"}; do
   # shellcheck disable=SC2312 # page_file only echoes a path
   [[ -f "$(page_file "$scratch/base" "$page")" ]] || continue
-  # shellcheck disable=SC2312
+  # shellcheck disable=SC2312 # page_file only echoes a path
   [[ -f "$(page_file "$root" "$page")" ]] || continue
   stylesheets "$scratch/base" "$page" "$scratch/base.css"
   stylesheets "$root" "$page" "$scratch/head.css"

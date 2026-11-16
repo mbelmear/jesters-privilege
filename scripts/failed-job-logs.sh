@@ -8,8 +8,9 @@
 # Usage: scripts/failed-job-logs.sh < <checks>
 set -euo pipefail
 
-# shellcheck disable=SC2312 # the awk below only filters this script's stdin
+failed=$(awk -F'\t' '$2 == "fail" && $4 ~ /\/job\/[0-9]+/ { print $1 "\t" $4 }')
 while IFS=$'\t' read -r name url; do
+  [[ -n "$name" ]] || continue
   # https://github.com/<owner>/<repo>/actions/runs/<run>/job/<job>
   job_logs=$(sed -E 's#^https://github.com/([^/]+/[^/]+)/actions/runs/[0-9]+/job/([0-9]+).*#repos/\1/actions/jobs/\2/logs#' <<<"$url")
   if ! log=$(gh api --allow-escape-sequences "$job_logs" 2>/dev/null); then
@@ -25,4 +26,4 @@ while IFS=$'\t' read -r name url; do
   fi
   echo "$name failed:"
   echo "$errors"
-done < <(awk -F'\t' '$2 == "fail" && $4 ~ /\/job\/[0-9]+/ { print $1 "\t" $4 }')
+done <<<"$failed"
