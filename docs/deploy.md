@@ -79,7 +79,7 @@ It answers with JSON the page uses for its success and failure states:
 | 502    | `{ "ok": false, "error": "verification" }`         | Turnstile couldn't be reached                    |
 | 502    | `{ "ok": false, "error": "delivery" }`             | The email couldn't be sent                       |
 
-Each Submission becomes one email from `submit@` to the show's Gmail, `thejestersprivilegepodcast@gmail.com`, through the `SUBMISSION_EMAIL` send_email binding. That address must be a verified destination (Account prerequisites): the binding only delivers to verified destinations, so it can't send to the `hello@` alias. The email is the only copy; nothing is stored. Failures are logged to the Worker's logs.
+Each Submission becomes one email from `submit@` to the show's Gmail, `thejestersprivilegepodcast@gmail.com`, through the `SUBMISSION_EMAIL` send_email binding. That address must be a verified destination (Account prerequisites): the binding only delivers to verified destinations, so it can't send to the `hello@` alias. The email is the only copy; nothing is stored. Failures are logged to the Worker's logs, which `wrangler.jsonc` keeps on (`observability`, Workers Logs): a Jester reads them under **Workers & Pages › jesters-privilege › Observability**, for 3 days on the free Workers plan and 7 on paid, after which they're gone ([Workers Logs](https://developers.cloudflare.com/workers/observability/logs/workers-logs/), 2026-11-16). Agents have no Cloudflare log access (#46).
 
 To try it locally, put Turnstile's always-pass test secret in `.dev.vars` (`TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA`) and run `npx wrangler dev` with a built `out/`; the email binding is simulated and prints the message.
 
