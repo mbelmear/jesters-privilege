@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
  */
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -49,7 +49,13 @@ function repo() {
     })
       .split("\n")
       .filter(Boolean);
-  return { dir, git, commit, restored };
+  const run = (reviewed: string, head: string) =>
+    spawnSync("bash", [script, reviewed, head, "main"], {
+      cwd: dir,
+      env,
+      encoding: "utf8",
+    });
+  return { dir, git, commit, restored, run };
 }
 
 describe("restored-to-main", () => {
@@ -97,6 +103,13 @@ describe("restored-to-main", () => {
     expect(r.restored(reviewed, r.git("rev-parse", "HEAD"))).toEqual([
       "added.ts",
     ]);
+  });
+
+  it("fails, listing nothing, when git can't read the head", () => {
+    // A mistyped head mustn't tell the follow-up review to skip every file.
+    const result = r.run(reviewed, "no-such-commit");
+    expect(result.status).not.toBe(0);
+    expect(result.stdout).toBe("");
   });
 
   it("matches the file against main as merged in, not main before it", () => {

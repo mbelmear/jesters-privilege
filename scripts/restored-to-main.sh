@@ -20,4 +20,8 @@ main=$3
 changed() {
   git diff --name-only --no-renames "$(git merge-base "$1" "$main")" "$1"
 }
-comm -23 <(changed "$reviewed" | sort) <(changed "$head" | sort)
+# Each list first, not in a process substitution, whose failure set -e can't
+# see: a head git can't read would otherwise list every file as restored.
+was=$(changed "$reviewed" | sort)
+now=$(changed "$head" | sort)
+comm -23 <(printf '%s\n' "$was") <(printf '%s\n' "$now") | sed '/^$/d'
