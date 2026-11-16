@@ -65,6 +65,7 @@ Reviewers skip these; the rules below are the ones that need judgement.
 ## Comments and docs
 
 - **A claim that nothing checks or handles something names the ticket that would change it, or says what the visitor or Jester sees instead.** The claim goes stale without its own line changing. #156 wrote that no deploy step notices Always Use HTTPS being off, from its ticket's history; #155 had added that check by the time it merged, and `docs/deploy.md` contradicted itself.
+- **A figure its source says will change on a stated date gives that date and names the ticket that revisits it.** A dated citation records when a figure was read, not when it stops being true. #230 first wrote Workers Logs' 3-day free retention, correct that day, from a page announcing that Workers Logs move to Observability pricing, 7 days on every plan, on 2026-12-01; the review caught it, and #231 drops the old figure after that date.
 - **A note explaining why a state a visitor should see doesn't appear names the ticket that investigates it.** A surprise written up as how things behave stops anyone questioning it: the screenshot script's header said Chromium "shows Play again" when audio fails before it starts, which was the bug #29 fixed.
 
 ## Workflows
