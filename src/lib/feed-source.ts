@@ -145,7 +145,9 @@ export function transcriptFetch(source: FeedSource, io: FeedIO): Fetch {
 
 // How to read the site's own Transcripts, saved on the `transcripts` branch
 // (ADR 0003): null when none is saved under the file name, and a throw when
-// the branch can't be read. The fixture's are files in a folder.
+// the branch can't be read. The fixture's are files in a folder. Builds read
+// the branch here; Transcribe decides what's saved from its own git checkout
+// of it instead (`isSaved` in scripts/transcribe.ts), with its own token.
 export function savedTranscripts(
   source: FeedSource,
   io: FeedIO
