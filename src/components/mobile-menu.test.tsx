@@ -11,7 +11,9 @@ const focused = () => document.activeElement as HTMLElement;
 
 function renderMenu() {
   render(
-    <MobileMenu items={items} labels={shell.menu} navLabel={shell.navLabel} />
+    <MobileMenu
+      menu={{ items, labels: shell.menu, navLabel: shell.navLabel }}
+    />
   );
   return screen.getByRole("button", { name: "Open menu" });
 }

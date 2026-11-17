@@ -28,6 +28,7 @@ import {
   type SubmissionType,
 } from "@/lib/submit";
 import { TurnstileWidget } from "./turnstile-widget";
+import { cn, focusRing } from "@/lib/utils";
 
 type Props = {
   copy: SpeakFreelyPage;
@@ -64,8 +65,10 @@ type FormState =
 
 type Problem = SubmissionProblem | "unverified";
 
-const inputClasses =
-  "w-full rounded-md border border-input bg-card px-3 py-2.5 font-body text-base text-foreground transition-colors duration-(--motion-courtly-duration) ease-courtly hover:border-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring aria-invalid:border-destructive";
+const inputClasses = cn(
+  "w-full rounded-md border border-input bg-card px-3 py-2.5 font-body text-base text-foreground transition-colors duration-(--motion-courtly-duration) ease-courtly hover:border-primary aria-invalid:border-destructive",
+  focusRing
+);
 
 /**
  * The Speak Freely form: a listener's Submission, checked with the endpoint's own

@@ -1,13 +1,16 @@
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
-import { cn } from "cn";
 import { Slot } from "radix-ui";
+import { cn, focusRing } from "@/lib/utils";
 
 // Restyled to the site tokens: UI typeface in small capitals, crisp corners,
 // and the orange focus ring. Teal is the primary action; the orange `brand`
 // fill takes dark text, per the contrast rule in globals.css.
 const buttonClasses = cva(
-  "inline-flex shrink-0 items-center justify-center gap-2 rounded-md border border-transparent font-ui font-semibold tracking-wider whitespace-nowrap uppercase no-underline transition-colors duration-(--motion-courtly-duration) ease-courtly select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  [
+    "inline-flex shrink-0 items-center justify-center gap-2 rounded-md border border-transparent font-ui font-semibold tracking-wider whitespace-nowrap uppercase no-underline transition-colors duration-(--motion-courtly-duration) ease-courtly select-none disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+    focusRing,
+  ],
   {
     variants: {
       variant: {

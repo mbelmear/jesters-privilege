@@ -10,6 +10,7 @@ import {
   type Shell,
   type Site,
 } from "@/lib/content";
+import { cn, focusRing } from "@/lib/utils";
 
 type Props = {
   site: Site;
@@ -22,8 +23,10 @@ type Props = {
   year: number;
 };
 
-const linkClass =
-  "text-primary underline underline-offset-3 hover:decoration-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
+const linkClass = cn(
+  "text-primary underline underline-offset-3 hover:decoration-2",
+  focusRing
+);
 
 /**
  * A map of the site (docs/spec.md, Design system, Footer): the logo and the

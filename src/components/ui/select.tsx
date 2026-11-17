@@ -1,9 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { cn } from "cn";
 import { Select as SelectPrimitive } from "radix-ui";
 import { ChevronDownIcon, CheckIcon, ChevronUpIcon } from "lucide-react";
+import { cn, focusRing } from "@/lib/utils";
 
 // Restyled to the site tokens: a field in the body face, a parchment card for
 // the list, courtly motion, and teal for the chosen item.
@@ -46,7 +46,8 @@ function SelectTrigger({
       data-slot="select-trigger"
       data-size={size}
       className={cn(
-        "flex w-full items-center justify-between gap-2 rounded-md border border-input bg-card px-3 font-body text-base whitespace-nowrap text-foreground transition-colors duration-(--motion-courtly-duration) ease-courtly select-none hover:border-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive data-placeholder:text-muted-foreground data-[size=default]:h-11 data-[size=sm]:h-9 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        "flex w-full items-center justify-between gap-2 rounded-md border border-input bg-card px-3 font-body text-base whitespace-nowrap text-foreground transition-colors duration-(--motion-courtly-duration) ease-courtly select-none hover:border-primary disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive data-placeholder:text-muted-foreground data-[size=default]:h-11 data-[size=sm]:h-9 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        focusRing,
         className
       )}
       {...props}
