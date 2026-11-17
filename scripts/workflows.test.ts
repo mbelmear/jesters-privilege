@@ -251,6 +251,16 @@ describe("the names scripts read", () => {
   });
 });
 
+// Transcribe's plan transcribes an Episode older than a week only when the run
+// was started by hand (#240); without this line every run is scheduled.
+describe("Transcribe", () => {
+  it("tells the plan whether the run was started by hand", () => {
+    expect(readFileSync(".github/workflows/transcribe.yml", "utf8")).toMatch(
+      /^ {6}TRANSCRIBE_ANY_AGE: \$\{\{ github\.event_name == 'workflow_dispatch' \}\}$/m
+    );
+  });
+});
+
 // Nightly's report opens an issue only for a job it needs; one left out fails
 // in the Actions tab, where nobody looks (#178).
 describe("Nightly's failure report", () => {
