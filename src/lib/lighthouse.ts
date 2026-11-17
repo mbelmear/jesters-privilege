@@ -275,7 +275,7 @@ export function summarise(
           `    near the LCP budget (${label}): runs of ${lcps.map(thousands).join(", ")} ms against ${thousands(budget)}`
         );
       }
-      // Runs a step or more apart on one build: a median that moved with them
+      // Runs more than a step apart on one build: a median that moved with them
       // is noise, not the diff (docs/testing.md, Performance).
       if (Math.max(...lcps) - Math.min(...lcps) > STEP_MS) {
         out.push(

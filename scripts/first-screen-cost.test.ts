@@ -17,8 +17,13 @@ function pr(paths: string[], body: string | null) {
     fixture,
     JSON.stringify({
       body,
-      // Shaped as `gh pr view 233 --json files` answered on 17 November 2026.
-      files: paths.map((path) => ({ path, additions: 4, deletions: 2 })),
+      // Shaped as `gh pr view 233 --json files` answered on 16 November 2026.
+      files: paths.map((path) => ({
+        additions: 4,
+        changeType: "MODIFIED",
+        deletions: 2,
+        path,
+      })),
     })
   );
   writeFileSync(
