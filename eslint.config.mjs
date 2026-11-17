@@ -68,6 +68,24 @@ const eslintConfig = defineConfig([
       ],
     },
   },
+  // Imports in three groups: packages, then `@/` aliases, then relative
+  // paths; `npx eslint --fix <file>` sorts them. Review once had to ask (#51).
+  {
+    settings: { "import/internal-regex": "^@/" },
+    rules: {
+      "import/order": [
+        "error",
+        {
+          groups: [
+            "builtin",
+            "external",
+            "internal",
+            ["parent", "sibling", "index"],
+          ],
+        },
+      ],
+    },
+  },
   // Colors and fonts come from the design tokens in `src/app/globals.css`, so
   // dark mode and a rebrand stay one-file changes. Applies to everything in
   // `src/` except tests.

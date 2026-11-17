@@ -273,6 +273,37 @@ describe("summarise, LCP budget", () => {
   });
 });
 
+describe("summarise, runs that disagree", () => {
+  const page = "/styleguide/home/simple.html";
+  const column = (label: string, ...lcps: number[]) => ({
+    label,
+    reports: lcps.map((lcp) => run(page, lcp, [])),
+  });
+  const roomy = { lcpBudgetFor: () => 3600 };
+
+  // #51's branch, three runs of one build: its median sat a step above
+  // main's on unchanged bytes, which only the single runs showed was noise.
+  it("lists each side's runs when they lie more than a step apart", () => {
+    const summary = summarise(
+      [
+        column("origin/main", 2778, 2779, 2779),
+        column("HEAD", 2779, 3353, 3353),
+      ],
+      roomy
+    );
+    expect(summary).toContain(
+      "    runs disagree (HEAD): simulated LCP 2,779, 3,353, 3,353 ms"
+    );
+    expect(summary).not.toContain("runs disagree (origin/main)");
+  });
+
+  it("stays quiet when every run is within a step", () => {
+    expect(summarise([column("HEAD", 2779, 2900, 2929)], roomy)).not.toContain(
+      "runs disagree"
+    );
+  });
+});
+
 describe("readReport", () => {
   it("reads the figures the summary needs from a Lighthouse report", () => {
     const json = {

@@ -275,6 +275,13 @@ export function summarise(
           `    near the LCP budget (${label}): runs of ${lcps.map(thousands).join(", ")} ms against ${thousands(budget)}`
         );
       }
+      // Runs a step or more apart on one build: a median that moved with them
+      // is noise, not the diff (docs/testing.md, Performance).
+      if (Math.max(...lcps) - Math.min(...lcps) > STEP_MS) {
+        out.push(
+          `    runs disagree (${label}): simulated LCP ${lcps.map(thousands).join(", ")} ms`
+        );
+      }
     }
     if (sides.length > 1) out.push(...fileChanges(sides));
   }

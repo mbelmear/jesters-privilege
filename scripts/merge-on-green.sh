@@ -9,11 +9,13 @@
 #      only clean merges of main came after it (require-review.sh),
 #   2. it closes only issues its title or body's first line names
 #      (closing-issues.sh), since "Fix #209 before #145." closed #209 (#211),
-#   3. the PR has at least one check (it waits for them to appear after a push),
-#   4. it merges cleanly with main, checked throughout the wait, since a conflict
+#   3. a change to the header, footer, or root layout carries
+#      `npm run lighthouse:compare` output in its body (first-screen-cost.sh),
+#   4. the PR has at least one check (it waits for them to appear after a push),
+#   5. it merges cleanly with main, checked throughout the wait, since a conflict
 #      would only send the checks round again (#165 waited 45 minutes on one),
-#   5. every check passes (it waits for pending ones, stops at the first failure),
-#   6. nothing main gained meanwhile touches the PR's files, or the newest such
+#   6. every check passes (it waits for pending ones, stops at the first failure),
+#   7. nothing main gained meanwhile touches the PR's files, or the newest such
 #      commit is the one passed to --overlap-read. Those commits merge cleanly
 #      and can still contradict what was reviewed, as #155 did #156's new line.
 # The merge is pinned to the reviewed commit, so a push during the wait fails it;
@@ -37,6 +39,7 @@ head=$(gh pr view "$pr" --json headRefOid --jq .headRefOid)
 
 "$(dirname "$0")/require-review.sh" "$pr" "$head" merge
 "$(dirname "$0")/closing-issues.sh" "$pr" merge
+"$(dirname "$0")/first-screen-cost.sh" "$pr" merge
 
 refuse_if_conflicting() {
   # A failed fetch leaves the last one's answer, and the next round tries again.
