@@ -18,7 +18,7 @@ import {
 } from "@/lib/format-episode";
 import { playableEpisode } from "@/lib/player";
 import type { Transcript } from "@/lib/transcript";
-import { cn } from "@/lib/utils";
+import { cn, focusRing } from "@/lib/utils";
 
 type Props = {
   sequence: EpisodeInSequence;
@@ -153,7 +153,8 @@ function SequenceLink({
       href={episodePath(episode)}
       rel={direction === "previous" ? "prev" : "next"}
       className={cn(
-        "group -mx-3 flex flex-col gap-1 rounded-md p-3 hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+        "group -mx-3 flex flex-col gap-1 rounded-md p-3 hover:bg-muted",
+        focusRing,
         // Next sits on the right even when there's no previous.
         direction === "next" && "sm:col-start-2 sm:items-end sm:text-right"
       )}

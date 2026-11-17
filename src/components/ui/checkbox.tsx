@@ -1,9 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { cn } from "cn";
 import { Checkbox as CheckboxPrimitive } from "radix-ui";
 import { CheckIcon } from "lucide-react";
+import { cn, focusRing } from "@/lib/utils";
 
 // Restyled to the site tokens: a square box that fills teal when checked.
 function Checkbox({
@@ -14,7 +14,8 @@ function Checkbox({
     <CheckboxPrimitive.Root
       data-slot="checkbox"
       className={cn(
-        "peer relative flex size-5 shrink-0 items-center justify-center rounded-sm border-2 border-input bg-card transition-colors duration-(--motion-courtly-duration) ease-courtly after:absolute after:-inset-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive data-checked:border-primary data-checked:bg-primary data-checked:text-primary-foreground",
+        "peer relative flex size-5 shrink-0 items-center justify-center rounded-sm border-2 border-input bg-card transition-colors duration-(--motion-courtly-duration) ease-courtly after:absolute after:-inset-3 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive data-checked:border-primary data-checked:bg-primary data-checked:text-primary-foreground",
+        focusRing,
         className
       )}
       {...props}

@@ -2,13 +2,16 @@
 
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
-import { cn } from "cn";
 import { Toggle as TogglePrimitive } from "radix-ui";
+import { cn, focusRing } from "@/lib/utils";
 
 // Restyled to the site tokens. Pressed shows in teal so the state reads
 // without relying on the icon alone.
 const toggleVariants = cva(
-  "inline-flex items-center justify-center gap-2 rounded-md font-ui font-semibold tracking-wider whitespace-nowrap uppercase text-foreground transition-colors duration-(--motion-courtly-duration) ease-courtly hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50 data-[state=on]:text-primary [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5",
+  [
+    "inline-flex items-center justify-center gap-2 rounded-md font-ui font-semibold tracking-wider whitespace-nowrap uppercase text-foreground transition-colors duration-(--motion-courtly-duration) ease-courtly hover:bg-muted disabled:pointer-events-none disabled:opacity-50 data-[state=on]:text-primary [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5",
+    focusRing,
+  ],
   {
     variants: {
       variant: {

@@ -7,6 +7,7 @@ import type { EpisodePage } from "@/lib/content";
 import type { PlayableEpisode } from "@/lib/feed";
 import { formatDuration } from "@/lib/format-duration";
 import { currentParagraph, type Transcript } from "@/lib/transcript";
+import { cn, focusRing } from "@/lib/utils";
 import {
   reportPlayerError,
   usePlayer,
@@ -88,7 +89,10 @@ export function EpisodeTranscript({ episode, transcript, copy }: Props) {
                   ?.play(episode, { at: startSeconds })
                   .catch(reportPlayerError)
               }
-              className="-mt-0.5 min-h-6 self-start rounded-sm px-1 py-1 text-right font-ui text-xs font-semibold text-brand-ink tabular-nums hover:underline hover:underline-offset-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              className={cn(
+                "-mt-0.5 min-h-6 self-start rounded-sm px-1 py-1 text-right font-ui text-xs font-semibold text-brand-ink tabular-nums hover:underline hover:underline-offset-3",
+                focusRing
+              )}
             >
               <span className="sr-only">{copy.playFrom} </span>
               {formatDuration(startSeconds)}

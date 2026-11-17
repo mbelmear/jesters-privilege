@@ -409,6 +409,33 @@ describe("readReport", () => {
       "lhr-1.json has no page URL"
     );
   });
+
+  it.each(["", "not a url"])(
+    "names the file whose page URL is %j",
+    (finalDisplayedUrl) => {
+      const json = {
+        finalDisplayedUrl,
+        audits: {
+          "largest-contentful-paint": { numericValue: 2675 },
+          "first-contentful-paint": { numericValue: 1052 },
+          metrics: {
+            details: {
+              items: [
+                {
+                  observedLargestContentfulPaint: 42,
+                  observedFirstContentfulPaint: 41,
+                },
+              ],
+            },
+          },
+          "network-requests": { details: { items: [] } },
+        },
+      };
+      expect(() => readReport("lhr-4.json", json)).toThrow(
+        `lhr-4.json has an invalid page URL: "${finalDisplayedUrl}"`
+      );
+    }
+  );
 });
 
 describe("spread", () => {

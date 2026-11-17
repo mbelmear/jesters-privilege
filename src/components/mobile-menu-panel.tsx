@@ -8,15 +8,21 @@ import { MotionProvider } from "@/components/motion-provider";
 import { Button } from "@/components/ui/button";
 import type { NavItem, Shell } from "@/lib/content";
 import { motionPresets, transitionFor } from "@/lib/motion";
+import { cn, focusRing } from "@/lib/utils";
+
+// The phone menu: its sections, its labels, and its navigation's name.
+export type Menu = {
+  items: readonly NavItem[];
+  labels: Shell["menu"];
+  navLabel: Shell["navLabel"];
+};
 
 export type MenuPanelProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   // Focused again once the menu closes.
   trigger: React.RefObject<HTMLButtonElement | null>;
-  items: readonly NavItem[];
-  labels: Shell["menu"];
-  navLabel: string;
+  menu: Menu;
 };
 
 const courtly = transitionFor(motionPresets.courtly);
@@ -31,9 +37,7 @@ export default function MobileMenuPanel({
   open,
   onOpenChange,
   trigger,
-  items,
-  labels,
-  navLabel,
+  menu: { items, labels, navLabel },
 }: MenuPanelProps) {
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
@@ -84,7 +88,10 @@ export default function MobileMenuPanel({
                           <DialogPrimitive.Close asChild>
                             <Link
                               href={item.href}
-                              className="block border-b border-border py-4 font-display text-3xl text-foreground no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                              className={cn(
+                                "block border-b border-border py-4 font-display text-3xl text-foreground no-underline",
+                                focusRing
+                              )}
                             >
                               {item.label}
                             </Link>

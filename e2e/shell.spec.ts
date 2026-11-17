@@ -1,6 +1,9 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Locator, type Page } from "@playwright/test";
+import { listen } from "../src/content/listen";
 import { microcopy } from "../src/content/microcopy";
+import { shell } from "../src/content/shell";
+import { site } from "../src/content/site";
 import { isPhone } from "./breakpoints";
 
 // Axe samples colors as rendered, so let an opening animation finish first.
@@ -195,6 +198,33 @@ test.describe("Footer", () => {
       .getByRole("navigation", { name: "Explore" });
     await explore.getByRole("link", { name: "Fools' Gallery" }).click();
     await expect(page).toHaveURL("/gallery");
+  });
+
+  test("links each filled-in Listen app and social network", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    const footer = page.getByRole("contentinfo");
+    const links = [
+      ...Object.entries(site.listen).map(([platform, href]) => ({
+        section: shell.footer.listen,
+        name: listen.platforms[platform as keyof typeof listen.platforms],
+        href,
+      })),
+      ...Object.entries(site.social).map(([network, href]) => ({
+        section: shell.footer.follow,
+        name: shell.footer.social[network as keyof typeof shell.footer.social],
+        href,
+      })),
+    ];
+    expect(links.length).toBeGreaterThan(0);
+    for (const { section, name, href } of links) {
+      await expect(
+        footer
+          .getByRole("navigation", { name: section })
+          .getByRole("link", { name, exact: true })
+      ).toHaveAttribute("href", href);
+    }
   });
 
   // Its mark is drawn from a file of its own, public/icons/amazon-music.svg.

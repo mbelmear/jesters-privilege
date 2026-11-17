@@ -44,6 +44,9 @@ export function readReport(file: string, json: unknown): Report {
     numberAt("audits", "metrics", "details", "items", 0, name);
   const url = dig(json, ["finalDisplayedUrl"]);
   if (typeof url !== "string") throw new Error(`${file} has no page URL`);
+  if (!URL.canParse(url)) {
+    throw new Error(`${file} has an invalid page URL: ${JSON.stringify(url)}`);
+  }
   const items = dig(json, ["audits", "network-requests", "details", "items"]);
   const element = dig(json, [
     "audits",

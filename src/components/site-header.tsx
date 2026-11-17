@@ -4,6 +4,7 @@ import { MobileMenu } from "@/components/mobile-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ThemedLogo } from "@/components/themed-logo";
 import type { Shell } from "@/lib/content";
+import { cn, focusRing } from "@/lib/utils";
 
 type Props = {
   shell: Shell;
@@ -15,6 +16,7 @@ export function SiteHeader({ shell, episodeCount }: Props) {
   const items = shell.nav.filter(
     (item) => !item.onlyWithEpisodes || episodeCount > 0
   );
+  const menu = { items, labels: shell.menu, navLabel: shell.navLabel };
   return (
     <HeaderFrame>
       <div className="mx-auto flex h-full w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
@@ -22,7 +24,7 @@ export function SiteHeader({ shell, episodeCount }: Props) {
         <Link
           href="/"
           aria-label={shell.homeLink}
-          className="flex h-full shrink-0 py-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+          className={cn("flex h-full shrink-0 py-2", focusRing)}
         >
           {/* The icon on phones, the wordmark from md up; at most 56px tall.
               Lazy, so the browser fetches only the one image that shows
@@ -51,7 +53,10 @@ export function SiteHeader({ shell, episodeCount }: Props) {
                 <li key={item.href}>
                   <Link
                     href={item.href}
-                    className="inline-flex h-11 items-center rounded-md px-3 font-ui text-base font-semibold tracking-wider text-foreground uppercase no-underline transition-[background-color] duration-(--motion-courtly-duration) ease-courtly hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                    className={cn(
+                      "inline-flex h-11 items-center rounded-md px-3 font-ui text-base font-semibold tracking-wider text-foreground uppercase no-underline transition-[background-color] duration-(--motion-courtly-duration) ease-courtly hover:bg-muted",
+                      focusRing
+                    )}
                   >
                     {item.label}
                   </Link>
@@ -61,11 +66,7 @@ export function SiteHeader({ shell, episodeCount }: Props) {
           </nav>
           <ThemeToggle label={shell.themeToggle} />
           <div className="md:hidden">
-            <MobileMenu
-              items={items}
-              labels={shell.menu}
-              navLabel={shell.navLabel}
-            />
+            <MobileMenu menu={menu} />
           </div>
         </div>
       </div>
