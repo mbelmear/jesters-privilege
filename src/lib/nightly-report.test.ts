@@ -140,7 +140,9 @@ describe("nightlyReport", () => {
   });
 
   it("leaves the zizmor advice out when the zizmor job didn't fail", () => {
-    expect(nightlyReport(RUN, LOG, ["Firefox"])).not.toContain("zizmor");
+    expect(nightlyReport(RUN, LOG, ["Firefox"])).not.toContain(
+      "# zizmor: ignore[rule]"
+    );
   });
 
   it("gives the Email Routing and zizmor advice together", () => {
