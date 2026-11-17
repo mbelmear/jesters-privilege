@@ -187,6 +187,8 @@ npm run fonts
 
 `scripts/fonts.ts` downloads the upstream files from a fixed commit of google/fonts, cuts both halves of each face, and writes `src/fonts/` and `src/app/fonts.ts`: next/font reads only literal options, so the definitions are generated, and the script, not that file, is the one to edit. Its output is the same on every run until the content's letters change. Content with a letter the subsets lack fails the content test ("sets every letter in the self-hosted font subsets"); run `npm run fonts` and commit what it changes. `e2e/fonts.spec.ts` checks that a page naming Fools fetches no rest file, and that their accented letters set in the brand faces.
 
+The body face, Source Serif 4, keeps only weights 400 to 700 of its variable axis, which took the preloaded upright from 46.2 KB to 33.2 KB and the italic from 48.8 KB to 34.6 KB (#94). A body weight outside that range would quietly set at the nearest one kept, so `e2e/fonts.spec.ts` fails if a page sets the body face at a weight its files don't carry. For a lighter or heavier body weight, widen `SOURCE_SERIF_WEIGHT` in `scripts/fonts.ts` and run `npm run fonts`.
+
 ## Formatting, linting, and types
 
 ```bash

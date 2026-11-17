@@ -76,4 +76,45 @@ test.describe("Fonts", () => {
     const { brand, fallback } = await letterWidths(element, "ř");
     expect(Math.abs(brand - fallback)).toBeGreaterThan(1);
   });
+
+  // scripts/fonts.ts keeps only part of Source Serif's weight axis (#94). A
+  // weight outside it would quietly set at the nearest kept one, or as a
+  // synthesized bold, so every body weight these pages set must be one the
+  // face carries. The style guide sets 600, the About page the italic.
+  for (const path of ["/styleguide", "/about", "/episodes/1"]) {
+    test(`${path} sets the body face only at weights it carries`, async ({
+      page,
+    }) => {
+      await page.goto(path);
+      const { carried, used } = await page.evaluate(() => {
+        const body = "sourceSerif";
+        const carried = [...document.fonts]
+          .filter((face) => face.family.replace(/"/g, "") === body)
+          .map((face) => face.weight.split(" ").map(Number));
+        const used = new Set<string>();
+        const walker = document.createTreeWalker(
+          document.body,
+          NodeFilter.SHOW_TEXT
+        );
+        for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+          const element = node.parentElement;
+          if (!element || !node.textContent?.trim()) continue;
+          const style = getComputedStyle(element);
+          if (style.display === "none" || element.closest("script, style"))
+            continue;
+          if (style.fontFamily.split(",")[0].replace(/"/g, "") === body)
+            used.add(style.fontWeight);
+        }
+        return { carried, used: [...used].map(Number) };
+      });
+
+      expect(carried.length).toBeGreaterThan(0);
+      expect(used.length).toBeGreaterThan(0);
+      const uncarried = used.filter(
+        (weight) =>
+          !carried.some(([min, max = min]) => weight >= min && weight <= max)
+      );
+      expect(uncarried).toEqual([]);
+    });
+  }
 });
