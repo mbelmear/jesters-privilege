@@ -1,13 +1,15 @@
 // The Transcribe workflow's step (#121, ADR 0003): transcribes each Episode
 // with neither a Transcript the feed links nor one saved on the `transcripts`
-// branch, with whisper.cpp, into that branch's checkout. The workflow commits
+// branch, and published in the last 7 days unless TRANSCRIBE_ANY_AGE=true
+// (#240), with whisper.cpp, into that branch's checkout. The workflow commits
 // and pushes what it writes. The logic is src/lib/transcribe.ts; this wires in
 // the feed, the files, and Whisper.
 //
 // Usage (run by .github/workflows/transcribe.yml, with FEED=live):
 //   npm run transcribe -- --plan   sets the step output `needed` to true or
 //                                  false, so the workflow sets Whisper up
-//                                  only when there's work
+//                                  only when there's work, and fails
+//                                  naming any older Episode it refused
 //   npm run transcribe             transcribes; needs WHISPER_CLI and
 //                                  WHISPER_MODEL, and ffmpeg on the PATH
 // TRANSCRIPTS_DIR is the branch's checkout.
@@ -20,7 +22,8 @@ import { promisify } from "node:util";
 import { getEpisodes } from "@/content/feed";
 import { jesters } from "@/content/jesters";
 import {
-  needingTranscripts,
+  planTranscripts,
+  refusals,
   runTranscribe,
   transcriptionPrompt,
   type TranscribableEpisode,
@@ -111,22 +114,41 @@ async function whisper(episode: TranscribableEpisode): Promise<string> {
   }
 }
 
+// A run the workflow says was started by hand transcribes Episodes of any age
+// (#240); every other run only new ones.
+const options = {
+  now: new Date(),
+  anyAge: process.env.TRANSCRIBE_ANY_AGE === "true",
+};
+
 async function main(): Promise<number> {
   const episodes = await getEpisodes();
   if (process.argv.includes("--plan")) {
-    const needed = await needingTranscripts(episodes, { isSaved });
-    for (const { title } of needed) {
+    const { transcribe, refused } = await planTranscripts(
+      episodes,
+      { isSaved },
+      options
+    );
+    for (const { title } of transcribe) {
       console.log(`::notice::"${title}" needs a Transcript`);
     }
-    setOutput("needed", String(needed.length > 0));
-    return 0;
+    setOutput("needed", String(transcribe.length > 0));
+    // With nothing new to transcribe, the run ends here, so the plan names
+    // and fails on what it refused; otherwise the Transcribe step does.
+    if (transcribe.length > 0) return 0;
+    for (const line of refusals(refused)) console.log(line);
+    return refused.length > 0 ? 1 : 0;
   }
-  return runTranscribe(episodes, {
-    isSaved,
-    transcribe: whisper,
-    save: (fileName, text) => writeFile(join(dir, fileName), text),
-    log: (line) => console.log(line),
-  });
+  return runTranscribe(
+    episodes,
+    {
+      isSaved,
+      transcribe: whisper,
+      save: (fileName, text) => writeFile(join(dir, fileName), text),
+      log: (line) => console.log(line),
+    },
+    options
+  );
 }
 
 main().then(

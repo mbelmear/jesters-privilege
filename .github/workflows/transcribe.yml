@@ -3,10 +3,12 @@ name: Transcribe
 # Spreaker makes no Transcripts, so the site makes its own (ADR 0003): every 2
 # hours, each Episode the feed links no WebVTT Transcript for, and that has
 # none saved, is transcribed once with whisper.cpp and saved as
-# `<episode-guid>.vtt` on the `transcripts` branch, which builds read. The
-# feed check (deploy.yml, at 17 past) then rebuilds the site, since an Episode
-# has gained a Transcript. A pull request that changes the transcriber runs it
-# for real against the live feed and uploads what it made, pushing nothing.
+# `<episode-guid>.vtt` on the `transcripts` branch, which builds read. Only an
+# Episode in its first 7 days is transcribed; an older one fails the run,
+# named, unless it was started from Run workflow (#240). The feed check
+# (deploy.yml, at 17 past) then rebuilds the site, since an Episode has gained
+# a Transcript. A pull request that changes the transcriber runs it for real
+# against the live feed and uploads what it made, pushing nothing.
 # See docs/deploy.md.
 
 on:
@@ -43,6 +45,9 @@ jobs:
       cancel-in-progress: false
     env:
       FEED: live
+      # Only a run from the Run workflow button transcribes an Episode older
+      # than a week (#240); a scheduled or pull request run refuses one.
+      TRANSCRIBE_ANY_AGE: ${{ github.event_name == 'workflow_dispatch' }}
     steps:
       - uses: actions/checkout@v5
         with:
