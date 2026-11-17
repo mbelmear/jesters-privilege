@@ -7,12 +7,12 @@ import type { EpisodePage } from "@/lib/content";
 import type { PlayableEpisode } from "@/lib/feed";
 import { formatDuration } from "@/lib/format-duration";
 import { currentParagraph, type Transcript } from "@/lib/transcript";
+import { cn, focusRing } from "@/lib/utils";
 import {
   reportPlayerError,
   usePlayer,
   usePlayerState,
 } from "./player-provider";
-import { cn, focusRing } from "@/lib/utils";
 
 type Props = {
   episode: PlayableEpisode;

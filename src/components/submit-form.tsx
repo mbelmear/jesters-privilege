@@ -27,8 +27,8 @@ import {
   type SubmissionProblem,
   type SubmissionType,
 } from "@/lib/submit";
-import { TurnstileWidget } from "./turnstile-widget";
 import { cn, focusRing } from "@/lib/utils";
+import { TurnstileWidget } from "./turnstile-widget";
 
 type Props = {
   copy: SpeakFreelyPage;
