@@ -1,4 +1,5 @@
-import { failedTests, nightlyReport } from "./nightly-report";
+import { readFileSync } from "node:fs";
+import { failedTests, nightlyReport, ZIZMOR_JOB } from "./nightly-report";
 
 // A job's log, as Nightly's run of 2026-11-05 printed it: each failure's detail,
 // then the closing summary, with a flaky test added to show it's left out.
@@ -130,5 +131,36 @@ describe("nightlyReport", () => {
 
   it("leaves the Email Routing fix out when only tests failed", () => {
     expect(nightlyReport(RUN, LOG)).not.toContain("Account prerequisites");
+  });
+
+  it("says where a zizmor fix goes when the zizmor job failed", () => {
+    const report = nightlyReport(RUN, "", ["zizmor (online)"]);
+    expect(report).toContain("docs/testing.md, Formatting, linting, and types");
+    expect(report).toContain("# zizmor: ignore[rule]");
+  });
+
+  it("leaves the zizmor advice out when the zizmor job didn't fail", () => {
+    expect(nightlyReport(RUN, LOG, ["Firefox"])).not.toContain(
+      "# zizmor: ignore[rule]"
+    );
+  });
+
+  it("gives the Email Routing and zizmor advice together", () => {
+    const report = nightlyReport(RUN, EMAIL_ROUTING_LOG, [
+      "Email Routing",
+      "zizmor (online)",
+    ]);
+    expect(report).toContain("docs/deploy.md, Account prerequisites");
+    expect(report).toContain("# zizmor: ignore[rule]");
+  });
+});
+
+// The report knows the zizmor job by the `name:` GitHub's API lists, so a
+// rename in the workflow would silently drop its advice line.
+describe("ZIZMOR_JOB", () => {
+  it("is the zizmor job's name in the Nightly workflow", () => {
+    const workflow = readFileSync(".github/workflows/nightly.yml", "utf8");
+    const name = /^ {2}zizmor:\n {4}name: (.+)$/m.exec(workflow)?.[1];
+    expect(name).toBe(ZIZMOR_JOB);
   });
 });
