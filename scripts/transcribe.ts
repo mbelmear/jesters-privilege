@@ -1,6 +1,6 @@
 // The Transcribe workflow's step (#121, ADR 0003): transcribes each Episode
 // with neither a Transcript the feed links nor one saved on the `transcripts`
-// branch, and published in the last 7 days unless TRANSCRIBE_ANY_AGE=true
+// branch, and in its first week unless TRANSCRIBE_ANY_AGE=true
 // (#240), with whisper.cpp, into that branch's checkout. The workflow commits
 // and pushes what it writes. The logic is src/lib/transcribe.ts; this wires in
 // the feed, the files, and Whisper.
@@ -22,11 +22,12 @@ import { promisify } from "node:util";
 import { getEpisodes } from "@/content/feed";
 import { jesters } from "@/content/jesters";
 import {
+  planStep,
   planTranscripts,
-  refusals,
   runTranscribe,
   transcriptionPrompt,
   type TranscribableEpisode,
+  type TranscribeRun,
 } from "@/lib/transcribe";
 
 // Names Whisper would otherwise misspell (docs/spec.md, Transcripts).
@@ -115,8 +116,8 @@ async function whisper(episode: TranscribableEpisode): Promise<string> {
 }
 
 // A run the workflow says was started by hand transcribes Episodes of any age
-// (#240); every other run only new ones.
-const options = {
+// (#240); every other run only those in their first week.
+const thisRun: TranscribeRun = {
   now: new Date(),
   anyAge: process.env.TRANSCRIBE_ANY_AGE === "true",
 };
@@ -124,20 +125,12 @@ const options = {
 async function main(): Promise<number> {
   const episodes = await getEpisodes();
   if (process.argv.includes("--plan")) {
-    const { transcribe, refused } = await planTranscripts(
-      episodes,
-      { isSaved },
-      options
+    const step = planStep(
+      await planTranscripts(episodes, { isSaved }, thisRun)
     );
-    for (const { title } of transcribe) {
-      console.log(`::notice::"${title}" needs a Transcript`);
-    }
-    setOutput("needed", String(transcribe.length > 0));
-    // With nothing new to transcribe, the run ends here, so the plan names
-    // and fails on what it refused; otherwise the Transcribe step does.
-    if (transcribe.length > 0) return 0;
-    for (const line of refusals(refused)) console.log(line);
-    return refused.length > 0 ? 1 : 0;
+    for (const line of step.lines) console.log(line);
+    setOutput("needed", String(step.needed));
+    return step.exitCode;
   }
   return runTranscribe(
     episodes,
@@ -147,7 +140,7 @@ async function main(): Promise<number> {
       save: (fileName, text) => writeFile(join(dir, fileName), text),
       log: (line) => console.log(line),
     },
-    options
+    thisRun
   );
 }
 

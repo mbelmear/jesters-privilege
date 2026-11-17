@@ -1,5 +1,6 @@
 import {
   needingTranscripts,
+  planStep,
   planTranscripts,
   runTranscribe,
   transcriptionPrompt,
@@ -98,6 +99,37 @@ describe("planTranscripts", () => {
   });
 });
 
+describe("planStep", () => {
+  const fresh = { ...second, publishedAt: daysAgo(6) };
+  const old = { ...first, publishedAt: daysAgo(8) };
+  const refusal =
+    '::error::"Celebrity Pastors" (ep-1) is older than 7 days and has no Transcript saved. Only a run started from Run workflow on Transcribe transcribes an Episode that old; press it to transcribe this one on purpose.';
+
+  it("fails, naming what it refused, when there's nothing new, so Whisper isn't built", () => {
+    expect(planStep({ transcribe: [], refused: [old] })).toEqual({
+      needed: false,
+      lines: [refusal],
+      exitCode: 1,
+    });
+  });
+
+  it("passes the refused ones on to the Transcribe step when there's something new", () => {
+    expect(planStep({ transcribe: [fresh], refused: [old] })).toEqual({
+      needed: true,
+      lines: ['::notice::"The Holy Fool" needs a Transcript'],
+      exitCode: 0,
+    });
+  });
+
+  it("passes with nothing to do", () => {
+    expect(planStep({ transcribe: [], refused: [] })).toEqual({
+      needed: false,
+      lines: [],
+      exitCode: 0,
+    });
+  });
+});
+
 describe("runTranscribe", () => {
   const scheduled = { now, anyAge: false };
 
@@ -146,7 +178,7 @@ describe("runTranscribe", () => {
     expect(transcribed).toEqual(["ep-2"]);
     expect(files).toEqual({ "ep-2.vtt": WEBVTT });
     expect(log).toEqual([
-      '::error::"Celebrity Pastors" (ep-1) is older than 7 days and has no Transcript saved, so a scheduled run won\'t transcribe it. Press Run workflow on Transcribe to transcribe it on purpose.',
+      '::error::"Celebrity Pastors" (ep-1) is older than 7 days and has no Transcript saved. Only a run started from Run workflow on Transcribe transcribes an Episode that old; press it to transcribe this one on purpose.',
       '::notice::Saved the Transcript of "The Holy Fool" as ep-2.vtt',
     ]);
   });

@@ -1,6 +1,6 @@
 // The Transcribe workflow (ADR 0003): Spreaker makes no Transcripts, so each
 // Episode the feed links none for is transcribed once, in its first week
-// unless the run was started by hand (#240), with Whisper on
+// (NEW_FOR_DAYS) unless the run was started by hand (#240), with Whisper on
 // GitHub's runners, and saved as `<episode-guid>.vtt` on the `transcripts`
 // branch, which builds read. An Episode with a saved Transcript is never
 // transcribed again, so a hand fix to its file sticks.
@@ -44,6 +44,12 @@ const NEW_FOR_MS = NEW_FOR_DAYS * 24 * 60 * 60 * 1000;
 
 export type TranscribePlan<E> = { transcribe: E[]; refused: E[] };
 
+// When the run started, and whether it was started by hand (Run workflow),
+// which lifts the first-week limit. The plan step and the Transcribe step each
+// read the clock, so an Episode at the limit could be planned and then refused
+// minutes later; that run goes red naming it, and Run workflow transcribes it.
+export type TranscribeRun = { now: Date; anyAge: boolean };
+
 // Which Episodes a run transcribes. A scheduled run takes only new ones: an
 // older Episode needing a Transcript means the branch lost a file or was read
 // wrong, so it's refused rather than sent to Whisper. A run started by hand
@@ -51,7 +57,7 @@ export type TranscribePlan<E> = { transcribe: E[]; refused: E[] };
 export async function planTranscripts<E extends TranscribableEpisode>(
   episodes: readonly E[],
   io: Pick<TranscribeIO, "isSaved">,
-  { now, anyAge }: { now: Date; anyAge: boolean }
+  { now, anyAge }: TranscribeRun
 ): Promise<TranscribePlan<E>> {
   const needed = await needingTranscripts(episodes, io);
   const isNew = (e: E) => now.getTime() - e.publishedAt.getTime() <= NEW_FOR_MS;
@@ -61,12 +67,39 @@ export async function planTranscripts<E extends TranscribableEpisode>(
   };
 }
 
-// An ::error:: line for each Episode a scheduled run refused.
-export function refusals(refused: readonly TranscribableEpisode[]): string[] {
+// An ::error:: line for each Episode the plan refused.
+export function refusalErrors(
+  refused: readonly TranscribableEpisode[]
+): string[] {
   return refused.map(
     ({ title, guid }) =>
-      `::error::"${title}" (${guid}) is older than ${NEW_FOR_DAYS} days and has no Transcript saved, so a scheduled run won't transcribe it. Press Run workflow on Transcribe to transcribe it on purpose.`
+      `::error::"${title}" (${guid}) is older than ${NEW_FOR_DAYS} days and has no Transcript saved. Only a run started from Run workflow on Transcribe transcribes an Episode that old; press it to transcribe this one on purpose.`
   );
+}
+
+// What the workflow's plan step logs, sets as `needed`, and exits with. With
+// nothing new to transcribe the run ends at the plan, so the plan names and
+// fails on what it refused, before Whisper is built; otherwise the Transcribe
+// step does, after saving the new ones (runTranscribe).
+export function planStep(plan: TranscribePlan<TranscribableEpisode>): {
+  needed: boolean;
+  lines: string[];
+  exitCode: number;
+} {
+  if (plan.transcribe.length > 0) {
+    return {
+      needed: true,
+      lines: plan.transcribe.map(
+        ({ title }) => `::notice::"${title}" needs a Transcript`
+      ),
+      exitCode: 0,
+    };
+  }
+  return {
+    needed: false,
+    lines: refusalErrors(plan.refused),
+    exitCode: plan.refused.length > 0 ? 1 : 0,
+  };
 }
 
 // Transcribes and saves each Episode the plan picks (planTranscripts), one at
@@ -77,10 +110,10 @@ export function refusals(refused: readonly TranscribableEpisode[]): string[] {
 export async function runTranscribe(
   episodes: readonly TranscribableEpisode[],
   io: TranscribeIO,
-  options: { now: Date; anyAge: boolean }
+  run: TranscribeRun
 ): Promise<number> {
-  const { transcribe, refused } = await planTranscripts(episodes, io, options);
-  for (const line of refusals(refused)) io.log(line);
+  const { transcribe, refused } = await planTranscripts(episodes, io, run);
+  for (const line of refusalErrors(refused)) io.log(line);
   if (transcribe.length === 0 && refused.length === 0) {
     io.log("::notice::Every Episode has a Transcript");
     return 0;
