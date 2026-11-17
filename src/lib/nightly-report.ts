@@ -5,6 +5,9 @@ import { NEAR_TIMEOUT } from "./near-timeout";
 
 export const NIGHTLY_ISSUE_TITLE = "Nightly is failing";
 
+/** The zizmor job's `name:` in .github/workflows/nightly.yml, as GitHub's API lists it. */
+export const ZIZMOR_JOB = "zizmor (online)";
+
 export const TERMINAL_COLOR = /\u001b\[[0-9;]*m/g;
 // The heading of Playwright's closing summary. Failures' details come first,
 // and they name a test that passed on a retry too, so only this is read.
@@ -82,6 +85,11 @@ export function nightlyReport(
     ...(emailRouting.length
       ? [
           "docs/deploy.md, Account prerequisites, says how Email Routing should be set up in the Cloudflare dashboard.",
+        ]
+      : []),
+    ...(failedJobNames.includes(ZIZMOR_JOB)
+      ? [
+          "zizmor's job log names each finding. Update the flagged action, or judge the finding safe and add an inline `# zizmor: ignore[rule]` with its reason: docs/testing.md, Formatting, linting, and types, explains both.",
         ]
       : []),
     "If it passes locally but not in CI, docs/testing.md says where to look first. Close this once Nightly passes again.",
