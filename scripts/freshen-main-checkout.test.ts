@@ -6,7 +6,7 @@ import { mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-const script = join(__dirname, "warn-stale-checkout.sh");
+const script = join(__dirname, "freshen-main-checkout.sh");
 
 // Git run from a hook inherits GIT_DIR and GIT_INDEX_FILE, which point every
 // git command at the real repository (merge-holds-branch.test.ts tells that
@@ -16,14 +16,14 @@ for (const name of Object.keys(env)) {
   if (name.startsWith("GIT_")) delete env[name];
 }
 
-describe("warn-stale-checkout", () => {
+describe("freshen-main-checkout", () => {
   let root: string;
   const git = (cwd: string, ...args: string[]) =>
     execFileSync("git", args, { cwd, env, encoding: "utf8" }).trim();
-  const warn = (cwd: string) =>
+  const freshen = (cwd: string) =>
     spawnSync("bash", [script], { cwd, env, encoding: "utf8" });
-  const commit = (cwd: string, message: string) => {
-    writeFileSync(join(cwd, "file"), `${message}\n`);
+  const commit = (cwd: string, message: string, file = "file") => {
+    writeFileSync(join(cwd, file), `${message}\n`);
     git(cwd, "add", "-A");
     git(
       cwd,
@@ -44,7 +44,7 @@ describe("warn-stale-checkout", () => {
   let checkout: string;
 
   beforeEach(() => {
-    root = realpathSync(mkdtempSync(join(tmpdir(), "stale-checkout-")));
+    root = realpathSync(mkdtempSync(join(tmpdir(), "freshen-main-")));
     origin = join(root, "origin");
     checkout = join(root, "checkout");
     execFileSync("git", ["init", "--quiet", "--initial-branch=main", origin], {
@@ -59,27 +59,76 @@ describe("warn-stale-checkout", () => {
   });
 
   it("says nothing when the checkout has all of origin/main", () => {
-    const result = warn(checkout);
+    const result = freshen(checkout);
 
     expect(result.stdout).toBe("");
     expect(result.status).toBe(0);
   });
 
-  it("counts the commits it is behind, fetching to find them", () => {
+  // #224's retro: a session started 22 commits behind and missed a rule only
+  // origin/main's AGENTS.md had, though this hook had warned.
+  it("fast-forwards a clean main to origin/main, fetching to find it", () => {
     commit(origin, "second");
     commit(origin, "third");
 
-    const result = warn(checkout);
+    const result = freshen(checkout);
 
-    expect(result.stdout).toContain("2 commits behind origin/main");
+    expect(result.stdout).toContain(
+      "Fast-forwarded the main checkout 2 commits to origin/main."
+    );
+    expect(result.stdout).not.toContain("AGENTS.md");
+    expect(git(checkout, "rev-parse", "HEAD")).toBe(
+      git(origin, "rev-parse", "HEAD")
+    );
+    expect(result.status).toBe(0);
+  });
+
+  it("says to reread AGENTS.md when the fast-forward changed it", () => {
+    commit(origin, "a new rule", "AGENTS.md");
+
+    const result = freshen(checkout);
+
+    expect(result.stdout).toContain("1 commit to origin/main");
+    expect(result.stdout).toContain("AGENTS.md changed");
+  });
+
+  it("only warns when the checkout has uncommitted changes", () => {
+    commit(origin, "second");
+    writeFileSync(join(checkout, "file"), "the human's edit\n");
+
+    const result = freshen(checkout);
+
+    expect(result.stdout).toContain("1 commit behind origin/main");
     expect(result.stdout).toContain("git show origin/main:AGENTS.md");
+    expect(git(checkout, "show", "HEAD:file")).toBe("first");
+    expect(result.status).toBe(0);
+  });
+
+  it("only warns when the checkout is on another branch", () => {
+    commit(origin, "second");
+    git(checkout, "switch", "--quiet", "-c", "other");
+
+    const result = freshen(checkout);
+
+    expect(result.stdout).toContain("1 commit behind origin/main");
+    expect(git(checkout, "log", "-1", "--format=%s")).toBe("first");
+  });
+
+  it("only warns when main has commits origin/main doesn't", () => {
+    commit(origin, "second");
+    commit(checkout, "local");
+
+    const result = freshen(checkout);
+
+    expect(result.stdout).toContain("1 commit behind origin/main");
+    expect(git(checkout, "log", "-1", "--format=%s")).toBe("local");
     expect(result.status).toBe(0);
   });
 
   it("says nothing about commits only the checkout has", () => {
     commit(checkout, "local");
 
-    expect(warn(checkout).stdout).toBe("");
+    expect(freshen(checkout).stdout).toBe("");
   });
 
   it("says nothing in a ticket's worktree, which falls behind as main moves", () => {
@@ -87,7 +136,7 @@ describe("warn-stale-checkout", () => {
     git(checkout, "worktree", "add", "--quiet", "-b", "ticket", worktree);
     commit(origin, "second");
 
-    const result = warn(worktree);
+    const result = freshen(worktree);
 
     expect(result.stdout).toBe("");
     expect(result.status).toBe(0);
@@ -98,10 +147,10 @@ describe("warn-stale-checkout", () => {
     git(checkout, "fetch", "--quiet");
     rmSync(origin, { recursive: true, force: true });
 
-    const result = warn(checkout);
+    const result = freshen(checkout);
 
     expect(result.stdout).toContain("Couldn't fetch origin");
-    expect(result.stdout).toContain("1 commit behind origin/main");
+    expect(result.stdout).toContain("1 commit to origin/main");
     expect(result.status).toBe(0);
   });
 });
