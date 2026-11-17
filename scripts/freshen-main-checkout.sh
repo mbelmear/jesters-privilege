@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
-# Claude Code SessionStart hook (.claude/settings.json): says so when the main
-# checkout is behind origin/main. A session loads AGENTS.md and runs scripts from
+# Claude Code SessionStart hook (.claude/settings.json): brings the main
+# checkout up to origin/main, or says it's behind when it can't. A session loads AGENTS.md and runs scripts from
 # the checkout it starts in, and the main checkout moves only when the human
 # pulls, so a retro's fix can miss the very next session: #104's started 19
 # commits behind, with an old CI wait and no overlap refusal in its steering.
 # A ticket's worktree stays quiet: it falls behind as main moves, and the human
 # has nothing to pull there.
+# A warning wasn't enough: #224's session started 22 behind and missed a rule
+# only origin/main's AGENTS.md had. So a clean main fast-forwards; the human's
+# edits, another branch, or a commit of their own keep the warning instead.
 # Prints to stdout, which the hook adds to the session's context. An unreachable
 # origin falls back on the last fetch, and says so.
 set -euo pipefail
@@ -23,4 +26,17 @@ behind=$(git rev-list --count HEAD..origin/main)
 
 commits=commits
 ((behind == 1)) && commits=commit
+
+before=$(git rev-parse HEAD)
+branch=$(git symbolic-ref --quiet --short HEAD || true)
+changes=$(git status --porcelain --untracked-files=no)
+if [[ "$branch" == main && -z "$changes" ]] &&
+  git merge --quiet --ff-only origin/main >/dev/null 2>&1; then
+  echo "Fast-forwarded the main checkout $behind $commits to origin/main."
+  if ! git diff --quiet "$before" HEAD -- AGENTS.md; then
+    echo "AGENTS.md changed, and this session may have loaded it before: read it again."
+  fi
+  exit 0
+fi
+
 echo "Main checkout is $behind $commits behind origin/main: its AGENTS.md and scripts are stale. Read git show origin/main:AGENTS.md."

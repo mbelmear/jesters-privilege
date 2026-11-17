@@ -67,16 +67,34 @@ export function nightlyReport(
   });
   const nearTimeout = errorsStarting(NEAR_TIMEOUT, log);
   const emailRouting = errorsStarting(EMAIL_ROUTING_FAILURE, log);
-  const failures = [...tests, ...nearTimeout, ...emailRouting];
+  const named = [...tests, ...nearTimeout, ...emailRouting];
+  const zizmor = failedJobNames.includes(ZIZMOR_JOB);
+  // zizmor's job has no tests, so it never needs the "No test is named" line.
+  const otherJobs = failedJobNames.filter((name) => name !== ZIZMOR_JOB);
+  const failures = [
+    ...named,
+    ...(zizmor
+      ? [`${ZIZMOR_JOB} flagged a workflow or action under .github.`]
+      : []),
+  ];
+  const noTestNamed = named.length
+    ? []
+    : otherJobs.length
+      ? [
+          `No test is named in the failed jobs' logs (${otherJobs.join(", ")}): a job failed outside a test, stopped before its tests finished, or its log couldn't be read.`,
+        ]
+      : zizmor
+        ? []
+        : [
+            "No test is named: the run stopped before its tests finished, or its logs couldn't be read.",
+          ];
   return [
     `Nightly failed: ${runUrl}`,
     "",
-    failures.length
-      ? failures.map((failure) => `- ${failure}`).join("\n")
-      : failedJobNames.length
-        ? `No test is named in the failed jobs' logs (${failedJobNames.join(", ")}): a job failed outside a test, stopped before its tests finished, or its log couldn't be read.`
-        : "No test is named: the run stopped before its tests finished, or its logs couldn't be read.",
-    "",
+    ...(failures.length
+      ? [failures.map((failure) => `- ${failure}`).join("\n"), ""]
+      : []),
+    ...(noTestNamed.length ? [...noTestNamed, ""] : []),
     ...(nearTimeout.length
       ? [
           "A test near its timeout passed this time and fails on a slower runner. CODING_STANDARDS.md, Browser tests, says how to give it the time it needs.",
@@ -87,7 +105,7 @@ export function nightlyReport(
           "docs/deploy.md, Account prerequisites, says how Email Routing should be set up in the Cloudflare dashboard.",
         ]
       : []),
-    ...(failedJobNames.includes(ZIZMOR_JOB)
+    ...(zizmor
       ? [
           "zizmor's job log names each finding. Update the flagged action, or judge the finding safe and add an inline `# zizmor: ignore[rule]` with its reason: docs/testing.md, Formatting, linting, and types, explains both.",
         ]

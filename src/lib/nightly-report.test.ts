@@ -78,11 +78,31 @@ describe("nightlyReport", () => {
   // #178's zizmor job fails without a test, so the report names which job.
   // The names are the jobs' `name:` in nightly.yml, as GitHub's API lists them.
   it("names each failed job when no test is", () => {
-    const report = nightlyReport(RUN, "zizmor found a problem", [
-      "zizmor (online)",
+    const report = nightlyReport(RUN, "npm ci failed", [
+      "Playwright (Firefox)",
     ]);
     expect(report).toContain(
-      "No test is named in the failed jobs' logs (zizmor (online))"
+      "No test is named in the failed jobs' logs (Playwright (Firefox))"
+    );
+  });
+
+  // zizmor has no tests, so "stopped before its tests finished" misreads it.
+  it("names a zizmor failure as one, not as a job without tests", () => {
+    const report = nightlyReport(RUN, "", ["zizmor (online)"]);
+    expect(report).toContain(
+      "- zizmor (online) flagged a workflow or action under .github."
+    );
+    expect(report).not.toContain("No test is named");
+  });
+
+  it("still names a job that failed without tests beside zizmor", () => {
+    const report = nightlyReport(RUN, "", [
+      "Playwright (Firefox)",
+      "zizmor (online)",
+    ]);
+    expect(report).toContain("- zizmor (online) flagged");
+    expect(report).toContain(
+      "No test is named in the failed jobs' logs (Playwright (Firefox))"
     );
   });
 
