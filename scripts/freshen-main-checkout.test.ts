@@ -20,7 +20,7 @@ describe("freshen-main-checkout", () => {
   let root: string;
   const git = (cwd: string, ...args: string[]) =>
     execFileSync("git", args, { cwd, env, encoding: "utf8" }).trim();
-  const warn = (cwd: string) =>
+  const freshen = (cwd: string) =>
     spawnSync("bash", [script], { cwd, env, encoding: "utf8" });
   const commit = (cwd: string, message: string, file = "file") => {
     writeFileSync(join(cwd, file), `${message}\n`);
@@ -44,7 +44,7 @@ describe("freshen-main-checkout", () => {
   let checkout: string;
 
   beforeEach(() => {
-    root = realpathSync(mkdtempSync(join(tmpdir(), "stale-checkout-")));
+    root = realpathSync(mkdtempSync(join(tmpdir(), "freshen-main-")));
     origin = join(root, "origin");
     checkout = join(root, "checkout");
     execFileSync("git", ["init", "--quiet", "--initial-branch=main", origin], {
@@ -59,7 +59,7 @@ describe("freshen-main-checkout", () => {
   });
 
   it("says nothing when the checkout has all of origin/main", () => {
-    const result = warn(checkout);
+    const result = freshen(checkout);
 
     expect(result.stdout).toBe("");
     expect(result.status).toBe(0);
@@ -71,7 +71,7 @@ describe("freshen-main-checkout", () => {
     commit(origin, "second");
     commit(origin, "third");
 
-    const result = warn(checkout);
+    const result = freshen(checkout);
 
     expect(result.stdout).toContain(
       "Fast-forwarded the main checkout 2 commits to origin/main."
@@ -86,7 +86,7 @@ describe("freshen-main-checkout", () => {
   it("says to reread AGENTS.md when the fast-forward changed it", () => {
     commit(origin, "a new rule", "AGENTS.md");
 
-    const result = warn(checkout);
+    const result = freshen(checkout);
 
     expect(result.stdout).toContain("1 commit to origin/main");
     expect(result.stdout).toContain("AGENTS.md changed");
@@ -96,7 +96,7 @@ describe("freshen-main-checkout", () => {
     commit(origin, "second");
     writeFileSync(join(checkout, "file"), "the human's edit\n");
 
-    const result = warn(checkout);
+    const result = freshen(checkout);
 
     expect(result.stdout).toContain("1 commit behind origin/main");
     expect(result.stdout).toContain("git show origin/main:AGENTS.md");
@@ -108,7 +108,7 @@ describe("freshen-main-checkout", () => {
     commit(origin, "second");
     git(checkout, "switch", "--quiet", "-c", "other");
 
-    const result = warn(checkout);
+    const result = freshen(checkout);
 
     expect(result.stdout).toContain("1 commit behind origin/main");
     expect(git(checkout, "log", "-1", "--format=%s")).toBe("first");
@@ -118,7 +118,7 @@ describe("freshen-main-checkout", () => {
     commit(origin, "second");
     commit(checkout, "local");
 
-    const result = warn(checkout);
+    const result = freshen(checkout);
 
     expect(result.stdout).toContain("1 commit behind origin/main");
     expect(git(checkout, "log", "-1", "--format=%s")).toBe("local");
@@ -128,7 +128,7 @@ describe("freshen-main-checkout", () => {
   it("says nothing about commits only the checkout has", () => {
     commit(checkout, "local");
 
-    expect(warn(checkout).stdout).toBe("");
+    expect(freshen(checkout).stdout).toBe("");
   });
 
   it("says nothing in a ticket's worktree, which falls behind as main moves", () => {
@@ -136,7 +136,7 @@ describe("freshen-main-checkout", () => {
     git(checkout, "worktree", "add", "--quiet", "-b", "ticket", worktree);
     commit(origin, "second");
 
-    const result = warn(worktree);
+    const result = freshen(worktree);
 
     expect(result.stdout).toBe("");
     expect(result.status).toBe(0);
@@ -147,7 +147,7 @@ describe("freshen-main-checkout", () => {
     git(checkout, "fetch", "--quiet");
     rmSync(origin, { recursive: true, force: true });
 
-    const result = warn(checkout);
+    const result = freshen(checkout);
 
     expect(result.stdout).toContain("Couldn't fetch origin");
     expect(result.stdout).toContain("1 commit to origin/main");

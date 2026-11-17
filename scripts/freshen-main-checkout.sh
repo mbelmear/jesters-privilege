@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 # Claude Code SessionStart hook (.claude/settings.json): brings the main
-# checkout up to origin/main, or says it's behind when it can't. A session loads AGENTS.md and runs scripts from
-# the checkout it starts in, and the main checkout moves only when the human
-# pulls, so a retro's fix can miss the very next session: #104's started 19
-# commits behind, with an old CI wait and no overlap refusal in its steering.
-# A ticket's worktree stays quiet: it falls behind as main moves, and the human
-# has nothing to pull there.
-# A warning wasn't enough: #224's session started 22 behind and missed a rule
-# only origin/main's AGENTS.md had. So a clean main fast-forwards; the human's
-# edits, another branch, or a commit of their own keep the warning instead.
+# checkout up to origin/main, or says it's behind when it can't.
+# A session loads AGENTS.md and runs scripts from the checkout it starts in, so
+# a stale one misses the latest retro's fix: #104's started 19 commits behind,
+# with an old CI wait and no overlap refusal in its steering. A warning wasn't
+# enough: #224's started 22 behind and missed a rule only origin/main's
+# AGENTS.md had. So a clean main fast-forwards; the human's edits, another
+# branch, or a commit of their own keep the warning instead.
+# A ticket's worktree stays quiet: it falls behind as main moves, and its
+# branch isn't main.
 # Prints to stdout, which the hook adds to the session's context. An unreachable
 # origin falls back on the last fetch, and says so.
 set -euo pipefail

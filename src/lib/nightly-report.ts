@@ -77,24 +77,25 @@ export function nightlyReport(
       ? [`${ZIZMOR_JOB} flagged a workflow or action under .github.`]
       : []),
   ];
-  const noTestNamed = named.length
-    ? []
-    : otherJobs.length
-      ? [
-          `No test is named in the failed jobs' logs (${otherJobs.join(", ")}): a job failed outside a test, stopped before its tests finished, or its log couldn't be read.`,
-        ]
-      : zizmor
-        ? []
-        : [
-            "No test is named: the run stopped before its tests finished, or its logs couldn't be read.",
-          ];
+  const noTestNamed = (): string[] => {
+    if (named.length) return [];
+    if (otherJobs.length) {
+      return [
+        `No test is named in the failed jobs' logs (${otherJobs.join(", ")}): a job failed outside a test, stopped before its tests finished, or its log couldn't be read.`,
+      ];
+    }
+    if (zizmor) return [];
+    return [
+      "No test is named: the run stopped before its tests finished, or its logs couldn't be read.",
+    ];
+  };
   return [
     `Nightly failed: ${runUrl}`,
     "",
     ...(failures.length
       ? [failures.map((failure) => `- ${failure}`).join("\n"), ""]
       : []),
-    ...(noTestNamed.length ? [...noTestNamed, ""] : []),
+    ...noTestNamed().flatMap((line) => [line, ""]),
     ...(nearTimeout.length
       ? [
           "A test near its timeout passed this time and fails on a slower runner. CODING_STANDARDS.md, Browser tests, says how to give it the time it needs.",

@@ -8,21 +8,24 @@
 import { NIGHTLY_ISSUE_TITLE, nightlyReport } from "@/lib/nightly-report";
 import { failedJobs, fileReport, gh, jobLogs, runUrl } from "./failed-run";
 
-const argument = process.argv[2];
-if (!argument) {
-  throw new Error("Usage: npm run report-nightly -- <run-id> | --dry-run");
-}
+const USAGE =
+  "Usage: npm run report-nightly -- <run-id> | --dry-run [--failed-job <name>]...";
+const [argument, ...jobFlags] = process.argv.slice(2);
+if (!argument) throw new Error(USAGE);
 const dryRun = argument === "--dry-run";
 
-const jobFlags = process.argv.slice(3);
-if (dryRun && jobFlags.length) {
-  const names = jobFlags.flatMap((flag, i) =>
-    i % 2 === 0 && flag === "--failed-job" ? [jobFlags[i + 1] ?? ""] : []
-  );
-  if (names.length * 2 !== jobFlags.length || names.includes("")) {
-    console.error("Usage: --dry-run [--failed-job <name>]...");
-    process.exit(1);
-  }
+// Only a dry run takes job names: beside a run id they'd be dropped while a
+// real report is filed.
+const names = jobFlags.flatMap((flag, i) =>
+  i % 2 === 0 && flag === "--failed-job" ? [jobFlags[i + 1] ?? ""] : []
+);
+if (
+  jobFlags.length &&
+  (!dryRun || names.length * 2 !== jobFlags.length || names.includes(""))
+) {
+  throw new Error(USAGE);
+}
+if (names.length) {
   console.log(nightlyReport("(the run's link)", "", names));
   process.exit(0);
 }

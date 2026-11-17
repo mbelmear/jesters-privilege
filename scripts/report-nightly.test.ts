@@ -23,13 +23,14 @@ describe("report-nightly --dry-run --failed-job", () => {
   });
 
   const run = (...args: string[]) =>
-    spawnSync("npx", ["tsx", script, "--dry-run", ...args], {
+    spawnSync("npx", ["tsx", script, ...args], {
       encoding: "utf8",
       env: { ...process.env, PATH: `${bin}:${process.env.PATH ?? ""}` },
     });
 
   it("prints the report for the jobs it names, without asking GitHub", () => {
     const result = run(
+      "--dry-run",
       "--failed-job",
       "zizmor (online)",
       "--failed-job",
@@ -46,8 +47,19 @@ describe("report-nightly --dry-run --failed-job", () => {
     );
   });
 
+  it("asks GitHub for the newest failure without --failed-job", () => {
+    expect(run("--dry-run").stderr).toContain("gh called");
+  });
+
   it("refuses --failed-job without a job's name", () => {
-    const result = run("--failed-job");
+    const result = run("--dry-run", "--failed-job");
+
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain("--failed-job");
+  });
+
+  it("refuses --failed-job beside a run id, which would file a real report", () => {
+    const result = run("123", "--failed-job", "zizmor (online)");
 
     expect(result.status).not.toBe(0);
     expect(result.stderr).toContain("--failed-job");
