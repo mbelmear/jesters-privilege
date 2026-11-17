@@ -2,7 +2,8 @@
 
 #94 cut the body face's weight axis to 400 to 700, which took most pages'
 early fonts from 78,871 to 65,903 bytes, and a page that loads the italic,
-such as About, from 127,936 to 100,796. It measured three more trims and left them alone.
+such as About, from 127,936 to 100,796. It measured three more trims and
+left them alone.
 
 ## Why this is out of scope
 
