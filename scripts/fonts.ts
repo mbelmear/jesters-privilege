@@ -37,10 +37,16 @@ const SOURCE =
 
 // Source Serif 4's optical-size axis is pinned at its default, as Google
 // serves it when only weight is asked for: the axis more than doubles the file.
+// Its weight axis keeps 400 to 700 of the typeface's 200 to 900: the site sets
+// body text at 400 and 600, and bold (700) for any <strong> or <b> the feed's
+// show notes carry. Cutting the rest took the preloaded upright from 46.2 KB to
+// 33.2 KB and the italic from 48.8 KB to 34.6 KB (#94); stopping at 600 would
+// save only 1.4 KB more and leave bold synthesized.
 type VariationAxes = Record<string, number | { min: number; max: number }>;
+const SOURCE_SERIF_WEIGHT = { min: 400, max: 700 };
 const SOURCE_SERIF_AXES: VariationAxes = {
   opsz: 20,
-  wght: { min: 200, max: 900 },
+  wght: SOURCE_SERIF_WEIGHT,
 };
 
 type FaceSpec = {
@@ -79,7 +85,7 @@ const FACES: FaceSpec[] = [
     name: "sourceSerif",
     file: "source-serif-4",
     source: "sourceserif4/SourceSerif4[opsz,wght].ttf",
-    weight: "200 900",
+    weight: `${SOURCE_SERIF_WEIGHT.min} ${SOURCE_SERIF_WEIGHT.max}`,
     style: "normal",
     variationAxes: SOURCE_SERIF_AXES,
     variable: "--font-source-serif",
@@ -92,7 +98,7 @@ const FACES: FaceSpec[] = [
     family: "sourceSerif",
     file: "source-serif-4-italic",
     source: "sourceserif4/SourceSerif4-Italic[opsz,wght].ttf",
-    weight: "200 900",
+    weight: `${SOURCE_SERIF_WEIGHT.min} ${SOURCE_SERIF_WEIGHT.max}`,
     style: "italic",
     variationAxes: SOURCE_SERIF_AXES,
     variable: "--font-source-serif-italic",

@@ -43,7 +43,7 @@ const gloockRest = localFont({
 /** Body: reading text, preloaded because it's usually the largest paint. Variable weight. */
 export const sourceSerif = localFont({
   src: "../fonts/source-serif-4.woff2",
-  weight: "200 900",
+  weight: "400 700",
   style: "normal",
   variable: "--font-source-serif",
   adjustFontFallback: "Times New Roman",
@@ -60,7 +60,7 @@ export const sourceSerif = localFont({
 /** The rest of sourceSerif's glyphs, fetched only for a letter the subset lacks. */
 const sourceSerifRest = localFont({
   src: "../fonts/source-serif-4-rest.woff2",
-  weight: "200 900",
+  weight: "400 700",
   style: "normal",
   variable: "--font-source-serif-rest",
   adjustFontFallback: false,
@@ -81,7 +81,7 @@ const sourceSerifRest = localFont({
 /** The body italic, not preloaded, so only pages that use it download it. It joins the upright's family, so `font-body` covers both. */
 export const sourceSerifItalic = localFont({
   src: "../fonts/source-serif-4-italic.woff2",
-  weight: "200 900",
+  weight: "400 700",
   style: "italic",
   variable: "--font-source-serif-italic",
   adjustFontFallback: false,
@@ -102,7 +102,7 @@ export const sourceSerifItalic = localFont({
 /** The rest of sourceSerifItalic's glyphs, fetched only for a letter the subset lacks. */
 const sourceSerifItalicRest = localFont({
   src: "../fonts/source-serif-4-italic-rest.woff2",
-  weight: "200 900",
+  weight: "400 700",
   style: "italic",
   variable: "--font-source-serif-italic-rest",
   adjustFontFallback: false,
