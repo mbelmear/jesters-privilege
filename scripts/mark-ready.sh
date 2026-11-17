@@ -28,6 +28,7 @@ fi
 # Checked before the wait, so a missing review fails in seconds, not minutes.
 "$(dirname "$0")/require-review.sh" "$pr" "$head" label
 "$(dirname "$0")/closing-issues.sh" "$pr" label
+"$(dirname "$0")/first-screen-cost.sh" "$pr" label
 # The report streams to the terminal as it waits, and is kept for the checks below.
 if ! status=$("$(dirname "$0")/pr-status.sh" "$pr" | tee /dev/stderr); then
   echo "Refusing to label #$pr: pr-status didn't pass (see above)." >&2

@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
-import { defineConfig, devices } from "@playwright/test";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
+import { defineConfig, devices } from "@playwright/test";
 
 // Tests serve the built site in out/. Without one, the run waited out the 60 s
 // webServer timeout and named the server, not the build (#217).

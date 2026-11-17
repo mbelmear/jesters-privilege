@@ -1,3 +1,9 @@
+import { episodePage } from "@/content/episode-page";
+import { episodes } from "@/content/episodes";
+import { home } from "@/content/home";
+import { listen } from "@/content/listen";
+import { shell } from "@/content/shell";
+import { speakFreely } from "@/content/speak-freely";
 import {
   findDrafts,
   findText,
@@ -6,12 +12,6 @@ import {
   type Content,
   type Painting,
 } from "./content";
-import { episodePage } from "@/content/episode-page";
-import { episodes } from "@/content/episodes";
-import { home } from "@/content/home";
-import { listen } from "@/content/listen";
-import { shell } from "@/content/shell";
-import { speakFreely } from "@/content/speak-freely";
 
 const painting: Painting = {
   src: "/paintings/stanczyk.jpg",

@@ -1,8 +1,8 @@
 import { render, screen, within } from "@testing-library/react";
 import { axe } from "jest-axe";
+import type { ReactNode } from "react";
 import { content } from "@/content";
 import type { Copy } from "@/lib/content";
-import type { ReactNode } from "react";
 import { PlayerContext } from "@/components/player-provider";
 import { getEpisodes } from "@/content/feed";
 import { FakeAudio } from "@/lib/fake-audio";

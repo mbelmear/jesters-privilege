@@ -3,8 +3,8 @@ import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { renderToString } from "react-dom/server";
 import { content } from "@/content";
-import { SubmitForm } from "./submit-form";
 import { fakeTurnstile } from "@/lib/fake-turnstile";
+import { SubmitForm } from "./submit-form";
 
 const copy = content.speakFreely;
 const SITE_KEY = "1x00000000000000000000AA";

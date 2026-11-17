@@ -1,8 +1,8 @@
 // Fails when draft content would go live: run before launch (#30), and before
 // any deploy once the Jesters' words are all in. Usage: npm run launch-check
+import { execFileSync } from "node:child_process";
 import { content } from "@/content";
 import { feedSource } from "@/content/feed";
-import { execFileSync } from "node:child_process";
 import { behindWarning } from "@/lib/checkout-freshness";
 import { findDrafts } from "@/lib/content";
 
