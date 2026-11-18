@@ -4,7 +4,8 @@ import { Pause, Play, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { PlayerCopy } from "@/lib/content";
 import type { PlayableEpisode } from "@/lib/feed";
-import { formatDuration, resumeLabel } from "@/lib/format-duration";
+import { resumeLabel } from "@/lib/format-duration";
+import { momentLabel } from "@/lib/moment";
 import {
   reportPlayerError,
   usePlayer,
@@ -58,7 +59,7 @@ export function PlayEpisodeButton({ episode, name, copy, playFrom }: Props) {
   if (loaded) {
     const heard = loaded.finished.has(episode.guid);
     const label = playFrom
-      ? `${playFrom} ${formatDuration(loaded.position)}`
+      ? momentLabel(playFrom, loaded.position)
       : heard
         ? copy.play
         : copy.resume;

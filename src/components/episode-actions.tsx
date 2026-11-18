@@ -46,11 +46,9 @@ export function EpisodeActions({
   const player = usePlayer();
   const state = usePlayerState(player);
   const arrival = parseMoment(useSearch(), episode.durationSeconds);
-  // Once this Episode plays, the visit is like any other.
+  // Once anything plays, the visit is like any other.
   const [played, setPlayed] = useState(false);
-  const playing =
-    state?.mode === "playing" && state.episode.guid === episode.guid;
-  if (playing && !played) setPlayed(true);
+  if (state?.mode === "playing" && !played) setPlayed(true);
   const at = arrival.kind === "moment" ? arrival.seconds : null;
 
   // Before the page paints, so a resume offer never shows in its place. Only

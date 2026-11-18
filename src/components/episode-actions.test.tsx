@@ -27,6 +27,8 @@ const another: PlayableEpisode = {
 
 const title = "Episode 4: Is Humor a Virtue?";
 const copy = content.episodePage;
+// The draft phrases, read from content so a reworded one breaks no test.
+const startAt = (time: string) => `${copy.moment.startAt.text} ${time}`;
 
 // Opens the page at an address, as a visitor following a link would.
 function visit(path: string) {
@@ -57,7 +59,7 @@ function setup() {
   return { audio, player, shared, user, ...result };
 }
 
-const startAt = () => screen.queryByRole("checkbox");
+const box = () => screen.queryByRole("checkbox");
 
 afterEach(() => visit("/"));
 
@@ -66,11 +68,11 @@ describe("EpisodeActions", () => {
     it("offers a moment only while this Episode is in the player", async () => {
       visit("/episodes/4");
       const { player } = setup();
-      expect(startAt()).not.toBeInTheDocument();
+      expect(box()).not.toBeInTheDocument();
       await act(() => player.play(another));
-      expect(startAt()).not.toBeInTheDocument();
+      expect(box()).not.toBeInTheDocument();
       await act(() => player.play(episode));
-      expect(startAt()).toBeInTheDocument();
+      expect(box()).toBeInTheDocument();
     });
 
     it("leaves the box unticked, its time following playback less a lead-in", async () => {
@@ -79,11 +81,11 @@ describe("EpisodeActions", () => {
       await act(() => player.play(episode));
       act(() => audio.playTo(759.6));
       expect(
-        screen.getByRole("checkbox", { name: "Start at 12:34" })
+        screen.getByRole("checkbox", { name: startAt("12:34") })
       ).not.toBeChecked();
       act(() => audio.playTo(800));
       expect(
-        screen.getByRole("checkbox", { name: "Start at 13:15" })
+        screen.getByRole("checkbox", { name: startAt("13:15") })
       ).toBeInTheDocument();
     });
 
@@ -102,18 +104,18 @@ describe("EpisodeActions", () => {
       await act(() => player.play(episode));
       act(() => audio.playTo(759));
       await user.click(
-        screen.getByRole("checkbox", { name: "Start at 12:34" })
+        screen.getByRole("checkbox", { name: startAt("12:34") })
       );
       act(() => audio.playTo(900));
       expect(
-        screen.getByRole("checkbox", { name: "Start at 12:34" })
+        screen.getByRole("checkbox", { name: startAt("12:34") })
       ).toBeChecked();
       await user.click(screen.getByRole("button", { name: "Share" }));
       expect(shared).toEqual([
         {
           title,
           url: "http://localhost/episodes/4?t=754",
-          text: "Listen from 12:34",
+          text: `${copy.moment.shareText.text} 12:34`,
         },
       ]);
     });
@@ -123,12 +125,12 @@ describe("EpisodeActions", () => {
       const { audio, player, user } = setup();
       await act(() => player.play(episode));
       act(() => audio.playTo(759));
-      const box = screen.getByRole("checkbox", { name: "Start at 12:34" });
-      await user.click(box);
+      const ticked = screen.getByRole("checkbox", { name: startAt("12:34") });
+      await user.click(ticked);
       act(() => audio.playTo(900));
-      await user.click(box);
+      await user.click(ticked);
       expect(
-        screen.getByRole("checkbox", { name: "Start at 14:55" })
+        screen.getByRole("checkbox", { name: startAt("14:55") })
       ).not.toBeChecked();
     });
 
@@ -147,7 +149,9 @@ describe("EpisodeActions", () => {
       expect(audio.src).toBe(episode.audioUrl);
       expect(audio.playing).toBe(false);
       await user.click(
-        screen.getByRole("button", { name: "Play from 12:34 Episode 4" })
+        screen.getByRole("button", {
+          name: `${copy.moment.playFrom.text} 12:34 Episode 4`,
+        })
       );
       expect(audio.playing).toBe(true);
       expect(audio.position).toBe(754);
@@ -163,6 +167,14 @@ describe("EpisodeActions", () => {
       expect(screen.getByText(copy.moment.bad.text)).toBeInTheDocument();
       await user.click(screen.getByRole("button", { name: "Play Episode 4" }));
       expect(audio.position).toBe(0);
+      expect(screen.queryByText(copy.moment.bad.text)).not.toBeInTheDocument();
+    });
+
+    it("drops the note once another Episode plays", async () => {
+      visit("/episodes/4?t=-3");
+      const { player } = setup();
+      expect(screen.getByText(copy.moment.bad.text)).toBeInTheDocument();
+      await act(() => player.play(another));
       expect(screen.queryByText(copy.moment.bad.text)).not.toBeInTheDocument();
     });
 

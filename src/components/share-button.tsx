@@ -5,8 +5,7 @@ import { useId, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { EpisodePage } from "@/lib/content";
-import { formatDuration } from "@/lib/format-duration";
-import { momentLink, sharedMoment } from "@/lib/moment";
+import { momentLabel, momentLink, sharedMoment } from "@/lib/moment";
 import { browserSharing, shareLink, type ShareOutcome } from "@/lib/share";
 import { usePlayer, usePlayerState } from "./player-provider";
 
@@ -56,7 +55,7 @@ export function ShareButton({
         ? {
             title,
             url: momentLink(url, moment),
-            text: `${momentCopy.shareText.text} ${formatDuration(moment)}`,
+            text: momentLabel(momentCopy.shareText.text, moment),
           }
         : { title, url };
     // shareLink reports its own failures; anything else still says so.
@@ -86,7 +85,7 @@ export function ShareButton({
               htmlFor={boxId}
               className="font-ui text-sm font-semibold tabular-nums"
             >
-              {momentCopy.startAt.text} {formatDuration(moment)}
+              {momentLabel(momentCopy.startAt.text, moment)}
             </label>
           </div>
         )}

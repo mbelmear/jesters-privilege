@@ -1,4 +1,4 @@
-import { momentLink, parseMoment, sharedMoment } from "./moment";
+import { momentLabel, momentLink, parseMoment, sharedMoment } from "./moment";
 
 describe("parseMoment", () => {
   const duration = 2577;
@@ -58,5 +58,12 @@ describe("momentLink", () => {
     expect(momentLink("https://example.com/episodes/4", 754)).toBe(
       "https://example.com/episodes/4?t=754"
     );
+  });
+});
+
+describe("momentLabel", () => {
+  it("reads the moment after its phrase", () => {
+    expect(momentLabel("Start at", 754)).toBe("Start at 12:34");
+    expect(momentLabel("Start at", 3754)).toBe("Start at 1:02:34");
   });
 });

@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
+import { episodePage } from "../src/content/episode-page";
 import {
   audioState,
   expectPlaying,
@@ -70,7 +71,10 @@ test.describe("Persistent player", () => {
       page.getByRole("button", { name: /^Resume from/ })
     ).toHaveCount(0);
     expect((await audioState(page)).paused).toBe(true);
-    await startEpisode(page, "Play from 0:40 Episode 1");
+    await startEpisode(
+      page,
+      `${episodePage.moment.playFrom.text} 0:40 Episode 1`
+    );
     await expect
       .poll(async () => (await audioState(page)).time, { timeout: 5000 })
       .toBeGreaterThanOrEqual(40);

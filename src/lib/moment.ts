@@ -1,6 +1,8 @@
 // Moment links: an Episode's address with ?t=<seconds>, which opens it ready
 // to play from that moment (GLOSSARY.md).
 
+import { formatDuration } from "./format-duration";
+
 export const MOMENT_PARAM = "t";
 
 // A shared moment starts this much before where the sharer is, so the
@@ -39,4 +41,9 @@ export function momentLink(url: string, seconds: number): string {
   const link = new URL(url);
   link.searchParams.set(MOMENT_PARAM, String(seconds));
   return link.href;
+}
+
+/** A phrase read before a moment: "Start at" becomes "Start at 12:34". */
+export function momentLabel(phrase: string, seconds: number): string {
+  return `${phrase} ${formatDuration(seconds)}`;
 }
