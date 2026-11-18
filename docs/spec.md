@@ -331,10 +331,10 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
   - **Episode**: a parchment card with a large "Episode N" in Gloock, the title, the logo mark, and a teal band
   - **Site-wide**: the logo, tagline, and a painting detail
 - A Share button on Episodes and Fools: the native share sheet where available, otherwise copy the link with a confirmation.
-- On an Episode page, Share can send a **Moment link** (`?t=<seconds>`, for example `?t=754`):
-  - While that Episode is in the player, a "Start at 12:34" checkbox shows by Share, unticked, so sharing the whole Episode stays the default. Its time is the player's position less a 5-second lead-in (never below 0), to the second, and follows playback until ticked, which freezes it. To share another moment, the sharer scrubs there first.
-  - Ticked, the share sheet gets the Episode's title, the Moment link, and the text "Listen from 12:34"; copying gives just the link. The link preview card stays the Episode's own.
-  - A browser won't play before a tap, so a Moment link opens the Episode in the player paused at the moment, its Play reading "Play from 12:34". It replaces any resume offer for that visit, though the place saved in another Episode stays saved. The Transcript neither scrolls nor opens on its own; its highlight marks the moment.
+- On an Episode page, Share can send a **Moment link** (`?t=<seconds>`, for example `?t=754`). Its words are draft copy in `src/content/episode-page.ts`, so they aren't quoted here:
+  - While that Episode is in the player, a checkbox by Share names the moment (12:34), unticked, so sharing the whole Episode stays the default. Its time is the player's position less a 5-second lead-in (never below 0), to the second, and follows playback until ticked, which freezes it. To share another moment, the sharer scrubs there first.
+  - Ticked, the share sheet gets the Episode's title, the Moment link, and a line of text naming the moment; copying gives just the link. The link preview card stays the Episode's own.
+  - A browser won't play before a tap, so a Moment link opens the Episode in the player paused at the moment, its Play naming the moment. It replaces any resume offer for that visit, though the place saved in another Episode stays saved. The Transcript neither scrolls nor opens on its own; its highlight marks the moment.
   - A moment that isn't in the Episode (not whole seconds, or at or past its end) opens the plain page, with a note by Play that it plays from the start, until the visitor plays.
 
 ## Testing Decisions

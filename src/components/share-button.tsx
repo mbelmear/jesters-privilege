@@ -66,7 +66,7 @@ export function ShareButton({
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+      <div className="flex flex-wrap items-center gap-3">
         <Button type="button" variant="outline" size="lg" onClick={share}>
           <Share aria-hidden="true" />
           {copy.button}
