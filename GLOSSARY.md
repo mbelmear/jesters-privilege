@@ -36,6 +36,10 @@ _Avoid_: Captions, subtitles
 A link to the show, or to one of its Episodes, in a podcast app (Apple Podcasts, Spotify, Amazon Music, YouTube). On an Episode, it opens that Episode in the app; anywhere general, such as the footer, it opens the show. Listening on the site itself needs no Listen link: every Episode plays here, free.
 _Avoid_: Platform link, subscribe button
 
+**Moment link**:
+A link to an Episode that opens it ready to play from a given moment.
+_Avoid_: Timestamp link (a timestamp is a Transcript paragraph's time in the margin), deep link
+
 ## Paintings
 
 **Painting band**:

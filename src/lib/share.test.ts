@@ -31,6 +31,26 @@ describe("shareLink", () => {
     expect(copied).toEqual([]);
   });
 
+  it("gives the share sheet a line of text, but copies only the link", async () => {
+    const moment = {
+      ...link,
+      url: `${link.url}?t=754`,
+      text: "Listen from 12:34",
+    };
+    const shared: ShareData[] = [];
+    const { sharing } = fakeSharing({
+      share: async (data) => {
+        shared.push(data);
+      },
+    });
+    await shareLink(moment, sharing);
+    expect(shared).toEqual([moment]);
+
+    const { sharing: noSheet, copied } = fakeSharing();
+    await shareLink(moment, noSheet);
+    expect(copied).toEqual([`${link.url}?t=754`]);
+  });
+
   it("copies the link where there's no share sheet", async () => {
     const { sharing, copied } = fakeSharing();
     expect(await shareLink(link, sharing)).toBe("copied");

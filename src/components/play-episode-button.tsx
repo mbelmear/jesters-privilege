@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import type { PlayerCopy } from "@/lib/content";
 import type { PlayableEpisode } from "@/lib/feed";
 import { resumeLabel } from "@/lib/format-duration";
+import { momentLabel } from "@/lib/moment";
 import {
   reportPlayerError,
   usePlayer,
@@ -17,6 +18,9 @@ type Props = {
   // which Episode it plays.
   name: string;
   copy: PlayerCopy;
+  // Set when the visit arrived on a Moment link: the words read before the
+  // time while the Episode waits there, "Play from 12:34".
+  playFrom?: string;
 };
 
 /**
@@ -24,7 +28,7 @@ type Props = {
  * An Episode left partly heard on this device offers to resume where it was
  * left, or to start over.
  */
-export function PlayEpisodeButton({ episode, name, copy }: Props) {
+export function PlayEpisodeButton({ episode, name, copy, playFrom }: Props) {
   const player = usePlayer();
   const state = usePlayerState(player);
   const loaded =
@@ -54,6 +58,11 @@ export function PlayEpisodeButton({ episode, name, copy }: Props) {
   }
   if (loaded) {
     const heard = loaded.finished.has(episode.guid);
+    const label = playFrom
+      ? momentLabel(playFrom, loaded.position)
+      : heard
+        ? copy.play
+        : copy.resume;
     return (
       <Button
         type="button"
@@ -62,7 +71,7 @@ export function PlayEpisodeButton({ episode, name, copy }: Props) {
         onClick={() => player?.resume().catch(reportPlayerError)}
       >
         <Play aria-hidden="true" className="fill-current" />
-        {named(heard ? copy.play : copy.resume)}
+        {named(label)}
       </Button>
     );
   }

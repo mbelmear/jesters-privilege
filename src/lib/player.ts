@@ -145,6 +145,12 @@ export type Player = {
   subscribe: (listener: () => void) => () => void;
   /** Plays an Episode, from `at` seconds if given. The loaded Episode carries on where it is. */
   play: (episode: PlayableEpisode, options?: { at?: number }) => Promise<void>;
+  /**
+   * Loads an Episode paused at `at` seconds, as a Moment link opens it: a
+   * browser won't play before a tap. Until it plays, this device's listening
+   * history is left as it was, and there is no resume offer this visit.
+   */
+  load: (episode: PlayableEpisode, options: { at: number }) => void;
   pause: () => void;
   resume: () => Promise<void>;
   toggle: () => Promise<void>;
@@ -186,6 +192,8 @@ export function createPlayer({
   // playback has just reached the end.
   let durationKnown = false;
   let heardToEnd = false;
+  // Loaded by load() and not yet played: nothing is saved for it until it is.
+  let unheard = false;
   const listeners = new Set<() => void>();
 
   // The Episode the lock screen shows, so its artwork is sent once per load.
@@ -215,17 +223,17 @@ export function createPlayer({
       case "pause":
         // Chromium reports a pause just after an error; the failure stands.
         if (state.mode === "failed") return;
-        history.savePosition(state.episode.guid, state.position, { now: true });
+        savePosition(state.position, { now: true });
         return setState(stopped(state, "paused"));
       case "waiting":
       case "playing":
         if (state.mode !== "playing") return;
         return setState({ ...state, buffering: event.type === "waiting" });
       case "time":
-        history.savePosition(state.episode.guid, event.position);
+        savePosition(event.position);
         return setState({ ...state, position: event.position });
       case "error":
-        history.savePosition(state.episode.guid, state.position, { now: true });
+        savePosition(state.position, { now: true });
         return setState(stopped(state, "failed"));
       case "duration":
         durationKnown = true;
@@ -245,12 +253,22 @@ export function createPlayer({
   }
   audio.subscribe(onAudio);
 
+  // Remembers where the loaded Episode is, once it has played.
+  function savePosition(position: number, options?: { now?: boolean }) {
+    if (state.mode === "empty" || unheard) return;
+    history.savePosition(state.episode.guid, position, options);
+  }
+
   // Asks the audio to play, from the start again if it was heard to the end.
   // A browser may refuse, as when autoplay is blocked, or abandon the attempt
   // when a new Episode loads; the store then shows paused. Any other failure,
   // such as audio it can't decode, is thrown.
   async function startAudio() {
     if (state.mode === "empty") return;
+    if (unheard) {
+      unheard = false;
+      history.markLastPlayed(playableEpisode(state.episode));
+    }
     if (heardToEnd) seek(0);
     if (state.mode === "failed") {
       loadAudio(state.episode);
@@ -279,6 +297,7 @@ export function createPlayer({
     loadCount += 1;
     durationKnown = false;
     heardToEnd = false;
+    unheard = false;
     audio.load(episode.audioUrl);
     audio.setRate(state.speed);
   }
@@ -289,7 +308,7 @@ export function createPlayer({
     const position = Math.min(Math.max(seconds, 0), end);
     heardToEnd = false;
     audio.seek(position);
-    history.savePosition(state.episode.guid, position, { now: true });
+    savePosition(position, { now: true });
     setState({ ...state, position });
   }
 
@@ -316,6 +335,19 @@ export function createPlayer({
       if (at !== undefined) seek(at);
       await startAudio();
     },
+    load(episode, { at }) {
+      loadAudio(episode);
+      unheard = true;
+      state = {
+        mode: "paused",
+        speed: state.speed,
+        finished: state.finished,
+        episode,
+        position: at,
+        duration: episode.durationSeconds,
+      };
+      seek(at);
+    },
     pause() {
       if (state.mode === "empty") return;
       audio.pause();
@@ -341,8 +373,7 @@ export function createPlayer({
     close() {
       if (state.mode === "empty") return;
       // One heard to the end is finished, with no place to resume from.
-      if (!heardToEnd)
-        history.savePosition(state.episode.guid, state.position, { now: true });
+      if (!heardToEnd) savePosition(state.position, { now: true });
       const { speed, finished } = state;
       // A play still pending is now for nothing loaded, and its answer is
       // ignored.

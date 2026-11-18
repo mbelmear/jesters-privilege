@@ -4,8 +4,7 @@ import { useId } from "react";
 import { EpisodeListenLinks } from "@/components/episode-listen-links";
 import { EpisodeTranscript } from "@/components/episode-transcript";
 import { FleuronRule } from "@/components/fleuron-rule";
-import { PlayEpisodeButton } from "@/components/play-episode-button";
-import { ShareButton } from "@/components/share-button";
+import { EpisodeActions } from "@/components/episode-actions";
 import type { EpisodePage, ListenCopy, PlayerCopy } from "@/lib/content";
 import type { EpisodeListenLink } from "@/lib/episode-listen-links";
 import { episodePath, type Episode, type EpisodeInSequence } from "@/lib/feed";
@@ -77,16 +76,14 @@ export function EpisodeDetails({
             {formatListeningTime(episode.durationSeconds, copy.units)}
           </span>
         </p>
-        <div className="mt-2 flex flex-wrap items-start gap-3">
-          <PlayEpisodeButton
+        <div className="mt-2">
+          <EpisodeActions
             episode={playable}
             name={label.kind === "labelled" ? episode.title : label.text}
-            copy={playerCopy}
-          />
-          <ShareButton
             title={episodeTitle(episode, copy)}
             path={episodePath(episode)}
-            copy={copy.share}
+            copy={copy}
+            playerCopy={playerCopy}
           />
         </div>
         <EpisodeListenLinks links={listenLinks} copy={listenCopy} />

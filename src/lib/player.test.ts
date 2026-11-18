@@ -466,6 +466,57 @@ describe("player", () => {
       });
     });
 
+    describe("opening at a moment", () => {
+      it("loads the Episode paused at the moment, offering no resume", async () => {
+        const { storage } = await listenTo(1234);
+        const { audio, player } = setup({ storage });
+        player.load(secondEpisode, { at: 754 });
+        expect(audio.src).toBe("https://example.com/ep-2.mp3");
+        expect(audio.playing).toBe(false);
+        expect(audio.position).toBe(754);
+        expect(player.getState()).toMatchObject({
+          mode: "paused",
+          episode: { guid: "ep-2" },
+          position: 754,
+        });
+        expect(player.resumeOffer()).toBeNull();
+      });
+
+      it("plays from the moment when resumed", async () => {
+        const { audio, player } = setup({ storage: memoryStorage() });
+        player.load(secondEpisode, { at: 754 });
+        await player.resume();
+        expect(audio.playing).toBe(true);
+        expect(audio.position).toBe(754);
+        expect(player.getState().mode).toBe("playing");
+      });
+
+      it("keeps this device's saved places until it plays", async () => {
+        const { storage } = await listenTo(1234);
+        const { player } = setup({ storage });
+        player.load(secondEpisode, { at: 754 });
+        const later = setup({ storage }).player;
+        expect(later.savedPosition("ep-2")).toBeNull();
+        expect(later.resumeOffer()).toMatchObject({
+          episode: { guid: "ep-1" },
+          position: 1234,
+        });
+      });
+
+      it("remembers the Episode once it plays", async () => {
+        const storage = memoryStorage();
+        const { audio, player } = setup({ storage });
+        player.load(secondEpisode, { at: 754 });
+        await player.resume();
+        audio.playTo(800);
+        player.pause();
+        expect(setup({ storage }).player.resumeOffer()).toMatchObject({
+          episode: { guid: "ep-2" },
+          position: 800,
+        });
+      });
+    });
+
     it("offers nothing on a first visit", () => {
       const { player } = setup({ storage: memoryStorage() });
       expect(player.savedPosition("ep-1")).toBeNull();
