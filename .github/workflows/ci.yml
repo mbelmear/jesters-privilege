@@ -26,7 +26,7 @@ jobs:
         with:
           args: -color
       # actionlint's shellcheck covers only workflows' run: blocks. The unit
-      # tests check composite actions' (scripts/shellcheck-actions.test.ts).
+      # tests check composite actions' (tests/unit/scripts/shellcheck-actions.test.ts).
       - run: npm run --silent lint:shell
       # Template injection, permissions, and credentials left in a checkout.
       - run: npm run --silent lint:zizmor
@@ -54,7 +54,7 @@ jobs:
   # failed, so a broken check costs time, not coverage. The jobs after the
   # build name its result too, because the default condition would skip them
   # for this job, however far back in `needs` it sits (#171 showed it), and a
-  # skipped job passes as a required check. scripts/workflows.test.ts holds each
+  # skipped job passes as a required check. tests/unit/scripts/workflows.test.ts holds each
   # job to this.
   docs-only:
     name: Docs-only check

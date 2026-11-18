@@ -1,5 +1,5 @@
 # Every class the stylesheet every page loads compiles, one per line, sorted.
-# scripts/compiled-classes.test.ts fails when the build compiles a class this list
+# tests/unit/scripts/compiled-classes.test.ts fails when the build compiles a class this list
 # lacks, or lists one it no longer compiles: each class a change adds is paid
 # for by every page, so it shows here (CODING_STANDARDS.md, Performance).
 *:data-[slot=select-value]:flex
@@ -131,7 +131,6 @@ empty:hidden
 fill-brand
 fill-current
 fill-frame
-filter
 first-letter:border-2
 first-letter:border-primary
 first-letter:float-left
@@ -244,7 +243,6 @@ lg:text-6xl
 lg:text-7xl
 line-clamp-3
 lowercase
-m-1
 max-h-(--radix-dropdown-menu-content-available-height)
 max-h-(--radix-select-content-available-height)
 max-w-2xl
@@ -369,7 +367,6 @@ scroll-my-1
 select-none
 self-center
 self-start
-sepia
 shadow-dock
 shadow-lg
 shadow-md
@@ -471,7 +468,6 @@ underline
 underline-offset-3
 underline-offset-4
 uppercase
-visible
 w-10
 w-48
 w-64

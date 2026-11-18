@@ -1,0 +1,159 @@
+/**
+ * @jest-environment node
+ */
+import { execFileSync, spawnSync } from "node:child_process";
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  realpathSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
+import { delimiter, join } from "node:path";
+import { repoRoot, scriptsDir } from "../../paths";
+
+// Git run from a hook inherits GIT_DIR and GIT_INDEX_FILE, which point every
+// git command at the real repository (merge-holds-branch.test.ts tells that
+// story), so every git here drops them.
+const env = { ...process.env };
+for (const name of Object.keys(env)) {
+  if (name.startsWith("GIT_")) delete env[name];
+}
+
+describe("npm run worktree", () => {
+  let root: string;
+  const git = (cwd: string, ...args: string[]) =>
+    execFileSync("git", args, { cwd, env, encoding: "utf8" }).trim();
+  const commitScript = (cwd: string, says: string) => {
+    writeFileSync(
+      join(cwd, "scripts", "new-worktree.sh"),
+      `#!/usr/bin/env bash\necho "${says}: $1 $2"\n`
+    );
+    git(cwd, "add", "-A");
+    git(
+      cwd,
+      "-c",
+      "user.email=test@example.com",
+      "-c",
+      "user.name=Test",
+      "-c",
+      "commit.gpgsign=false",
+      "commit",
+      "--quiet",
+      "-m",
+      says
+    );
+  };
+
+  beforeEach(() => {
+    root = realpathSync(mkdtempSync(join(tmpdir(), "new-worktree-")));
+  });
+
+  afterEach(() => {
+    rmSync(root, { recursive: true, force: true });
+  });
+
+  it("runs origin/main's script from a checkout that is behind", () => {
+    const origin = join(root, "origin");
+    const checkout = join(root, "checkout");
+    execFileSync("git", ["init", "--quiet", "--initial-branch=main", origin], {
+      env,
+    });
+    mkdirSync(join(origin, "scripts"));
+    copyFileSync(join(repoRoot, "package.json"), join(origin, "package.json"));
+    commitScript(origin, "stale");
+    execFileSync("git", ["clone", "--quiet", origin, checkout], { env });
+    commitScript(origin, "current");
+
+    const result = spawnSync(
+      "npm",
+      ["run", "--silent", "worktree", "--", "104", "a-branch"],
+      { cwd: checkout, env, encoding: "utf8" }
+    );
+
+    expect(result.stdout).toContain("current: 104 a-branch");
+    expect(result.status).toBe(0);
+  });
+});
+
+describe("new-worktree.sh", () => {
+  let root: string;
+  const script = join(scriptsDir, "new-worktree.sh");
+  // No machine-wide config, so only what a test sets counts. npm and npx are
+  // stand-ins: installing isn't what's tested.
+  const noConfig = {
+    ...env,
+    GIT_CONFIG_GLOBAL: "/dev/null",
+    GIT_CONFIG_NOSYSTEM: "1",
+  };
+
+  beforeEach(() => {
+    root = realpathSync(mkdtempSync(join(tmpdir(), "new-worktree-")));
+    const bin = join(root, "bin");
+    mkdirSync(bin);
+    for (const tool of ["npm", "npx"]) {
+      writeFileSync(join(bin, tool), "#!/bin/sh\n", { mode: 0o755 });
+    }
+    const origin = join(root, "origin");
+    execFileSync("git", ["init", "--quiet", "--initial-branch=main", origin], {
+      env: noConfig,
+    });
+    execFileSync(
+      "git",
+      [
+        "-c",
+        "user.email=test@example.com",
+        "-c",
+        "user.name=Test",
+        "-c",
+        "commit.gpgsign=false",
+        "commit",
+        "--quiet",
+        "--allow-empty",
+        "-m",
+        "start",
+      ],
+      { cwd: origin, env: noConfig }
+    );
+    execFileSync("git", ["clone", "--quiet", origin, join(root, "checkout")], {
+      env: noConfig,
+    });
+  });
+
+  afterEach(() => {
+    rmSync(root, { recursive: true, force: true });
+  });
+
+  const run = () =>
+    spawnSync("bash", [script, "104", "a-branch"], {
+      cwd: join(root, "checkout"),
+      env: {
+        ...noConfig,
+        PATH: `${join(root, "bin")}${delimiter}${env.PATH}`,
+      },
+      encoding: "utf8",
+    });
+
+  it("refuses a machine with no git identity, before making a worktree", () => {
+    const result = run();
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("git config --global user.email");
+    expect(existsSync(join(root, "jp-104"))).toBe(false);
+  });
+
+  it("makes the worktree once an identity is set", () => {
+    execFileSync("git", ["config", "user.email", "test@example.com"], {
+      cwd: join(root, "checkout"),
+      env: noConfig,
+    });
+
+    const result = run();
+
+    expect(result.stdout).toContain("Ready:");
+    expect(existsSync(join(root, "jp-104"))).toBe(true);
+  });
+});

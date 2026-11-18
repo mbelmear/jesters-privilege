@@ -26,7 +26,7 @@ const phone = { width: 390, height: 844 };
 const emptyFeed = process.env.FEED === "empty";
 
 export default defineConfig({
-  testDir: "./e2e",
+  testDir: "./tests/e2e",
   grep: emptyFeed ? /@empty-feed/ : undefined,
   grepInvert: emptyFeed ? undefined : /@empty-feed/,
   fullyParallel: true,
@@ -36,7 +36,7 @@ export default defineConfig({
     ? [
         ["github"],
         ["html", { open: "never" }],
-        ["./e2e/near-timeout-reporter.ts"],
+        ["./tests/e2e/near-timeout-reporter.ts"],
       ]
     : "list",
   use: {
