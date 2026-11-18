@@ -1,8 +1,9 @@
 // Screenshots of a page of the built site in out/, for checking a visual
 // change: phone and desktop, light and dark, each the full page after
-// scrolling through it (so reveals and lazy images have run), plus the
-// phone's first screen, where most visitors land from Instagram. It also prints
-// the page's tab title, which no screenshot shows.
+// scrolling through it (so reveals and lazy images have run), plus each
+// size's first screen at full size: the phone's is where most visitors land
+// from Instagram, and a full desktop page shrinks past reading (#243's had to
+// be cropped). It also prints the page's tab title, which no screenshot shows.
 // It refuses a missing or stale build in out/; run `npm run build` first. Usage:
 //   npm run screenshots -- <page path> [folder] [--click <name>]... [--fill <label>=<text>]... [--drop-audio] [--submit <status>=<json>] [--grant clipboard] [--storage <key>=<json>]... [--element <selector>]... [--missing]
 // A path the site doesn't have answers with the 404 page, so it fails unless
@@ -180,12 +181,12 @@ async function main() {
         // Lazily loaded code (Motion, for an on-scroll reveal) arrives
         // before the scroll that should trigger it.
         await tab.waitForLoadState("networkidle");
-        if (size === "phone" && colorScheme === "light") {
-          console.log(`Tab title: ${await tab.title()}`);
+        if (colorScheme === "light") {
+          if (size === "phone") console.log(`Tab title: ${await tab.title()}`);
           // The first screen's own reveal takes most of a second to rise.
           await tab.waitForTimeout(1200);
           await tab.screenshot({
-            path: join(folder, "phone-first-screen.png"),
+            path: join(folder, `${size}-first-screen.png`),
           });
         }
         await scrollThrough(tab);

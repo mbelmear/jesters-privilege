@@ -63,7 +63,7 @@ describe("momentLink", () => {
 
 describe("momentLabel", () => {
   it("reads the moment after its phrase", () => {
-    expect(momentLabel("Start at", 754)).toBe("Start at 12:34");
-    expect(momentLabel("Start at", 3754)).toBe("Start at 1:02:34");
+    expect(momentLabel("Jump to", 754)).toBe("Jump to 12:34");
+    expect(momentLabel("Jump to", 3754)).toBe("Jump to 1:02:34");
   });
 });

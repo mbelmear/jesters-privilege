@@ -30,6 +30,7 @@
     "lighthouse:compare": "scripts/lighthouse-compare.sh",
     "lighthouse:spread": "scripts/lighthouse-spread.sh",
     "screenshots": "tsx scripts/screenshots.ts",
+    "compiled-classes": "tsx scripts/compiled-classes.ts",
     "trace": "tsx scripts/trace-summary.ts",
     "ci-times": "tsx scripts/ci-times.ts",
     "test-times": "tsx scripts/test-times.ts",
