@@ -1,7 +1,8 @@
 # Every class the stylesheet every page loads compiles, one per line, sorted.
-# tests/unit/scripts/compiled-classes.test.ts fails when the build compiles a class this list
-# lacks, or lists one it no longer compiles: each class a change adds is paid
-# for by every page, so it shows here (CODING_STANDARDS.md, Performance).
+# tests/unit/scripts/compiled-classes.test.ts fails when the build compiles a
+# class this list lacks, or lists one it no longer compiles: each class a change
+# adds is paid for by every page, so it shows here (CODING_STANDARDS.md,
+# Performance).
 *:data-[slot=select-value]:flex
 *:data-[slot=select-value]:gap-2
 *:data-[slot=select-value]:items-center

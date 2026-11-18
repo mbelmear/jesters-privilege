@@ -3,6 +3,8 @@ import { failedTests, nightlyReport, ZIZMOR_JOB } from "@/lib/nightly-report";
 
 // A job's log, as Nightly's run of 2026-11-05 printed it: each failure's detail,
 // then the closing summary, with a flaky test added to show it's left out.
+// Its spec paths read tests/e2e/, where specs have lived since #246; that run
+// printed e2e/.
 const LOG = [
   "2026-11-05T17:27:39.2325812Z ##[error]  1) [firefox-phone] › tests/e2e/player.spec.ts:62:7 › Persistent player › offers to resume from any page on a return visit ",
   "2026-11-05T17:27:39.2400000Z     Retry #1 ───────────────────────",

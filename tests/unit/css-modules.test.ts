@@ -13,11 +13,10 @@ import { srcDir } from "../paths";
 // every page's stylesheet (#92's first specimen, with `--radius-sm`). next/jest
 // maps every module to an identity proxy, so before a lighthouse:compare run
 // only this check sees either.
-const src = srcDir;
-const modules = globSync("**/*.module.css", { cwd: src }).sort();
+const modules = globSync("**/*.module.css", { cwd: srcDir }).sort();
 
 // Read by path: under Jest, resolving a .css file gives Next's style mock.
-const read = (path: string) => readFileSync(join(src, path), "utf8");
+const read = (path: string) => readFileSync(join(srcDir, path), "utf8");
 const globals = read("app/globals.css");
 // The stylesheet holding the theme of each package globals.css imports.
 const imported: Record<string, string> = {

@@ -13,13 +13,13 @@ Add `firefox` to that install if you want to run the nightly browser locally.
 
 ## Unit and component tests (Jest)
 
-Jest uses Next's preset (`next/jest`), React Testing Library, and jest-axe. Tests live in `tests/`, apart from the code, so `src/` and `scripts/` hold only the code itself. A unit test sits at the path of the code it tests under `tests/unit/` (`src/lib/feed.ts` is tested by `tests/unit/lib/feed.test.ts`, `scripts/merge-on-green.sh` by `tests/unit/scripts/merge-on-green.test.ts`), named `*.test.ts` or `*.test.tsx`, and imports the code through `@/`. A test that reads or runs a file by path builds it from `tests/paths.ts` (`repoRoot`, `srcDir`, `scriptsDir`), never from its own directory. Data only tests read lives in `tests/fixtures/` (the Playwright trace that `tests/unit/lib/trace-summary.test.ts` reads); a fixture the build reads, such as `src/content/feed-fixture.xml`, stays with the code. `tests/unit/test-locations.test.ts` fails on a test or spec left under `src/` or `scripts/`.
+Jest uses Next's preset (`next/jest`), React Testing Library, and jest-axe. Tests live in `tests/`, apart from the code, so `src/` and `scripts/` hold only the code itself. A unit test mirrors the path of the code it tests under `tests/unit/` (`src/lib/feed.ts` is tested by `tests/unit/lib/feed.test.ts`, `scripts/merge-on-green.sh` by `tests/unit/scripts/merge-on-green.test.ts`), named `*.test.ts` or `*.test.tsx`, and imports the code through `@/`. A test that reads or runs a file by path builds it from `tests/paths.ts` (`repoRoot`, `srcDir`, `scriptsDir`), never from its own directory. Data only tests read lives in `tests/fixtures/` (the Playwright trace that `tests/unit/lib/trace-summary.test.ts` reads); a fixture the build reads, such as `src/content/feed-fixture.xml`, stays with the code. A test of the whole tree, such as `tests/unit/test-locations.test.ts`, which fails on a test or spec left under `src/` or `scripts/`, sits at the top of `tests/unit/`.
 
 ```bash
 npm test                    # run once
 npm run test:watch          # rerun on change
 npm run test:coverage       # with coverage, as CI runs it
-npx jest src/lib            # one folder or file
+npx jest tests/unit/lib     # one folder or file
 ```
 
 - **Logic modules** live in `src/lib/`. Coverage there must stay at or above 90% of lines, or `test:coverage` fails.
