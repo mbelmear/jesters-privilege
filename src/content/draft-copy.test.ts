@@ -16,7 +16,7 @@ const root = join(__dirname, "../..");
 const read = (path: string) => readFileSync(join(root, path), "utf8");
 
 // Every string in the content, split by whether a draft record holds it.
-function strings(
+function contentStrings(
   value: ContentValue,
   inDraft = false,
   found = { draft: new Set<string>(), final: new Set<string>() }
@@ -25,21 +25,21 @@ function strings(
     (inDraft ? found.draft : found.final).add(value);
   } else if (Array.isArray(value)) {
     const items: readonly ContentValue[] = value;
-    for (const item of items) strings(item, inDraft, found);
+    for (const item of items) contentStrings(item, inDraft, found);
   } else if (typeof value === "object" && value !== null) {
     const draft = inDraft || ("draft" in value && value.draft === true);
-    for (const item of Object.values(value)) strings(item, draft, found);
+    for (const item of Object.values(value)) contentStrings(item, draft, found);
   }
   return found;
 }
 
-const { draft, final } = strings(content);
+const { draft, final } = contentStrings(content);
 // Words a final record also holds can't be told apart in a test: the
 // Transcript's final "Play from" stays readable as plain text.
 const draftOnly = [...draft].filter((text) => !final.has(text));
 const quotes = ['"', "'", "`", "“"];
 
-// The places in a file where a draft text opens a quoted string.
+// The draft texts that open a quoted string somewhere in a file.
 function quotedDrafts(text: string, drafts: readonly string[]): string[] {
   return drafts.filter((copy) =>
     quotes.some((quote) => text.includes(quote + copy))
@@ -57,6 +57,7 @@ describe("draft copy", () => {
 
   const tests = [
     ...globSync("src/**/*.test.{ts,tsx}", { cwd: root }),
+    ...globSync("scripts/**/*.test.ts", { cwd: root }),
     ...globSync("e2e/**/*.ts", { cwd: root }),
   ]
     .filter((path) => !path.endsWith("draft-copy.test.ts"))
