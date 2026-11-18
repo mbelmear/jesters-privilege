@@ -35,7 +35,7 @@ describe("shareLink", () => {
     const moment = {
       ...link,
       url: `${link.url}?t=754`,
-      text: "Listen from 12:34",
+      text: "Hear this bit",
     };
     const shared: ShareData[] = [];
     const { sharing } = fakeSharing({
