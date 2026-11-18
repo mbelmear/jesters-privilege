@@ -135,7 +135,7 @@ describe("content", () => {
   // where a Jester says it, so transcripts/ is skipped.
   it("names no church", () => {
     const files = readdirSync(contentDir, { withFileTypes: true })
-      .filter((entry) => entry.isFile() && !/\.test\.tsx?$/.test(entry.name))
+      .filter((entry) => entry.isFile())
       .map((entry) => entry.name);
     expect(
       files.filter((name) =>
@@ -264,9 +264,7 @@ describe("microcopy", () => {
     readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
       const path = join(dir, entry.name);
       if (entry.isDirectory()) return sources(path);
-      return /\.tsx?$/.test(entry.name) && !/\.test\.tsx?$/.test(entry.name)
-        ? [path]
-        : [];
+      return /\.tsx?$/.test(entry.name) ? [path] : [];
     });
   const code = sources(srcDir)
     .filter((path) => !path.endsWith(join("content", "microcopy.ts")))

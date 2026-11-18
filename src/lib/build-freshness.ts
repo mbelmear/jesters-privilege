@@ -9,19 +9,16 @@ export type BuildFreshness =
   { kind: "missing" } | { kind: "stale"; newest: string } | { kind: "fresh" };
 
 // `builtMs` is when out/index.html was written, or null when there is none.
-// Tests are left out: they change nothing a visitor sees.
 export function buildFreshness(
   builtMs: number | null,
   sources: readonly SourceFile[]
 ): BuildFreshness {
   if (builtMs === null) return { kind: "missing" };
-  const newest = sources
-    .filter(({ path }) => !/\.test\.tsx?$/.test(path))
-    .reduce<SourceFile | null>(
-      (latest, file) =>
-        latest === null || file.modifiedMs > latest.modifiedMs ? file : latest,
-      null
-    );
+  const newest = sources.reduce<SourceFile | null>(
+    (latest, file) =>
+      latest === null || file.modifiedMs > latest.modifiedMs ? file : latest,
+    null
+  );
   return newest !== null && newest.modifiedMs > builtMs
     ? { kind: "stale", newest: newest.path }
     : { kind: "fresh" };

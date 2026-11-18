@@ -88,10 +88,9 @@ const eslintConfig = defineConfig([
   },
   // Colors and fonts come from the design tokens in `src/app/globals.css`, so
   // dark mode and a rebrand stay one-file changes. Applies to everything in
-  // `src/` except tests.
+  // `src/`.
   {
     files: ["src/**/*.{ts,tsx}"],
-    ignores: ["**/*.test.{ts,tsx}"],
     rules: {
       "no-restricted-syntax": [
         "error",

@@ -20,15 +20,4 @@ describe("buildFreshness", () => {
   it("finds the build fresh when it is newer than every source", () => {
     expect(buildFreshness(3_000, sources)).toEqual({ kind: "fresh" });
   });
-
-  // A test changes nothing a visitor sees, so editing one after the build
-  // needs no rebuild.
-  it("ignores tests changed after the build", () => {
-    expect(
-      buildFreshness(3_000, [
-        ...sources,
-        { path: "src/app/page.test.tsx", modifiedMs: 9_000 },
-      ])
-    ).toEqual({ kind: "fresh" });
-  });
 });

@@ -1,9 +1,9 @@
 /*
  * Tailwind compiles every class name it finds in the files it scans,
  * comments and strings included, into the stylesheet every page loads. It
- * scans src/ (Jest tests included) without its Markdown: the docs, scripts,
- * browser tests, and lint config name utilities as examples (the colours
- * CODING_STANDARDS.md bans), and those reached every page when the whole
+ * scans src/ without its Markdown: the docs, scripts, tests, and lint
+ * config name utilities as examples (the colours CODING_STANDARDS.md
+ * bans), and those reached every page when the whole
  * repo was scanned (#26). This comment names no class, since this file is
  * scanned too; docs/compiled-classes.txt lists what it compiles.
  */

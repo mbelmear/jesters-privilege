@@ -4,11 +4,12 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { summariseTrace, type TraceFile } from "@/lib/trace-summary";
+import { repoRoot } from "../../paths";
 
 // A failing test's trace, cut down from CI run 41005625683's and from real
 // traces of a page error and a test timeout. Times are round so each row below
 // can be worked out by eye: the earliest context began at 1000.
-const folder = join(process.cwd(), "scripts", "trace-fixture");
+const folder = join(repoRoot, "tests", "fixtures", "trace");
 const fixture: TraceFile[] = readdirSync(folder).map((name) => ({
   name,
   text: readFileSync(join(folder, name), "utf8"),

@@ -9,10 +9,13 @@ import { repoRoot } from "../paths";
 // (docs/testing.md, Unit tests).
 describe("test locations", () => {
   it.each(["src", "scripts"])("puts no test or spec file in %s/", (dir) => {
-    const misplaced = globSync(`${dir}/**/*.{test,spec}.{ts,tsx}`, {
-      cwd: repoRoot,
-    }).map((path) =>
-      path.endsWith(".spec.ts") || path.endsWith(".spec.tsx")
+    const misplaced = globSync(
+      `${dir}/**/*.{test,spec}.{ts,tsx,js,jsx,mjs,cjs}`,
+      {
+        cwd: repoRoot,
+      }
+    ).map((path) =>
+      /\.spec\.\w+$/.test(path)
         ? `${path}: move it under tests/e2e/`
         : `${path}: move it to tests/unit/${path.replace(/^src\//, "")}`
     );
