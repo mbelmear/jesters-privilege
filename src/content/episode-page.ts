@@ -31,4 +31,13 @@ export const episodePage = {
       text: "Your browser wouldn't copy the link, so do it the old-fashioned way: copy this page's address to share it.",
     },
   },
+  moment: {
+    startAt: { text: "Start at", draft: true },
+    shareText: { text: "Listen from", draft: true },
+    playFrom: { text: "Play from", draft: true },
+    bad: {
+      text: "That moment isn't in this Episode, so it plays from the start.",
+      draft: true,
+    },
+  },
 } as const satisfies EpisodePage;

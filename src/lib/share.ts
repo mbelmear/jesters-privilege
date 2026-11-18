@@ -1,7 +1,9 @@
 // Sharing a page: the native share sheet where the browser has one (phones,
 // mostly), otherwise copying the link for the visitor to paste.
 
-export type ShareTarget = { title: string; url: string };
+// The text goes to the share sheet only, as the message sent with the link;
+// copying gives just the link.
+export type ShareTarget = { title: string; url: string; text?: string };
 
 // What the browser can do; browserSharing() is the real one.
 export type Sharing = {

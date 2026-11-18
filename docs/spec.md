@@ -331,6 +331,11 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
   - **Episode**: a parchment card with a large "Episode N" in Gloock, the title, the logo mark, and a teal band
   - **Site-wide**: the logo, tagline, and a painting detail
 - A Share button on Episodes and Fools: the native share sheet where available, otherwise copy the link with a confirmation.
+- On an Episode page, Share can send a **Moment link** (`?t=<seconds>`, for example `?t=754`):
+  - While that Episode is in the player, a "Start at 12:34" checkbox shows by Share, unticked, so sharing the whole Episode stays the default. Its time is the player's position less a 5-second lead-in (never below 0), to the second, and follows playback until ticked, which freezes it. To share another moment, the sharer scrubs there first.
+  - Ticked, the share sheet gets the Episode's title, the Moment link, and the text "Listen from 12:34"; copying gives just the link. The link preview card stays the Episode's own.
+  - A browser won't play before a tap, so a Moment link opens the Episode in the player paused at the moment, its Play reading "Play from 12:34". It replaces any resume offer for that visit, though the place saved in another Episode stays saved. The Transcript neither scrolls nor opens on its own; its highlight marks the moment.
+  - A moment that isn't in the Episode (not whole seconds, or at or past its end) opens the plain page, with a note by Play that it plays from the start, until the visitor plays.
 
 ## Testing Decisions
 
@@ -353,6 +358,7 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
   - audio keeps playing across navigation
   - archive play-in-place
   - Transcript timestamps seek the player
+  - a Moment link opens its Episode paused at the moment, with no resume offer
   - the theme toggle persists, with no flash
   - the mobile menu's focus handling
   - the Speak Freely form succeeds and fails gracefully, using Turnstile's test keys
@@ -369,7 +375,7 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
 ## Out of Scope
 
 - Site-only Episode extras (Scripture passages, books mentioned), the Scripture index, the Jester's Library, topic and series browsing, site search.
-- Player queue, autoplay, sleep timer, downloads, chapters, and share-from-timestamp.
+- Player queue, autoplay, sleep timer, downloads, and chapters.
 - Proofreading every Transcript.
 - Newsletter, merch, blog, comments, accounts, a CMS, and a database.
 - Forwarding `hello@` to several inboxes: everything goes to the show's Gmail.

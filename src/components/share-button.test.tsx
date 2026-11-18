@@ -23,7 +23,15 @@ function stubNavigator(stubs: {
 }
 
 const renderShare = () =>
-  render(<ShareButton title={title} path="/episodes/1" copy={copy} />);
+  render(
+    <ShareButton
+      title={title}
+      path="/episodes/1"
+      episodeGuid="https://api.spreaker.com/episode/1"
+      copy={copy}
+      momentCopy={content.episodePage.moment}
+    />
+  );
 
 describe("ShareButton", () => {
   // userEvent.setup() puts its own clipboard on navigator; each test sets

@@ -60,6 +60,23 @@ test.describe("Persistent player", () => {
     await expectPlaying(page);
   });
 
+  test("opens a Moment link paused at its moment, in place of a resume offer", async ({
+    page,
+  }) => {
+    await rememberEpisodeTwo(page);
+    await page.goto("/episodes/1?t=40");
+    await expect(playerBar(page)).toContainText("Celebrity Pastors");
+    await expect(
+      page.getByRole("button", { name: /^Resume from/ })
+    ).toHaveCount(0);
+    expect((await audioState(page)).paused).toBe(true);
+    await startEpisode(page, "Play from 0:40 Episode 1");
+    await expect
+      .poll(async () => (await audioState(page)).time, { timeout: 5000 })
+      .toBeGreaterThanOrEqual(40);
+    await expectPlaying(page);
+  });
+
   test("offers to resume from any page on a return visit", async ({ page }) => {
     await rememberEpisodeTwo(page);
     await page.goto("/gallery");
