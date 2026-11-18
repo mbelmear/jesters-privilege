@@ -12,7 +12,7 @@ export const TERMINAL_COLOR = /\u001b\[[0-9;]*m/g;
 // The heading of Playwright's closing summary. Failures' details come first,
 // and they name a test that passed on a retry too, so only this is read.
 const FAILED_HEADING = /\s\d+ failed\s*$/;
-const LISTED_TEST = /(\[[a-z]+-[a-z]+\]) › (e2e\/\S+:\d+:\d+ › .+?)\s*$/;
+const LISTED_TEST = /(\[[a-z]+-[a-z]+\]) › (tests\/e2e\/\S+:\d+:\d+ › .+?)\s*$/;
 
 /** Each test a job's log lists as failed, as its closing summary lists them. */
 export function failedTests(log: string): string[] {

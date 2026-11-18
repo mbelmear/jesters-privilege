@@ -8,7 +8,8 @@ const config: Config = {
   testEnvironment: "jsdom",
   setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
   moduleNameMapper: { "^@/(.*)$": "<rootDir>/src/$1" },
-  testPathIgnorePatterns: ["<rootDir>/node_modules/", "<rootDir>/e2e/"],
+  // Unit tests live in tests/unit, apart from the code they test (docs/testing.md).
+  testMatch: ["<rootDir>/tests/unit/**/*.test.{ts,tsx}"],
   collectCoverageFrom: ["src/**/*.{ts,tsx}", "!src/**/*.d.ts"],
   // Logic modules live in src/lib and must stay well covered. Components are
   // covered by their own tests and by Playwright, so they carry no threshold.

@@ -1,6 +1,6 @@
 /* The style guide's CSS module specimen (#92), plain CSS on :root's tokens
-   (src/css-modules.test.ts). Each style here is one no utility on the style
-   guide gives, so the browser test can tell the module applied. */
+   (tests/unit/css-modules.test.ts). Each style here is one no utility on
+   the style guide gives, so the browser test can tell the module applied. */
 
 .proclamation {
   border: 4px double var(--border);

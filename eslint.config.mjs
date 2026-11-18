@@ -88,10 +88,9 @@ const eslintConfig = defineConfig([
   },
   // Colors and fonts come from the design tokens in `src/app/globals.css`, so
   // dark mode and a rebrand stay one-file changes. Applies to everything in
-  // `src/` except tests.
+  // `src/`.
   {
     files: ["src/**/*.{ts,tsx}"],
-    ignores: ["**/*.test.{ts,tsx}"],
     rules: {
       "no-restricted-syntax": [
         "error",
@@ -147,7 +146,7 @@ const eslintConfig = defineConfig([
     },
   },
   {
-    files: ["**/*.test.{ts,tsx}", "e2e/**"],
+    files: ["tests/**"],
     rules: {
       "@typescript-eslint/consistent-type-assertions": "off",
     },
@@ -172,7 +171,7 @@ const eslintConfig = defineConfig([
           selector:
             "CallExpression[callee.object.name='jest'][callee.property.name=/^isolateModules/]",
           message:
-            "jest.isolateModules loads a second React, which breaks hooks. To swap what a module returns, jest.mock it around the real one, as src/app/episodes/page.test.tsx does with getEpisodes.",
+            "jest.isolateModules loads a second React, which breaks hooks. To swap what a module returns, jest.mock it around the real one, as tests/unit/app/episodes/page.test.tsx does with getEpisodes.",
         },
       ],
     },
@@ -181,7 +180,7 @@ const eslintConfig = defineConfig([
   // spend rendering no frames at all (#60). An empty toContainText matches
   // any element, as an empty toHaveTextContent does in Jest.
   {
-    files: ["e2e/**"],
+    files: ["tests/e2e/**"],
     rules: {
       "no-restricted-syntax": [
         "error",

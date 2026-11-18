@@ -348,7 +348,7 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
   5. **Components**: rendered with React Testing Library, asserting what a user sees, including every missing-input and empty state, with jest-axe accessibility assertions.
   6. **Built site**: Playwright drives the exported site.
   7. **Build manifest** (`src/lib/build-manifest.ts`): a value in, a `BuildManifest` or a descriptive error out. The feed check reads the live site's manifest through it.
-  8. **Script logic**: what a script in `scripts/` decides lives in `src/lib/`, text in and text out. What it writes through `gh` is tested against a mocked `child_process` (`scripts/failed-run.test.ts`).
+  8. **Script logic**: what a script in `scripts/` decides lives in `src/lib/`, text in and text out. What it writes through `gh` is tested against a mocked `child_process` (`tests/unit/scripts/failed-run.test.ts`).
 - **Layers in CI on every pull request** (one changing only `docs/**` or top-level Markdown runs Jest alone):
   - **Jest** with React Testing Library and jest-axe. Coverage thresholds (about 90% of lines) on logic modules.
   - **Playwright** on Chromium and WebKit at phone and desktop sizes, with axe scans of every page. Firefox runs nightly.
@@ -366,11 +366,11 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
   - the zero-Episodes state with an empty-feed fixture
   - closing the player stops audio, and Play afterwards resumes
 - **Prior art**, the tests to copy for each layer:
-  - **Jest, logic modules**: `src/lib/feed.test.ts` and `src/lib/player.test.ts`.
-  - **Jest, Worker**: `src/worker/index.test.ts`, with a fake environment for its bindings.
-  - **Jest, components**: `src/components/site-header.test.tsx`.
-  - **Playwright**: `e2e/player.spec.ts`.
-  - **Lighthouse CI**: the budgets in `lighthouserc.json`, with `src/lib/lighthouse.test.ts` checking their URL patterns.
+  - **Jest, logic modules**: `tests/unit/lib/feed.test.ts` and `tests/unit/lib/player.test.ts`.
+  - **Jest, Worker**: `tests/unit/worker/index.test.ts`, with a fake environment for its bindings.
+  - **Jest, components**: `tests/unit/components/site-header.test.tsx`.
+  - **Playwright**: `tests/e2e/player.spec.ts`.
+  - **Lighthouse CI**: the budgets in `lighthouserc.json`, with `tests/unit/lib/lighthouse.test.ts` checking their URL patterns.
 
 ## Out of Scope
 

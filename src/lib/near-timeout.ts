@@ -1,7 +1,7 @@
 // A browser test that passes using most of its time fails on the next slow
 // runner: in #199's Nightly, the hover sweep timed out on one run and passed
 // at 28.3-29.5 s of its 30 s on the other three.
-// e2e/near-timeout-reporter.ts names each one, so it's seen while it passes.
+// tests/e2e/near-timeout-reporter.ts names each one, so it's seen while it passes.
 
 /** The share of its timeout past which a passing test is near it. */
 export const NEAR_TIMEOUT_SHARE = 0.6;
