@@ -192,9 +192,9 @@ export async function loadTranscriptTexts(
   );
 }
 
-// Transcripts as JSON, so a build from the live feed reads them once, before
-// Next's workers render the pages and the build manifest, and every one of
-// them reads the same answer (scripts/transcripts.ts).
+// Transcripts as JSON, so a build reads them once, before Next's workers
+// render the pages and the build manifest, and every one of them reads the
+// same answer (src/lib/episode-feed.ts).
 export function serializeTranscriptTexts(texts: TranscriptTexts): {
   [guid: string]: string;
 } {

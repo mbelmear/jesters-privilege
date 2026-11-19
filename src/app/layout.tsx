@@ -5,9 +5,8 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { WebAnalytics } from "@/components/web-analytics";
 import { content } from "@/content";
-import { feedSource, getEpisodes } from "@/content/feed";
+import { feed, getEpisodes } from "@/content/feed";
 import { analyticsToken } from "@/lib/analytics";
-import { feedUrl } from "@/lib/feed-source";
 import { siteOpenGraph } from "@/lib/seo";
 import { motionCss, motionPresets } from "@/lib/motion";
 import { themeScript } from "@/lib/theme";
@@ -74,7 +73,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           rel="alternate"
           type="application/rss+xml"
           title={site.name}
-          href={feedUrl(feedSource)}
+          href={feed.address}
         />
       </head>
       <body className="flex min-h-full flex-col">

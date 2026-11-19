@@ -5,7 +5,7 @@ import { EpisodeDetails } from "@/components/episode-details";
 import { JsonLd } from "@/components/json-ld";
 import { content } from "@/content";
 import {
-  feedSource,
+  feed,
   getEpisodeListenLinks,
   getEpisodes,
   getTranscript,
@@ -56,7 +56,14 @@ export default async function EpisodePage({
   return (
     <>
       <DraftRibbon
-        uses={[shell, site.name, site.listen, episodePage, listen, feedSource]}
+        uses={[
+          shell,
+          site.name,
+          site.listen,
+          episodePage,
+          listen,
+          { draft: feed.draft },
+        ]}
       />
       <JsonLd data={episodeJsonLd(series, sequence.episode)} />
       <EpisodeDetails

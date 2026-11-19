@@ -4,7 +4,7 @@ import { EpisodeArchive } from "@/components/episode-archive";
 import { FinishedMark } from "@/components/finished-mark";
 import { LatestEpisode } from "@/components/latest-episode";
 import { content } from "@/content";
-import { feedSource, getEpisodes } from "@/content/feed";
+import { feed, getEpisodes } from "@/content/feed";
 import { archiveOf } from "@/lib/archive";
 import { pageMetadata } from "@/lib/seo";
 
@@ -33,7 +33,7 @@ export default async function Episodes() {
           home.latestEpisode,
           episodePage,
           microcopy.comingSoon,
-          feedSource,
+          { draft: feed.draft },
         ]}
       />
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 px-4 sm:px-6">

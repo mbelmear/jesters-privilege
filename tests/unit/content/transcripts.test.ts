@@ -1,11 +1,13 @@
 import {
+  feed,
   getEpisodes,
   getTranscribedEpisodes,
   getTranscript,
 } from "@/content/feed";
 
-// A warning (an unreadable Transcript) fails the test, via jest.setup.ts,
-// unless a test expects one.
+// The fixture's feed, read through its snapshot as a build reads it
+// (tests/fixture-feed.ts). A warning (an unreadable Transcript) fails the
+// test, via jest.setup.ts, unless a test expects one.
 describe("the fixture's Transcripts", () => {
   async function episode(title: string) {
     const found = (await getEpisodes()).find((e) => e.title === title);
@@ -18,11 +20,6 @@ describe("the fixture's Transcripts", () => {
       ?.map(({ text }) => text)
       .join(" ");
   }
-
-  beforeEach(() => {
-    // The bonus Episode has no Transcript, which the build log notes.
-    jest.spyOn(console, "warn").mockImplementation(() => {});
-  });
 
   it("gives every fixture Episode with a Transcript link a readable Transcript", async () => {
     const linked = (await getEpisodes()).filter((e) => e.transcriptUrl);
@@ -45,11 +42,13 @@ describe("the fixture's Transcripts", () => {
     expect(await words("Celebrity Pastors")).toContain("So the reason");
   });
 
-  it("leaves an Episode with neither without one, and says why", async () => {
+  it("leaves an Episode with neither without one, and the snapshot's log says why", async () => {
     expect(
       await words("Listener Confessions: Christmas Edition")
     ).toBeUndefined();
-    expect(console.warn).toHaveBeenCalledWith(
+    const warn = jest.fn();
+    await feed.lookUp({ warn });
+    expect(warn).toHaveBeenCalledWith(
       'Episode "Listener Confessions: Christmas Edition" has no Transcript yet: the feed links none, and the transcripts branch has no https%3A%2F%2Fapi.spreaker.com%2Fepisode%2F70000005.vtt'
     );
   });

@@ -26,11 +26,8 @@
 # images made by scripts/images.ts
 /public/images/
 
-# Episode lookups made by scripts/lookups.ts
-/.lookups.json
-
-# Transcripts read by scripts/transcripts.ts
-/.transcripts.json
+# The feed snapshot made by scripts/snapshot.ts
+/.feed-snapshot.json
 
 # misc
 .DS_Store

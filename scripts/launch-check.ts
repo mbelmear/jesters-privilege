@@ -2,7 +2,7 @@
 // any deploy once the Jesters' words are all in. Usage: npm run launch-check
 import { execFileSync } from "node:child_process";
 import { content } from "@/content";
-import { feedSource } from "@/content/feed";
+import { feed } from "@/content/feed";
 import { behindWarning } from "@/lib/checkout-freshness";
 import { findDrafts } from "@/lib/content";
 
@@ -19,7 +19,7 @@ try {
   console.warn(`Can't tell whether this checkout is current: ${String(error)}`);
 }
 
-const drafts = findDrafts({ ...content, feed: feedSource });
+const drafts = findDrafts({ ...content, feed: { draft: feed.draft } });
 
 if (drafts.length > 0) {
   console.error(
