@@ -15,10 +15,14 @@ import {
 import { fixtureSource } from "@/lib/feed-source";
 import { srcDir } from "./paths";
 
+// src/content/feed.ts's FEED_SNAPSHOT; importing it here would load the
+// module this file stands in for.
+const FEED_SNAPSHOT = ".feed-snapshot.json";
+
 // The snapshot file, kept in memory.
 export function memorySnapshotStore(): SnapshotStore {
   const files = new Map<string, string>();
-  return fileSnapshotStore(".feed-snapshot.json", {
+  return fileSnapshotStore(FEED_SNAPSHOT, {
     readFile: async (path) => {
       const text = files.get(path);
       if (text === undefined) {
@@ -73,7 +77,7 @@ export function contentFeed(
   feed: EpisodeFeed = fixtureFeed()
 ): typeof import("@/content/feed") {
   return {
-    FEED_SNAPSHOT: ".feed-snapshot.json",
+    FEED_SNAPSHOT,
     feedSnapshot: memorySnapshotStore(),
     feed,
     getEpisodes: () => feed.episodes(),

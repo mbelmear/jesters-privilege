@@ -89,18 +89,14 @@ function memorySource(
   };
 }
 
-// The snapshot file, kept in memory.
+// The snapshot file, kept in memory, with a way to put any text in it.
 function memoryFiles() {
   const files = new Map<string, string>();
   const store = fileSnapshotStore(".feed-snapshot.json", {
     readFile: (path) => {
       const text = files.get(path);
       return text === undefined
-        ? Promise.reject(
-            Object.assign(new Error(`ENOENT: no such file, open '${path}'`), {
-              code: "ENOENT",
-            })
-          )
+        ? Promise.reject(new Error(`ENOENT: no such file, open '${path}'`))
         : Promise.resolve(text);
     },
     writeFile: (path, text) => {

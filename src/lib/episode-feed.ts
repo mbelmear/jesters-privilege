@@ -80,8 +80,8 @@ export type EpisodeFeed = {
   // An Episode's Transcript, or null when it has none (the snapshot's log
   // said why).
   transcript(episode: Pick<Episode, "guid">): Promise<Transcript | null>;
-  // The Episode's Listen link in each app the show is on; `warn` names each
-  // one that opens the show for want of the Episode's own.
+  // The Episode's Listen link in each app the show is on; the feed's `warn`
+  // names each one that opens the show for want of the Episode's own.
   listenLinks(
     episode: Pick<Episode, "guid" | "title">
   ): Promise<EpisodeListenLink[]>;
