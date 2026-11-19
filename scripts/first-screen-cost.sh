@@ -13,12 +13,14 @@ usage="Usage: scripts/first-screen-cost.sh <pr-number> <action>"
 pr="${1:?$usage}"
 action="${2:?$usage}"
 
-# The files the standard names: the header, the footer, the root layout.
-changed=$(gh pr view "$pr" --json files,body --jq '
-  if ((.body // "") | contains("lighthouse:compare")) then ""
-  else [.files[].path
-        | select(test("^src/(components/(site-header|header-frame|site-footer)\\.tsx|app/layout\\.tsx)$"))]
-       | join(", ") end')
+has_run=$(gh pr view "$pr" --json body --jq '(.body // "") | contains("lighthouse:compare")')
+if [[ $has_run == true ]]; then
+  exit 0
+fi
+paths=$(gh pr view "$pr" --json files --jq '.files[].path')
+first_screen=$("$(dirname "$0")/first-screen-files.sh" <<<"$paths")
+joined=$(paste -sd, - <<<"$first_screen")
+changed=${joined//,/, }
 
 if [[ -n "$changed" ]]; then
   {
