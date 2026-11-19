@@ -9,7 +9,7 @@ import { EpisodeListenLinks } from "@/components/episode-listen-links";
 import { LatestEpisode } from "@/components/latest-episode";
 import { MeetTheJesters } from "@/components/meet-the-jesters";
 import { content, sectionHref } from "@/content";
-import { feedSource, getEpisodeListenLinks, getEpisodes } from "@/content/feed";
+import { feed, getEpisodeListenLinks, getEpisodes } from "@/content/feed";
 import { series } from "@/content/series";
 import { pageMetadata, seriesJsonLd } from "@/lib/seo";
 
@@ -37,7 +37,7 @@ export default async function Home() {
           jesters,
           microcopy.comingSoon,
           paintings.stanczyk,
-          feedSource,
+          { draft: feed.draft },
         ]}
       />
       <JsonLd data={seriesJsonLd(series)} />

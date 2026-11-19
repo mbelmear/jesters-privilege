@@ -11,8 +11,11 @@ import Episodes, { metadata } from "@/app/episodes/page";
 
 // The real Feed (the fixture), which a test can swap for an empty one.
 jest.mock("@/content/feed", () => {
-  const actual =
-    jest.requireActual<typeof import("@/content/feed")>("@/content/feed");
+  const actual = jest
+    .requireActual<typeof import("../../../fixture-feed")>(
+      "../../../fixture-feed"
+    )
+    .contentFeed();
   return { ...actual, getEpisodes: jest.fn(actual.getEpisodes) };
 });
 

@@ -4,6 +4,17 @@ import { toHaveNoViolations } from "jest-axe";
 
 expect.extend(toHaveNoViolations);
 
+// Pages read the Episode feed's snapshot, which a build writes before
+// `next build` (npm run snapshot). Tests read the fixture's, taken in memory,
+// so they need no build first (tests/fixture-feed.ts).
+jest.mock("@/content/feed", () =>
+  jest
+    .requireActual<typeof import("./tests/fixture-feed")>(
+      "./tests/fixture-feed"
+    )
+    .contentFeed()
+);
+
 // jsdom has no IntersectionObserver. Without one, next/link marks itself
 // visible on a timer to prefetch, updating state after a test ends; an
 // observer that never fires keeps links still, as off-screen ones are.

@@ -1,16 +1,17 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { render, screen, within } from "@testing-library/react";
 import { axe } from "jest-axe";
 import { content } from "@/content";
-import { findEpisode, parseFeed } from "@/lib/feed";
+import { getEpisodes } from "@/content/feed";
+import { findEpisode, type Episode } from "@/lib/feed";
 import type { EpisodeListenLink } from "@/lib/episode-listen-links";
 import type { Transcript } from "@/lib/transcript";
 import { EpisodeDetails } from "@/components/episode-details";
 
-const episodes = parseFeed(
-  readFileSync(join(process.cwd(), "src/content/feed-fixture.xml"), "utf8")
-);
+// The fixture's Episodes, read through the feed's snapshot (tests/fixture-feed.ts).
+let episodes: Episode[];
+beforeAll(async () => {
+  episodes = await getEpisodes();
+});
 
 const appleLink = {
   app: "apple-podcasts",

@@ -7,7 +7,7 @@ import { LatestEpisode } from "@/components/latest-episode";
 import { ListenButtons } from "@/components/listen-buttons";
 import { MeetTheJesters } from "@/components/meet-the-jesters";
 import { content, sectionHref } from "@/content";
-import { feedSource, getEpisodes } from "@/content/feed";
+import { feed, getEpisodes } from "@/content/feed";
 import { styleguide } from "@/content/styleguide";
 import { cn } from "@/lib/utils";
 
@@ -49,7 +49,7 @@ export async function HomePreview({ heroOption, story }: Props) {
           microcopy.comingSoon,
           paintings.stanczyk,
           copy,
-          feedSource,
+          { draft: feed.draft },
         ]}
       />
       <div>

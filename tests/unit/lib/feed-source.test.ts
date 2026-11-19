@@ -1,25 +1,9 @@
-import {
-  chooseFeedSource,
-  feedUrl,
-  loadFeedText,
-  appleLookupFetch,
-  savedTranscripts,
-  transcriptFetch,
-  type FeedIO,
-  type FeedSources,
-} from "@/lib/feed-source";
+import type { Fetch } from "@/lib/download";
+import { chooseFeedSource, fixtureSource, liveSource } from "@/lib/feed-source";
 
 const url = "https://www.spreaker.com/show/6900001/episodes/feed";
 const BRANCH =
   "https://raw.githubusercontent.com/mbelmear/jesters-privilege/transcripts/";
-
-function io(overrides: Partial<FeedIO>): FeedIO {
-  return {
-    fetch: () => Promise.reject(new Error("fetch not expected")),
-    readFile: () => Promise.reject(new Error("readFile not expected")),
-    ...overrides,
-  };
-}
 
 function response(status: number, statusText: string, body = "") {
   return Promise.resolve({
@@ -30,251 +14,165 @@ function response(status: number, statusText: string, body = "") {
   });
 }
 
-describe("loadFeedText", () => {
-  it("reads the fixture while the real feed doesn't exist yet", async () => {
-    const text = await loadFeedText(
+const notFetched: Fetch = () => Promise.reject(new Error("fetch not expected"));
+
+describe("liveSource", () => {
+  const live = (fetch: Fetch = notFetched) =>
+    liveSource(
       {
-        kind: "fixture",
-        path: "src/content/feed-fixture.xml",
-        transcripts: "src/content/transcripts",
-        savedTranscripts: "src/content/saved-transcripts",
-        appleLookup: "src/content/apple-lookup-fixture.json",
-        standsInFor: url,
-        draft: true,
+        url,
+        savedTranscripts: BRANCH,
+        spotifyKey: () => ({ kind: "none" }),
       },
-      io({
-        readFile: (path) =>
-          Promise.resolve(
-            path === "src/content/feed-fixture.xml" ? "<rss/>" : ""
-          ),
-      })
+      fetch
     );
-    expect(text).toBe("<rss/>");
+
+  it("is the feed the site reads, for podcast apps to subscribe to", () => {
+    expect(live().address).toBe(url);
+    expect(live().draft).toBeUndefined();
   });
 
   it("downloads the real feed", async () => {
-    const text = await loadFeedText(
-      { kind: "url", url, savedTranscripts: BRANCH },
-      io({ fetch: (u) => response(200, "OK", u === url ? "<rss/>" : "") })
-    );
-    expect(text).toBe("<rss/>");
+    const source = live((u) => response(200, "OK", u === url ? "<rss/>" : ""));
+    expect(await source.feedText()).toBe("<rss/>");
   });
 
   it("fails the build when the feed can't be reached", async () => {
     await expect(
-      loadFeedText(
-        { kind: "url", url, savedTranscripts: BRANCH },
-        io({ fetch: () => Promise.reject(new TypeError("fetch failed")) })
-      )
+      live(() => Promise.reject(new TypeError("fetch failed"))).feedText()
     ).rejects.toThrow(`Feed ${url} couldn't be reached: fetch failed`);
   });
 
   it("fails the build when the feed answers with an error", async () => {
     await expect(
-      loadFeedText(
-        { kind: "url", url, savedTranscripts: BRANCH },
-        io({ fetch: () => response(503, "Service Unavailable", "<html/>") })
-      )
+      live(() => response(503, "Service Unavailable", "<html/>")).feedText()
     ).rejects.toThrow(`Feed ${url} answered 503 Service Unavailable`);
+  });
+
+  it("downloads the real feed's Transcripts and asks Apple and Spotify itself", async () => {
+    const transcriptUrl =
+      "https://transcription.spreaker.com/starship/abc/abc.vtt";
+    const source = live((u) =>
+      response(200, "OK", u === transcriptUrl ? "WEBVTT" : "{}")
+    );
+    expect(await (await source.hostTranscript(transcriptUrl)).text()).toBe(
+      "WEBVTT"
+    );
+    expect(
+      await (await source.appleLookup("https://itunes.apple.com/lookup")).text()
+    ).toBe("{}");
+    expect(source.spotify?.key({ required: false })).toEqual({ kind: "none" });
+  });
+
+  describe("savedTranscript", () => {
+    const fileName = "https%3A%2F%2Fapi.spreaker.com%2Fepisode%2F1.vtt";
+    const onBranch = `${BRANCH}https%253A%252F%252Fapi.spreaker.com%252Fepisode%252F1.vtt`;
+
+    it("downloads the site's own Transcript from the transcripts branch", async () => {
+      const asked: string[] = [];
+      const source = live((u) => {
+        asked.push(u);
+        return response(200, "OK", "WEBVTT");
+      });
+      expect(await source.savedTranscript(fileName)).toBe("WEBVTT");
+      // The file name is a path segment of its own, percent signs and all.
+      expect(asked).toEqual([onBranch]);
+    });
+
+    it("finds none saved when the branch has no such file", async () => {
+      const source = live(() => response(404, "Not Found"));
+      expect(await source.savedTranscript(fileName)).toBeNull();
+    });
+
+    it("fails when the branch answers with an error", async () => {
+      const source = live(() => response(503, "Service Unavailable"));
+      await expect(source.savedTranscript(fileName)).rejects.toThrow(
+        `Saved Transcript ${onBranch} answered 503 Service Unavailable`
+      );
+    });
+
+    it("fails when the branch can't be reached", async () => {
+      const source = live(() => Promise.reject(new TypeError("fetch failed")));
+      await expect(source.savedTranscript(fileName)).rejects.toThrow(
+        `Saved Transcript ${onBranch} couldn't be reached: fetch failed`
+      );
+    });
   });
 });
 
-describe("transcriptFetch", () => {
-  const transcriptUrl =
-    "https://transcription.spreaker.com/starship/abc/abc.vtt";
+describe("fixtureSource", () => {
+  const missing = (path: string) =>
+    Promise.reject(
+      Object.assign(new Error(`ENOENT: no such file, ${path}`), {
+        code: "ENOENT",
+      })
+    );
 
-  it("reads the fixture's Transcripts from files named like Spreaker's", async () => {
-    const fetch = transcriptFetch(
+  const fixture = (
+    files: Record<string, string>,
+    readFile = (path: string) =>
+      path in files ? Promise.resolve(files[path]) : missing(path)
+  ) =>
+    fixtureSource(
       {
-        kind: "fixture",
         path: "src/content/feed-fixture.xml",
         transcripts: "src/content/transcripts",
         savedTranscripts: "src/content/saved-transcripts",
         appleLookup: "src/content/apple-lookup-fixture.json",
         standsInFor: url,
-        draft: true,
       },
-      io({
-        readFile: (path) =>
-          Promise.resolve(
-            path === "src/content/transcripts/abc.vtt" ? "WEBVTT" : ""
-          ),
-      })
+      readFile
     );
-    const answer = await fetch(transcriptUrl);
+
+  it("stands in for the real feed's address, and its Episodes are draft", () => {
+    const source = fixture({});
+    expect(source.address).toBe(url);
+    expect(source.draft).toBe(true);
+  });
+
+  it("reads the fixture feed, so tests never depend on Spreaker", async () => {
+    const source = fixture({ "src/content/feed-fixture.xml": "<rss/>" });
+    expect(await source.feedText()).toBe("<rss/>");
+  });
+
+  it("reads the fixture's Transcripts from files named like Spreaker's", async () => {
+    const source = fixture({ "src/content/transcripts/abc.vtt": "WEBVTT" });
+    const answer = await source.hostTranscript(
+      "https://transcription.spreaker.com/starship/abc/abc.vtt"
+    );
     expect(answer.ok).toBe(true);
     expect(await answer.text()).toBe("WEBVTT");
   });
 
-  it("downloads the real feed's Transcripts", async () => {
-    const fetch = transcriptFetch(
-      { kind: "url", url, savedTranscripts: BRANCH },
-      io({
-        fetch: (u) => response(200, "OK", u === transcriptUrl ? "WEBVTT" : ""),
-      })
-    );
-    expect(await (await fetch(transcriptUrl)).text()).toBe("WEBVTT");
-  });
-});
-
-describe("savedTranscripts", () => {
-  const branch =
-    "https://raw.githubusercontent.com/mbelmear/jesters-privilege/transcripts/";
-  const fileName = "https%3A%2F%2Fapi.spreaker.com%2Fepisode%2F1.vtt";
-  const fixture = {
-    kind: "fixture" as const,
-    path: "src/content/feed-fixture.xml",
-    transcripts: "src/content/transcripts",
-    savedTranscripts: "src/content/saved-transcripts",
-    appleLookup: "src/content/apple-lookup-fixture.json",
-    standsInFor: url,
-    draft: true as const,
-  };
-  const live = { kind: "url" as const, url, savedTranscripts: branch };
-
-  it("reads the fixture's saved Transcripts from a folder standing in for the branch", async () => {
-    const saved = savedTranscripts(
-      fixture,
-      io({
-        readFile: (path) =>
-          path === `src/content/saved-transcripts/${fileName}`
-            ? Promise.resolve("WEBVTT")
-            : Promise.reject(
-                Object.assign(new Error(`ENOENT: no such file, ${path}`), {
-                  code: "ENOENT",
-                })
-              ),
-      })
-    );
-    expect(await saved(fileName)).toBe("WEBVTT");
-    expect(await saved("other.vtt")).toBeNull();
+  it("reads its saved Transcripts from a folder standing in for the branch", async () => {
+    const fileName = "https%3A%2F%2Fapi.spreaker.com%2Fepisode%2F1.vtt";
+    const source = fixture({
+      [`src/content/saved-transcripts/${fileName}`]: "WEBVTT",
+    });
+    expect(await source.savedTranscript(fileName)).toBe("WEBVTT");
+    expect(await source.savedTranscript("other.vtt")).toBeNull();
   });
 
-  it("fails when the fixture's folder can't be read", async () => {
-    const saved = savedTranscripts(
-      fixture,
-      io({ readFile: () => Promise.reject(new Error("EACCES: denied")) })
+  it("fails when its saved Transcripts' folder can't be read", async () => {
+    const source = fixture({}, () =>
+      Promise.reject(new Error("EACCES: denied"))
     );
-    await expect(saved(fileName)).rejects.toThrow("EACCES: denied");
-  });
-
-  it("downloads the real feed's saved Transcripts from the transcripts branch", async () => {
-    const asked: string[] = [];
-    const saved = savedTranscripts(
-      live,
-      io({
-        fetch: (u) => {
-          asked.push(u);
-          return response(200, "OK", "WEBVTT");
-        },
-      })
-    );
-    expect(await saved(fileName)).toBe("WEBVTT");
-    // The file name is a path segment of its own, percent signs and all.
-    expect(asked).toEqual([
-      `${branch}https%253A%252F%252Fapi.spreaker.com%252Fepisode%252F1.vtt`,
-    ]);
-  });
-
-  it("finds none saved when the branch has no such file", async () => {
-    const saved = savedTranscripts(
-      live,
-      io({ fetch: () => response(404, "Not Found") })
-    );
-    expect(await saved(fileName)).toBeNull();
-  });
-
-  it("fails when the branch can't be read", async () => {
-    const saved = savedTranscripts(
-      live,
-      io({ fetch: () => response(503, "Service Unavailable") })
-    );
-    await expect(saved(fileName)).rejects.toThrow(
-      `Saved Transcript ${branch}https%253A%252F%252Fapi.spreaker.com%252Fepisode%252F1.vtt answered 503 Service Unavailable`
+    await expect(source.savedTranscript("any.vtt")).rejects.toThrow(
+      "EACCES: denied"
     );
   });
-});
 
-describe("appleLookupFetch", () => {
-  const lookupUrl =
-    "https://itunes.apple.com/lookup?id=6830338936&entity=podcastEpisode&limit=200";
-
-  it("answers the fixture's Apple lookup from a file, so tests never depend on Apple", async () => {
-    const fetch = appleLookupFetch(
-      {
-        kind: "fixture",
-        path: "src/content/feed-fixture.xml",
-        transcripts: "src/content/transcripts",
-        savedTranscripts: "src/content/saved-transcripts",
-        appleLookup: "src/content/apple-lookup-fixture.json",
-        standsInFor: url,
-        draft: true,
-      },
-      io({
-        readFile: (path) =>
-          Promise.resolve(
-            path === "src/content/apple-lookup-fixture.json" ? "{}" : ""
-          ),
-      })
-    );
-    expect(await (await fetch(lookupUrl)).text()).toBe("{}");
-  });
-
-  it("asks Apple for the real feed's Episodes", async () => {
-    const fetch = appleLookupFetch(
-      { kind: "url", url, savedTranscripts: BRANCH },
-      io({ fetch: (u) => response(200, "OK", u === lookupUrl ? "{}" : "") })
-    );
-    expect(await (await fetch(lookupUrl)).text()).toBe("{}");
-  });
-});
-
-describe("feedUrl", () => {
-  it("is the feed the site reads, for podcast apps to subscribe to", () => {
-    expect(feedUrl({ kind: "url", url, savedTranscripts: BRANCH })).toBe(url);
-  });
-
-  it("is the address the fixture stands in for, until the real feed exists", () => {
+  it("answers Apple's lookup from a file, so tests never depend on Apple, and never asks Spotify", async () => {
+    const source = fixture({ "src/content/apple-lookup-fixture.json": "{}" });
     expect(
-      feedUrl({
-        kind: "fixture",
-        path: "src/content/feed-fixture.xml",
-        transcripts: "src/content/transcripts",
-        savedTranscripts: "src/content/saved-transcripts",
-        appleLookup: "src/content/apple-lookup-fixture.json",
-        standsInFor: "https://www.spreaker.com/show/1/episodes/feed",
-        draft: true,
-      })
-    ).toBe("https://www.spreaker.com/show/1/episodes/feed");
+      await (await source.appleLookup("https://itunes.apple.com/lookup")).text()
+    ).toBe("{}");
+    expect(source.spotify).toBeUndefined();
   });
 });
 
 describe("chooseFeedSource", () => {
-  const sources: FeedSources = {
-    live: {
-      kind: "url",
-      url: "https://www.spreaker.com/show/7523831/episodes/feed",
-      savedTranscripts: BRANCH,
-    },
-    fixture: {
-      kind: "fixture",
-      path: "src/content/feed-fixture.xml",
-      transcripts: "src/content/transcripts",
-      savedTranscripts: "src/content/saved-transcripts",
-      appleLookup: "src/content/apple-lookup-fixture.json",
-      standsInFor: "https://www.spreaker.com/show/7523831/episodes/feed",
-      draft: true,
-    },
-    empty: {
-      kind: "fixture",
-      path: "src/content/feed-fixture-empty.xml",
-      transcripts: "src/content/transcripts",
-      savedTranscripts: "src/content/saved-transcripts",
-      appleLookup: "src/content/apple-lookup-fixture.json",
-      standsInFor: "https://www.spreaker.com/show/7523831/episodes/feed",
-      draft: true,
-    },
-  };
+  const sources = { live: "live", fixture: "fixture", empty: "empty" };
 
   it("builds from the fixture by default, so tests never depend on Spreaker", () => {
     expect(chooseFeedSource({}, sources)).toBe(sources.fixture);

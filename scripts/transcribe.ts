@@ -19,7 +19,7 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { availableParallelism, tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
-import { getEpisodes } from "@/content/feed";
+import { feed } from "@/content/feed";
 import { jesters } from "@/content/jesters";
 import {
   planStep,
@@ -123,7 +123,7 @@ const thisRun: TranscribeRun = {
 };
 
 async function main(): Promise<number> {
-  const episodes = await getEpisodes();
+  const episodes = await feed.freshEpisodes();
   if (process.argv.includes("--plan")) {
     const step = planStep(
       await planTranscripts(episodes, { isSaved }, thisRun)

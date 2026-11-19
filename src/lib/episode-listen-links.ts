@@ -76,7 +76,7 @@ export function episodeListenLinks(
 
 // Lookups as JSON, so the build can look the apps up once, before Next's
 // workers render the pages and the build manifest, and every one of them
-// reads the same answer (scripts/lookups.ts).
+// reads the same answer (src/lib/episode-feed.ts).
 type SerializedLookup =
   | { kind: "found"; episodes: [string, string][] }
   | { kind: "failed"; reason: string };
