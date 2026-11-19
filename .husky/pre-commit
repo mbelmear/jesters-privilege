@@ -1,4 +1,7 @@
+# Node as .nvmrc pins it, as CI runs (scripts/pinned-node.sh).
+. scripts/pinned-node.sh
 scripts/no-conflict-markers.sh
+scripts/first-screen-reminder.sh
 # One at a time: Prettier rewrites the files the linters read.
 npx lint-staged --concurrent false
 npm run check

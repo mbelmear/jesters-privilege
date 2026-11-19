@@ -72,6 +72,14 @@ describe("first-screen-cost.sh", () => {
     );
   });
 
+  it("names every first-screen file it changes", () => {
+    expect(
+      pr(["src/app/layout.tsx", "src/components/site-header.tsx"], noRun).stderr
+    ).toContain(
+      "it changes src/app/layout.tsx, src/components/site-header.tsx, and its body"
+    );
+  });
+
   it("refuses an empty body", () => {
     expect(pr(["src/components/site-footer.tsx"], null).status).toBe(1);
   });
