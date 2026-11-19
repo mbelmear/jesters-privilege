@@ -13,29 +13,25 @@ import { repoRoot } from "../paths";
 // build makes it (public/images, by npm run images). The Jesters' own inputs
 // are left as they sent them.
 
-// Git run from a hook inherits GIT_DIR and GIT_INDEX_FILE (merge-holds-branch
-// tells that story), so git here drops them.
-const env = { ...process.env };
-for (const name of Object.keys(env)) {
-  if (name.startsWith("GIT_")) delete env[name];
-}
-
-// Every tracked file that can name a path: Markdown, code, workflows, and the
-// commit hooks, which have no extension. git lists dot-folders (.github,
-// .husky) that a glob skips.
-const READ = /\.(md|ts|tsx|mjs|css|sh|yml|yaml)$|^\.husky\/[^_/]+$/;
+// Every tracked file that can name a path: Markdown, code, workflows, JSON
+// config, and the commit hooks, which have no extension. git lists the
+// dot-folders (.github, .husky, .claude) a glob skips. Unlike the tests that
+// run git in a throwaway repo, this one keeps the GIT_* a commit hook sets:
+// they point at this repo, and its index is the one being committed. A file
+// deleted but not yet staged names nothing.
+const READ =
+  /\.(md|ts|tsx|mjs|css|sh|yml|yaml)$|^\.husky\/[^_/]+$|^(package|\.claude\/settings)\.json$/;
 const files = execFileSync("git", ["ls-files"], {
   cwd: repoRoot,
-  env,
   encoding: "utf8",
 })
   .split("\n")
-  .filter((path) => READ.test(path) && !path.startsWith("docs/inputs/"));
+  .filter((path) => READ.test(path) && !path.startsWith("docs/inputs/"))
+  .filter((path) => existsSync(join(repoRoot, path)));
 
 const ignored = (path: string) =>
   spawnSync("git", ["check-ignore", "--no-index", path, `${path}/`], {
     cwd: repoRoot,
-    env,
   }).status === 0;
 
 const exists = (path: string) =>
@@ -51,13 +47,15 @@ describe("named paths", () => {
         "src/app/globals.css",
         ".github/workflows/ci.yml",
         ".husky/pre-commit",
+        "package.json",
       ])
     );
   });
 
   it.each(files)("%s names only paths that exist", (file) => {
     const text = readFileSync(join(repoRoot, file), "utf8");
-    const format = file.endsWith(".md") ? "markdown" : "code";
+    // JSON has no comments, so it's read whole, as Markdown is.
+    const format = /\.(md|json)$/.test(file) ? "markdown" : "code";
     expect(namedPaths(text, format).filter((path) => !exists(path))).toEqual(
       []
     );

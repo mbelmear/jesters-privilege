@@ -43,7 +43,7 @@ function comments(code: string): string {
         rest = rest.slice(end + 2);
         continue;
       }
-      const start = /(?<!\S)\/\*|(?<![:\S])\/\/|(?<!\S)# /.exec(rest);
+      const start = /(?<!\S)\/\*|(?<!\S)\/\/|(?<!\S)# /.exec(rest);
       if (!start) break;
       if (start[0] === "/*") {
         inBlock = true;
