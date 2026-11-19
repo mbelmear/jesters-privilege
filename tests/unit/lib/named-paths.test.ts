@@ -53,6 +53,15 @@ describe("namedPaths", () => {
     ).toEqual([]);
   });
 
+  it("reads no comment opened inside a glob in a string", () => {
+    expect(
+      namedPaths(
+        'const files = globSync("**/*.md");\nconst x = "docs/gone.md";',
+        "code"
+      )
+    ).toEqual([]);
+  });
+
   it("reads only the comments of code", () => {
     const code = [
       "// Reads src/content/feed.ts (see docs/deploy.md).",
