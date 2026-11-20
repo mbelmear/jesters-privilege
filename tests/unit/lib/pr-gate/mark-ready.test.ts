@@ -6,12 +6,13 @@ import { join } from "node:path";
 import { markReady } from "@/lib/pr-gate/mark-ready";
 import { firstScreenFiles } from "../../../../scripts/pr-gate-first-screen";
 import { scriptsDir } from "../../../paths";
-import { git, mainGains, throwawayPr } from "./throwaway-pr";
-
-const passedAt = (sha: string) => `Code review: passed at ${sha}`;
-
-const previewOf = (sha: string) =>
-  `<!-- deploy-preview -->\n**Preview:** https://pr-7.example.workers.dev\n\nBuilt from ${sha}.`;
+import {
+  git,
+  mainGains,
+  passedAt,
+  previewOf,
+  throwawayPr,
+} from "./throwaway-pr";
 
 // A PR whose head has a passed review, passing checks, and a preview built
 // from it, unless a test says otherwise.
@@ -165,6 +166,21 @@ describe("mark-ready", () => {
     expect(t.err.at(-1)).toBe(
       "Refusing to label #7: pr-status didn't pass (see above)."
     );
+  });
+
+  // As pr-status said an error on its way out, before mark-ready refused.
+  it("says an error from the wait, then refuses", async () => {
+    const t = setup();
+    jest.spyOn(t.github, "checks").mockImplementation(() => {
+      throw new Error("gh pr checks 7: HTTP 502: Bad Gateway\nmore detail");
+    });
+
+    expect(await t.run()).toBe(1);
+    expect(t.err.slice(-2)).toEqual([
+      "gh pr checks 7: HTTP 502: Bad Gateway",
+      "Refusing to label #7: pr-status didn't pass (see above).",
+    ]);
+    expect(t.github.labels).toEqual([]);
   });
 
   it("refuses without a preview built from its head", async () => {

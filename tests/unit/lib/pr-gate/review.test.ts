@@ -1,28 +1,17 @@
 /**
  * @jest-environment node
  */
-import { spawnSync } from "node:child_process";
-import { chmodSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { delimiter, join } from "node:path";
-import { lastReviewed, requireReview } from "@/lib/pr-gate/review";
-import { scriptsDir } from "../../../paths";
-import { git, mainGains, throwawayPr } from "./throwaway-pr";
-
-const passedAt = (sha: string) => `Code review: passed at ${sha}`;
+import { join } from "node:path";
+import { requireReview } from "@/lib/pr-gate/review";
+import { refusalLines } from "./refusal-lines";
+import { git, mainGains, passedAt, throwawayPr } from "./throwaway-pr";
 
 // A PR on `ticket` whose head has a passed review.
 function setup() {
   const t = throwawayPr("review-");
   t.github.commentBodies = [passedAt(t.head)];
-  const run = (head: string) => {
-    try {
-      requireReview(7, head, "merge", t.gate);
-      return [];
-    } catch (error) {
-      return String((error as Error).message).split("\n");
-    }
-  };
+  const run = (head: string) =>
+    refusalLines(() => requireReview(7, head, "merge", t.gate));
   return { ...t, run };
 }
 
@@ -112,78 +101,5 @@ describe("the review rule", () => {
     const head = git(t.dir, "rev-parse", "HEAD");
 
     expect(t.run(head)[1]).toContain("with origin/main as the fixed point");
-  });
-});
-
-// scripts/last-reviewed-sha.sh reads reviews for the post-merge audit, which
-// installs nothing, so it stays shell; this holds it to the gate's reading.
-describe("the passed-review line", () => {
-  const a = "a".repeat(40);
-  const b = "b".repeat(40);
-  const c = "c".repeat(40);
-
-  // What the script prints for these comments, gh answering from a fixture
-  // through the real jq, as gh does with the script's --jq.
-  function script(comments: string[]): string {
-    const root = mkdtempSync(join(tmpdir(), "last-reviewed-"));
-    try {
-      const fixture = join(root, "pr.json");
-      writeFileSync(
-        fixture,
-        JSON.stringify({ comments: comments.map((body) => ({ body })) })
-      );
-      writeFileSync(
-        join(root, "gh"),
-        `#!/bin/bash
-filter="."
-while (($#)); do
-  [[ $1 == --jq ]] && { filter=$2; shift; }
-  shift
-done
-jq -r "$filter" "${fixture}"
-`
-      );
-      chmodSync(join(root, "gh"), 0o755);
-      return spawnSync(
-        "bash",
-        [join(scriptsDir, "last-reviewed-sha.sh"), "7"],
-        {
-          env: {
-            ...process.env,
-            PATH: `${root}${delimiter}${process.env.PATH}`,
-          },
-          encoding: "utf8",
-        }
-      ).stdout.trim();
-    } finally {
-      rmSync(root, { recursive: true, force: true });
-    }
-  }
-
-  it.each([
-    ["no comments", [], undefined],
-    ["no review", ["Looks good"], undefined],
-    ["one review", [passedAt(a)], a],
-    ["the newest of two", [passedAt(a), "Looks good", passedAt(b)], b],
-    [
-      "a carried-over review",
-      [
-        passedAt(a),
-        `Code review: passed at ${b} (carried over from ${a}: only clean merges of main since)`,
-      ],
-      b,
-    ],
-    ["a line inside a comment", [`Notes\n${passedAt(a)}\nmore`], a],
-    [
-      "the last of two in one comment",
-      [`${passedAt(a)}\n${passedAt(b)}`, "x"],
-      b,
-    ],
-    ["not a line's start", [`Said: ${passedAt(a)}`], undefined],
-    ["a short SHA", ["Code review: passed at abc1234"], undefined],
-    ["capitals", [`Code review: passed at ${c.toUpperCase()}`], undefined],
-  ])("reads %s the same way", (_, comments, sha) => {
-    expect(lastReviewed(comments)).toBe(sha);
-    expect(script(comments)).toBe(sha ?? "");
   });
 });

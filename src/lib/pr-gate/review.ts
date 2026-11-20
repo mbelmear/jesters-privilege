@@ -5,7 +5,7 @@
 // (scripts/audit-merge.sh), which reads the line through
 // scripts/last-reviewed-sha.sh; a test holds the two to the same reading.
 import type { Gate } from "./pr-status";
-import { Refusal } from "./snapshot";
+import { refusing, type Action } from "./snapshot";
 
 const PASSED = /^Code review: passed at ([0-9a-f]{40})/;
 
@@ -25,7 +25,7 @@ export function lastReviewed(comments: readonly string[]): string | undefined {
 export function requireReview(
   pr: number,
   head: string,
-  action: string,
+  action: Action,
   { github, git, err }: Gate
 ) {
   const reviewed = lastReviewed(github.comments(pr));
@@ -47,10 +47,10 @@ export function requireReview(
   // Review only the new commits, unless a rebase dropped the reviewed one.
   const since =
     reviewed && git.isAncestor(reviewed, head) ? reviewed : "origin/main";
-  throw new Refusal(
-    [
-      `Refusing to ${action} #${pr}: head is ${head}, but the last passed review is at ${reviewed ?? "no commit"}.`,
-      `Review it (docs/testing.md, Merging) with ${since} as the fixed point, then: npm run review-passed -- ${pr} ${head}`,
-    ].join("\n")
+  throw refusing(
+    action,
+    pr,
+    `head is ${head}, but the last passed review is at ${reviewed ?? "no commit"}.`,
+    `Review it (docs/testing.md, Merging) with ${since} as the fixed point, then: npm run review-passed -- ${pr} ${head}`
   );
 }

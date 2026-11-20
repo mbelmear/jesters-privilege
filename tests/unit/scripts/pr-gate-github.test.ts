@@ -9,11 +9,13 @@ jest.mock("node:child_process", () => ({ execFileSync: jest.fn() }));
 
 const calls: string[][] = [];
 const quiet: boolean[] = [];
+const stdios: unknown[] = [];
 let answer: (args: readonly string[]) => string = () => "";
 
 beforeEach(() => {
   calls.length = 0;
   quiet.length = 0;
+  stdios.length = 0;
   jest.mocked(execFileSync).mockImplementation(((
     _file: string,
     args: readonly string[],
@@ -21,6 +23,7 @@ beforeEach(() => {
   ) => {
     calls.push([...args]);
     quiet.push(options?.stdio !== undefined);
+    stdios.push(options?.stdio);
     return answer(args);
   }) as typeof execFileSync);
 });
@@ -147,6 +150,21 @@ describe("the gh GitHub", () => {
     });
   });
 
+  it("says gh's error when it can't read the comments", () => {
+    // Recorded: gh pr view 99999 --json comments.
+    answer = () => {
+      throw exited(
+        1,
+        "GraphQL: Could not resolve to a PullRequest with the number of 99999. (repository.pullRequest)\n"
+      );
+    };
+
+    // Kept from printing, as the comments are polled, so the error thrown says it.
+    expect(() => ghGitHub.comments(99999)).toThrow(
+      "gh pr view 99999 --json=comments: GraphQL: Could not resolve to a PullRequest with the number of 99999. (repository.pullRequest)"
+    );
+  });
+
   it("reads each comment's body", () => {
     // Made up.
     answer = () => '["Looks good","<!-- deploy-preview -->\\nBuilt from a."]\n';
@@ -263,20 +281,23 @@ describe("the gh GitHub", () => {
     });
   });
 
-  it("posts a comment", () => {
+  // gh prints the URL of what it changed, as mark-ready.sh's gh calls did.
+  it("posts a comment, printing its URL", () => {
     ghGitHub.comment(256, "Code review: passed at abc");
 
     expect(calls).toEqual([
       ["pr", "comment", "256", "--body=Code review: passed at abc"],
     ]);
+    expect(stdios).toEqual([["ignore", "inherit", "inherit"]]);
   });
 
-  it("adds a label", () => {
+  it("adds a label, printing the PR's URL", () => {
     ghGitHub.addLabel(256, "ready-for-human");
 
     expect(calls).toEqual([
       ["pr", "edit", "256", "--add-label=ready-for-human"],
     ]);
+    expect(stdios).toEqual([["ignore", "inherit", "inherit"]]);
   });
 
   it("reads a job's log through the jobs API", () => {

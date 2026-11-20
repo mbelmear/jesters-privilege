@@ -1,7 +1,8 @@
 // A throwaway origin with main, and a clone on a PR's branch `ticket`, one
 // commit ahead and pushed, for the PR gate's tests. GitHub (FakeGitHub) shows
 // that commit as the PR's head, open, with every check passed and its preview
-// skipped, unless a test says otherwise.
+// skipped, unless a test says otherwise. Importing it removes each one after
+// every test.
 import { execFileSync } from "node:child_process";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -33,6 +34,13 @@ afterEach(() => {
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+/** The comment `npm run review-passed` posts. */
+export const passedAt = (sha: string) => `Code review: passed at ${sha}`;
+
+/** The deploy workflow's comment, naming the commit its preview is built from. */
+export const previewOf = (sha: string) =>
+  `<!-- deploy-preview -->\n**Preview:** https://pr-7.example.workers.dev\n\nBuilt from ${sha}.`;
 
 export function throwawayPr(prefix: string) {
   const root = mkdtempSync(join(tmpdir(), prefix));

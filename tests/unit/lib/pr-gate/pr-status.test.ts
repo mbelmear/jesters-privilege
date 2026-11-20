@@ -4,7 +4,7 @@
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { prStatus } from "@/lib/pr-gate/pr-status";
-import { git, throwawayPr } from "./throwaway-pr";
+import { git, previewOf, throwawayPr } from "./throwaway-pr";
 
 function setup() {
   const t = throwawayPr("pr-status-");
@@ -142,15 +142,13 @@ describe("pr-status", () => {
     const ran = (t: ReturnType<typeof setup>) => {
       t.github.checkList = [{ name: "Preview URL", state: "pass", link: "" }];
     };
-    const comment = (sha: string) =>
-      `<!-- deploy-preview -->\n**Preview:** https://pr-7.example.workers.dev\n\nBuilt from ${sha}.`;
 
     it("waits for the comment naming the head, and reports its URL", async () => {
       const t = setup();
       ran(t);
-      t.github.commentBodies = ["Looks good", comment("b".repeat(40))];
+      t.github.commentBodies = ["Looks good", previewOf("b".repeat(40))];
       t.clock.onSleep = () => {
-        t.github.commentBodies.push(comment(t.head));
+        t.github.commentBodies.push(previewOf(t.head));
       };
 
       expect(await t.run()).toBe(0);

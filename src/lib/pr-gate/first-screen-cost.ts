@@ -5,7 +5,7 @@
 // still judges the rest of that rule: what these files render (the mobile
 // menu, the player dock) and what a page fetches before its paint.
 import type { PrContents } from "./github";
-import { Refusal } from "./snapshot";
+import { refusing, type Action } from "./snapshot";
 
 /**
  * Which of these paths are first-screen files. Production asks
@@ -18,15 +18,15 @@ export function requireFirstScreenCost(
   pr: number,
   { body, files }: PrContents,
   firstScreen: FirstScreen,
-  action: string
+  action: Action
 ) {
   if (body.includes("lighthouse:compare")) return;
   const changed = firstScreen(files);
   if (!changed.length) return;
-  throw new Refusal(
-    [
-      `Refusing to ${action} #${pr}: it changes ${changed.join(", ")}, and its body has no \`npm run lighthouse:compare\` output.`,
-      "Run it against main (docs/testing.md, Performance), add its figures to the body, then rerun.",
-    ].join("\n")
+  throw refusing(
+    action,
+    pr,
+    `it changes ${changed.join(", ")}, and its body has no \`npm run lighthouse:compare\` output.`,
+    "Run it against main (docs/testing.md, Performance), add its figures to the body, then rerun."
   );
 }

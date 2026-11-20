@@ -9,7 +9,8 @@
 # needs a review of its own. The pre-push hook makes a branch merge main
 # whenever main has moved, so a commit reviewed before its first push often
 # reaches the PR under one (#193). merge and mark-ready carry a review over
-# such merges to the head (require-review.sh).
+# such merges to the head (require-review.sh for merge,
+# src/lib/pr-gate/review.ts for mark-ready).
 #
 # Usage: npm run review-passed -- <pr-number> <reviewed full SHA>
 set -euo pipefail

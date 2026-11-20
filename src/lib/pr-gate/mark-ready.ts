@@ -10,13 +10,26 @@
 // push during that wait is refused, as its head was never checked.
 import { requireNamedClosures } from "./closing-issues";
 import { requireFirstScreenCost, type FirstScreen } from "./first-screen-cost";
-import { isOpen, waitForHead, type Gate } from "./pr-status";
+import {
+  isOpenElseSay,
+  waitForHead,
+  type Gate,
+  type HeadStatus,
+} from "./pr-status";
+import type { PullRequest } from "./github";
 import { requireReview } from "./review";
-import { pushedHead, Refusal } from "./snapshot";
+import {
+  builtUrl,
+  pushedHead,
+  Refusal,
+  refusalExit,
+  refusing,
+  type Action,
+} from "./snapshot";
 
 export type MarkReadyGate = Gate & { firstScreen: FirstScreen };
 
-const ACTION = "label";
+const ACTION: Action = "label";
 
 /** Returns the exit code: 0 once labelled. */
 export async function markReady(
@@ -27,26 +40,25 @@ export async function markReady(
     await label(pr, gate);
     return 0;
   } catch (error) {
-    if (!(error instanceof Refusal)) throw error;
-    error.message.split("\n").forEach(gate.err);
-    return 1;
+    return refusalExit(error, gate.err);
   }
 }
 
 async function label(pr: number, gate: MarkReadyGate) {
   const { github } = gate;
-  const refuse = (why: string) =>
-    new Refusal(`Refusing to label #${pr}: ${why}`);
-
   const pullRequest = github.pullRequest(pr);
   let head: string;
   try {
     head = await pushedHead(pr, pullRequest, gate);
   } catch (error) {
     if (!(error instanceof Refusal)) throw error;
-    throw new Refusal(
-      `${error.message}\n${refuse("GitHub doesn't show this checkout's commit (see above).").message}`
+    // The wait's own message first, so this one's "above" points at it.
+    const refusal = refusing(
+      ACTION,
+      pr,
+      "GitHub doesn't show this checkout's commit (see above)."
     );
+    throw new Refusal(`${error.message}\n${refusal.message}`);
   }
 
   requireReview(pr, head, ACTION, gate);
@@ -54,19 +66,42 @@ async function label(pr: number, gate: MarkReadyGate) {
   requireNamedClosures(pr, contents, ACTION);
   requireFirstScreenCost(pr, contents, gate.firstScreen, ACTION);
 
-  // The report goes to stderr, as it did when pr-status's output was kept for these checks.
-  const status = { ...gate, out: gate.err };
-  const passed =
-    isOpen(pr, pullRequest, status.out) &&
-    (await waitForHead(pr, head, status));
-  if (!passed || !passed.passed) {
-    throw refuse("pr-status didn't pass (see above).");
+  const status = await waitForPr(pr, pullRequest, head, gate);
+  if (!status?.passed) {
+    throw refusing(ACTION, pr, "pr-status didn't pass (see above).");
   }
-  if (passed.preview?.skipped !== false || !passed.preview.url) {
-    throw refuse("no preview built from its head yet.");
+  if (!builtUrl(status.preview)) {
+    throw refusing(ACTION, pr, "no preview built from its head yet.");
   }
   if (github.pullRequest(pr).head !== head) {
-    throw refuse("its head moved while checks ran; run it again.");
+    throw refusing(
+      ACTION,
+      pr,
+      "its head moved while checks ran; run it again."
+    );
   }
   github.addLabel(pr, "ready-for-human");
+}
+
+/**
+ * pr-status's wait and report, on stderr, as when mark-ready kept
+ * pr-status's output for its own checks. Undefined if it didn't finish: a
+ * closed PR, or an error, said as pr-status says one on its way out.
+ */
+async function waitForPr(
+  pr: number,
+  pullRequest: PullRequest,
+  head: string,
+  gate: Gate
+): Promise<HeadStatus | undefined> {
+  const status = { ...gate, out: gate.err };
+  if (!isOpenElseSay(pr, pullRequest, status.out)) return undefined;
+  try {
+    return await waitForHead(pr, head, status);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const lines = message.split("\n");
+    (error instanceof Refusal ? lines : lines.slice(0, 1)).forEach(gate.err);
+    return undefined;
+  }
 }

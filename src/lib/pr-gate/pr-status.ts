@@ -8,7 +8,7 @@ import {
   finishedChecks,
   preview,
   pushedHead,
-  Refusal,
+  refusalExit,
   type Preview,
   short,
   type Reader,
@@ -45,21 +45,19 @@ export async function prStatus(pr: number, gate: Gate): Promise<number> {
   try {
     return await report(pr, gate);
   } catch (error) {
-    if (!(error instanceof Refusal)) throw error;
-    error.message.split("\n").forEach(gate.err);
-    return 1;
+    return refusalExit(error, gate.err);
   }
 }
 
 async function report(pr: number, gate: Gate): Promise<number> {
   const pullRequest = gate.github.pullRequest(pr);
-  if (!isOpen(pr, pullRequest, gate.out)) return 1;
+  if (!isOpenElseSay(pr, pullRequest, gate.out)) return 1;
   const head = await pushedHead(pr, pullRequest, gate);
   return (await waitForHead(pr, head, gate)).passed ? 0 : 1;
 }
 
-/** Says so of a PR that isn't open: nothing to wait for. */
-export function isOpen(
+/** Whether the PR is open; if not, says so, as there's nothing to wait for. */
+export function isOpenElseSay(
   pr: number,
   { state }: PullRequest,
   say: (line: string) => void

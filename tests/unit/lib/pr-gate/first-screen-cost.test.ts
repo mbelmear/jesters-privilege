@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { requireFirstScreenCost } from "@/lib/pr-gate/first-screen-cost";
 import { firstScreenFiles } from "../../../../scripts/pr-gate-first-screen";
 import { scriptsDir } from "../../../paths";
+import { refusalLines } from "./refusal-lines";
 
 // The real list, scripts/first-screen-files.sh, which the pre-commit reminder reads too.
 const firstScreen = firstScreenFiles(join(scriptsDir, "first-screen-files.sh"));
@@ -18,12 +19,9 @@ function refusal(files: string[], body: string): string[] {
     commitMessages: [],
     files,
   };
-  try {
-    requireFirstScreenCost(233, contents, firstScreen, "merge");
-    return [];
-  } catch (error) {
-    return String((error as Error).message).split("\n");
-  }
+  return refusalLines(() =>
+    requireFirstScreenCost(233, contents, firstScreen, "merge")
+  );
 }
 
 // #233's body as first written, before review asked for the comparison.

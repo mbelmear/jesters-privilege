@@ -7,7 +7,7 @@
 // closed #209 again. A ticket a PR means to close goes in its title or its
 // body's first line, as "Closes #181, closes #200." does.
 import type { PrContents } from "./github";
-import { Refusal } from "./snapshot";
+import { refusing, type Action } from "./snapshot";
 
 // GitHub's keywords, then an optional colon, before #N, owner/repo#N, or an
 // issue's URL.
@@ -35,16 +35,16 @@ export function unnamedClosures({
 export function requireNamedClosures(
   pr: number,
   contents: PrContents,
-  action: string
+  action: Action
 ) {
   const unnamed = unnamedClosures(contents);
   if (!unnamed.length) return;
-  throw new Refusal(
-    [
-      `Refusing to ${action} #${pr}: merging it closes ${unnamed.map((n) => `#${n}`).join(", ")}, which neither its title names nor its body's first line closes.`,
-      `GitHub closes an issue after "fix", "close" or "resolve" anywhere in the body or a commit message.`,
-      `Reword that line ("#209 needs fixing first"; amend or rebase for a commit),`,
-      `or put "Closes #N." in the body's first line if it should close, then rerun.`,
-    ].join("\n")
+  throw refusing(
+    action,
+    pr,
+    `merging it closes ${unnamed.map((n) => `#${n}`).join(", ")}, which neither its title names nor its body's first line closes.`,
+    `GitHub closes an issue after "fix", "close" or "resolve" anywhere in the body or a commit message.`,
+    `Reword that line ("#209 needs fixing first"; amend or rebase for a commit),`,
+    `or put "Closes #N." in the body's first line if it should close, then rerun.`
   );
 }

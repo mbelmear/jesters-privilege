@@ -1,5 +1,6 @@
 import { requireNamedClosures } from "@/lib/pr-gate/closing-issues";
 import type { PrContents } from "@/lib/pr-gate/github";
+import { refusalLines } from "./refusal-lines";
 
 // The refusal's lines, or [] when it passes.
 function refusal(
@@ -15,12 +16,7 @@ function refusal(
     commitMessages,
     files: [],
   };
-  try {
-    requireNamedClosures(211, contents, "merge");
-    return [];
-  } catch (error) {
-    return String((error as Error).message).split("\n");
-  }
+  return refusalLines(() => requireNamedClosures(211, contents, "merge"));
 }
 
 const passes = (...args: Parameters<typeof refusal>) =>

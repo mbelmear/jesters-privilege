@@ -1,4 +1,5 @@
 // The PR gate's GitHub (src/lib/pr-gate/github.ts), built from `gh`.
+import { execFileSync } from "node:child_process";
 import {
   CHECK_STATES,
   Disconnected,
@@ -19,6 +20,18 @@ const printed = (error: unknown, stream: "stdout" | "stderr") =>
   error instanceof Error && stream in error
     ? String(Reflect.get(error, stream) ?? "")
     : "";
+
+/** As gh, but printing what gh prints: the URL of what it changed. */
+const ghLoud = (...args: string[]) => {
+  execFileSync("gh", args, { stdio: ["ignore", "inherit", "inherit"] });
+};
+
+/** A quiet read's error, saying gh's own error, which it kept from printing. */
+const quietError = (command: string, error: unknown) =>
+  new Error(
+    `${command}: ${printed(error, "stderr").trim() || (error instanceof Error ? error.message : "")}`,
+    { cause: error }
+  );
 
 const isCheckState = (bucket: string): bucket is CheckState =>
   CHECK_STATES.some((state) => state === bucket);
@@ -89,14 +102,7 @@ export const ghGitHub: GitHub = {
       if (stderr.includes("no checks reported")) return [];
       // gh exits 8 while any is pending and 1 once any failed, having printed them.
       rows = printed(error, "stdout");
-      // ghQuiet kept gh's error from printing, so this one says it.
-      if (!rows.trim()) {
-        const said =
-          stderr.trim() || (error instanceof Error ? error.message : "");
-        throw new Error(`gh pr checks ${pr}: ${said}`, {
-          cause: error,
-        });
-      }
+      if (!rows.trim()) throw quietError(`gh pr checks ${pr}`, error);
     }
     return tabbed(rows).map(([name = "", bucket = "", link = ""]): Check => {
       if (!isCheckState(bucket)) {
@@ -139,23 +145,27 @@ export const ghGitHub: GitHub = {
   },
 
   comment(pr, body) {
-    gh("pr", "comment", String(pr), `--body=${body}`);
+    ghLoud("pr", "comment", String(pr), `--body=${body}`);
   },
 
   addLabel(pr, label) {
-    gh("pr", "edit", String(pr), `--add-label=${label}`);
+    ghLoud("pr", "edit", String(pr), `--add-label=${label}`);
   },
 
   comments(pr) {
-    const json: unknown = JSON.parse(
-      ghQuiet(
+    let read: string;
+    try {
+      read = ghQuiet(
         "pr",
         "view",
         String(pr),
         "--json=comments",
         "--jq=[.comments[].body]"
-      )
-    );
+      );
+    } catch (error) {
+      throw quietError(`gh pr view ${pr} --json=comments`, error);
+    }
+    const json: unknown = JSON.parse(read);
     const bodies: unknown[] = Array.isArray(json) ? json : [];
     return bodies.filter((body): body is string => typeof body === "string");
   },
