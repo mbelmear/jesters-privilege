@@ -52,7 +52,7 @@ async function label(pr: number, gate: MarkReadyGate) {
     pullRequest = github.pullRequest(pr);
     head = await pushedHead(pr, pullRequest, gate);
   } catch (error) {
-    // The wait's own message first, so this one's "above" points at it.
+    // The read's or the wait's own message first, so this one's "above" points at it.
     sayError(error, gate.err);
     throw refusing(
       ACTION,

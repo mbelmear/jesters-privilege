@@ -1,5 +1,7 @@
 // The `gh` wiring a failed run's report shares: how its jobs ended, their logs,
-// and the one open issue that tracks it. Used by report-nightly and report-deploy.
+// and the one open issue that tracks it. Used by report-nightly and
+// report-deploy; the PR gate's GitHub (pr-gate-github.ts) runs gh through
+// gh, ghQuiet and ghLoud.
 import { execFileSync } from "node:child_process";
 
 const GH = { encoding: "utf8", maxBuffer: 1 << 28 } as const;

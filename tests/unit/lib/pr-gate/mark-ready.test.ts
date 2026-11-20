@@ -64,13 +64,17 @@ describe("mark-ready", () => {
   // As when wait-pushed-head.sh failed on gh's error, having printed it.
   it("says an error reading the head, then refuses", async () => {
     const t = setup();
+    const read =
+      "gh pr view 7 --json=state,headRefName,headRefOid --jq=[.state, .headRefName, .headRefOid] | @tsv";
     jest.spyOn(t.github, "pullRequest").mockImplementation(() => {
-      throw new Error("Command failed: gh pr view 7\nHTTP 502");
+      // Made up: the shape execFileSync's error takes when gh exits non-zero
+      // (pr-gate-github.test.ts), gh's own error after the first line.
+      throw new Error(`Command failed: ${read}\nHTTP 502: Bad Gateway`);
     });
 
     expect(await t.run()).toBe(1);
     expect(t.err).toEqual([
-      "Command failed: gh pr view 7",
+      `Command failed: ${read}`,
       "Refusing to label #7: GitHub doesn't show this checkout's commit (see above).",
     ]);
   });
