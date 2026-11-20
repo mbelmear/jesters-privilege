@@ -15,7 +15,7 @@ import { scriptsDir } from "../../paths";
 
 const script = join(scriptsDir, "pinned-node.sh");
 
-describe("the commit hooks' Node", () => {
+describe("the pinned Node the hooks and npm test run", () => {
   let root: string;
 
   // A stand-in node that answers --version as the real one does.
@@ -25,8 +25,8 @@ describe("the commit hooks' Node", () => {
     chmodSync(join(dir, "node"), 0o755);
   }
 
-  // Sources the script as a hook does, then reports the node it left first
-  // on PATH.
+  // Sources the script as a hook or an npm test script does, then reports
+  // the node it left first on PATH.
   function hook({ shellNode, nvm }: { shellNode?: string; nvm: string[] }) {
     const shellBin = join(root, "shell-bin");
     mkdirSync(shellBin, { recursive: true });
@@ -75,15 +75,15 @@ describe("the commit hooks' Node", () => {
     expect(result.status).toBe(1);
     expect(result.stdout).toBe("");
     expect(result.stderr).toBe(
-      "Node 26 runs this hook, and .nvmrc pins 24, which CI runs.\n" +
-        "Install it (`nvm install`) or switch to it (`nvm use`), then commit again.\n"
+      "Node 26 runs this, and .nvmrc pins 24, which CI runs.\n" +
+        "Install it (`nvm install`) or switch to it (`nvm use`), then run it again.\n"
     );
   });
 
   it("names a shell with no node at all", () => {
     const result = hook({ nvm: [] });
     expect(result.status).toBe(1);
-    expect(result.stderr).toContain("Node (none) runs this hook");
+    expect(result.stderr).toContain("Node (none) runs this,");
   });
 
   it("reads a full version in .nvmrc as its major", () => {

@@ -11,7 +11,7 @@ npx playwright install chromium webkit   # once, and after Playwright upgrades
 
 Add `firefox` to that install if you want to run the nightly browser locally.
 
-Use the Node major `.nvmrc` pins, which CI runs (`nvm use`). The commit hooks switch to it themselves when nvm has it installed (`scripts/pinned-node.sh`), since another major can fail a test CI passes: Node 26 fails one of `tests/unit/lib/player-browser.test.ts` that 24 passes. A test you run by hand runs under your shell's Node.
+Use the Node major `.nvmrc` pins, which CI runs (`nvm use`). The commit hooks, `npm test`, `test:watch` and `test:coverage` switch to it themselves when nvm has it installed (`scripts/pinned-node.sh`), since another major can fail a test CI passes: Node 26 fails one of `tests/unit/lib/player-browser.test.ts` that 24 passes. Run one file by hand with `npm test -- <file>`; `npx jest` and the `test:e2e` scripts run under your shell's Node.
 
 ## Unit and component tests (Jest)
 
@@ -21,7 +21,7 @@ Jest uses Next's preset (`next/jest`), React Testing Library, and jest-axe. Test
 npm test                    # run once
 npm run test:watch          # rerun on change
 npm run test:coverage       # with coverage, as CI runs it
-npx jest tests/unit/lib     # one folder or file
+npm test -- tests/unit/lib  # one folder or file
 ```
 
 - **Logic modules** live in `src/lib/`. Coverage there must stay at or above 90% of lines, or `test:coverage` fails.
@@ -220,7 +220,7 @@ The pre-commit hook formats staged files with Prettier, so `format:check` only f
 
 `lint:zizmor` (`scripts/zizmor.sh`) downloads the zizmor release that script pins the same way, and CI's **Lint workflows** job runs it too. It runs offline there and in the commit hook. Nightly runs it online (the **zizmor (online)** job, with the run's token), which also checks each action against GitHub's security advisories and a hash-pinned action's commit against its repository (#178). A finding there fails Nightly, not a pull request's required checks, so an advisory published overnight reaches the failure report: update the action, or judge it safe. `.github/zizmor.yml` holds this repo's rules. A finding that's safe in one place gets an inline `# zizmor: ignore[rule]` with its reason alongside. zizmor doesn't flag a secret in a workflow's or job's `env`, so `tests/unit/scripts/workflows.test.ts` does.
 
-A shell script with logic is tested from a `tests/unit/scripts/*.test.ts` that runs it for real: `merge-holds-branch.test.ts` against a throwaway repo, `smoke-check.test.ts` with stubs for `curl` and `sleep` on the `PATH`. Those tests hand the child its `PATH` through `env`. Jest's `process.env` is a copy, so a module that spawns without `env` never sees a `PATH` set in a test: code that writes through `gh` is tested with `child_process` mocked (`tests/unit/scripts/failed-run.test.ts`). #164's first test stubbed `gh` on Jest's `PATH`, and it opened real issues.
+A shell script with logic is tested from a `tests/unit/scripts/*.test.ts` that runs it for real: `merge-holds-branch.test.ts` against a throwaway repo, `smoke-check.test.ts` with stubs for `curl` and `sleep` on the `PATH`. Those tests hand the child its `PATH` through `env`. Jest's `process.env` is a copy, so a module that spawns without `env` never sees a `PATH` set in a test: code that writes through `gh` is tested with `child_process` mocked (`tests/unit/scripts/failed-run.test.ts`). #164's first test stubbed `gh` on Jest's `PATH`, and it opened real issues. The PR gate's tests (`tests/unit/lib/pr-gate/`) stub nothing on any `PATH`: they ask GitHub through `FakeGitHub`, and `fake-github-only.test.ts` fails on a `PATH` or a `gh` stand-in there.
 
 ## In CI
 
