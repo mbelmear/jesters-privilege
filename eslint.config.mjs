@@ -167,9 +167,10 @@ const eslintConfig = defineConfig([
         },
         // A hand-built gh failure misses the shape execFileSync throws: #268's
         // lacked `status`, by which the gate knows gh said its own error.
+        // Test files only: tests/gh-failed.ts is the one helper that builds it.
         ...[
-          "NewExpression[callee.name='Error'] > Literal[value=/^Command failed:/]",
-          "NewExpression[callee.name='Error'] > TemplateLiteral > TemplateElement[value.raw=/^Command failed:/]",
+          ":matches(NewExpression, CallExpression)[callee.name='Error'] Literal[value=/^Command failed:/]",
+          ":matches(NewExpression, CallExpression)[callee.name='Error'] TemplateElement[value.raw=/^Command failed:/]",
         ].map((selector) => ({
           selector,
           message:

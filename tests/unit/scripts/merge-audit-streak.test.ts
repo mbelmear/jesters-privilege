@@ -25,7 +25,7 @@ afterEach(() => {
   rmSync(root, { recursive: true, force: true });
 });
 
-function streak(conclusions: string[], exit = 0) {
+function runHook(conclusions: string[], exit = 0) {
   writeFileSync(
     join(root, "answer"),
     conclusions.map((c) => `${c}\n`).join("")
@@ -49,7 +49,7 @@ exit ${exit}
 describe("merge-audit-streak", () => {
   it("asks for main's finished Merge audit runs, newest first", () => {
     // Made up.
-    const result = streak(["success"]);
+    const result = runHook(["success"]);
 
     expect(result.args).toBe(
       "run list --workflow merge-audit.yml --branch main --status completed --limit 20 --json conclusion --jq .[].conclusion"
@@ -58,7 +58,7 @@ describe("merge-audit-streak", () => {
 
   it("says nothing when the newest run passed", () => {
     // Made up.
-    const result = streak(["success", "failure", "failure"]);
+    const result = runHook(["success", "failure", "failure"]);
 
     expect(result.stdout).toBe("");
     expect(result.status).toBe(0);
@@ -66,7 +66,7 @@ describe("merge-audit-streak", () => {
 
   it("counts the failures since the last pass", () => {
     // Made up.
-    const result = streak(["failure", "failure", "failure", "success"]);
+    const result = runHook(["failure", "failure", "failure", "success"]);
 
     expect(result.stdout).toBe(
       "Merge audit failed on the last 3 merges to main: each merged without a passed review recorded at its head (docs/testing.md, Merging). Tell the user before merging anything else; gh run list --workflow merge-audit.yml shows which.\n"
@@ -74,23 +74,30 @@ describe("merge-audit-streak", () => {
     expect(result.status).toBe(0);
   });
 
+  it("counts past a cancelled run, which neither passed nor failed", () => {
+    // Made up.
+    const result = runHook(["failure", "cancelled", "failure", "success"]);
+
+    expect(result.stdout).toContain("on the last 2 merges to main");
+  });
+
   it("says one merge as one", () => {
     // Made up.
-    expect(streak(["failure", "success"]).stdout).toContain(
+    expect(runHook(["failure", "success"]).stdout).toContain(
       "on the last 1 merge to main"
     );
   });
 
   // Recorded: gh 2.103.3 on 2026-11-20, when every one of the newest 20 had failed.
   it("says it's at least as many as it read when none passed", () => {
-    const result = streak(Array<string>(20).fill("failure"));
+    const result = runHook(Array<string>(20).fill("failure"));
 
     expect(result.stdout).toContain("on the last 20 or more merges to main");
   });
 
   it("says so when it can't read the runs", () => {
     // Made up.
-    const result = streak([], 1);
+    const result = runHook([], 1);
 
     expect(result.stdout).toBe(
       "Couldn't read Merge audit's runs (gh run list --workflow merge-audit.yml), so whether recent merges kept their review is unknown.\n"

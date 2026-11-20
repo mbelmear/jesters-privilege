@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Claude Code SessionStart hook (.claude/settings.json): says when Merge audit
 # has failed on the latest merges to main, each a PR merged without a passed
-# review recorded at its head. Its failures went unread for 35 merges after
-# #222 (#268's retro), so a session now opens with them.
+# review recorded at its head. It failed on 32 merges, #222 to #268, unread
+# (#268's retro), so a session now opens with the streak: the failures since
+# its last pass, a cancelled or skipped run counting as neither.
 # Prints to stdout, which the hook adds to the session's context.
 set -euo pipefail
 
@@ -15,8 +16,11 @@ fi
 
 failed=0
 while IFS= read -r conclusion; do
-  [[ "$conclusion" == failure ]] || break
-  failed=$((failed + 1))
+  case "$conclusion" in
+    success) break ;;
+    failure) failed=$((failed + 1)) ;;
+    *) ;;
+  esac
 done <<<"$runs"
 ((failed > 0)) || exit 0
 
