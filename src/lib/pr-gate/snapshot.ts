@@ -15,6 +15,24 @@ export type Reader = { github: GitHub; git: Git; clock: Clock };
 /** A command stops here; its message says why and what to do. */
 export class Refusal extends Error {}
 
+/** What a command refuses to do, as its refusals say it. */
+export type Action = "merge" | "label";
+
+/** "Refusing to <action> #<pr>: <why>", then any lines on what to do. */
+export const refusing = (
+  action: Action,
+  pr: number,
+  why: string,
+  ...next: string[]
+) => new Refusal([`Refusing to ${action} #${pr}: ${why}`, ...next].join("\n"));
+
+/** A command's exit code for a refusal, having said it line by line; anything else is rethrown. */
+export function refusalExit(error: unknown, err: (line: string) => void) {
+  if (!(error instanceof Refusal)) throw error;
+  error.message.split("\n").forEach(err);
+  return 1;
+}
+
 /**
  * The PR's head. Run from a checkout of the PR's branch, it first waits for
  * GitHub to show the commit checked out here, so a run straight after `git
@@ -124,5 +142,9 @@ function deployComment(pr: number, github: GitHub): string {
     return "";
   }
 }
+
+/** The preview's URL, if one was built from the head. */
+export const builtUrl = (built: Preview | undefined) =>
+  built && !built.skipped ? built.url : undefined;
 
 export const short = (sha: string) => sha.slice(0, 7);

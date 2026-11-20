@@ -12,6 +12,24 @@ export function localGit(
     spawnSync(file, args, { cwd: dir, env, encoding: "utf8" });
   const has = (commit: string) =>
     run("git", ["cat-file", "-e", `${commit}^{commit}`]).status === 0;
+  const fetch = (head: string) =>
+    run(fetchScript, ["--quiet", "origin", "main", head]).status === 0;
+  const isAncestor = (ancestor: string, commit: string) =>
+    run("git", ["merge-base", "--is-ancestor", ancestor, commit]).status === 0;
+  /** What `commit` changes since it left main, blob by blob; undefined if git failed. */
+  const changes = (commit: string, main: string) => {
+    const base = run("git", ["merge-base", commit, main]);
+    if (base.status !== 0) return undefined;
+    const diff = run("git", [
+      "diff",
+      "--raw",
+      "--no-renames",
+      "--abbrev=40",
+      base.stdout.trim(),
+      commit,
+    ]);
+    return diff.status === 0 ? diff.stdout : undefined;
+  };
 
   return {
     branch() {
@@ -28,9 +46,26 @@ export function localGit(
       }
       return result.stdout.trim();
     },
+    fetch,
+    isAncestor,
+    mergedMainOnly(reviewed, head) {
+      const main = "origin/main";
+      if (!isAncestor(reviewed, head)) return false;
+      const own = run("git", [
+        "rev-list",
+        "--no-merges",
+        `${reviewed}..${head}`,
+        "--not",
+        main,
+      ]);
+      if (own.status !== 0 || own.stdout.trim()) return false;
+      // Each read first: two failed reads would compare equal, as empty.
+      const was = changes(reviewed, main);
+      const now = changes(head, main);
+      return was !== undefined && was === now;
+    },
     mergesCleanly(head) {
-      const fetched = run(fetchScript, ["--quiet", "origin", "main", head]);
-      if (fetched.status !== 0 || !has(head) || !has("origin/main")) {
+      if (!fetch(head) || !has(head) || !has("origin/main")) {
         return "unknown";
       }
       const merged = run("git", [

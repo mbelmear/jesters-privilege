@@ -8,6 +8,9 @@
 # touching one of those files, or a merge commit adding a change of its own,
 # refuses. main-overlap.sh sees only the first, and only commits still to merge. What it can't see is main changing something the PR relies on in
 # another file; CI runs on the merged code.
+# require-review.sh and review-passed.sh run it; the PR gate's mark-ready
+# reads the same in scripts/pr-gate-git.ts (mergedMainOnly), and
+# merged-main-only.test.ts runs every case through both.
 # Usage: scripts/merged-main-only.sh <reviewed> <head> <main>
 set -euo pipefail
 

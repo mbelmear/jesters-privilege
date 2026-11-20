@@ -1,77 +1,14 @@
 /**
  * @jest-environment node
  */
-import { execFileSync } from "node:child_process";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { FakeGitHub } from "@/lib/pr-gate/fake-github";
 import { prStatus } from "@/lib/pr-gate/pr-status";
-import { fakeClock } from "@/lib/pr-gate/waits";
-import { localGit } from "../../../../scripts/pr-gate-git";
-import { scriptsDir } from "../../../paths";
+import { git, previewOf, throwawayPr } from "./throwaway-pr";
 
-// Git run from a hook inherits GIT_DIR and GIT_INDEX_FILE, which point every
-// git command at the real repository (merge-holds-branch.test.ts), so every
-// git here drops them.
-const env = { ...process.env };
-for (const name of Object.keys(env)) {
-  if (name.startsWith("GIT_")) delete env[name];
-}
-const git = (cwd: string, ...args: string[]) =>
-  execFileSync("git", args, {
-    cwd,
-    env,
-    encoding: "utf8",
-    stdio: ["ignore", "pipe", "pipe"],
-  }).trim();
-
-let root = "";
-afterEach(() => {
-  if (root) rmSync(root, { recursive: true, force: true });
-  root = "";
-});
-
-// A throwaway origin with main, and a clone on the PR's branch `ticket`, one
-// commit ahead and pushed. GitHub (the fake) shows that commit as the PR's
-// head, open, with every check passed and its preview skipped, unless a test
-// says otherwise.
 function setup() {
-  root = mkdtempSync(join(tmpdir(), "pr-status-"));
-  const origin = join(root, "origin.git");
-  const dir = join(root, "clone");
-  git(root, "init", "--quiet", "--bare", "--initial-branch=main", origin);
-  git(root, "clone", "--quiet", origin, dir);
-  git(dir, "config", "user.email", "test@example.com");
-  git(dir, "config", "user.name", "Test");
-  writeFileSync(join(dir, "deploy.md"), "top\nmiddle\nbottom\n");
-  git(dir, "add", "-A");
-  git(dir, "commit", "--quiet", "-m", "Main");
-  git(dir, "push", "--quiet", "origin", "main");
-  git(dir, "switch", "--quiet", "-c", "ticket");
-  writeFileSync(join(dir, "ticket.md"), "the ticket\n");
-  git(dir, "add", "-A");
-  git(dir, "commit", "--quiet", "-m", "Ticket");
-  git(dir, "push", "--quiet", "origin", "ticket");
-  const head = git(dir, "rev-parse", "HEAD");
-
-  const github = new FakeGitHub({ state: "OPEN", branch: "ticket", head });
-  github.checkList = [
-    { name: "Lint workflows", state: "pass", link: "" },
-    { name: "Preview URL", state: "skipping", link: "" },
-  ];
-  const clock = fakeClock();
-  const out: string[] = [];
-  const err: string[] = [];
-  const run = () =>
-    prStatus(7, {
-      github,
-      git: localGit(dir, join(scriptsDir, "fetch.sh"), env),
-      clock,
-      out: (line) => out.push(line),
-      err: (line) => err.push(line),
-    });
-  return { dir, head, github, clock, out, err, run };
+  const t = throwawayPr("pr-status-");
+  return { ...t, run: () => prStatus(7, t.gate) };
 }
 
 describe("pr-status", () => {
@@ -205,15 +142,13 @@ describe("pr-status", () => {
     const ran = (t: ReturnType<typeof setup>) => {
       t.github.checkList = [{ name: "Preview URL", state: "pass", link: "" }];
     };
-    const comment = (sha: string) =>
-      `<!-- deploy-preview -->\n**Preview:** https://pr-7.example.workers.dev\n\nBuilt from ${sha}.`;
 
     it("waits for the comment naming the head, and reports its URL", async () => {
       const t = setup();
       ran(t);
-      t.github.commentBodies = ["Looks good", comment("b".repeat(40))];
+      t.github.commentBodies = ["Looks good", previewOf("b".repeat(40))];
       t.clock.onSleep = () => {
-        t.github.commentBodies.push(comment(t.head));
+        t.github.commentBodies.push(previewOf(t.head));
       };
 
       expect(await t.run()).toBe(0);

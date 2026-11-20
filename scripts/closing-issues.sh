@@ -12,8 +12,9 @@
 # (close, closes, closed, fix, fixes, fixed, resolve, resolves, resolved, then
 # an optional colon) before #N, owner/repo#N, or an issue's URL. gh cuts a long
 # first line with "…" and opens the body with "…", so the two are rejoined.
-# Shared by `npm run merge` and `npm run mark-ready`, which hands the merge
-# to a Jester.
+# Run by `npm run merge`; mark-ready reads it the same way in
+# src/lib/pr-gate/closing-issues.ts, which replaces this as merge moves there
+# (#250).
 # Usage: scripts/closing-issues.sh <pr-number> <action>
 set -euo pipefail
 

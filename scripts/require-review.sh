@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Exit 0 if a pull request's newest "Code review: passed at <sha>" comment
 # names the given head; otherwise say which commits still need a review and
-# exit 1. Shared by `npm run merge` and `npm run mark-ready`, so both refuse
-# an unreviewed head the same way. A head that adds only clean merges of main
+# exit 1. Run by `npm run merge`; mark-ready refuses an unreviewed head the
+# same way in src/lib/pr-gate/review.ts, which replaces this as merge moves
+# there (#250). A head that adds only clean merges of main
 # keeps its review (merged-main-only.sh), recorded as a comment on that head
 # for the post-merge audit, which reads the same line.
 # Usage: scripts/require-review.sh <pr-number> <head-sha> <action>

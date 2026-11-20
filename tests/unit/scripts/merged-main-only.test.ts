@@ -5,8 +5,11 @@ import { execFileSync, spawnSync } from "node:child_process";
 import { mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { localGit } from "../../../scripts/pr-gate-git";
 import { scriptsDir } from "../../paths";
 
+// review-passed.sh still runs the script; the PR gate has its own reading
+// (src/lib/pr-gate/git.ts, mergedMainOnly). Every case runs both.
 const script = join(scriptsDir, "merged-main-only.sh");
 
 // Git run from a hook inherits GIT_DIR and GIT_INDEX_FILE, which point every
@@ -42,18 +45,30 @@ function repo() {
     git("commit", "--quiet", "-m", message);
     return git("rev-parse", "HEAD");
   };
-  const carries = (reviewed: string, head: string) =>
-    spawnSync("bash", [script, reviewed, head, "main"], {
-      cwd: dir,
-      env,
-      encoding: "utf8",
-    }).status === 0;
+  // Both readings, the script's and the gate's, against main as origin/main.
+  const gate = localGit(dir, join(scriptsDir, "fetch.sh"), env);
+  const carries = (reviewed: string, head: string) => {
+    git("update-ref", "refs/remotes/origin/main", "main");
+    const byScript =
+      spawnSync("bash", [script, reviewed, head, "origin/main"], {
+        cwd: dir,
+        env,
+        encoding: "utf8",
+      }).status === 0;
+    const byGate = gate.mergedMainOnly(reviewed, head);
+    if (byScript !== byGate) {
+      throw new Error(
+        `merged-main-only.sh says ${byScript}, the gate ${byGate}`
+      );
+    }
+    return byGate;
+  };
   return { dir, git, commit, carries };
 }
 
 const lines = "one\ntwo\nthree\nfour\nfive\nsix\nseven\neight\nnine\n";
 
-describe("merged-main-only", () => {
+describe("merged-main-only, as the script and the gate read it", () => {
   let r: ReturnType<typeof repo>;
   let reviewed: string;
   beforeEach(() => {
