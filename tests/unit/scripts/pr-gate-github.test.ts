@@ -291,7 +291,7 @@ describe("the gh GitHub", () => {
   // review-passed.sh ended with gh's own exit code when gh pr comment
   // failed, adding nothing to the error gh printed.
   describe("a failed gh", () => {
-    // Made up: an auth failure's exit code and message, as gh gives them.
+    // Made up in gh's format: an auth failure's exit code and message.
     const unauthenticated = () =>
       exited(4, "To get started with GitHub CLI, please run:  gh auth login");
     const unknownState = new Error(

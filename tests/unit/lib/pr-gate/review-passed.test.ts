@@ -101,8 +101,12 @@ describe("review-passed", () => {
       async (_, ok) => {
         const t = setup();
         const local = t.commit("ticket.md", "unpushed\n", "Unpushed");
-        // Made up: what execFileSync throws when gh exits 1.
-        const error = new Error("Command failed: gh pr view 7\nHTTP 502");
+        // Made up in the shape execFileSync throws when gh exits 1, its
+        // status included, by which the caller knows gh said its own error.
+        const error = Object.assign(
+          new Error("Command failed: gh pr view 7\nHTTP 502"),
+          { status: 1 }
+        );
         let reads = 0;
         jest.spyOn(t.github, "pullRequest").mockImplementation(() => {
           reads += 1;
@@ -187,13 +191,18 @@ describe("review-passed", () => {
       git(t.dir, "remote", "set-url", "origin", nowhere);
 
       expect(await t.run("7", t.head)).toBe(1);
-      expect(t.err.slice(-4)).toEqual([
+      expect(t.err).toEqual([
+        `fatal: '${nowhere}' does not appear to be a git repository`,
+        "fatal: Could not read from remote repository.",
+        "",
+        "Please make sure you have the correct access rights",
+        "and the repository exists.",
+        `Couldn't fetch main and ${head}; checking what's here.`,
         "fatal: ambiguous argument 'origin/main': unknown revision or path not in the working tree.",
         "Use '--' to separate paths from revisions, like this:",
         "'git <command> [<revision>...] -- [<file>...]'",
         `Refusing: #7's head is ${head}, and a merge since ${t.head} changes the PR's files. Review it with ${t.head} as the fixed point (docs/testing.md, Merging: a merge of main that changes the PR's files), then record that review at ${head}.`,
       ]);
-      expect(t.err).toHaveLength(10);
       expect(t.github.commentBodies).toEqual([]);
     });
 

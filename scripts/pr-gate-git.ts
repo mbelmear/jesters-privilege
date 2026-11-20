@@ -82,10 +82,10 @@ export function localGit(
       // merge, as review-passed.sh's message did.
       if (own.status !== 0) return "merge changes files";
       if (own.stdout.trim()) return "own commits";
-      // Each read first: two failed reads would compare equal, as empty.
+      // A failed read stops here too, as set -e stopped merged-main-only.sh.
       const was = changes(reviewed, main);
-      const now = changes(head, main);
-      return was !== undefined && was === now
+      if (was === undefined) return "merge changes files";
+      return changes(head, main) === was
         ? "clean merges"
         : "merge changes files";
     },
