@@ -1,7 +1,13 @@
 // What the gate reads of a PR, each read or decided here once: its head, its
-// checks, the preview built from that head, and why a failed check failed.
+// checks, and the preview built from that head. Why a failed check failed is
+// failed-checks.ts; whether it merges cleanly, git.ts.
 import type { Git } from "./git";
-import { Disconnected, type Check, type GitHub } from "./github";
+import {
+  Disconnected,
+  type Check,
+  type GitHub,
+  type PullRequest,
+} from "./github";
 import { poll, WAITS, type Clock } from "./waits";
 
 export type Reader = { github: GitHub; git: Git; clock: Clock };
@@ -14,18 +20,23 @@ export class Refusal extends Error {}
  * GitHub to show the commit checked out here, so a run straight after `git
  * push` reads that commit, not the one before it (#57).
  */
-export async function pushedHead(pr: number, { github, git, clock }: Reader) {
-  const { branch } = github.pullRequest(pr);
+export async function pushedHead(
+  pr: number,
+  read: PullRequest,
+  { github, git, clock }: Reader
+) {
+  const { branch } = read;
   // Outside the branch's checkout there's no local head to wait for.
   const local = git.branch() === branch ? git.head() : undefined;
-  let head = "";
+  // The first try takes the head already read; each after reads it again.
+  let head: string | undefined;
   const shown = await poll(WAITS.pushedHead, clock, () => {
-    head = github.pullRequest(pr).head;
+    head = head === undefined ? read.head : github.pullRequest(pr).head;
     return local === undefined || head === local ? head : undefined;
   });
   if (shown === undefined) {
     throw new Refusal(
-      `#${pr} is at ${short(head)} on GitHub, but ${branch} here is at ${short(local ?? "")}; push or pull until they match.`
+      `#${pr} is at ${short(head ?? "")} on GitHub, but ${branch} here is at ${short(local ?? "")}; push or pull until they match.`
     );
   }
   return shown;

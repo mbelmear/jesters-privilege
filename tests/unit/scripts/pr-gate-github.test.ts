@@ -3,19 +3,24 @@ import { Disconnected } from "@/lib/pr-gate/github";
 import { ghGitHub } from "../../../scripts/pr-gate-github";
 
 // Fakes the process call itself, so no test here can reach GitHub (#164): see
-// failed-run.test.ts. Each answer is a recorded sample of what gh printed.
+// failed-run.test.ts. Each answer is what gh 2.103.3 printed for PR #256 on
+// 2026-11-20, cut to a few rows, unless its test says otherwise.
 jest.mock("node:child_process", () => ({ execFileSync: jest.fn() }));
 
 const calls: string[][] = [];
+const quiet: boolean[] = [];
 let answer: (args: readonly string[]) => string = () => "";
 
 beforeEach(() => {
   calls.length = 0;
+  quiet.length = 0;
   jest.mocked(execFileSync).mockImplementation(((
     _file: string,
-    args: readonly string[]
+    args: readonly string[],
+    options?: { stdio?: unknown }
   ) => {
     calls.push([...args]);
+    quiet.push(options?.stdio !== undefined);
     return answer(args);
   }) as typeof execFileSync);
 });
@@ -91,6 +96,7 @@ describe("the gh GitHub", () => {
       expect(ghGitHub.checks(256)).toEqual([]);
     });
 
+    // Not recorded: the errors read-checks.sh has retried on, one per pattern.
     it.each([
       "error connecting to api.github.com",
       'Post "https://api.github.com/graphql": dial tcp: lookup api.github.com: no such host',
@@ -153,5 +159,24 @@ describe("the gh GitHub", () => {
         `--jq=if (.check_runs | length) == 0 then "none" else .check_runs | max_by(.started_at) | .conclusion // "pending" end`,
       ],
     ]);
+  });
+
+  it("refuses a PR state it doesn't know", () => {
+    answer = () => "DRAFTED\tticket\tabc\n";
+
+    expect(() => ghGitHub.pullRequest(256)).toThrow(
+      "gh pr view gave #256 an unknown state: DRAFTED"
+    );
+  });
+
+  // A poll reads again on an error, so gh's own errors would print at each try.
+  it("keeps gh's errors to itself on reads that are polled or reported on", () => {
+    answer = (args) => (args.includes("--json=comments") ? "[]" : "");
+    ghGitHub.checks(256);
+    ghGitHub.comments(256);
+    ghGitHub.jobLog("o/r", "42");
+    ghGitHub.mainCheck("Build");
+
+    expect(quiet).toEqual([true, true, true, true]);
   });
 });

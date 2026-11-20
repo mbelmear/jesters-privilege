@@ -2,16 +2,25 @@
 // (scripts/pr-gate-github.ts); tests pass FakeGitHub, so `gh` never runs in the
 // gate's tests (#164).
 
+export const PR_STATES = ["OPEN", "CLOSED", "MERGED"] as const;
+export type PrState = (typeof PR_STATES)[number];
+
 export type PullRequest = {
-  /** OPEN, CLOSED or MERGED. */
-  state: string;
+  state: PrState;
   branch: string;
   /** The head commit's full SHA. */
   head: string;
 };
 
 /** As `gh pr checks` buckets them. */
-export type CheckState = "pass" | "fail" | "pending" | "skipping" | "cancel";
+export const CHECK_STATES = [
+  "pass",
+  "fail",
+  "pending",
+  "skipping",
+  "cancel",
+] as const;
+export type CheckState = (typeof CHECK_STATES)[number];
 
 export type Check = { name: string; state: CheckState; link: string };
 

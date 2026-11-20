@@ -1,11 +1,14 @@
 // The PR gate's GitHub (src/lib/pr-gate/github.ts), built from `gh`.
 import {
+  CHECK_STATES,
   Disconnected,
+  PR_STATES,
   type Check,
   type CheckState,
   type GitHub,
+  type PrState,
 } from "@/lib/pr-gate/github";
-import { gh } from "./failed-run";
+import { gh, ghQuiet } from "./failed-run";
 
 // What gh prints when it can't reach GitHub, rather than GitHub answering.
 const DROPPED = /error connecting to|dial tcp|connection reset|timeout|EOF/;
@@ -16,9 +19,10 @@ const printed = (error: unknown, stream: "stdout" | "stderr") =>
     ? String(Reflect.get(error, stream) ?? "")
     : "";
 
-const STATES = ["pass", "fail", "pending", "skipping", "cancel"] as const;
-const isState = (bucket: string): bucket is CheckState =>
-  STATES.some((state) => state === bucket);
+const isCheckState = (bucket: string): bucket is CheckState =>
+  CHECK_STATES.some((state) => state === bucket);
+const isPrState = (state: string): state is PrState =>
+  PR_STATES.some((known) => known === state);
 
 const tabbed = (output: string) =>
   output
@@ -38,13 +42,16 @@ export const ghGitHub: GitHub = {
           "--jq=[.state, .headRefName, .headRefOid] | @tsv"
         )
       )[0] ?? [];
+    if (!isPrState(state)) {
+      throw new Error(`gh pr view gave #${pr} an unknown state: ${state}`);
+    }
     return { state, branch, head };
   },
 
   checks(pr) {
     let rows: string;
     try {
-      rows = gh(
+      rows = ghQuiet(
         "pr",
         "checks",
         String(pr),
@@ -60,7 +67,7 @@ export const ghGitHub: GitHub = {
       if (!rows.trim()) throw error;
     }
     return tabbed(rows).map(([name = "", bucket = "", link = ""]): Check => {
-      if (!isState(bucket)) {
+      if (!isCheckState(bucket)) {
         throw new Error(
           `gh pr checks gave ${name} an unknown state: ${bucket}`
         );
@@ -70,16 +77,21 @@ export const ghGitHub: GitHub = {
   },
 
   comments(pr) {
-    const bodies: unknown = JSON.parse(
-      gh("pr", "view", String(pr), "--json=comments", "--jq=[.comments[].body]")
+    const json: unknown = JSON.parse(
+      ghQuiet(
+        "pr",
+        "view",
+        String(pr),
+        "--json=comments",
+        "--jq=[.comments[].body]"
+      )
     );
-    return Array.isArray(bodies)
-      ? bodies.filter((body): body is string => typeof body === "string")
-      : [];
+    const bodies: unknown[] = Array.isArray(json) ? json : [];
+    return bodies.filter((body): body is string => typeof body === "string");
   },
 
   jobLog(repo, job) {
-    return gh(
+    return ghQuiet(
       "api",
       "--allow-escape-sequences",
       `repos/${repo}/actions/jobs/${job}/logs`
@@ -87,7 +99,7 @@ export const ghGitHub: GitHub = {
   },
 
   mainCheck(name) {
-    return gh(
+    return ghQuiet(
       "api",
       "-X",
       "GET",

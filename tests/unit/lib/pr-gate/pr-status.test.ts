@@ -6,9 +6,9 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { FakeGitHub } from "@/lib/pr-gate/fake-github";
-import { localGit } from "@/lib/pr-gate/git";
 import { prStatus } from "@/lib/pr-gate/pr-status";
 import { fakeClock } from "@/lib/pr-gate/waits";
+import { localGit } from "../../../../scripts/pr-gate-git";
 import { scriptsDir } from "../../../paths";
 
 // Git run from a hook inherits GIT_DIR and GIT_INDEX_FILE, which point every
@@ -235,7 +235,7 @@ describe("pr-status", () => {
 
   describe("a failed check", () => {
     const JOB = "https://github.com/o/r/actions/runs/4/job/42";
-    const failed = (t: ReturnType<typeof setup>) => {
+    const failing = (t: ReturnType<typeof setup>) => {
       t.github.checkList = [
         { name: "Lint workflows", state: "fail", link: JOB },
         { name: "Build", state: "pending", link: "" },
@@ -249,7 +249,7 @@ describe("pr-status", () => {
 
     it("waits for every other check, then prints its log from the first error, and fails", async () => {
       const t = setup();
-      failed(t);
+      failing(t);
       t.github.logs["42"] = [
         "2026-11-20T10:00:00.1234567Z \u001b[36;1mnpm run lint\u001b[0m",
         "2026-11-20T10:00:01.1234567Z ##[error]the cause",
@@ -275,7 +275,7 @@ describe("pr-status", () => {
 
     it("says when its log has no error line, or can't be read", async () => {
       const t = setup();
-      failed(t);
+      failing(t);
       t.github.checkList.push({
         name: "Unit tests",
         state: "fail",
@@ -301,12 +301,13 @@ describe("pr-status", () => {
       ["pending", "main's head is still running it."],
       ["none", "main's head hasn't run it."],
       [undefined, "couldn't read main's run of it."],
+      ["", "couldn't read main's run of it."],
       ["timed_out", "main's head ended it as timed_out."],
     ])(
       "says whose failure it likely is when main's run is %s",
       async (main, said) => {
         const t = setup();
-        failed(t);
+        failing(t);
         t.github.logs["42"] = "##[error]the cause";
         if (main === undefined) delete t.github.main["Lint workflows"];
         else t.github.main["Lint workflows"] = main;
@@ -330,5 +331,45 @@ describe("pr-status", () => {
       "Build was cancelled. Rerun it from its run: https://github.com/o/r/actions/runs/4/job/44",
     ]);
     expect(t.out).toContain("Build\tcancel");
+  });
+
+  it("prints the checks failed first, then by state and name, as gh's table sorts them", async () => {
+    const t = setup();
+    t.github.checkList = [
+      { name: "Preview URL", state: "skipping", link: "" },
+      { name: "Lint workflows", state: "pass", link: "" },
+      { name: "Unit tests", state: "fail", link: "" },
+      { name: "Build", state: "pass", link: "" },
+      { name: "Feed check", state: "skipping", link: "" },
+    ];
+    t.github.main["Unit tests"] = "success";
+
+    expect(await t.run()).toBe(1);
+    expect(t.out.slice(1, 6)).toEqual([
+      "Unit tests\tfail",
+      "Build\tpass",
+      "Lint workflows\tpass",
+      "Feed check\tskipping",
+      "Preview URL\tskipping",
+    ]);
+  });
+
+  it("ends a short log's errors at its last line, not a blank one", async () => {
+    const t = setup();
+    t.github.checkList.push({
+      name: "Unit tests",
+      state: "fail",
+      link: "https://github.com/o/r/actions/runs/4/job/43",
+    });
+    t.github.logs["43"] = "##[error]the cause\nthe detail\n";
+    t.github.main["Unit tests"] = "success";
+
+    expect(await t.run()).toBe(1);
+    expect(t.err).toEqual([
+      "Unit tests failed:",
+      "##[error]the cause",
+      "the detail",
+      "Unit tests: main's head passes it.",
+    ]);
   });
 });

@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # Print a pull request's head commit. Run from a checkout of the PR's branch,
 # it first waits for GitHub to show the commit checked out here, so a
-# pr-status or mark-ready run straight after `git push` checks that commit,
-# not the one before it (#57). Fails if GitHub still shows another commit
+# mark-ready or review-passed run straight after `git push` checks that commit,
+# not the one before it (#57). pr-status does the same in
+# src/lib/pr-gate/snapshot.ts, which replaces this as the other commands move
+# there (#250). Fails if GitHub still shows another commit
 # after a minute: push or pull until they match.
 # Usage: scripts/wait-pushed-head.sh <pr-number>
 set -euo pipefail

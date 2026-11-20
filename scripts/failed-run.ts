@@ -5,6 +5,17 @@ import { execFileSync } from "node:child_process";
 export const gh = (...args: string[]) =>
   execFileSync("gh", args, { encoding: "utf8", maxBuffer: 1 << 28 });
 
+/**
+ * As gh, but its errors stay in the error thrown rather than printing: for a
+ * read that's polled, or whose failure the caller reports itself.
+ */
+export const ghQuiet = (...args: string[]) =>
+  execFileSync("gh", args, {
+    encoding: "utf8",
+    maxBuffer: 1 << 28,
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+
 export type Job = { readonly id: string; readonly name: string };
 
 function jobsThatEnded(

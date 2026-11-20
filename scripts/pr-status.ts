@@ -5,9 +5,9 @@
 // mark-ready.sh reads the "Preview: https://" line; keep its shape.
 // Usage: npm run pr-status -- <pr-number>
 import { join } from "node:path";
-import { localGit } from "@/lib/pr-gate/git";
 import { prStatus } from "@/lib/pr-gate/pr-status";
 import { realClock } from "@/lib/pr-gate/waits";
+import { localGit } from "./pr-gate-git";
 import { ghGitHub } from "./pr-gate-github";
 
 const args = process.argv.slice(2);

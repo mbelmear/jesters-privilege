@@ -1,8 +1,9 @@
 // npm run pr-status: wait for a PR's head to finish CI and get its preview,
 // then report every check, the preview built from that head, and whether it
 // merges cleanly with main. Read-only.
-import { failed, failedCheckReport } from "./failed-checks";
+import { anyFailed, failedCheckReport } from "./failed-checks";
 import type { MergesCleanly } from "./git";
+import type { Check, CheckState } from "./github";
 import {
   finishedChecks,
   preview,
@@ -23,6 +24,19 @@ const MERGES: Record<MergesCleanly, string> = {
   unknown: "unknown (couldn't fetch)",
 };
 
+// gh's own table puts what needs looking at first, then sorts by name; its
+// JSON, which the gate reads, comes in no order.
+const TABLE_ORDER: readonly CheckState[] = [
+  "fail",
+  "cancel",
+  "pending",
+  "pass",
+  "skipping",
+];
+const asGhTable = (a: Check, b: Check) =>
+  TABLE_ORDER.indexOf(a.state) - TABLE_ORDER.indexOf(b.state) ||
+  a.name.localeCompare(b.name, "en");
+
 /** Returns the exit code: 0 when every check passed and it merges cleanly. */
 export async function prStatus(pr: number, gate: Gate): Promise<number> {
   try {
@@ -36,12 +50,12 @@ export async function prStatus(pr: number, gate: Gate): Promise<number> {
 
 async function report(pr: number, gate: Gate): Promise<number> {
   const { github, git, out } = gate;
-  const { state } = github.pullRequest(pr);
-  if (state !== "OPEN") {
-    out(`#${pr} is ${state}; nothing to wait for.`);
+  const read = github.pullRequest(pr);
+  if (read.state !== "OPEN") {
+    out(`#${pr} is ${read.state}; nothing to wait for.`);
     return 1;
   }
-  const head = await pushedHead(pr, gate);
+  const head = await pushedHead(pr, read, gate);
   out(`#${pr} at ${short(head)}`);
 
   // A PR that already conflicts would only be refused after the checks, so say
@@ -60,9 +74,11 @@ async function report(pr: number, gate: Gate): Promise<number> {
     );
     return 1;
   }
-  const passed = !failed(checks);
+  const passed = !anyFailed(checks);
   if (!passed) failedCheckReport(checks, github).forEach(gate.err);
-  for (const check of checks) out(`${check.name}\t${check.state}`);
+  for (const check of [...checks].sort(asGhTable)) {
+    out(`${check.name}\t${check.state}`);
+  }
 
   const built = await preview(pr, head, checks, gate);
   out(

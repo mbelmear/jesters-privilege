@@ -6,7 +6,7 @@
 import type { Check, GitHub } from "./github";
 
 /** Whether the checks failed: any failed, or was cancelled, which gh alone counts as passing. */
-export const failed = (checks: readonly Check[]) =>
+export const anyFailed = (checks: readonly Check[]) =>
   checks.some((check) => check.state === "fail" || check.state === "cancel");
 
 /** The report's lines, for stderr. */
@@ -49,7 +49,10 @@ function jobErrors({ name, link }: Check, github: GitHub): string[] {
   if (first === -1) {
     return [`${name} failed, with no ##[error] line in its log: ${link}`];
   }
-  return [`${name} failed:`, ...lines.slice(first, first + 20)];
+  const errors = lines.slice(first, first + 20);
+  // A log ends in a newline, which isn't a line of its own.
+  while (errors.at(-1) === "") errors.pop();
+  return [`${name} failed:`, ...errors];
 }
 
 function onMain(name: string, github: GitHub): string {
@@ -59,6 +62,8 @@ function onMain(name: string, github: GitHub): string {
   } catch {
     return "couldn't read main's run of it.";
   }
+  // An empty answer says nothing about main's run either.
+  if (!main) return "couldn't read main's run of it.";
   switch (main) {
     case "failure":
       return "main's head fails it too, so the cause is likely CI, not this PR.";
