@@ -27,6 +27,27 @@ const quietError = (command: string, error: unknown) =>
     { cause: error }
   );
 
+/**
+ * The exit code of a gh that failed, as execFileSync's error keeps it;
+ * undefined for any other error. Through gh or ghLoud, gh has already said
+ * its error.
+ */
+export function ghExit(error: unknown): number | undefined {
+  const status: unknown =
+    error instanceof Error ? Reflect.get(error, "status") : undefined;
+  return typeof status === "number" ? status : undefined;
+}
+
+/**
+ * Says an error by its first line, unless gh failed, which said its own
+ * error through gh or ghLoud.
+ */
+export function sayUnlessGh(error: unknown, err: (line: string) => void) {
+  if (ghExit(error) !== undefined) return;
+  const message = error instanceof Error ? error.message : String(error);
+  err(message.split("\n")[0] ?? "");
+}
+
 const isCheckState = (bucket: string): bucket is CheckState =>
   CHECK_STATES.some((state) => state === bucket);
 const isPrState = (state: string): state is PrState =>

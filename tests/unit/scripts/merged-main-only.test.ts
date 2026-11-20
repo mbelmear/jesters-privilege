@@ -8,8 +8,8 @@ import { join } from "node:path";
 import { localGit } from "../../../scripts/pr-gate-git";
 import { scriptsDir } from "../../paths";
 
-// review-passed.sh still runs the script; the PR gate has its own reading
-// (src/lib/pr-gate/git.ts, mergedMainOnly). Every case runs both.
+// merge (require-review.sh) still runs the script; the PR gate has its own
+// reading (src/lib/pr-gate/git.ts, sinceReview). Every case runs both.
 const script = join(scriptsDir, "merged-main-only.sh");
 
 // Git run from a hook inherits GIT_DIR and GIT_INDEX_FILE, which point every
@@ -55,7 +55,7 @@ function repo() {
         env,
         encoding: "utf8",
       }).status === 0;
-    const byGate = gate.mergedMainOnly(reviewed, head);
+    const byGate = gate.sinceReview(reviewed, head) === "clean merges";
     if (byScript !== byGate) {
       throw new Error(
         `merged-main-only.sh says ${byScript}, the gate ${byGate}`

@@ -36,7 +36,7 @@ export function requireReview(
     if (!git.fetch(head)) {
       err(`Couldn't fetch main and ${head}; checking what's here.`);
     }
-    if (git.mergedMainOnly(reviewed, head)) {
+    if (git.sinceReview(reviewed, head) === "clean merges") {
       github.comment(
         pr,
         `Code review: passed at ${head} (carried over from ${reviewed}: only clean merges of main since)`

@@ -4,6 +4,15 @@
 
 export type MergesCleanly = "yes" | "no" | "unknown";
 
+/**
+ * What follows a reviewed commit up to a PR's head: only clean merges of
+ * main, so the review still holds; a commit of the PR's own (or a head the
+ * reviewed commit isn't part of); or only merges, but ones that change the
+ * PR's files.
+ */
+export type SinceReview =
+  "clean merges" | "own commits" | "merge changes files";
+
 export interface Git {
   /** The branch checked out, or undefined outside any branch. */
   branch(): string | undefined;
@@ -20,17 +29,18 @@ export interface Git {
   /** Whether `ancestor` is part of `commit`'s history. */
   isAncestor(ancestor: string, commit: string): boolean;
   /**
-   * Whether everything after `reviewed` up to `head` is merges of origin/main
-   * that leave the PR's own changes as they were, so a review of `reviewed`
-   * still holds. The pre-push hook makes a branch merge main whenever main
-   * has moved, which with several sessions merging is most pushes.
+   * What follows `reviewed` up to `head`: "clean merges" when it's all merges
+   * of origin/main that leave the PR's own changes as they were, so a review
+   * of `reviewed` still holds. The pre-push hook makes a branch merge main
+   * whenever main has moved, which with several sessions merging is most
+   * pushes.
    *
    * It compares the blobs of every file the PR changes, before and after, so
    * main touching one of those files, or a merge commit adding a change of
-   * its own, says no. What it can't see is main changing something the PR
-   * relies on in another file; CI runs on the merged code.
-   * scripts/merged-main-only.sh, which review-passed still runs, does the
-   * same; one test holds both to the same cases.
+   * its own, says "merge changes files". What it can't see is main changing
+   * something the PR relies on in another file; CI runs on the merged code.
+   * scripts/merged-main-only.sh, which merge still runs, does the same; one
+   * test holds both to the same cases.
    */
-  mergedMainOnly(reviewed: string, head: string): boolean;
+  sinceReview(reviewed: string, head: string): SinceReview;
 }

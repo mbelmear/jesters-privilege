@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { Disconnected } from "@/lib/pr-gate/github";
-import { ghGitHub } from "../../../scripts/pr-gate-github";
+import { ghExit, ghGitHub, sayUnlessGh } from "../../../scripts/pr-gate-github";
 
 // Fakes the process call itself, so no test here can reach GitHub (#164): see
 // failed-run.test.ts. Each answer says whether gh printed it (gh 2.103.3,
@@ -286,6 +286,30 @@ describe("the gh GitHub", () => {
       ["pr", "comment", "256", "--body=Code review: passed at abc"],
     ]);
     expect(stdios).toEqual([["ignore", "inherit", "inherit"]]);
+  });
+
+  // review-passed.sh ended with gh's own exit code when gh pr comment
+  // failed, adding nothing to the error gh printed.
+  describe("a failed gh", () => {
+    // Made up in gh's format: an auth failure's exit code and message.
+    const unauthenticated = () =>
+      exited(4, "To get started with GitHub CLI, please run:  gh auth login");
+    const unknownState = new Error(
+      "gh pr view gave #7 an unknown state: DRAFT\nmore"
+    );
+
+    it("gives gh's exit code, and none for any other error", () => {
+      expect(ghExit(unauthenticated())).toBe(4);
+      expect(ghExit(unknownState)).toBeUndefined();
+    });
+
+    it("leaves gh's error to gh, and says any other by its first line", () => {
+      const said: string[] = [];
+      sayUnlessGh(unauthenticated(), (line) => said.push(line));
+      sayUnlessGh(unknownState, (line) => said.push(line));
+
+      expect(said).toEqual(["gh pr view gave #7 an unknown state: DRAFT"]);
+    });
   });
 
   it("adds a label, printing the PR's URL", () => {
