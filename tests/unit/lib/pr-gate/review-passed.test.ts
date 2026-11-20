@@ -175,6 +175,28 @@ describe("review-passed", () => {
       ]);
     });
 
+    // As review-passed.sh ended on 2026-11-20 (a failed fetch's lines first),
+    // but for git's three-line error, which it printed twice, reading the
+    // commits again to pick its message; the gate reads them once.
+    it("names the merge when git can't read main, saying git's error", async () => {
+      const t = setup();
+      mainGains(t, "other.md", "other\n");
+      const head = mergeMain(t);
+      git(t.dir, "update-ref", "-d", "refs/remotes/origin/main");
+      const nowhere = join(t.dir, "nowhere.git");
+      git(t.dir, "remote", "set-url", "origin", nowhere);
+
+      expect(await t.run("7", t.head)).toBe(1);
+      expect(t.err.slice(-4)).toEqual([
+        "fatal: ambiguous argument 'origin/main': unknown revision or path not in the working tree.",
+        "Use '--' to separate paths from revisions, like this:",
+        "'git <command> [<revision>...] -- [<file>...]'",
+        `Refusing: #7's head is ${head}, and a merge since ${t.head} changes the PR's files. Review it with ${t.head} as the fixed point (docs/testing.md, Merging: a merge of main that changes the PR's files), then record that review at ${head}.`,
+      ]);
+      expect(t.err).toHaveLength(10);
+      expect(t.github.commentBodies).toEqual([]);
+    });
+
     // Taken from review-passed.sh on 2026-11-20: git's lines, its blank one
     // included, then the warning, and it goes on with what's here.
     it("says when it can't fetch, and checks what's here", async () => {

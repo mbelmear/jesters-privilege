@@ -31,8 +31,9 @@ export interface Git {
   /**
    * What follows `reviewed` up to `head`: "clean merges" when it's all merges
    * of origin/main that leave the PR's own changes as they were, so a review
-   * of `reviewed` still holds. The pre-push hook makes a branch merge main whenever main
-   * has moved, which with several sessions merging is most pushes.
+   * of `reviewed` still holds. The pre-push hook makes a branch merge main
+   * whenever main has moved, which with several sessions merging is most
+   * pushes.
    *
    * It compares the blobs of every file the PR changes, before and after, so
    * main touching one of those files, or a merge commit adding a change of

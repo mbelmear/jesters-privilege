@@ -38,6 +38,16 @@ export function ghExit(error: unknown): number | undefined {
   return typeof status === "number" ? status : undefined;
 }
 
+/**
+ * Says an error by its first line, unless gh failed, which said its own
+ * error through gh or ghLoud.
+ */
+export function sayUnlessGh(error: unknown, err: (line: string) => void) {
+  if (ghExit(error) !== undefined) return;
+  const message = error instanceof Error ? error.message : String(error);
+  err(message.split("\n")[0] ?? "");
+}
+
 const isCheckState = (bucket: string): bucket is CheckState =>
   CHECK_STATES.some((state) => state === bucket);
 const isPrState = (state: string): state is PrState =>

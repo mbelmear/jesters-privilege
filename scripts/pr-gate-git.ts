@@ -78,12 +78,14 @@ export function localGit(
         "--not",
         main,
       ]);
-      // A failed read names no commit; review-passed.sh then named the merge.
-      if (own.status === 0 && own.stdout.trim()) return "own commits";
+      // A failed read stops here, as merged-main-only.sh did, and names the
+      // merge, as review-passed.sh's message did.
+      if (own.status !== 0) return "merge changes files";
+      if (own.stdout.trim()) return "own commits";
       // Each read first: two failed reads would compare equal, as empty.
       const was = changes(reviewed, main);
       const now = changes(head, main);
-      return own.status === 0 && was !== undefined && was === now
+      return was !== undefined && was === now
         ? "clean merges"
         : "merge changes files";
     },

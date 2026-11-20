@@ -11,7 +11,11 @@ export type ReviewPassedGate = Reader & {
 
 const USAGE = "Usage: npm run review-passed -- <pr-number> <reviewed full SHA>";
 
-/** Returns the exit code: 0 once recorded, 2 for bad arguments. */
+/**
+ * Returns the exit code: 0 once recorded, 1 for a refusal or a failed read
+ * of the head, 2 for bad arguments. A failed comment is thrown, for the
+ * caller to exit with gh's own code.
+ */
 export async function reviewPassed(
   args: readonly string[],
   gate: ReviewPassedGate

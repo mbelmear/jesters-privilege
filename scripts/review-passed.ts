@@ -6,16 +6,10 @@ import { join } from "node:path";
 import { reviewPassed } from "@/lib/pr-gate/review-passed";
 import { realClock } from "@/lib/pr-gate/waits";
 import { localGit } from "./pr-gate-git";
-import { ghExit, ghGitHub } from "./pr-gate-github";
-
-/** gh has said its own error; anything else says its first line. */
-function failed(error: unknown) {
-  if (ghExit(error) !== undefined) return;
-  const message = error instanceof Error ? error.message : String(error);
-  console.error(message.split("\n")[0]);
-}
+import { ghExit, ghGitHub, sayUnlessGh } from "./pr-gate-github";
 
 const err = (line: string) => console.error(line);
+const failed = (error: unknown) => sayUnlessGh(error, err);
 
 reviewPassed(process.argv.slice(2), {
   github: ghGitHub,
