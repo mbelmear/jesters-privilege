@@ -19,7 +19,7 @@ if [[ "$reviewed" != "$head" ]]; then
   if [[ -n "$reviewed" ]]; then
     # Unfetched, a merge of newer main looks like commits of the PR's own, and
     # the check below refuses.
-    git fetch --quiet origin main "$head" || echo "Couldn't fetch main and $head; checking what's here." >&2
+    "$(dirname "$0")/fetch.sh" --quiet origin main "$head" || echo "Couldn't fetch main and $head; checking what's here." >&2
     if "$(dirname "$0")/merged-main-only.sh" "$reviewed" "$head" origin/main; then
       gh pr comment "$pr" --body "Code review: passed at $head (carried over from $reviewed: only clean merges of main since)"
       exit 0

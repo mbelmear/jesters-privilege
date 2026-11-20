@@ -29,7 +29,7 @@ if ! head=$("$(dirname "$0")/wait-pushed-head.sh" "$pr"); then
 fi
 if [[ "$reviewed" != "$head" ]]; then
   # Unfetched, a merge of newer main looks like commits of the PR's own.
-  git fetch --quiet origin main "$head" || echo "Couldn't fetch main and $head; checking what's here." >&2
+  "$(dirname "$0")/fetch.sh" --quiet origin main "$head" || echo "Couldn't fetch main and $head; checking what's here." >&2
 fi
 if [[ "$reviewed" != "$head" ]] &&
   ! "$(dirname "$0")/merged-main-only.sh" "$reviewed" "$head" origin/main; then

@@ -43,7 +43,7 @@ head=$(gh pr view "$pr" --json headRefOid --jq .headRefOid)
 
 refuse_if_conflicting() {
   # A failed fetch leaves the last one's answer, and the next round tries again.
-  git fetch --quiet origin main "$head" || true
+  "$(dirname "$0")/fetch.sh" --quiet origin main "$head" || true
   # With a commit missing, merge-tree's exit 1 wouldn't mean a conflict.
   git cat-file -e "$head^{commit}" 2>/dev/null && git cat-file -e origin/main 2>/dev/null || return 0
   local merged=0
@@ -84,7 +84,7 @@ if ((status != 0)); then
 fi
 
 # After the wait, since that's when main moves.
-git fetch --quiet origin main "$head"
+"$(dirname "$0")/fetch.sh" --quiet origin main "$head"
 refuse_if_conflicting
 overlap=$("$(dirname "$0")/main-overlap.sh" "$head" origin/main)
 newest=${overlap%%$'\n'*}

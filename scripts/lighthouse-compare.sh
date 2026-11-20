@@ -52,7 +52,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-git fetch --quiet origin
+"$(dirname "$0")/fetch.sh" --quiet origin
 # After the fetch, so a branch only on the remote counts, named as
 # origin/<branch>.
 if ! git rev-parse --quiet --verify "${base}^{commit}" >/dev/null; then
