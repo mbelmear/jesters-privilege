@@ -33,11 +33,12 @@ while IFS= read -r conclusion; do
 done <<<"$runs"
 ((failed > 0)) || exit 0
 
-# Without a pass among the runs read, the streak may run further back.
-last=$merges
-[[ "$passed" == true ]] || last="$merges or more"
 noun=merges
-[[ "$last" == 1 ]] && noun=merge
+((merges == 1)) && noun=merge
 of=""
 ((failed == merges)) || of="$failed of "
-echo "Merge audit failed on ${of}the last $last $noun to main: each merged without a passed review recorded at its head (docs/testing.md, Merging). Tell the user before merging anything else; gh run list --workflow merge-audit.yml shows which."
+# Every run read and none passed: the streak may run further back. Fewer
+# than the limit is the whole history.
+since=""
+[[ "$passed" == true ]] || ((merges < limit)) || since=", and none of the $limit runs read passed"
+echo "Merge audit didn't pass on ${of}the last $merges $noun to main$since. It fails a merge without a passed review recorded at its head (docs/testing.md, Merging). Tell the user before merging anything else; gh run list --workflow merge-audit.yml shows which."

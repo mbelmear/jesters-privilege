@@ -69,7 +69,7 @@ describe("merge-audit-streak", () => {
     const result = runHook(["failure", "failure", "failure", "success"]);
 
     expect(result.stdout).toBe(
-      "Merge audit failed on the last 3 merges to main: each merged without a passed review recorded at its head (docs/testing.md, Merging). Tell the user before merging anything else; gh run list --workflow merge-audit.yml shows which.\n"
+      "Merge audit didn't pass on the last 3 merges to main. It fails a merge without a passed review recorded at its head (docs/testing.md, Merging). Tell the user before merging anything else; gh run list --workflow merge-audit.yml shows which.\n"
     );
     expect(result.status).toBe(0);
   });
@@ -78,37 +78,55 @@ describe("merge-audit-streak", () => {
     // Made up.
     const result = runHook(["failure", "cancelled", "failure", "success"]);
 
-    expect(result.stdout).toContain("on 2 of the last 3 merges to main");
+    expect(result.stdout).toContain("on 2 of the last 3 merges to main.");
   });
 
   it("counts an audit that timed out as one that didn't pass", () => {
     // Made up.
     const result = runHook(["timed_out", "failure", "success"]);
 
-    expect(result.stdout).toContain("on the last 2 merges to main");
+    expect(result.stdout).toContain("on the last 2 merges to main.");
   });
 
-  it("says or more when no pass is among the runs read", () => {
+  it("says the streak may run further back when none of the runs read passed", () => {
     // Made up.
     const result = runHook([...Array<string>(19).fill("failure"), "cancelled"]);
 
     expect(result.stdout).toContain(
-      "on 19 of the last 20 or more merges to main"
+      "on 19 of the last 20 merges to main, and none of the 20 runs read passed."
     );
+  });
+
+  // Fewer runs than it asks for are the whole history.
+  it("says nothing further back when it read every run", () => {
+    // Made up.
+    expect(runHook(["failure"]).stdout).toContain(
+      "on the last 1 merge to main. It fails"
+    );
+  });
+
+  it("says nothing when there are no runs", () => {
+    // Made up: gh's --jq prints nothing for an empty list.
+    const result = runHook([]);
+
+    expect(result.stdout).toBe("");
+    expect(result.status).toBe(0);
   });
 
   it("says one merge as one", () => {
     // Made up.
     expect(runHook(["failure", "success"]).stdout).toContain(
-      "on the last 1 merge to main"
+      "on the last 1 merge to main."
     );
   });
 
   // Recorded: gh 2.103.3 on 2026-11-20, when every one of the newest 20 had failed.
-  it("says it's at least as many as it read when none passed", () => {
+  it("says when none of the 20 it read passed", () => {
     const result = runHook(Array<string>(20).fill("failure"));
 
-    expect(result.stdout).toContain("on the last 20 or more merges to main");
+    expect(result.stdout).toContain(
+      "on the last 20 merges to main, and none of the 20 runs read passed."
+    );
   });
 
   it("says so when it can't read the runs", () => {
