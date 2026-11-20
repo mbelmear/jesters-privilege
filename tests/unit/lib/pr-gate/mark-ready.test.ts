@@ -5,6 +5,7 @@ import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { markReady } from "@/lib/pr-gate/mark-ready";
 import { firstScreenFiles } from "../../../../scripts/pr-gate-first-screen";
+import { ghFailed } from "../../../gh-failed";
 import { scriptsDir } from "../../../paths";
 import {
   git,
@@ -67,9 +68,12 @@ describe("mark-ready", () => {
     const read =
       "gh pr view 7 --json=state,headRefName,headRefOid --jq=[.state, .headRefName, .headRefOid] | @tsv";
     jest.spyOn(t.github, "pullRequest").mockImplementation(() => {
-      // Made up: the shape execFileSync's error takes when gh exits non-zero
-      // (pr-gate-github.test.ts), gh's own error after the first line.
-      throw new Error(`Command failed: ${read}\nHTTP 502: Bad Gateway`);
+      // Made up: gh exiting 1 on a 502.
+      throw ghFailed({
+        command: read,
+        status: 1,
+        stderr: "HTTP 502: Bad Gateway",
+      });
     });
 
     expect(await t.run()).toBe(1);
