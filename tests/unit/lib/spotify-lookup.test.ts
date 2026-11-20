@@ -340,9 +340,9 @@ describe("spotifyKey", () => {
     ).toEqual({ kind: "set", credentials: CREDENTIALS });
   });
 
-  // Every run that asks Spotify (a preview, a production build, the feed
-  // check, a local FEED=live build) is handed the key since 2026-11-05, so
-  // going without means the secrets were deleted or renamed.
+  // Every workflow run that asks Spotify (a preview, a production build, the
+  // feed check) is handed the key since 2026-11-05, so going without means the
+  // secrets were deleted or renamed.
   it.each([{}, { SPOTIFY_CLIENT_ID: "", SPOTIFY_CLIENT_SECRET: "" }])(
     "names both secrets when neither is set (%j)",
     (env) => {
