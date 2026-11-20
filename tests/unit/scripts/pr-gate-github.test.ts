@@ -3,11 +3,8 @@ import { Disconnected } from "@/lib/pr-gate/github";
 import { ghGitHub } from "../../../scripts/pr-gate-github";
 
 // Fakes the process call itself, so no test here can reach GitHub (#164): see
-// failed-run.test.ts. The answers in "reads a PR's state…" and "reads each
-// check's…" are what gh 2.103.3 printed for PR #256 on 2026-11-20, cut to a
-// few rows, and the unresolvable PR's error is what it printed for #99999
-// that day. Every other answer is not recorded: it is the shape its --jq or
-// gh's error gives, with made-up values.
+// failed-run.test.ts. Each answer says whether gh printed it (gh 2.103.3,
+// 2026-11-20) or it is made up in the shape gh's --jq gives.
 jest.mock("node:child_process", () => ({ execFileSync: jest.fn() }));
 
 const calls: string[][] = [];
@@ -28,16 +25,21 @@ beforeEach(() => {
   }) as typeof execFileSync);
 });
 
-// What execFileSync throws when gh exits non-zero.
+// What execFileSync throws when gh exits non-zero: its message names the
+// command, then adds stderr if there was any (Node 24.22.1, 2026-11-20).
 const exited = (status: number, stderr: string, stdout = "") =>
-  Object.assign(new Error(`Command failed: gh\n${stderr}`), {
-    status,
-    stderr,
-    stdout,
-  });
+  Object.assign(
+    new Error(`Command failed: gh pr checks${stderr ? `\n${stderr}` : ""}`),
+    {
+      status,
+      stderr,
+      stdout,
+    }
+  );
 
 describe("the gh GitHub", () => {
   it("reads a PR's state, branch and head in one call", () => {
+    // Recorded: PR #256 (its state then MERGED).
     answer = () =>
       "OPEN\tepisode-visit\t5c8068b2027589f957bc1f5a201e182b30c90038\n";
 
@@ -58,6 +60,7 @@ describe("the gh GitHub", () => {
   });
 
   describe("checks", () => {
+    // Recorded: PR #256, cut to two rows.
     const SAMPLE =
       "Playwright (Chromium, WebKit)\tpass\thttps://github.com/mbelmear/jesters-privilege/actions/runs/44780476936/job/136442437798\nPreview URL\tskipping\t\n";
 
@@ -84,6 +87,7 @@ describe("the gh GitHub", () => {
     });
 
     it("reads them when gh exits as pending or failed", () => {
+      // Made up: the exit code; the rows are SAMPLE's.
       answer = () => {
         throw exited(8, "", SAMPLE);
       };
@@ -92,6 +96,8 @@ describe("the gh GitHub", () => {
     });
 
     it("are none before CI starts", () => {
+      // Made up: no PR here has run without checks to record. gh's wording, as
+      // read-checks.test.ts has it.
       answer = () => {
         throw exited(1, "no checks reported on the 'ticket' branch\n");
       };
@@ -99,7 +105,7 @@ describe("the gh GitHub", () => {
       expect(ghGitHub.checks(256)).toEqual([]);
     });
 
-    // Not recorded: the errors read-checks.sh has retried on, one per pattern.
+    // Made up: one error per pattern read-checks.sh has retried on.
     it.each([
       "error connecting to api.github.com",
       'Post "https://api.github.com/graphql": dial tcp: lookup api.github.com: no such host',
@@ -115,16 +121,18 @@ describe("the gh GitHub", () => {
     });
 
     it("say gh's error, or its own when gh printed none", () => {
+      // Made up.
       answer = () => {
         throw exited(1, "");
       };
 
       expect(() => ghGitHub.checks(256)).toThrow(
-        "gh pr checks 256: Command failed: gh"
+        "gh pr checks 256: Command failed: gh pr checks"
       );
     });
 
     it("pass any other error on", () => {
+      // Recorded: gh pr checks 99999.
       answer = () => {
         throw exited(
           1,
@@ -140,6 +148,7 @@ describe("the gh GitHub", () => {
   });
 
   it("reads each comment's body", () => {
+    // Made up.
     answer = () => '["Looks good","<!-- deploy-preview -->\\nBuilt from a."]\n';
 
     expect(ghGitHub.comments(256)).toEqual([
@@ -152,6 +161,7 @@ describe("the gh GitHub", () => {
   });
 
   it("reads a job's log through the jobs API", () => {
+    // Made up.
     answer = () => "##[error]the cause\n";
 
     expect(ghGitHub.jobLog("o/r", "42")).toBe("##[error]the cause\n");
@@ -161,6 +171,7 @@ describe("the gh GitHub", () => {
   });
 
   it("reads how main's head last ran a check", () => {
+    // Made up.
     answer = () => "failure\n";
 
     expect(ghGitHub.mainCheck("Lint workflows")).toBe("failure");
@@ -178,6 +189,7 @@ describe("the gh GitHub", () => {
   });
 
   it("refuses a PR state it doesn't know", () => {
+    // Made up: gh has no such state.
     answer = () => "DRAFTED\tticket\tabc\n";
 
     expect(() => ghGitHub.pullRequest(256)).toThrow(
@@ -187,6 +199,7 @@ describe("the gh GitHub", () => {
 
   // A poll reads again on an error, so gh's own errors would print at each try.
   it("keeps gh's errors to itself on reads that are polled or reported on", () => {
+    // Made up: empty answers, read only for how gh was called.
     answer = (args) => (args.includes("--json=comments") ? "[]" : "");
     ghGitHub.checks(256);
     ghGitHub.comments(256);
@@ -198,6 +211,7 @@ describe("the gh GitHub", () => {
 
   // Its errors carry gh's own message, which the command prints on its way out.
   it("lets gh print its errors on the read that ends a command", () => {
+    // Made up.
     answer = () => "OPEN\tticket\tabc\n";
     ghGitHub.pullRequest(256);
 
