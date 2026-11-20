@@ -1,19 +1,17 @@
-import {
-  getEpisodes,
-  getListedEpisodes,
-  getTranscribedEpisodes,
-} from "@/content/feed";
+import { getBuildRecord } from "@/content/feed";
 import type { BuildManifest } from "@/lib/build-manifest";
 
 export const dynamic = "force-static";
 
 export async function GET() {
-  const [newest] = await getEpisodes();
+  const { newestEpisodeGuid, episodeListenLinks, transcripts } =
+    await getBuildRecord();
+  // Fields in the order the manifest has always had, so its JSON is unchanged.
   const manifest: BuildManifest = {
-    newestEpisodeGuid: newest?.guid ?? null,
+    newestEpisodeGuid,
     commit: process.env.BUILD_COMMIT ?? null,
-    episodeListenLinks: await getListedEpisodes(),
-    transcripts: await getTranscribedEpisodes(),
+    episodeListenLinks,
+    transcripts,
   };
   return Response.json(manifest);
 }

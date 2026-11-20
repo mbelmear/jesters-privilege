@@ -10,7 +10,7 @@
 import { feed, FEED_SNAPSHOT, feedSnapshot } from "@/content/feed";
 
 feed
-  .lookUp({ spotifyKeyRequired: process.env.SITE_ENV === "production" })
+  .lookUp()
   .then(async (snapshot) => {
     await feedSnapshot.write(snapshot);
     console.log(

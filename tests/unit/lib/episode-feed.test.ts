@@ -1,3 +1,4 @@
+import { buildRecord } from "@/lib/build-manifest";
 import type { Fetch } from "@/lib/download";
 import {
   createEpisodeFeed,
@@ -135,7 +136,6 @@ describe("createEpisodeFeed", () => {
     expect((await feed.transcript(captioned))?.[0]?.text).toBe("From the host");
     expect((await feed.transcript(saved))?.[0]?.text).toBe("Saved by the site");
     expect(await feed.transcript(untranscribed)).toBeNull();
-    expect(await feed.transcribedEpisodes()).toEqual([SAVED, CAPTIONED]);
   });
 
   it("reads back each Episode's Listen links from the apps' lookups", async () => {
@@ -153,7 +153,45 @@ describe("createEpisodeFeed", () => {
       app: "apple-podcasts",
       href: SHOW["apple-podcasts"],
     });
-    expect(await feed.listedEpisodes()).toEqual({ "apple-podcasts": [SAVED] });
+  });
+
+  it("records what the build knows: the newest Episode, who lists which, and which have Transcripts", async () => {
+    const feed = await snapshotted();
+    expect(await feed.record()).toEqual({
+      newestEpisodeGuid: UNTRANSCRIBED,
+      episodeListenLinks: { "apple-podcasts": [SAVED] },
+      transcripts: [SAVED, CAPTIONED],
+    });
+  });
+
+  it("records for the build what the feed check records afresh, a failed lookup included", async () => {
+    const source = memorySource({
+      spotify: {
+        key: () => ({
+          kind: "set",
+          credentials: { clientId: "the-id", clientSecret: "the-secret" },
+        }),
+        fetch: () => answer("", 404),
+      },
+    });
+    const forCheck = createEpisodeFeed(source, memoryFiles().store, {
+      listen: SHOW,
+      warn: quiet,
+    });
+    const fresh = buildRecord(await forCheck.lookUp({ warn: quiet }));
+    expect(await (await snapshotted(source)).record()).toEqual(fresh);
+  });
+
+  it("records no newest Episode for a feed that has none", async () => {
+    const empty = FEED.replace(/<item>[\s\S]*<\/item>/, "");
+    const feed = await snapshotted(
+      memorySource({ feedText: () => Promise.resolve(empty) })
+    );
+    expect(await feed.record()).toEqual({
+      newestEpisodeGuid: null,
+      episodeListenLinks: {},
+      transcripts: [],
+    });
   });
 
   it("names the Episode it couldn't find a Transcript for while looking up", async () => {
@@ -191,8 +229,7 @@ describe("createEpisodeFeed", () => {
     const feed = await snapshotted(memorySource(), store);
     reads.mockClear();
     await feed.episodes();
-    await feed.transcribedEpisodes();
-    await feed.listedEpisodes();
+    await feed.record();
     expect(reads).toHaveBeenCalledTimes(1);
   });
 
@@ -255,31 +292,25 @@ describe("createEpisodeFeed", () => {
       );
     });
 
-    it("is left out when the source has no key and none is required", async () => {
-      const access = spotify({ kind: "none" });
-      const feed = createEpisodeFeed(
-        memorySource({ spotify: access }),
-        memoryFiles().store,
-        { listen: SHOW, warn: quiet }
-      );
-      const { lookups } = await feed.lookUp({ warn: quiet });
-      expect(lookups.spotify).toBeUndefined();
-      expect(access.key).toHaveBeenCalledWith({ required: false });
-    });
-
-    it("counts a missing key as a failed lookup when the run requires one", async () => {
+    it("names the app whose lookup failed, once, while looking up", async () => {
       const access = spotify({ kind: "incomplete", reason: "no key" });
       const feed = createEpisodeFeed(
         memorySource({ spotify: access }),
         memoryFiles().store,
         { listen: SHOW, warn: quiet }
       );
-      const { lookups } = await feed.lookUp({
-        spotifyKeyRequired: true,
-        warn: quiet,
-      });
+      const warn = jest.fn();
+      const { lookups } = await feed.lookUp({ warn });
       expect(lookups.spotify).toEqual({ kind: "failed", reason: "no key" });
-      expect(access.key).toHaveBeenCalledWith({ required: true });
+      expect(
+        warn.mock.calls.filter(([message]) =>
+          String(message).startsWith("Spotify lookup failed")
+        )
+      ).toEqual([
+        [
+          "Spotify lookup failed, so no Episode has its Spotify Listen link: no key",
+        ],
+      ]);
     });
   });
 });

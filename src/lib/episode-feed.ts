@@ -6,18 +6,19 @@
 // them in several worker processes, and a network read made in each could
 // succeed in one and fail in another, leaving a page that disagrees with the
 // manifest the feed check compares against (CODING_STANDARDS.md).
+import { buildRecord, type BuildRecord } from "./build-manifest";
 import type { Site } from "./content";
 import { errorMessage, type Fetch } from "./download";
 import {
+  APP_NAMES,
+  EPISODE_LISTEN_APPS,
   episodeListenLinks,
-  listedEpisodes,
   lookUpApple,
   parseLookups,
   serializeLookups,
   type AppLookup,
   type EpisodeListenApp,
   type EpisodeListenLink,
-  type ListedEpisodes,
   type Lookups,
 } from "./episode-listen-links";
 import { parseFeed, type Episode } from "./feed";
@@ -55,9 +56,8 @@ export type FeedSourceAdapter = {
 
 export type SpotifyAccess = {
   fetch: Fetch;
-  // The key to ask with; a run that requires one counts going without as a
-  // failed lookup.
-  key(options: { required: boolean }): SpotifyKey;
+  // The key to ask with; going without it is a failed lookup (`spotifyKey`).
+  key(): SpotifyKey;
 };
 
 // Everything a build reads of the feed, asked once.
@@ -85,18 +85,13 @@ export type EpisodeFeed = {
   listenLinks(
     episode: Pick<Episode, "guid" | "title">
   ): Promise<EpisodeListenLink[]>;
-  // The Episodes each app has a link for, as the build manifest records.
-  listedEpisodes(): Promise<ListedEpisodes>;
-  // The Episodes that have a Transcript, newest first, as the build manifest
-  // records.
-  transcribedEpisodes(): Promise<string[]>;
+  // The build record of the snapshot, which the build manifest publishes.
+  record(): Promise<BuildRecord>;
   // Asks the source afresh for everything a build reads. Throws when the
   // feed can't be read or breaks a rule; a Transcript or lookup that fails
-  // never does, and `warn` names each Episode left without its Transcript.
-  lookUp(options?: {
-    spotifyKeyRequired?: boolean;
-    warn?: (message: string) => void;
-  }): Promise<FeedSnapshot>;
+  // never does, and `warn` names each Episode left without its Transcript
+  // and each app whose lookup failed.
+  lookUp(options?: { warn?: (message: string) => void }): Promise<FeedSnapshot>;
   // The feed's Episodes read afresh, for a run with no snapshot that needs
   // nothing else (Transcribe).
   freshEpisodes(): Promise<Episode[]>;
@@ -119,10 +114,7 @@ export function createEpisodeFeed(
   const readEpisodes = () =>
     (episodes ??= read().then(({ feed }) => parseFeed(feed)));
 
-  async function lookUpApps(
-    found: readonly Episode[],
-    spotifyKeyRequired: boolean
-  ): Promise<Lookups> {
+  async function lookUpApps(found: readonly Episode[]): Promise<Lookups> {
     const lookups: { [A in EpisodeListenApp]?: AppLookup } = {};
     const apple = listen["apple-podcasts"];
     if (apple) {
@@ -130,13 +122,12 @@ export function createEpisodeFeed(
     }
     const spotify = listen.spotify;
     if (spotify && source.spotify) {
-      const lookup = await lookUpSpotify(
+      lookups.spotify = await lookUpSpotify(
         spotify,
-        source.spotify.key({ required: spotifyKeyRequired }),
+        source.spotify.key(),
         found,
         source.spotify.fetch
       );
-      if (lookup) lookups.spotify = lookup;
     }
     return lookups;
   }
@@ -152,16 +143,8 @@ export function createEpisodeFeed(
     async listenLinks(episode) {
       return episodeListenLinks(episode, listen, (await read()).lookups, warn);
     },
-    async listedEpisodes() {
-      return listedEpisodes(await readEpisodes(), (await read()).lookups);
-    },
-    async transcribedEpisodes() {
-      const { transcripts } = await read();
-      return (await readEpisodes())
-        .map(({ guid }) => guid)
-        .filter((guid) => transcripts.has(guid));
-    },
-    async lookUp({ spotifyKeyRequired = false, warn: lookUpWarn = warn } = {}) {
+    record: async () => buildRecord(await read()),
+    async lookUp({ warn: lookUpWarn = warn } = {}) {
       const feed = await source.feedText();
       const found = parseFeed(feed);
       const [transcripts, lookups] = await Promise.all([
@@ -170,8 +153,16 @@ export function createEpisodeFeed(
           saved: (fileName) => source.savedTranscript(fileName),
           warn: lookUpWarn,
         }),
-        lookUpApps(found, spotifyKeyRequired),
+        lookUpApps(found),
       ]);
+      for (const app of EPISODE_LISTEN_APPS) {
+        const lookup = lookups[app];
+        if (lookup?.kind === "failed") {
+          lookUpWarn(
+            `${APP_NAMES[app]} lookup failed, so no Episode has its ${APP_NAMES[app]} Listen link: ${lookup.reason}`
+          );
+        }
+      }
       return { feed, transcripts, lookups };
     },
     freshEpisodes: async () => parseFeed(await source.feedText()),

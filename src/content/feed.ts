@@ -2,10 +2,8 @@ import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { Fetch } from "@/lib/download";
 import { createEpisodeFeed, fileSnapshotStore } from "@/lib/episode-feed";
-import type {
-  EpisodeListenLink,
-  ListedEpisodes,
-} from "@/lib/episode-listen-links";
+import type { BuildRecord } from "@/lib/build-manifest";
+import type { EpisodeListenLink } from "@/lib/episode-listen-links";
 import type { Episode } from "@/lib/feed";
 import { chooseFeedSource, fixtureSource, liveSource } from "@/lib/feed-source";
 import { spotifyKey } from "@/lib/spotify-lookup";
@@ -47,7 +45,7 @@ export const feedSnapshot = fileSnapshotStore(FEED_SNAPSHOT, {
 // to test the coming-soon state (docs/testing.md). Spotify is asked only of
 // the live feed, with the key the deploy passes in (SPOTIFY_CLIENT_ID and
 // SPOTIFY_CLIENT_SECRET); without it every Episode's Spotify link opens the
-// show.
+// show, and the run says the key is missing (`spotifyKey`).
 export const feed = createEpisodeFeed(
   chooseFeedSource(
     { FEED: process.env.FEED, SITE_ENV: process.env.SITE_ENV },
@@ -57,14 +55,11 @@ export const feed = createEpisodeFeed(
           url: LIVE_FEED_URL,
           savedTranscripts:
             "https://raw.githubusercontent.com/mbelmear/jesters-privilege/transcripts/",
-          spotifyKey: (options) =>
-            spotifyKey(
-              {
-                SPOTIFY_CLIENT_ID: process.env.SPOTIFY_CLIENT_ID,
-                SPOTIFY_CLIENT_SECRET: process.env.SPOTIFY_CLIENT_SECRET,
-              },
-              options
-            ),
+          spotifyKey: () =>
+            spotifyKey({
+              SPOTIFY_CLIENT_ID: process.env.SPOTIFY_CLIENT_ID,
+              SPOTIFY_CLIENT_SECRET: process.env.SPOTIFY_CLIENT_SECRET,
+            }),
         },
         fetchWithTimeout
       ),
@@ -91,11 +86,6 @@ export const getEpisodeListenLinks = (
   episode: Pick<Episode, "guid" | "title">
 ): Promise<EpisodeListenLink[]> => feed.listenLinks(episode);
 
-// The Feed's Episodes each app has a link for, as the build manifest records.
-export const getListedEpisodes = (): Promise<ListedEpisodes> =>
-  feed.listedEpisodes();
-
-// The Episodes that have a Transcript, newest first, as the build manifest
-// records.
-export const getTranscribedEpisodes = (): Promise<string[]> =>
-  feed.transcribedEpisodes();
+// What this build knows of the feed's Episodes, which the build manifest
+// publishes for the feed check to compare against.
+export const getBuildRecord = (): Promise<BuildRecord> => feed.record();
