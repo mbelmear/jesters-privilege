@@ -17,7 +17,7 @@
     "lint:zizmor": "scripts/zizmor.sh --offline --no-progress .github",
     "prepare": "husky",
     "typecheck": "next typegen && tsc --noEmit",
-    "test": "jest",
+    "test": ". scripts/pinned-node.sh && jest",
     "check": "npm run lint && npm run typecheck && npm run test",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
