@@ -25,8 +25,8 @@ describe("the pinned Node the hooks and npm test run", () => {
     chmodSync(join(dir, "node"), 0o755);
   }
 
-  // Sources the script as a hook or an npm test script does, then reports the node it left first
-  // on PATH.
+  // Sources the script as a hook or an npm test script does, then reports
+  // the node it left first on PATH.
   function hook({ shellNode, nvm }: { shellNode?: string; nvm: string[] }) {
     const shellBin = join(root, "shell-bin");
     mkdirSync(shellBin, { recursive: true });

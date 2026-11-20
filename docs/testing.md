@@ -11,7 +11,7 @@ npx playwright install chromium webkit   # once, and after Playwright upgrades
 
 Add `firefox` to that install if you want to run the nightly browser locally.
 
-Use the Node major `.nvmrc` pins, which CI runs (`nvm use`). The commit hooks and `npm test` switch to it themselves when nvm has it installed (`scripts/pinned-node.sh`), since another major can fail a test CI passes: Node 26 fails one of `tests/unit/lib/player-browser.test.ts` that 24 passes. So does each `npm run test:*`: run one file by hand with `npm test -- <file>`, since `npx jest` runs under your shell's Node.
+Use the Node major `.nvmrc` pins, which CI runs (`nvm use`). The commit hooks, `npm test`, `test:watch` and `test:coverage` switch to it themselves when nvm has it installed (`scripts/pinned-node.sh`), since another major can fail a test CI passes: Node 26 fails one of `tests/unit/lib/player-browser.test.ts` that 24 passes. Run one file by hand with `npm test -- <file>`; `npx jest` and the `test:e2e` scripts run under your shell's Node.
 
 ## Unit and component tests (Jest)
 
