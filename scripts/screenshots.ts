@@ -39,6 +39,8 @@
 // footer that a full phone page, thousands of pixels tall, shrinks past
 // reading. Cut from the full page, a sticky header or player stays put.
 //   npm run screenshots -- /episodes/1 --element footer
+// To see what changed between two folders of these, before and after:
+//   npm run screenshots:compare -- <before folder> <after folder>
 import { spawn } from "node:child_process";
 import { mkdir, readdir, stat } from "node:fs/promises";
 import { createServer } from "node:net";

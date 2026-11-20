@@ -18,7 +18,7 @@ main=$(git worktree list --porcelain | sed -n '1s/^worktree //p')
 # shellcheck disable=SC2312
 [[ "$(git rev-parse --show-toplevel)" == "$main" ]] || exit 0
 
-if ! GIT_TERMINAL_PROMPT=0 git fetch --quiet origin main 2>/dev/null; then
+if ! GIT_TERMINAL_PROMPT=0 "$(dirname "$0")/fetch.sh" --quiet origin main 2>/dev/null; then
   echo "Couldn't fetch origin, so the main checkout is compared with the last fetch of origin/main."
 fi
 behind=$(git rev-list --count HEAD..origin/main)

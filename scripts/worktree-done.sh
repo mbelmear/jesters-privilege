@@ -10,7 +10,8 @@
 set -euo pipefail
 
 pr="${1:?Usage: npm run worktree-done -- <pr-number>}"
-holds="$(cd "$(dirname "$0")" && pwd)/merge-holds-branch.sh"
+scripts=$(cd "$(dirname "$0")" && pwd)
+holds="$scripts/merge-holds-branch.sh"
 
 info=$(gh pr view "$pr" \
   --json state,headRefName,mergeCommit \
@@ -25,7 +26,7 @@ fi
 # worktree never pulls the ground from under this script.
 main=$(git worktree list --porcelain | sed -n '1s/^worktree //p')
 cd "$main"
-git fetch --quiet --prune origin
+"$scripts/fetch.sh" --quiet --prune origin
 
 dir=$(git worktree list --porcelain | awk -v ref="branch refs/heads/$branch" '
   /^worktree / { path = substr($0, 10) }
