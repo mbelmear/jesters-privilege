@@ -25,7 +25,8 @@ prStatus(Number(args[0]), {
 }).then(
   (code) => process.exit(code),
   (error: unknown) => {
-    // gh has printed its own error; this adds which command it was.
+    // gh printed its own error, and this adds which command it was; a quiet
+    // read (pr-gate-github.ts) puts gh's error on this first line instead.
     const message = error instanceof Error ? error.message : String(error);
     console.error(message.split("\n")[0]);
     process.exit(1);

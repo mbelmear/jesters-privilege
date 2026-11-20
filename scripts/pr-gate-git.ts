@@ -21,7 +21,11 @@ export function localGit(
     },
     head() {
       const result = run("git", ["rev-parse", "HEAD"]);
-      if (result.status !== 0) throw new Error(result.stderr.trim());
+      if (result.status !== 0) {
+        throw new Error(
+          `git rev-parse HEAD failed in ${dir}: ${result.error?.message ?? result.stderr.trim()}`
+        );
+      }
       return result.stdout.trim();
     },
     mergesCleanly(head) {

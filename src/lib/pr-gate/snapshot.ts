@@ -22,16 +22,16 @@ export class Refusal extends Error {}
  */
 export async function pushedHead(
   pr: number,
-  read: PullRequest,
+  pullRequest: PullRequest,
   { github, git, clock }: Reader
 ) {
-  const { branch } = read;
+  const { branch } = pullRequest;
   // Outside the branch's checkout there's no local head to wait for.
   const local = git.branch() === branch ? git.head() : undefined;
   // The first try takes the head already read; each after reads it again.
   let head: string | undefined;
   const shown = await poll(WAITS.pushedHead, clock, () => {
-    head = head === undefined ? read.head : github.pullRequest(pr).head;
+    head = head === undefined ? pullRequest.head : github.pullRequest(pr).head;
     return local === undefined || head === local ? head : undefined;
   });
   if (shown === undefined) {

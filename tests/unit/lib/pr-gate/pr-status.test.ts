@@ -341,14 +341,19 @@ describe("pr-status", () => {
       { name: "Unit tests", state: "fail", link: "" },
       { name: "Build", state: "pass", link: "" },
       { name: "Feed check", state: "skipping", link: "" },
+      { name: "Preview the failure report", state: "pass", link: "" },
+      { name: "actionlint", state: "pass", link: "" },
     ];
     t.github.main["Unit tests"] = "success";
 
     expect(await t.run()).toBe(1);
-    expect(t.out.slice(1, 6)).toEqual([
+    // By byte, as gh compares: capitals before lower case, so "actionlint" last.
+    expect(t.out.slice(1, 8)).toEqual([
       "Unit tests\tfail",
       "Build\tpass",
       "Lint workflows\tpass",
+      "Preview the failure report\tpass",
+      "actionlint\tpass",
       "Feed check\tskipping",
       "Preview URL\tskipping",
     ]);

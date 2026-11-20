@@ -26,16 +26,18 @@ const MERGES: Record<MergesCleanly, string> = {
 
 // gh's own table puts what needs looking at first, then sorts by name; its
 // JSON, which the gate reads, comes in no order.
-const TABLE_ORDER: readonly CheckState[] = [
-  "fail",
-  "cancel",
-  "pending",
-  "pass",
-  "skipping",
-];
+const TABLE_ORDER: Record<CheckState, number> = {
+  fail: 0,
+  cancel: 1,
+  pending: 2,
+  pass: 3,
+  skipping: 4,
+};
 const asGhTable = (a: Check, b: Check) =>
-  TABLE_ORDER.indexOf(a.state) - TABLE_ORDER.indexOf(b.state) ||
-  a.name.localeCompare(b.name, "en");
+  TABLE_ORDER[a.state] - TABLE_ORDER[b.state] || byByte(a.name, b.name);
+
+// As Go compares strings, which gh does: capitals sort before lower case.
+const byByte = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
 
 /** Returns the exit code: 0 when every check passed and it merges cleanly. */
 export async function prStatus(pr: number, gate: Gate): Promise<number> {
@@ -50,12 +52,12 @@ export async function prStatus(pr: number, gate: Gate): Promise<number> {
 
 async function report(pr: number, gate: Gate): Promise<number> {
   const { github, git, out } = gate;
-  const read = github.pullRequest(pr);
-  if (read.state !== "OPEN") {
-    out(`#${pr} is ${read.state}; nothing to wait for.`);
+  const pullRequest = github.pullRequest(pr);
+  if (pullRequest.state !== "OPEN") {
+    out(`#${pr} is ${pullRequest.state}; nothing to wait for.`);
     return 1;
   }
-  const head = await pushedHead(pr, read, gate);
+  const head = await pushedHead(pr, pullRequest, gate);
   out(`#${pr} at ${short(head)}`);
 
   // A PR that already conflicts would only be refused after the checks, so say

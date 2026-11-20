@@ -64,7 +64,12 @@ export const ghGitHub: GitHub = {
       if (stderr.includes("no checks reported")) return [];
       // gh exits 8 while any is pending and 1 once any failed, having printed them.
       rows = printed(error, "stdout");
-      if (!rows.trim()) throw error;
+      // ghQuiet kept gh's error from printing, so this one says it.
+      if (!rows.trim()) {
+        throw new Error(`gh pr checks ${pr}: ${stderr.trim()}`, {
+          cause: error,
+        });
+      }
     }
     return tabbed(rows).map(([name = "", bucket = "", link = ""]): Check => {
       if (!isCheckState(bucket)) {

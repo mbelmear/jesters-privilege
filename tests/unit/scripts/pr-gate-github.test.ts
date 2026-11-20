@@ -3,8 +3,9 @@ import { Disconnected } from "@/lib/pr-gate/github";
 import { ghGitHub } from "../../../scripts/pr-gate-github";
 
 // Fakes the process call itself, so no test here can reach GitHub (#164): see
-// failed-run.test.ts. Each answer is what gh 2.103.3 printed for PR #256 on
-// 2026-11-20, cut to a few rows, unless its test says otherwise.
+// failed-run.test.ts. The PR view and checks answers are what gh 2.103.3
+// printed for PR #256 on 2026-11-20, cut to a few rows. The rest are not
+// recorded: each is the shape its --jq gives, with made-up values.
 jest.mock("node:child_process", () => ({ execFileSync: jest.fn() }));
 
 const calls: string[][] = [];
@@ -119,7 +120,10 @@ describe("the gh GitHub", () => {
         );
       };
 
-      expect(() => ghGitHub.checks(99999)).toThrow(/Could not resolve/);
+      // gh's error is kept from printing, so the error thrown says it.
+      expect(() => ghGitHub.checks(99999)).toThrow(
+        "gh pr checks 99999: GraphQL: Could not resolve to a PullRequest with the number of 99999."
+      );
     });
   });
 
@@ -178,5 +182,13 @@ describe("the gh GitHub", () => {
     ghGitHub.mainCheck("Build");
 
     expect(quiet).toEqual([true, true, true, true]);
+  });
+
+  // Its errors carry gh's own message, which the command prints on its way out.
+  it("lets gh print its errors on the read that ends a command", () => {
+    answer = () => "OPEN\tticket\tabc\n";
+    ghGitHub.pullRequest(256);
+
+    expect(quiet).toEqual([false]);
   });
 });
