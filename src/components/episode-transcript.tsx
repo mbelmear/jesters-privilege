@@ -8,11 +8,7 @@ import type { PlayableEpisode } from "@/lib/feed";
 import { formatDuration } from "@/lib/format-duration";
 import { currentParagraph, type Transcript } from "@/lib/transcript";
 import { cn, focusRing } from "@/lib/utils";
-import {
-  reportPlayerError,
-  usePlayer,
-  usePlayerState,
-} from "./player-provider";
+import { reportPlayerError, useLoadedEpisode } from "./player-provider";
 
 type Props = {
   episode: PlayableEpisode;
@@ -40,18 +36,14 @@ const PREVIEW_FADE = {
  * opens it in full.
  */
 export function EpisodeTranscript({ episode, transcript, copy }: Props) {
-  const player = usePlayer();
-  const state = usePlayerState(player);
+  const { player, loaded } = useLoadedEpisode(episode.guid);
   const headingId = useId();
   const [expanded, setExpanded] = useState(false);
   const collapsed = !expanded && transcript.length > PREVIEW_PARAGRAPHS;
   // Where the reader carries on once the Transcript opens in full.
   const continuation = useRef<HTMLButtonElement>(null);
   // Only while this Episode is the one in the player.
-  const current =
-    state && state.mode !== "empty" && state.episode.guid === episode.guid
-      ? currentParagraph(transcript, state.position)
-      : null;
+  const current = loaded ? currentParagraph(transcript, loaded.position) : null;
 
   function expand() {
     flushSync(() => setExpanded(true));

@@ -32,7 +32,7 @@ export const episodePage = {
     },
   },
   moment: {
-    startAt: { text: "Start at", draft: true },
+    shareFrom: { text: "Share from", draft: true },
     shareText: { text: "Listen from", draft: true },
     playFrom: { text: "Play from", draft: true },
     bad: {

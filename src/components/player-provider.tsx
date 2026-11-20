@@ -8,7 +8,12 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import { createPlayer, type Player, type PlayerState } from "@/lib/player";
+import {
+  createPlayer,
+  type LoadedState,
+  type Player,
+  type PlayerState,
+} from "@/lib/player";
 import {
   audioElementAdapter,
   browserMediaSession,
@@ -64,6 +69,23 @@ export function usePlayerState(player: Player | null): PlayerState | null {
     () => player?.getState() ?? null,
     () => null
   );
+}
+
+/**
+ * The player, and its state while the Episode with this guid is the one
+ * loaded in it: null while another Episode or none is, or before it starts.
+ */
+export function useLoadedEpisode(guid: string): {
+  player: Player | null;
+  loaded: LoadedState | null;
+} {
+  const player = usePlayer();
+  const state = usePlayerState(player);
+  const loaded =
+    state && state.mode !== "empty" && state.episode.guid === guid
+      ? state
+      : null;
+  return { player, loaded };
 }
 
 /**

@@ -304,10 +304,10 @@ export type EpisodePage = EpisodeLabels & {
     readonly failed: Copy;
   };
   // Moment links. Each phrase is read before a time: the box by Share that
-  // shares one, "Start at 12:34"; the message the share sheet sends with it,
+  // shares one, "Share from 12:34"; the message the share sheet sends with it,
   // "Listen from 12:34"; and Play on arriving at one, "Play from 12:34".
   readonly moment: {
-    readonly startAt: Copy;
+    readonly shareFrom: Copy;
     readonly shareText: Copy;
     readonly playFrom: Copy;
     // Shown by Play when the link's moment isn't in the Episode.

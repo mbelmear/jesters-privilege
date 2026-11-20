@@ -40,6 +40,10 @@ _Avoid_: Platform link, subscribe button
 A link to an Episode that opens it ready to play from a given moment.
 _Avoid_: Timestamp link (a timestamp is a Transcript paragraph's time in the margin), deep link
 
+**Visit**:
+One arrival at an Episode page, plain or by a Moment link, until anything plays. A Visit that began on a Moment link finds the Episode paused at the moment; once anything plays, it is like any other.
+_Avoid_: Session (the player's state outlives a page)
+
 ## Paintings
 
 **Painting band**:

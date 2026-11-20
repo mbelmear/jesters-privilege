@@ -43,7 +43,7 @@ export function momentLink(url: string, seconds: number): string {
   return link.href;
 }
 
-/** A phrase read before a moment: "Start at" becomes "Start at 12:34". */
+/** A phrase read before a moment: "Share from" becomes "Share from 12:34". */
 export function momentLabel(phrase: string, seconds: number): string {
   return `${phrase} ${formatDuration(seconds)}`;
 }

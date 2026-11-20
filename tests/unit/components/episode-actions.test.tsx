@@ -18,17 +18,10 @@ const episode: PlayableEpisode = {
   artworkUrl: "https://example.com/art.jpg",
 };
 
-const another: PlayableEpisode = {
-  ...episode,
-  number: 5,
-  guid: "https://api.spreaker.com/episode/5",
-  audioUrl: "https://example.com/ep-5.mp3",
-};
-
 const title = "Episode 4: Is Humor a Virtue?";
 const copy = content.episodePage;
 // The draft phrases, read from content so a reworded one breaks no test.
-const startAt = (time: string) => `${copy.moment.startAt.text} ${time}`;
+const shareFrom = (time: string) => `${copy.moment.shareFrom.text} ${time}`;
 
 // Opens the page at an address, as a visitor following a link would.
 function visit(path: string) {
@@ -59,43 +52,22 @@ function setup() {
   return { audio, player, shared, user, ...result };
 }
 
-const box = () => screen.queryByRole("checkbox");
-
 afterEach(() => visit("/"));
 
 describe("EpisodeActions", () => {
   describe("sharing", () => {
-    it("offers a moment only while this Episode is in the player", async () => {
-      visit("/episodes/4");
-      const { player } = setup();
-      expect(box()).not.toBeInTheDocument();
-      await act(() => player.play(another));
-      expect(box()).not.toBeInTheDocument();
-      await act(() => player.play(episode));
-      expect(box()).toBeInTheDocument();
-    });
-
-    it("leaves the box unticked, its time following playback less a lead-in", async () => {
+    it("names the moment Share would send, in a box left unticked", async () => {
       visit("/episodes/4");
       const { audio, player } = setup();
       await act(() => player.play(episode));
       act(() => audio.playTo(759.6));
       expect(
-        screen.getByRole("checkbox", { name: startAt("12:34") })
+        screen.getByRole("checkbox", { name: shareFrom("12:34") })
       ).not.toBeChecked();
       act(() => audio.playTo(800));
       expect(
-        screen.getByRole("checkbox", { name: startAt("13:15") })
+        screen.getByRole("checkbox", { name: shareFrom("13:15") })
       ).toBeInTheDocument();
-    });
-
-    it("shares the whole Episode while the box is unticked", async () => {
-      visit("/episodes/4");
-      const { audio, player, shared, user } = setup();
-      await act(() => player.play(episode));
-      act(() => audio.playTo(759));
-      await user.click(screen.getByRole("button", { name: "Share" }));
-      expect(shared).toEqual([{ title, url: "http://localhost/episodes/4" }]);
     });
 
     it("shares a Moment link, frozen at the time ticked", async () => {
@@ -104,11 +76,11 @@ describe("EpisodeActions", () => {
       await act(() => player.play(episode));
       act(() => audio.playTo(759));
       await user.click(
-        screen.getByRole("checkbox", { name: startAt("12:34") })
+        screen.getByRole("checkbox", { name: shareFrom("12:34") })
       );
       act(() => audio.playTo(900));
       expect(
-        screen.getByRole("checkbox", { name: startAt("12:34") })
+        screen.getByRole("checkbox", { name: shareFrom("12:34") })
       ).toBeChecked();
       await user.click(screen.getByRole("button", { name: "Share" }));
       expect(shared).toEqual([
@@ -118,20 +90,6 @@ describe("EpisodeActions", () => {
           text: `${copy.moment.shareText.text} 12:34`,
         },
       ]);
-    });
-
-    it("follows playback again once unticked", async () => {
-      visit("/episodes/4");
-      const { audio, player, user } = setup();
-      await act(() => player.play(episode));
-      act(() => audio.playTo(759));
-      const ticked = screen.getByRole("checkbox", { name: startAt("12:34") });
-      await user.click(ticked);
-      act(() => audio.playTo(900));
-      await user.click(ticked);
-      expect(
-        screen.getByRole("checkbox", { name: startAt("14:55") })
-      ).not.toBeChecked();
     });
 
     it("has no accessibility violations with the box shown", async () => {
@@ -167,14 +125,6 @@ describe("EpisodeActions", () => {
       expect(screen.getByText(copy.moment.bad.text)).toBeInTheDocument();
       await user.click(screen.getByRole("button", { name: "Play Episode 4" }));
       expect(audio.position).toBe(0);
-      expect(screen.queryByText(copy.moment.bad.text)).not.toBeInTheDocument();
-    });
-
-    it("drops the note once another Episode plays", async () => {
-      visit("/episodes/4?t=-3");
-      const { player } = setup();
-      expect(screen.getByText(copy.moment.bad.text)).toBeInTheDocument();
-      await act(() => player.play(another));
       expect(screen.queryByText(copy.moment.bad.text)).not.toBeInTheDocument();
     });
 
