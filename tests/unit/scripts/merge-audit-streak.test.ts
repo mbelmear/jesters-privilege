@@ -69,7 +69,7 @@ describe("merge-audit-streak", () => {
     const result = runHook(["failure", "failure", "failure", "success"]);
 
     expect(result.stdout).toBe(
-      "Merge audit didn't pass on the last 3 merges to main. It fails a merge without a passed review recorded at its head (docs/testing.md, Merging). Tell the user before merging anything else; gh run list --workflow merge-audit.yml shows which.\n"
+      "Merge audit didn't pass on the last 3 merges to main. It fails a merge with neither a passed review recorded at its head nor the ready-for-human label (docs/testing.md, Merging). Tell the user before merging anything else; gh run list --workflow merge-audit.yml shows which.\n"
     );
     expect(result.status).toBe(0);
   });
@@ -98,7 +98,7 @@ describe("merge-audit-streak", () => {
   });
 
   // Fewer runs than it asks for are the whole history.
-  it("says nothing further back when it read every run", () => {
+  it("says no run passed only when it read all 20", () => {
     // Made up.
     expect(runHook(["failure"]).stdout).toContain(
       "on the last 1 merge to main. It fails"
@@ -106,7 +106,7 @@ describe("merge-audit-streak", () => {
   });
 
   it("says nothing when there are no runs", () => {
-    // Made up: gh's --jq prints nothing for an empty list.
+    // Recorded: gh 2.103.3 on 2026-11-20, listing a branch with no runs: exit 0, nothing printed.
     const result = runHook([]);
 
     expect(result.stdout).toBe("");
