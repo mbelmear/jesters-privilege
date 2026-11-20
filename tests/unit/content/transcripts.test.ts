@@ -1,7 +1,7 @@
 import {
   feed,
+  getBuildRecord,
   getEpisodes,
-  getTranscribedEpisodes,
   getTranscript,
 } from "@/content/feed";
 
@@ -54,7 +54,7 @@ describe("the fixture's Transcripts", () => {
   });
 
   it("records every Episode with a Transcript for the build manifest", async () => {
-    expect(await getTranscribedEpisodes()).toEqual([
+    expect((await getBuildRecord()).transcripts).toEqual([
       "https://api.spreaker.com/episode/70000006",
       "https://api.spreaker.com/episode/70000004",
       "https://api.spreaker.com/episode/70000003",

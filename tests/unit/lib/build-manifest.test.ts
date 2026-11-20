@@ -1,4 +1,8 @@
-import { parseBuildManifest } from "@/lib/build-manifest";
+import {
+  compareRecords,
+  parseBuildManifest,
+  type BuildRecord,
+} from "@/lib/build-manifest";
 
 describe("parseBuildManifest", () => {
   it("reads the newest Episode, commit, and Transcripts a deploy was built with", () => {
@@ -112,5 +116,65 @@ describe("parseBuildManifest", () => {
     ).toThrow(
       'Build manifest episodeListenLinks has "rss", which isn\'t an app with Episode Listen links'
     );
+  });
+});
+
+describe("compareRecords", () => {
+  const EPISODE_1 = "https://www.spreaker.com/episode/61234567";
+  const EPISODE_2 = "https://www.spreaker.com/episode/61299999";
+
+  // A record with no Episode Listen links or Transcripts unless given some.
+  const record = (
+    newestEpisodeGuid: string | null,
+    { episodeListenLinks = {}, transcripts = [] }: Partial<BuildRecord> = {}
+  ): BuildRecord => ({ newestEpisodeGuid, episodeListenLinks, transcripts });
+
+  it("leaves the site alone when its newest Episode is the feed's", () => {
+    expect(compareRecords(record(EPISODE_1), record(EPISODE_1))).toEqual({
+      rebuild: false,
+      reason: `The live site already has the newest Episode (${EPISODE_1}) and every Episode Listen link and Transcript`,
+    });
+  });
+
+  it("rebuilds when the feed has a newer Episode than the live site", () => {
+    expect(compareRecords(record(EPISODE_1), record(EPISODE_2))).toEqual({
+      rebuild: true,
+      reason: `The feed's newest Episode (${EPISODE_2}) isn't on the live site, which has ${EPISODE_1}`,
+    });
+  });
+
+  it("rebuilds when an Episode has gained an Episode Listen link since the deploy", () => {
+    const live = record(EPISODE_2, {
+      episodeListenLinks: { "apple-podcasts": [EPISODE_1] },
+    });
+    const fresh = record(EPISODE_2, {
+      episodeListenLinks: { "apple-podcasts": [EPISODE_2, EPISODE_1] },
+    });
+    expect(compareRecords(live, fresh)).toEqual({
+      rebuild: true,
+      reason: `Episodes have gained Episode Listen links since the live site was built: ${EPISODE_2} in Apple Podcasts`,
+    });
+  });
+
+  it("leaves the site alone when an Episode has lost a link, as when a lookup failed", () => {
+    const live = record(EPISODE_2, {
+      episodeListenLinks: { "apple-podcasts": [EPISODE_2, EPISODE_1] },
+    });
+    expect(compareRecords(live, record(EPISODE_2)).rebuild).toBe(false);
+  });
+
+  it("rebuilds when an Episode has gained a Transcript since the deploy", () => {
+    const live = record(EPISODE_2, { transcripts: [EPISODE_1] });
+    const fresh = record(EPISODE_2, { transcripts: [EPISODE_2, EPISODE_1] });
+    expect(compareRecords(live, fresh)).toEqual({
+      rebuild: true,
+      reason: `Episodes have gained Transcripts since the live site was built: ${EPISODE_2}`,
+    });
+  });
+
+  it("leaves the site alone when an Episode has lost its Transcript, as when a download failed", () => {
+    const live = record(EPISODE_2, { transcripts: [EPISODE_2, EPISODE_1] });
+    const fresh = record(EPISODE_2, { transcripts: [EPISODE_1] });
+    expect(compareRecords(live, fresh).rebuild).toBe(false);
   });
 });

@@ -8,29 +8,28 @@ import type { Episode } from "./feed";
 
 export type SpotifyCredentials = { clientId: string; clientSecret: string };
 
-// The build's Spotify key, from the GitHub secrets the deploy passes in. A
-// build with neither (a fork, a local build, CI's tests) skips the lookup
-// quietly; one with only one has a mistake to name, and so does a run that
-// needs the key (a production build, the feed check) with neither.
+// The run's Spotify key, from the GitHub secrets the deploy passes in. A
+// preview with neither (a fork's or Dependabot's pull request) skips the
+// lookup quietly; one with only one has a mistake to name, and so does any
+// other run (a production build, the feed check) with neither. This is the
+// one place that decides which runs need the key.
 export type SpotifyKey =
   | { kind: "set"; credentials: SpotifyCredentials }
   | { kind: "none" }
   | { kind: "incomplete"; reason: string };
 
-export function spotifyKey(
-  env: {
-    SPOTIFY_CLIENT_ID?: string;
-    SPOTIFY_CLIENT_SECRET?: string;
-  },
-  { required = false } = {}
-): SpotifyKey {
+export function spotifyKey(env: {
+  SPOTIFY_CLIENT_ID?: string;
+  SPOTIFY_CLIENT_SECRET?: string;
+  SITE_ENV?: string;
+}): SpotifyKey {
   const clientId = env.SPOTIFY_CLIENT_ID ?? "";
   const clientSecret = env.SPOTIFY_CLIENT_SECRET ?? "";
   if (clientId && clientSecret) {
     return { kind: "set", credentials: { clientId, clientSecret } };
   }
   if (!clientId && !clientSecret) {
-    return required
+    return env.SITE_ENV !== "preview"
       ? {
           kind: "incomplete",
           reason:

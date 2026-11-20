@@ -339,50 +339,55 @@ describe("lookUpSpotify's matching", () => {
 });
 
 describe("spotifyKey", () => {
-  it("has the key when both secrets are set", () => {
-    expect(
-      spotifyKey({
-        SPOTIFY_CLIENT_ID: "the-id",
-        SPOTIFY_CLIENT_SECRET: "the-secret",
-      })
-    ).toEqual({ kind: "set", credentials: CREDENTIALS });
-  });
+  const BOTH = {
+    SPOTIFY_CLIENT_ID: "the-id",
+    SPOTIFY_CLIENT_SECRET: "the-secret",
+  };
 
-  // Forks, local builds, and CI's tests have neither, and skip the lookup.
-  it.each([{}, { SPOTIFY_CLIENT_ID: "", SPOTIFY_CLIENT_SECRET: "" }])(
-    "has none when neither secret is set (%j)",
-    (env) => {
-      expect(spotifyKey(env)).toEqual({ kind: "none" });
-    }
-  );
-
-  // A production build or the feed check has the key since 2026-11-05, so
-  // going without means the secrets were deleted or renamed.
-  it.each([{}, { SPOTIFY_CLIENT_ID: "", SPOTIFY_CLIENT_SECRET: "" }])(
-    "names both secrets when a run that needs the key has neither (%j)",
-    (env) => {
-      expect(spotifyKey(env, { required: true })).toEqual({
-        kind: "incomplete",
-        reason:
-          "SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET aren't set, so Spotify can't be asked",
+  it.each(["production", undefined, "preview"])(
+    "has the key when both secrets are set (SITE_ENV %s)",
+    (SITE_ENV) => {
+      expect(spotifyKey({ ...BOTH, SITE_ENV })).toEqual({
+        kind: "set",
+        credentials: CREDENTIALS,
       });
     }
   );
 
-  it("has the key when a run that needs it has both secrets", () => {
-    expect(
-      spotifyKey(
-        { SPOTIFY_CLIENT_ID: "the-id", SPOTIFY_CLIENT_SECRET: "the-secret" },
-        { required: true }
-      )
-    ).toEqual({ kind: "set", credentials: CREDENTIALS });
+  // A preview of a fork's or Dependabot's pull request gets no secrets, and
+  // skips the lookup.
+  it.each([{}, { SPOTIFY_CLIENT_ID: "", SPOTIFY_CLIENT_SECRET: "" }])(
+    "has none when a preview has neither secret (%j)",
+    (env) => {
+      expect(spotifyKey({ ...env, SITE_ENV: "preview" })).toEqual({
+        kind: "none",
+      });
+    }
+  );
+
+  // A production build or the feed check (no SITE_ENV) has the key since
+  // 2026-11-05, so going without means the secrets were deleted or renamed.
+  it.each([
+    { SITE_ENV: "production" },
+    { SITE_ENV: undefined },
+    {
+      SITE_ENV: "production",
+      SPOTIFY_CLIENT_ID: "",
+      SPOTIFY_CLIENT_SECRET: "",
+    },
+  ])("names both secrets when any other run has neither (%j)", (env) => {
+    expect(spotifyKey(env)).toEqual({
+      kind: "incomplete",
+      reason:
+        "SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET aren't set, so Spotify can't be asked",
+    });
   });
 
   it.each([
     [{ SPOTIFY_CLIENT_ID: "the-id" }, "SPOTIFY_CLIENT_SECRET"],
     [{ SPOTIFY_CLIENT_SECRET: "the-secret" }, "SPOTIFY_CLIENT_ID"],
   ])("names the missing secret when only one is set (%j)", (env, missing) => {
-    expect(spotifyKey(env)).toEqual({
+    expect(spotifyKey({ ...env, SITE_ENV: "preview" })).toEqual({
       kind: "incomplete",
       reason: `${missing} isn't set, so Spotify can't be asked`,
     });
