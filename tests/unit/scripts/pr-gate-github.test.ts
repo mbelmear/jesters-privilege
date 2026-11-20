@@ -3,9 +3,11 @@ import { Disconnected } from "@/lib/pr-gate/github";
 import { ghGitHub } from "../../../scripts/pr-gate-github";
 
 // Fakes the process call itself, so no test here can reach GitHub (#164): see
-// failed-run.test.ts. The PR view and checks answers are what gh 2.103.3
-// printed for PR #256 on 2026-11-20, cut to a few rows. The rest are not
-// recorded: each is the shape its --jq gives, with made-up values.
+// failed-run.test.ts. The answers in "reads a PR's state…" and "reads each
+// check's…" are what gh 2.103.3 printed for PR #256 on 2026-11-20, cut to a
+// few rows, and the unresolvable PR's error is what it printed for #99999
+// that day. Every other answer is not recorded: it is the shape its --jq or
+// gh's error gives, with made-up values.
 jest.mock("node:child_process", () => ({ execFileSync: jest.fn() }));
 
 const calls: string[][] = [];
@@ -110,6 +112,16 @@ describe("the gh GitHub", () => {
       };
 
       expect(() => ghGitHub.checks(256)).toThrow(Disconnected);
+    });
+
+    it("say gh's error, or its own when gh printed none", () => {
+      answer = () => {
+        throw exited(1, "");
+      };
+
+      expect(() => ghGitHub.checks(256)).toThrow(
+        "gh pr checks 256: Command failed: gh"
+      );
     });
 
     it("pass any other error on", () => {

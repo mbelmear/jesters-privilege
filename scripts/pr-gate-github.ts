@@ -66,7 +66,9 @@ export const ghGitHub: GitHub = {
       rows = printed(error, "stdout");
       // ghQuiet kept gh's error from printing, so this one says it.
       if (!rows.trim()) {
-        throw new Error(`gh pr checks ${pr}: ${stderr.trim()}`, {
+        const said =
+          stderr.trim() || (error instanceof Error ? error.message : "");
+        throw new Error(`gh pr checks ${pr}: ${said}`, {
           cause: error,
         });
       }
