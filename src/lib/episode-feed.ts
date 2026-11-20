@@ -56,8 +56,7 @@ export type FeedSourceAdapter = {
 
 export type SpotifyAccess = {
   fetch: Fetch;
-  // The key to ask with. A run that requires one counts going without as a
-  // failed lookup; the source decides which runs do (src/content/feed.ts).
+  // The key to ask with; going without it is a failed lookup (`spotifyKey`).
   key(): SpotifyKey;
 };
 

@@ -167,7 +167,10 @@ describe("createEpisodeFeed", () => {
   it("records for the build what the feed check records afresh, a failed lookup included", async () => {
     const source = memorySource({
       spotify: {
-        key: () => ({ kind: "incomplete", reason: "no key" }),
+        key: () => ({
+          kind: "set",
+          credentials: { clientId: "the-id", clientSecret: "the-secret" },
+        }),
         fetch: () => answer("", 404),
       },
     });
