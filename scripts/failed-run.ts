@@ -2,8 +2,16 @@
 // and the one open issue that tracks it. Used by report-nightly and report-deploy.
 import { execFileSync } from "node:child_process";
 
-export const gh = (...args: string[]) =>
-  execFileSync("gh", args, { encoding: "utf8", maxBuffer: 1 << 28 });
+const GH = { encoding: "utf8", maxBuffer: 1 << 28 } as const;
+
+export const gh = (...args: string[]) => execFileSync("gh", args, GH);
+
+/**
+ * As gh, but its errors stay in the error thrown rather than printing: for a
+ * read that's polled, or whose failure the caller reports itself.
+ */
+export const ghQuiet = (...args: string[]) =>
+  execFileSync("gh", args, { ...GH, stdio: ["ignore", "pipe", "pipe"] });
 
 export type Job = { readonly id: string; readonly name: string };
 

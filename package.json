@@ -46,7 +46,7 @@
     "feed-check": "tsx scripts/feed-check.ts",
     "email-destination": "tsx scripts/email-destination.ts",
     "try-feed": "tsx scripts/try-feed.ts",
-    "pr-status": "scripts/pr-status.sh",
+    "pr-status": "tsx scripts/pr-status.ts",
     "fonts": "tsx scripts/fonts.ts",
     "report-nightly": "tsx scripts/report-nightly.ts",
     "report-deploy": "tsx scripts/report-deploy.ts",

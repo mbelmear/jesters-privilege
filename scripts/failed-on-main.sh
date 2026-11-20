@@ -3,8 +3,9 @@
 # head fails the same check: if it does, CI itself is likely broken rather than
 # the PR (#200; #196's runner image failed every PR at once, and #192's stop
 # took eight lookups to tell from a broken PR). failed-job-logs.sh says why the
-# job failed; this says whose failure it likely is. merge-on-green.sh and
-# pr-status.sh call both once their wait ends.
+# job failed; this says whose failure it likely is. merge-on-green.sh calls
+# both once its wait ends; pr-status does the same in
+# src/lib/pr-gate/failed-checks.ts, which replaces both once merge moves there (#250).
 # It only reports, so it exits 0 whatever GitHub answers.
 # Usage: scripts/failed-on-main.sh < <checks>
 set -euo pipefail
