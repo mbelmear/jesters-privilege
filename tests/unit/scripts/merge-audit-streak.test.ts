@@ -78,7 +78,23 @@ describe("merge-audit-streak", () => {
     // Made up.
     const result = runHook(["failure", "cancelled", "failure", "success"]);
 
+    expect(result.stdout).toContain("on 2 of the last 3 merges to main");
+  });
+
+  it("counts an audit that timed out as one that didn't pass", () => {
+    // Made up.
+    const result = runHook(["timed_out", "failure", "success"]);
+
     expect(result.stdout).toContain("on the last 2 merges to main");
+  });
+
+  it("says or more when no pass is among the runs read", () => {
+    // Made up.
+    const result = runHook([...Array<string>(19).fill("failure"), "cancelled"]);
+
+    expect(result.stdout).toContain(
+      "on 19 of the last 20 or more merges to main"
+    );
   });
 
   it("says one merge as one", () => {

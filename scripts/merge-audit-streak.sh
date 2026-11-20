@@ -2,8 +2,10 @@
 # Claude Code SessionStart hook (.claude/settings.json): says when Merge audit
 # has failed on the latest merges to main, each a PR merged without a passed
 # review recorded at its head. It failed on 32 merges, #222 to #268, unread
-# (#268's retro), so a session now opens with the streak: the failures since
-# its last pass, a cancelled or skipped run counting as neither.
+# (#268's retro), so a session now opens with the streak: the merges since
+# its last pass that didn't pass. A cancelled or skipped run is a merge that
+# counts as neither; any other conclusion (failure, timed_out,
+# startup_failure) is an audit that didn't pass.
 # Prints to stdout, which the hook adds to the session's context.
 set -euo pipefail
 
@@ -15,17 +17,27 @@ if ! runs=$(gh run list --workflow merge-audit.yml --branch main --status comple
 fi
 
 failed=0
+merges=0
+passed=false
 while IFS= read -r conclusion; do
+  [[ -n "$conclusion" ]] || continue
   case "$conclusion" in
-    success) break ;;
-    failure) failed=$((failed + 1)) ;;
-    *) ;;
+    success)
+      passed=true
+      break
+      ;;
+    cancelled | skipped) ;;
+    *) failed=$((failed + 1)) ;;
   esac
+  merges=$((merges + 1))
 done <<<"$runs"
 ((failed > 0)) || exit 0
 
-count=$failed
-((failed == limit)) && count="$limit or more"
-merges=merges
-((failed == 1)) && merges=merge
-echo "Merge audit failed on the last $count $merges to main: each merged without a passed review recorded at its head (docs/testing.md, Merging). Tell the user before merging anything else; gh run list --workflow merge-audit.yml shows which."
+# Without a pass among the runs read, the streak may run further back.
+last=$merges
+[[ "$passed" == true ]] || last="$merges or more"
+noun=merges
+[[ "$last" == 1 ]] && noun=merge
+of=""
+((failed == merges)) || of="$failed of "
+echo "Merge audit failed on ${of}the last $last $noun to main: each merged without a passed review recorded at its head (docs/testing.md, Merging). Tell the user before merging anything else; gh run list --workflow merge-audit.yml shows which."
