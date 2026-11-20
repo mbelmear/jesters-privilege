@@ -178,8 +178,11 @@ describe("createEpisodeFeed", () => {
       listen: SHOW,
       warn: quiet,
     });
-    const fresh = buildRecord(await forCheck.lookUp({ warn: quiet }));
-    expect(await (await snapshotted(source)).record()).toEqual(fresh);
+    const snapshot = await forCheck.lookUp({ warn: quiet });
+    expect(snapshot.lookups.spotify?.kind).toBe("failed");
+    expect(await (await snapshotted(source)).record()).toEqual(
+      buildRecord(snapshot)
+    );
   });
 
   it("records no newest Episode for a feed that has none", async () => {

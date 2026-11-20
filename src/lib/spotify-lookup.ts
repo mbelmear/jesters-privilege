@@ -9,10 +9,11 @@ import type { Episode } from "./feed";
 export type SpotifyCredentials = { clientId: string; clientSecret: string };
 
 // The run's Spotify key, from the GitHub secrets the deploy passes in. Every
-// run that asks Spotify (one reading the live feed: a preview, a production
-// build, the feed check) is handed both, so one without them has a mistake to
-// name: the secrets were deleted or renamed, or a local FEED=live build
-// wasn't given them. Fork and Dependabot pull requests get no preview.
+// workflow run that asks Spotify (a preview, a production build, the feed
+// check) is handed both, so one without them has a mistake to name: the
+// secrets were deleted or renamed. A local FEED=live build without them logs
+// the same failed lookup, though there the key was never given. Fork and
+// Dependabot pull requests get no preview.
 export type SpotifyKey =
   | { kind: "set"; credentials: SpotifyCredentials }
   | { kind: "incomplete"; reason: string };
