@@ -37,7 +37,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "merge": "scripts/merge-on-green.sh",
-    "mark-ready": "scripts/mark-ready.sh",
+    "mark-ready": "tsx scripts/mark-ready.ts",
     "review-passed": "scripts/review-passed.sh",
     "ready": "scripts/ready-tickets.sh",
     "worktree": "scripts/fetch.sh --quiet origin && bash -c \"$(git show origin/main:scripts/new-worktree.sh)\" new-worktree",

@@ -3,12 +3,13 @@
 // merges cleanly with main. Read-only.
 import { anyFailed, failedCheckReport } from "./failed-checks";
 import type { MergesCleanly } from "./git";
-import type { Check, CheckState } from "./github";
+import type { Check, CheckState, PullRequest } from "./github";
 import {
   finishedChecks,
   preview,
   pushedHead,
   Refusal,
+  type Preview,
   short,
   type Reader,
 } from "./snapshot";
@@ -45,19 +46,41 @@ export async function prStatus(pr: number, gate: Gate): Promise<number> {
     return await report(pr, gate);
   } catch (error) {
     if (!(error instanceof Refusal)) throw error;
-    gate.err(error.message);
+    error.message.split("\n").forEach(gate.err);
     return 1;
   }
 }
 
 async function report(pr: number, gate: Gate): Promise<number> {
-  const { github, git, out } = gate;
-  const pullRequest = github.pullRequest(pr);
-  if (pullRequest.state !== "OPEN") {
-    out(`#${pr} is ${pullRequest.state}; nothing to wait for.`);
-    return 1;
-  }
+  const pullRequest = gate.github.pullRequest(pr);
+  if (!isOpen(pr, pullRequest, gate.out)) return 1;
   const head = await pushedHead(pr, pullRequest, gate);
+  return (await waitForHead(pr, head, gate)).passed ? 0 : 1;
+}
+
+/** Says so of a PR that isn't open: nothing to wait for. */
+export function isOpen(
+  pr: number,
+  { state }: PullRequest,
+  say: (line: string) => void
+): boolean {
+  if (state === "OPEN") return true;
+  say(`#${pr} is ${state}; nothing to wait for.`);
+  return false;
+}
+
+export type HeadStatus = { passed: boolean; preview?: Preview };
+
+/**
+ * Waits for `head`'s checks and preview, reporting each, then whether it
+ * merges cleanly. Passed when every check passed and it merges cleanly.
+ */
+export async function waitForHead(
+  pr: number,
+  head: string,
+  gate: Gate
+): Promise<HeadStatus> {
+  const { github, git, out } = gate;
   out(`#${pr} at ${short(head)}`);
 
   // A PR that already conflicts would only be refused after the checks, so say
@@ -66,7 +89,7 @@ async function report(pr: number, gate: Gate): Promise<number> {
     out(
       "Merges cleanly with main: no (CONFLICTING); merge origin/main in and push first."
     );
-    return 1;
+    return { passed: false };
   }
 
   const checks = await finishedChecks(pr, gate);
@@ -74,7 +97,7 @@ async function report(pr: number, gate: Gate): Promise<number> {
     gate.err(
       `No checks reported on #${pr} yet; wait for CI to start, then run this again.`
     );
-    return 1;
+    return { passed: false };
   }
   const passed = !anyFailed(checks);
   if (!passed) failedCheckReport(checks, github).forEach(gate.err);
@@ -91,5 +114,5 @@ async function report(pr: number, gate: Gate): Promise<number> {
 
   const merges = git.mergesCleanly(head);
   out(`Merges cleanly with main: ${MERGES[merges]}`);
-  return passed && merges === "yes" ? 0 : 1;
+  return { passed: passed && merges === "yes", preview: built };
 }

@@ -4,12 +4,23 @@ import {
   Disconnected,
   type Check,
   type GitHub,
+  type PrContents,
   type PullRequest,
 } from "./github";
 
 export class FakeGitHub implements GitHub {
   checkList: Check[] = [];
+  /** Every comment, those the gate posts included. */
   commentBodies: string[] = [];
+  /** The labels the gate added. */
+  labels: string[] = [];
+  prContents: PrContents = {
+    title: "A ticket (#158)",
+    body: "Closes #158.",
+    closingIssues: [158],
+    commitMessages: ["Ticket"],
+    files: ["ticket.md"],
+  };
   /** Logs by job id; a job missing here can't be read. */
   logs: Record<string, string> = {};
   /** How main's head ran each check; a check missing here can't be read. */
@@ -31,8 +42,20 @@ export class FakeGitHub implements GitHub {
     return this.checkList.map((check) => ({ ...check }));
   }
 
+  contents(): PrContents {
+    return structuredClone(this.prContents);
+  }
+
   comments(): string[] {
     return [...this.commentBodies];
+  }
+
+  comment(_pr: number, body: string): void {
+    this.commentBodies.push(body);
+  }
+
+  addLabel(_pr: number, label: string): void {
+    this.labels.push(label);
   }
 
   jobLog(repo: string, job: string): string {

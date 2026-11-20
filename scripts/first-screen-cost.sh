@@ -5,7 +5,9 @@
 # cost". #233 changed the header and footer and reached review without the
 # run (#51). Review still judges the rest of that rule: what these files render
 # (the mobile menu, the player dock) and what a page fetches before its paint.
-# Shared by `npm run merge` and `npm run mark-ready`.
+# Run by `npm run merge`; mark-ready does the same in
+# src/lib/pr-gate/first-screen-cost.ts, which replaces this as merge moves
+# there (#250).
 # Usage: scripts/first-screen-cost.sh <pr-number> <action>
 set -euo pipefail
 

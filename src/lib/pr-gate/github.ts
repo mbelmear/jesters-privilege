@@ -22,14 +22,30 @@ export const CHECK_STATES = [
 ] as const;
 export type CheckState = (typeof CHECK_STATES)[number];
 
+/** What merging a PR would carry: its text, what it closes, and its files. */
+export type PrContents = {
+  title: string;
+  /** "" when it has none. */
+  body: string;
+  /** The issues GitHub links it to close (closingIssuesReferences). */
+  closingIssues: number[];
+  /** Each commit's whole message, which the squash merge's body carries. */
+  commitMessages: string[];
+  /** Every path it changes. */
+  files: string[];
+};
+
 export type Check = { name: string; state: CheckState; link: string };
 
 export interface GitHub {
   pullRequest(pr: number): PullRequest;
   /** Every check on the PR's head; none before CI starts. */
   checks(pr: number): Check[];
+  contents(pr: number): PrContents;
   /** Each comment's body, oldest first. */
   comments(pr: number): string[];
+  comment(pr: number, body: string): void;
+  addLabel(pr: number, label: string): void;
   /** A job's log, as the jobs API serves it. */
   jobLog(repo: string, job: string): string;
   /**

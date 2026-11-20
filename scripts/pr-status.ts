@@ -2,7 +2,6 @@
 // then report: every check, the preview URL built from that head, and whether
 // the PR merges cleanly with main. Exits 1 if a check fails, it conflicts, or
 // it can't tell. Read-only. The logic is src/lib/pr-gate/pr-status.ts.
-// mark-ready.sh reads the "Preview: https://" line; keep its shape.
 // Usage: npm run pr-status -- <pr-number>
 import { join } from "node:path";
 import { prStatus } from "@/lib/pr-gate/pr-status";

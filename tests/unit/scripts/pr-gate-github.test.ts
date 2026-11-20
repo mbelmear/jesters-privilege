@@ -160,6 +160,125 @@ describe("the gh GitHub", () => {
     ]);
   });
 
+  describe("contents", () => {
+    // Recorded: PR #213 (gh 2.103.3, 2026-11-20), cut to its first 120
+    // characters of body, two commits and two files. gh cuts a long first
+    // line with "…", which then also opens the body ("merge's re…",
+    // "…fusal tested").
+    const SAMPLE = JSON.stringify({
+      body: 'From the retro of #158. #211\'s evidence carried the line "Fix" + "#209 before #145", and GitHub shut #209 when #211 merg',
+      closingIssuesReferences: [],
+      commits: [
+        {
+          authoredDate: "2026-11-12T01:00:12Z",
+          committedDate: "2026-11-12T01:00:12Z",
+          messageBody:
+            '#211\'s evidence said "Fix #209 before #145.", and GitHub closed #209 when\n#211 merged.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>',
+          messageHeadline:
+            "merge and mark-ready refuse a PR that would close an unnamed issue",
+          oid: "fa6a670359ebcfadd936611cfced02ee9a747f8f",
+        },
+        {
+          authoredDate: "2026-11-12T01:03:03Z",
+          committedDate: "2026-11-12T01:03:03Z",
+          messageBody:
+            "…fusal tested\n\n- A PR with no body reads as an empty first line.",
+          messageHeadline:
+            "Review fixes: GitHub's answer as it is, a PR with no body, merge's re…",
+          oid: "1984b9a300c34417cc5960157fad4010c7fffff6",
+        },
+      ],
+      files: [
+        {
+          path: "docs/testing.md",
+          additions: 1,
+          deletions: 1,
+          changeType: "MODIFIED",
+        },
+        {
+          path: "scripts/closing-issues.sh",
+          additions: 32,
+          deletions: 0,
+          changeType: "ADDED",
+        },
+      ],
+      title:
+        "merge and mark-ready refuse a PR that would close an unnamed issue",
+    });
+
+    it("reads a PR's text, what it closes, its commit messages and its files in one call", () => {
+      answer = () => SAMPLE;
+
+      expect(ghGitHub.contents(213)).toEqual({
+        title:
+          "merge and mark-ready refuse a PR that would close an unnamed issue",
+        body: 'From the retro of #158. #211\'s evidence carried the line "Fix" + "#209 before #145", and GitHub shut #209 when #211 merg',
+        closingIssues: [],
+        commitMessages: [
+          'merge and mark-ready refuse a PR that would close an unnamed issue\n#211\'s evidence said "Fix #209 before #145.", and GitHub closed #209 when\n#211 merged.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>',
+          "Review fixes: GitHub's answer as it is, a PR with no body, merge's refusal tested\n\n- A PR with no body reads as an empty first line.",
+        ],
+        files: ["docs/testing.md", "scripts/closing-issues.sh"],
+      });
+      expect(calls).toEqual([
+        [
+          "pr",
+          "view",
+          "213",
+          "--json=title,body,closingIssuesReferences,commits,files",
+        ],
+      ]);
+    });
+
+    it("reads what a PR closes, and a missing body as empty", () => {
+      // Made up: #211's closing reference, cut to its number, and no body.
+      answer = () =>
+        JSON.stringify({
+          title: "A fix (#158)",
+          body: null,
+          closingIssuesReferences: [{ number: 158 }, { number: 209 }],
+          commits: [],
+          files: [],
+        });
+
+      expect(ghGitHub.contents(211)).toMatchObject({
+        body: "",
+        closingIssues: [158, 209],
+      });
+    });
+    it("refuses a shape it doesn't know, rather than read nothing", () => {
+      // Made up: a closing reference without its number.
+      answer = () =>
+        JSON.stringify({
+          title: "A fix",
+          body: "",
+          closingIssuesReferences: [{ id: "I_1" }],
+          commits: [],
+          files: [],
+        });
+
+      expect(() => ghGitHub.contents(211)).toThrow(
+        "gh pr view gave number as undefined"
+      );
+    });
+  });
+
+  it("posts a comment", () => {
+    ghGitHub.comment(256, "Code review: passed at abc");
+
+    expect(calls).toEqual([
+      ["pr", "comment", "256", "--body=Code review: passed at abc"],
+    ]);
+  });
+
+  it("adds a label", () => {
+    ghGitHub.addLabel(256, "ready-for-human");
+
+    expect(calls).toEqual([
+      ["pr", "edit", "256", "--add-label=ready-for-human"],
+    ]);
+  });
+
   it("reads a job's log through the jobs API", () => {
     // Made up.
     answer = () => "##[error]the cause\n";

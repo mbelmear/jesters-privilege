@@ -6,6 +6,7 @@ import {
   type Check,
   type CheckState,
   type GitHub,
+  type PrContents,
   type PrState,
 } from "@/lib/pr-gate/github";
 import { gh, ghQuiet } from "./failed-run";
@@ -29,6 +30,30 @@ const tabbed = (output: string) =>
     .split("\n")
     .filter(Boolean)
     .map((line) => line.split("\t"));
+
+// Reads gh's JSON field by field, throwing on a shape it doesn't know: a
+// check that read nothing would pass a PR it should refuse.
+type Json = Record<string, unknown>;
+const isJson = (value: unknown): value is Json =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+function field<T>(
+  json: unknown,
+  key: string,
+  is: (value: unknown) => value is T
+): T {
+  const value = isJson(json) ? json[key] : undefined;
+  if (!is(value)) {
+    throw new Error(`gh pr view gave ${key} as ${JSON.stringify(value)}`);
+  }
+  return value;
+}
+
+const isString = (value: unknown): value is string => typeof value === "string";
+const isNumber = (value: unknown): value is number => typeof value === "number";
+const isList = (value: unknown): value is unknown[] => Array.isArray(value);
+const isBody = (value: unknown): value is string | null =>
+  value === null || isString(value);
 
 export const ghGitHub: GitHub = {
   pullRequest(pr) {
@@ -81,6 +106,44 @@ export const ghGitHub: GitHub = {
       }
       return { name, state: bucket, link };
     });
+  },
+
+  contents(pr): PrContents {
+    const read: unknown = JSON.parse(
+      gh(
+        "pr",
+        "view",
+        String(pr),
+        "--json=title,body,closingIssuesReferences,commits,files"
+      )
+    );
+    return {
+      title: field(read, "title", isString),
+      body: field(read, "body", isBody) ?? "",
+      closingIssues: field(read, "closingIssuesReferences", isList).map(
+        (issue) => field(issue, "number", isNumber)
+      ),
+      // gh splits a message at its first line, dropping the blank line after
+      // it, and cuts a long first line with "…", which then also opens the
+      // body; rejoined, a keyword cut in two reads whole.
+      commitMessages: field(read, "commits", isList).map((commit) =>
+        `${field(commit, "messageHeadline", isString)}\n${field(commit, "messageBody", isString)}`.replace(
+          "…\n…",
+          ""
+        )
+      ),
+      files: field(read, "files", isList).map((file) =>
+        field(file, "path", isString)
+      ),
+    };
+  },
+
+  comment(pr, body) {
+    gh("pr", "comment", String(pr), `--body=${body}`);
+  },
+
+  addLabel(pr, label) {
+    gh("pr", "edit", String(pr), `--add-label=${label}`);
   },
 
   comments(pr) {
