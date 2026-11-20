@@ -4,7 +4,8 @@
 # it failed; its log says why. The jobs API serves a finished job's log while
 # the rest of its run goes on, where gh run view --log-failed waits for the
 # whole run: #193 took five calls to find a missing library without this.
-# merge-on-green.sh and pr-status.sh call it once their wait ends.
+# merge-on-green.sh calls it once its wait ends; pr-status does the same in
+# src/lib/pr-gate/failed-checks.ts, which replaces this once merge moves there (#250).
 # Usage: scripts/failed-job-logs.sh < <checks>
 set -euo pipefail
 

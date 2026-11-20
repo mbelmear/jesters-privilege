@@ -243,7 +243,7 @@ describe("a workflow's runners", () => {
 });
 
 describe("the names scripts read", () => {
-  // pr-status.sh reads this one; a rename brings back its wait for a preview.
+  // The PR gate reads this one (src/lib/pr-gate/snapshot.ts); a rename brings back its wait for a preview.
   it("keeps the preview job's name", () => {
     expect(readFileSync(".github/workflows/deploy.yml", "utf8")).toContain(
       "name: Preview URL\n"

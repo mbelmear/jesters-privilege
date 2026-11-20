@@ -4,7 +4,7 @@
 # over a clean merge of main (require-review.sh). A Jester judges
 # the preview, not the code, so first it refuses a head without a passed
 # /code-review, as a merge does (require-review.sh). Then it waits on
-# pr-status.sh and labels only when every check passes, the preview is built
+# pr-status and labels only when every check passes, the preview is built
 # from the head, and the PR merges cleanly with main, so a Jester never
 # reviews a preview that can't merge. A push during that wait is refused, as
 # its head was never checked.
@@ -30,7 +30,7 @@ fi
 "$(dirname "$0")/closing-issues.sh" "$pr" label
 "$(dirname "$0")/first-screen-cost.sh" "$pr" label
 # The report streams to the terminal as it waits, and is kept for the checks below.
-if ! status=$("$(dirname "$0")/pr-status.sh" "$pr" | tee /dev/stderr); then
+if ! status=$(npx tsx "$(dirname "$0")/pr-status.ts" "$pr" | tee /dev/stderr); then
   echo "Refusing to label #$pr: pr-status didn't pass (see above)." >&2
   exit 1
 fi
