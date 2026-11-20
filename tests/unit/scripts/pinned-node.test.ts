@@ -15,7 +15,7 @@ import { scriptsDir } from "../../paths";
 
 const script = join(scriptsDir, "pinned-node.sh");
 
-describe("the commit hooks' Node", () => {
+describe("the pinned Node the hooks and npm test run", () => {
   let root: string;
 
   // A stand-in node that answers --version as the real one does.
@@ -25,7 +25,7 @@ describe("the commit hooks' Node", () => {
     chmodSync(join(dir, "node"), 0o755);
   }
 
-  // Sources the script as a hook does, then reports the node it left first
+  // Sources the script as a hook or an npm test script does, then reports the node it left first
   // on PATH.
   function hook({ shellNode, nvm }: { shellNode?: string; nvm: string[] }) {
     const shellBin = join(root, "shell-bin");

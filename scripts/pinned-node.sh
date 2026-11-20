@@ -1,10 +1,11 @@
 # shellcheck shell=sh
-# Sourced by the commit hooks and `npm test`: runs them with the Node major
-# .nvmrc pins, as CI's setup-node does, so a test passes or fails here as it
-# will there, whether a hook runs it or `npm test -- <file>` does. A shell whose own node is another major gets one of nvm's installs of
-# the pinned major put first on PATH; with none installed, it stops and says
-# how to get it. Node 26 failed a test the hook runs that 24 passes,
-# refusing #247's commit for a reason CI never sees.
+# Sourced by the commit hooks and the `npm test` scripts: runs them with the
+# Node major .nvmrc pins, as CI's setup-node does, so a test passes or fails
+# here as it will there, whether a hook runs it or `npm test -- <file>` does.
+# A shell whose own node is another major gets one of nvm's installs of the
+# pinned major put first on PATH; with none installed, it stops and says how
+# to get it. Node 26 failed a test the hook runs that 24 passes, refusing
+# #247's commit for a reason CI never sees.
 # Usage: . scripts/pinned-node.sh (from the repository root; npm runs a
 # script there)
 

@@ -11,7 +11,7 @@ npx playwright install chromium webkit   # once, and after Playwright upgrades
 
 Add `firefox` to that install if you want to run the nightly browser locally.
 
-Use the Node major `.nvmrc` pins, which CI runs (`nvm use`). The commit hooks and `npm test` switch to it themselves when nvm has it installed (`scripts/pinned-node.sh`), since another major can fail a test CI passes: Node 26 fails one of `tests/unit/lib/player-browser.test.ts` that 24 passes. So run one file by hand with `npm test -- <file>`; `npx jest` runs under your shell's Node.
+Use the Node major `.nvmrc` pins, which CI runs (`nvm use`). The commit hooks and `npm test` switch to it themselves when nvm has it installed (`scripts/pinned-node.sh`), since another major can fail a test CI passes: Node 26 fails one of `tests/unit/lib/player-browser.test.ts` that 24 passes. So does each `npm run test:*`: run one file by hand with `npm test -- <file>`, since `npx jest` runs under your shell's Node.
 
 ## Unit and component tests (Jest)
 
@@ -21,7 +21,7 @@ Jest uses Next's preset (`next/jest`), React Testing Library, and jest-axe. Test
 npm test                    # run once
 npm run test:watch          # rerun on change
 npm run test:coverage       # with coverage, as CI runs it
-npx jest tests/unit/lib     # one folder or file
+npm test -- tests/unit/lib  # one folder or file
 ```
 
 - **Logic modules** live in `src/lib/`. Coverage there must stay at or above 90% of lines, or `test:coverage` fails.
