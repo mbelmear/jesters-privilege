@@ -2,7 +2,7 @@
 # branch alone, so a lint rule or test that reached main after the branch
 # was cut fails only in CI. Each branch pushed must already contain
 # origin/main; deletions and tags pass.
-if ! git fetch --quiet origin main; then
+if ! scripts/fetch.sh --quiet origin main; then
   echo "pre-push: couldn't fetch origin/main; pushing without checking it." >&2
   exit 0
 fi

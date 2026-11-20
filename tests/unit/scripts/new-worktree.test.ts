@@ -64,6 +64,11 @@ describe("npm run worktree", () => {
     });
     mkdirSync(join(origin, "scripts"));
     copyFileSync(join(repoRoot, "package.json"), join(origin, "package.json"));
+    // The npm script fetches through it, and the two arrive together.
+    copyFileSync(
+      join(scriptsDir, "fetch.sh"),
+      join(origin, "scripts", "fetch.sh")
+    );
     commitScript(origin, "stale");
     execFileSync("git", ["clone", "--quiet", origin, checkout], { env });
     commitScript(origin, "current");

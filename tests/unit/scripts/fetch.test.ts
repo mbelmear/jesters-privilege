@@ -13,9 +13,17 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { scriptsDir } from "../../paths";
+import { repoRoot, scriptsDir } from "../../paths";
 
 const script = join(scriptsDir, "fetch.sh");
+
+// Whether a file runs git fetch itself, on a line that isn't a comment.
+function rawFetches(text: string): boolean {
+  return text
+    .split("\n")
+    .filter((line) => !/^\s*(#|\/\/)/.test(line))
+    .some((line) => /\bgit fetch\b|\bgit\(\s*"fetch"/.test(line));
+}
 
 // Git run from a hook inherits GIT_DIR and GIT_INDEX_FILE, which point every
 // git command at the real repository (merge-holds-branch.test.ts tells that
@@ -110,13 +118,44 @@ describe("fetch", () => {
     expect(result.stderr).toContain("cannot lock ref");
   });
 
-  it("is how every script fetches", () => {
-    const raw = readdirSync(scriptsDir)
-      .filter((name) => name !== "fetch.sh")
-      .filter((name) =>
-        /\bgit fetch\b/.test(readFileSync(join(scriptsDir, name), "utf8"))
+  it("passes on what git says when the fetch succeeds", () => {
+    const result = spawnSync("bash", [script, "origin"], {
+      cwd: checkout,
+      env,
+      encoding: "utf8",
+    });
+    expect(result.status).toBe(0);
+    expect(result.stderr).toContain("origin/main");
+  });
+
+  describe("every fetch of ours", () => {
+    // Where this repo runs git fetch itself: its scripts, its git hooks, and
+    // its npm scripts. Workflows run alone on a runner, with no session to
+    // race.
+    const ours = [
+      ...readdirSync(scriptsDir)
+        .filter((name) => name !== "fetch.sh")
+        .map((name) => join(scriptsDir, name)),
+      ...readdirSync(join(repoRoot, ".husky"))
+        .filter((name) => !name.startsWith("_"))
+        .map((name) => join(repoRoot, ".husky", name)),
+      join(repoRoot, "package.json"),
+    ];
+
+    it("finds a raw fetch in a shell line or a git() call, not in a comment", () => {
+      expect(rawFetches("if ! git fetch --quiet origin main; then")).toBe(true);
+      expect(rawFetches('  git("fetch", "--quiet", "origin", "main");')).toBe(
+        true
       );
-    expect(raw).toEqual([]);
+      expect(rawFetches("# git fetch fails on a lock\n// git fetch")).toBe(
+        false
+      );
+    });
+
+    it("goes through fetch.sh", () => {
+      const raw = ours.filter((path) => rawFetches(readFileSync(path, "utf8")));
+      expect(raw).toEqual([]);
+    });
   });
 
   it("fails at once on any other error", () => {

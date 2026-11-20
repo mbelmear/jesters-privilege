@@ -1,6 +1,7 @@
 // Fails when draft content would go live: run before launch (#30), and before
 // any deploy once the Jesters' words are all in. Usage: npm run launch-check
 import { execFileSync } from "node:child_process";
+import { join } from "node:path";
 import { content } from "@/content";
 import { feed } from "@/content/feed";
 import { behindWarning } from "@/lib/checkout-freshness";
@@ -10,7 +11,8 @@ import { findDrafts } from "@/lib/content";
 try {
   const git = (...args: string[]) =>
     execFileSync("git", args, { encoding: "utf8" }).trim();
-  git("fetch", "--quiet", "origin", "main");
+  // Through fetch.sh, which waits out another session's fetch.
+  execFileSync(join(__dirname, "fetch.sh"), ["--quiet", "origin", "main"]);
   const warning = behindWarning(
     Number(git("rev-list", "--count", "HEAD..origin/main"))
   );

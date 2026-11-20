@@ -13,6 +13,8 @@ delay="${FETCH_RETRY_DELAY:-1}"
 for ((attempt = 1; ; attempt++)); do
   # Keeps git's stderr to read, and passes its stdout through.
   if { err=$(git fetch "$@" 2>&1 1>&3 3>&-); } 3>&1; then
+    # What a fetch reports, such as refs pruned, is on stderr too.
+    [[ -z "$err" ]] || printf '%s\n' "$err" >&2
     exit 0
   fi
   if [[ "$err" != *"cannot lock ref"* ]] || ((attempt == attempts)); then

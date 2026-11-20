@@ -40,7 +40,7 @@
     "mark-ready": "scripts/mark-ready.sh",
     "review-passed": "scripts/review-passed.sh",
     "ready": "scripts/ready-tickets.sh",
-    "worktree": "git fetch --quiet origin && bash -c \"$(git show origin/main:scripts/new-worktree.sh)\" new-worktree",
+    "worktree": "scripts/fetch.sh --quiet origin && bash -c \"$(git show origin/main:scripts/new-worktree.sh)\" new-worktree",
     "worktree-done": "scripts/worktree-done.sh",
     "launch-check": "FEED=live tsx scripts/launch-check.ts",
     "feed-check": "tsx scripts/feed-check.ts",
