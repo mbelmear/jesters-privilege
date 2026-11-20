@@ -1,6 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { Disconnected } from "@/lib/pr-gate/github";
 import { ghExit, ghGitHub, sayUnlessGh } from "../../../scripts/pr-gate-github";
+import { ghFailed } from "../../gh-failed";
 
 // Fakes the process call itself, so no test here can reach GitHub (#164): see
 // failed-run.test.ts. Each answer says whether gh printed it (gh 2.103.3,
@@ -25,17 +26,9 @@ beforeEach(() => {
   }) as typeof execFileSync);
 });
 
-// What execFileSync throws when gh exits non-zero: its message names the
-// command, then adds stderr if there was any (Node 24.22.1, 2026-11-20).
+// gh exiting non-zero, as execFileSync throws it (tests/gh-failed.ts).
 const exited = (status: number, stderr: string, stdout = "") =>
-  Object.assign(
-    new Error(`Command failed: gh pr checks${stderr ? `\n${stderr}` : ""}`),
-    {
-      status,
-      stderr,
-      stdout,
-    }
-  );
+  ghFailed({ command: "gh pr checks", status, stderr, stdout });
 
 describe("the gh GitHub", () => {
   it("reads a PR's state, branch and head in one call", () => {

@@ -7,6 +7,11 @@
             "type": "command",
             "command": "\"$CLAUDE_PROJECT_DIR\"/scripts/freshen-main-checkout.sh",
             "timeout": 15
+          },
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/scripts/merge-audit-streak.sh",
+            "timeout": 15
           }
         ]
       }

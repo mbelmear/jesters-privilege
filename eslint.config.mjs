@@ -165,6 +165,16 @@ const eslintConfig = defineConfig([
           message:
             'toHaveTextContent("") always passes. Use toBeEmptyDOMElement() to check that an element is empty.',
         },
+        // A hand-built gh failure misses the shape execFileSync throws: #268's
+        // lacked `status`, by which the gate knows gh said its own error.
+        ...[
+          "NewExpression[callee.name='Error'] > Literal[value=/^Command failed:/]",
+          "NewExpression[callee.name='Error'] > TemplateLiteral > TemplateElement[value.raw=/^Command failed:/]",
+        ].map((selector) => ({
+          selector,
+          message:
+            "Hand-built execFileSync error. Use ghFailed from tests/gh-failed.ts, which carries status, stderr and stdout as execFileSync's error does.",
+        })),
         // A fresh module registry loads a second React, so every hook in what
         // it renders fails with "Invalid hook call" (#21).
         {

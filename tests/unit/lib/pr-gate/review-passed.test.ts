@@ -4,6 +4,7 @@
 import { join } from "node:path";
 import { reviewPassed } from "@/lib/pr-gate/review-passed";
 import { localGit } from "../../../../scripts/pr-gate-git";
+import { ghFailed } from "../../../gh-failed";
 import { scriptsDir } from "../../../paths";
 import { env, git, mainGains, passedAt, throwawayPr } from "./throwaway-pr";
 
@@ -54,10 +55,8 @@ describe("review-passed", () => {
   // the caller's to give (scripts/review-passed.ts).
   it("leaves a failed comment to the caller", async () => {
     const t = setup();
-    // Made up: what execFileSync throws when gh exits 4.
-    const error = Object.assign(new Error("Command failed: gh pr comment 7"), {
-      status: 4,
-    });
+    // Made up: gh exiting 4 with nothing on stderr.
+    const error = ghFailed({ command: "gh pr comment 7", status: 4 });
     jest.spyOn(t.github, "comment").mockImplementation(() => {
       throw error;
     });
@@ -101,12 +100,12 @@ describe("review-passed", () => {
       async (_, ok) => {
         const t = setup();
         const local = t.commit("ticket.md", "unpushed\n", "Unpushed");
-        // Made up in the shape execFileSync throws when gh exits 1, its
-        // status included, by which the caller knows gh said its own error.
-        const error = Object.assign(
-          new Error("Command failed: gh pr view 7\nHTTP 502"),
-          { status: 1 }
-        );
+        // Made up: gh exiting 1 on a 502.
+        const error = ghFailed({
+          command: "gh pr view 7",
+          status: 1,
+          stderr: "HTTP 502",
+        });
         let reads = 0;
         jest.spyOn(t.github, "pullRequest").mockImplementation(() => {
           reads += 1;
