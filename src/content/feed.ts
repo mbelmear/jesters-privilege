@@ -45,7 +45,7 @@ export const feedSnapshot = fileSnapshotStore(FEED_SNAPSHOT, {
 // to test the coming-soon state (docs/testing.md). Spotify is asked only of
 // the live feed, with the key the deploy passes in (SPOTIFY_CLIENT_ID and
 // SPOTIFY_CLIENT_SECRET); without it every Episode's Spotify link opens the
-// show, and every run but a preview says the key is missing (`spotifyKey`).
+// show, and the run says the key is missing (`spotifyKey`).
 export const feed = createEpisodeFeed(
   chooseFeedSource(
     { FEED: process.env.FEED, SITE_ENV: process.env.SITE_ENV },
@@ -59,7 +59,6 @@ export const feed = createEpisodeFeed(
             spotifyKey({
               SPOTIFY_CLIENT_ID: process.env.SPOTIFY_CLIENT_ID,
               SPOTIFY_CLIENT_SECRET: process.env.SPOTIFY_CLIENT_SECRET,
-              SITE_ENV: process.env.SITE_ENV,
             }),
         },
         fetchWithTimeout

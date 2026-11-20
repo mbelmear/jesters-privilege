@@ -164,13 +164,19 @@ describe("createEpisodeFeed", () => {
     });
   });
 
-  it("records for the build what the feed check records afresh", async () => {
-    const feed = createEpisodeFeed(memorySource(), memoryFiles().store, {
+  it("records for the build what the feed check records afresh, a failed lookup included", async () => {
+    const source = memorySource({
+      spotify: {
+        key: () => ({ kind: "incomplete", reason: "no key" }),
+        fetch: () => answer("", 404),
+      },
+    });
+    const forCheck = createEpisodeFeed(source, memoryFiles().store, {
       listen: SHOW,
       warn: quiet,
     });
-    const fresh = buildRecord(await feed.lookUp({ warn: quiet }));
-    expect(await (await snapshotted()).record()).toEqual(fresh);
+    const fresh = buildRecord(await forCheck.lookUp({ warn: quiet }));
+    expect(await (await snapshotted(source)).record()).toEqual(fresh);
   });
 
   it("records no newest Episode for a feed that has none", async () => {
@@ -280,21 +286,6 @@ describe("createEpisodeFeed", () => {
       });
       expect((await feed.lookUp({ warn: quiet })).lookups.spotify).toBe(
         undefined
-      );
-    });
-
-    it("is left out when the source has no key to ask with", async () => {
-      const access = spotify({ kind: "none" });
-      const feed = createEpisodeFeed(
-        memorySource({ spotify: access }),
-        memoryFiles().store,
-        { listen: SHOW, warn: quiet }
-      );
-      const warn = jest.fn();
-      const { lookups } = await feed.lookUp({ warn });
-      expect(lookups.spotify).toBeUndefined();
-      expect(warn).not.toHaveBeenCalledWith(
-        expect.stringMatching(/^Spotify lookup failed/)
       );
     });
 

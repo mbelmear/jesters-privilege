@@ -8,20 +8,18 @@ import type { Episode } from "./feed";
 
 export type SpotifyCredentials = { clientId: string; clientSecret: string };
 
-// The run's Spotify key, from the GitHub secrets the deploy passes in. A
-// preview with neither (a fork's or Dependabot's pull request) skips the
-// lookup quietly; one with only one has a mistake to name, and so does any
-// other run (a production build, the feed check) with neither. This is the
-// one place that decides which runs need the key.
+// The run's Spotify key, from the GitHub secrets the deploy passes in. Every
+// run that asks Spotify (one reading the live feed: a preview, a production
+// build, the feed check) is handed both, so one without them has a mistake to
+// name: the secrets were deleted or renamed, or a local FEED=live build
+// wasn't given them. Fork and Dependabot pull requests get no preview.
 export type SpotifyKey =
   | { kind: "set"; credentials: SpotifyCredentials }
-  | { kind: "none" }
   | { kind: "incomplete"; reason: string };
 
 export function spotifyKey(env: {
   SPOTIFY_CLIENT_ID?: string;
   SPOTIFY_CLIENT_SECRET?: string;
-  SITE_ENV?: string;
 }): SpotifyKey {
   const clientId = env.SPOTIFY_CLIENT_ID ?? "";
   const clientSecret = env.SPOTIFY_CLIENT_SECRET ?? "";
@@ -29,13 +27,11 @@ export function spotifyKey(env: {
     return { kind: "set", credentials: { clientId, clientSecret } };
   }
   if (!clientId && !clientSecret) {
-    return env.SITE_ENV !== "preview"
-      ? {
-          kind: "incomplete",
-          reason:
-            "SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET aren't set, so Spotify can't be asked",
-        }
-      : { kind: "none" };
+    return {
+      kind: "incomplete",
+      reason:
+        "SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET aren't set, so Spotify can't be asked",
+    };
   }
   const missing = clientId ? "SPOTIFY_CLIENT_SECRET" : "SPOTIFY_CLIENT_ID";
   return {
@@ -47,16 +43,13 @@ export function spotifyKey(env: {
 const TOKEN_URL = "https://accounts.spotify.com/api/token";
 
 // Never throws: a failed lookup leaves every Episode linking to the show.
-// Without a key there's no lookup at all (undefined), as for an app with none.
 export async function lookUpSpotify(
   showUrl: string,
   key: SpotifyKey,
   episodes: readonly Pick<Episode, "guid" | "title" | "publishedAt">[],
   fetch: Fetch
-): Promise<AppLookup | undefined> {
+): Promise<AppLookup> {
   switch (key.kind) {
-    case "none":
-      return undefined;
     case "incomplete":
       return { kind: "failed", reason: key.reason };
     case "set":

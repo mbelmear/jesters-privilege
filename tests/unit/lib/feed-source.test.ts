@@ -22,7 +22,7 @@ describe("liveSource", () => {
       {
         url,
         savedTranscripts: BRANCH,
-        spotifyKey: () => ({ kind: "none" }),
+        spotifyKey: () => ({ kind: "incomplete", reason: "no key" }),
       },
       fetch
     );
@@ -61,7 +61,10 @@ describe("liveSource", () => {
     expect(
       await (await source.appleLookup("https://itunes.apple.com/lookup")).text()
     ).toBe("{}");
-    expect(source.spotify?.key()).toEqual({ kind: "none" });
+    expect(source.spotify?.key()).toEqual({
+      kind: "incomplete",
+      reason: "no key",
+    });
   });
 
   describe("savedTranscript", () => {

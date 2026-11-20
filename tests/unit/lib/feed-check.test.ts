@@ -1,10 +1,9 @@
 import type { BuildRecord } from "@/lib/build-manifest";
 import type { Fetch } from "@/lib/download";
 import { runFeedCheck, type FeedCheckEnv } from "@/lib/feed-check";
+import { EPISODE_1, EPISODE_2, record } from "../../build-records";
 
 const SITE = "https://jestersprivilegepodcast.com";
-const EPISODE_1 = "https://www.spreaker.com/episode/61234567";
-const EPISODE_2 = "https://www.spreaker.com/episode/61299999";
 
 // A live site whose build manifest answers with `body`.
 function liveSite(body: string, status = 200): Fetch {
@@ -20,12 +19,6 @@ function liveSite(body: string, status = 200): Fetch {
     };
   };
 }
-
-// A record with no Episode Listen links or Transcripts unless given some.
-const record = (
-  newestEpisodeGuid: string | null,
-  { episodeListenLinks = {}, transcripts = [] }: Partial<BuildRecord> = {}
-): BuildRecord => ({ newestEpisodeGuid, episodeListenLinks, transcripts });
 
 const deployedWith = (live: BuildRecord): Fetch =>
   liveSite(JSON.stringify({ ...live, commit: "7c625bc" }));
@@ -83,6 +76,20 @@ describe("runFeedCheck", () => {
     ]);
   });
 
+  it("tells the workflow not to deploy when a failed lookup lists none of an app's Episodes", async () => {
+    const { env, outputs, log } = workflow(
+      deployedWith(
+        record(EPISODE_1, { episodeListenLinks: { spotify: [EPISODE_1] } })
+      ),
+      async () => record(EPISODE_1)
+    );
+    expect(await runFeedCheck(SITE, env)).toBe(0);
+    expect(outputs).toEqual(["rebuild=false"]);
+    expect(log).toEqual([
+      `::notice::No rebuild: The live site already has the newest Episode (${EPISODE_1}) and every Episode Listen link and Transcript`,
+    ]);
+  });
+
   it("tells the workflow to deploy when an Episode has gained a Transcript", async () => {
     const { env, outputs, log } = workflow(
       deployedWith(record(EPISODE_1)),
@@ -95,7 +102,7 @@ describe("runFeedCheck", () => {
     ]);
   });
 
-  it("builds the fresh record once, so the feed is downloaded once", async () => {
+  it("builds the fresh record once per run", async () => {
     const { env, freshRecord } = workflow(
       deployedWith(record(EPISODE_1)),
       async () => record(EPISODE_1)

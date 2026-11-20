@@ -123,13 +123,12 @@ export function createEpisodeFeed(
     }
     const spotify = listen.spotify;
     if (spotify && source.spotify) {
-      const lookup = await lookUpSpotify(
+      lookups.spotify = await lookUpSpotify(
         spotify,
         source.spotify.key(),
         found,
         source.spotify.fetch
       );
-      if (lookup) lookups.spotify = lookup;
     }
     return lookups;
   }

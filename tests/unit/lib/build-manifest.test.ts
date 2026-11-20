@@ -1,8 +1,5 @@
-import {
-  compareRecords,
-  parseBuildManifest,
-  type BuildRecord,
-} from "@/lib/build-manifest";
+import { compareRecords, parseBuildManifest } from "@/lib/build-manifest";
+import { EPISODE_1, EPISODE_2, record } from "../../build-records";
 
 describe("parseBuildManifest", () => {
   it("reads the newest Episode, commit, and Transcripts a deploy was built with", () => {
@@ -120,15 +117,6 @@ describe("parseBuildManifest", () => {
 });
 
 describe("compareRecords", () => {
-  const EPISODE_1 = "https://www.spreaker.com/episode/61234567";
-  const EPISODE_2 = "https://www.spreaker.com/episode/61299999";
-
-  // A record with no Episode Listen links or Transcripts unless given some.
-  const record = (
-    newestEpisodeGuid: string | null,
-    { episodeListenLinks = {}, transcripts = [] }: Partial<BuildRecord> = {}
-  ): BuildRecord => ({ newestEpisodeGuid, episodeListenLinks, transcripts });
-
   it("leaves the site alone when its newest Episode is the feed's", () => {
     expect(compareRecords(record(EPISODE_1), record(EPISODE_1))).toEqual({
       rebuild: false,
