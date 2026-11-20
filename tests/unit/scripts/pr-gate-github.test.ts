@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { Disconnected } from "@/lib/pr-gate/github";
-import { ghGitHub } from "../../../scripts/pr-gate-github";
+import { ghExit, ghGitHub } from "../../../scripts/pr-gate-github";
 
 // Fakes the process call itself, so no test here can reach GitHub (#164): see
 // failed-run.test.ts. Each answer says whether gh printed it (gh 2.103.3,
@@ -286,6 +286,18 @@ describe("the gh GitHub", () => {
       ["pr", "comment", "256", "--body=Code review: passed at abc"],
     ]);
     expect(stdios).toEqual([["ignore", "inherit", "inherit"]]);
+  });
+
+  // review-passed.sh ended with gh's own exit code when gh pr comment failed.
+  it("gives a failed gh's exit code, and none for any other error", () => {
+    expect(
+      ghExit(
+        exited(4, "To get started with GitHub CLI, please run:  gh auth login")
+      )
+    ).toBe(4);
+    expect(
+      ghExit(new Error("gh pr view gave #7 an unknown state: "))
+    ).toBeUndefined();
   });
 
   it("adds a label, printing the PR's URL", () => {

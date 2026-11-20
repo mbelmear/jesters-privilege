@@ -2,25 +2,39 @@
 import { spawnSync } from "node:child_process";
 import type { Git } from "@/lib/pr-gate/git";
 
-/** Git in `dir`, fetching through scripts/fetch.sh, which waits out another session's fetch. */
+/**
+ * Git in `dir`, fetching through scripts/fetch.sh, which waits out another
+ * session's fetch. Given `err`, the fetch and sinceReview say there what git
+ * printed on stderr, as the shell scripts they replace let git print it;
+ * without it, git's own errors stay unsaid.
+ */
 export function localGit(
   dir: string,
   fetchScript: string,
-  env: NodeJS.ProcessEnv = process.env
+  env: NodeJS.ProcessEnv = process.env,
+  err?: (line: string) => void
 ): Git {
   const run = (file: string, args: string[]) =>
     spawnSync(file, args, { cwd: dir, env, encoding: "utf8" });
+  /** As run, saying what it printed on stderr. */
+  const loud = (file: string, args: string[]) => {
+    const result = run(file, args);
+    if (err && result.stderr) {
+      result.stderr.replace(/\n$/, "").split("\n").forEach(err);
+    }
+    return result;
+  };
   const has = (commit: string) =>
     run("git", ["cat-file", "-e", `${commit}^{commit}`]).status === 0;
   const fetch = (head: string) =>
-    run(fetchScript, ["--quiet", "origin", "main", head]).status === 0;
+    loud(fetchScript, ["--quiet", "origin", "main", head]).status === 0;
   const isAncestor = (ancestor: string, commit: string) =>
     run("git", ["merge-base", "--is-ancestor", ancestor, commit]).status === 0;
   /** What `commit` changes since it left main, blob by blob; undefined if git failed. */
   const changes = (commit: string, main: string) => {
-    const base = run("git", ["merge-base", commit, main]);
+    const base = loud("git", ["merge-base", commit, main]);
     if (base.status !== 0) return undefined;
-    const diff = run("git", [
+    const diff = loud("git", [
       "diff",
       "--raw",
       "--no-renames",
@@ -48,21 +62,30 @@ export function localGit(
     },
     fetch,
     isAncestor,
-    mergedMainOnly(reviewed, head) {
+    sinceReview(reviewed, head) {
       const main = "origin/main";
-      if (!isAncestor(reviewed, head)) return false;
-      const own = run("git", [
+      const ancestor = loud("git", [
+        "merge-base",
+        "--is-ancestor",
+        reviewed,
+        head,
+      ]);
+      if (ancestor.status !== 0) return "own commits";
+      const own = loud("git", [
         "rev-list",
         "--no-merges",
         `${reviewed}..${head}`,
         "--not",
         main,
       ]);
-      if (own.status !== 0 || own.stdout.trim()) return false;
+      // A failed read names no commit; review-passed.sh then named the merge.
+      if (own.status === 0 && own.stdout.trim()) return "own commits";
       // Each read first: two failed reads would compare equal, as empty.
       const was = changes(reviewed, main);
       const now = changes(head, main);
-      return was !== undefined && was === now;
+      return own.status === 0 && was !== undefined && was === now
+        ? "clean merges"
+        : "merge changes files";
     },
     mergesCleanly(head) {
       if (!fetch(head) || !has(head) || !has("origin/main")) {
