@@ -1,5 +1,4 @@
 // The PR gate's GitHub (src/lib/pr-gate/github.ts), built from `gh`.
-import { execFileSync } from "node:child_process";
 import {
   CHECK_STATES,
   Disconnected,
@@ -10,7 +9,7 @@ import {
   type PrContents,
   type PrState,
 } from "@/lib/pr-gate/github";
-import { gh, ghQuiet } from "./failed-run";
+import { gh, ghLoud, ghQuiet } from "./failed-run";
 
 // What gh prints when it can't reach GitHub, rather than GitHub answering.
 const DROPPED = /error connecting to|dial tcp|connection reset|timeout|EOF/;
@@ -20,11 +19,6 @@ const printed = (error: unknown, stream: "stdout" | "stderr") =>
   error instanceof Error && stream in error
     ? String(Reflect.get(error, stream) ?? "")
     : "";
-
-/** As gh, but printing what gh prints: the URL of what it changed. */
-const ghLoud = (...args: string[]) => {
-  execFileSync("gh", args, { stdio: ["ignore", "inherit", "inherit"] });
-};
 
 /** A quiet read's error, saying gh's own error, which it kept from printing. */
 const quietError = (command: string, error: unknown) =>

@@ -46,19 +46,19 @@ export async function markReady(
 
 async function label(pr: number, gate: MarkReadyGate) {
   const { github } = gate;
-  const pullRequest = github.pullRequest(pr);
+  let pullRequest: PullRequest;
   let head: string;
   try {
+    pullRequest = github.pullRequest(pr);
     head = await pushedHead(pr, pullRequest, gate);
   } catch (error) {
-    if (!(error instanceof Refusal)) throw error;
     // The wait's own message first, so this one's "above" points at it.
-    const refusal = refusing(
+    sayError(error, gate.err);
+    throw refusing(
       ACTION,
       pr,
       "GitHub doesn't show this checkout's commit (see above)."
     );
-    throw new Refusal(`${error.message}\n${refusal.message}`);
   }
 
   requireReview(pr, head, ACTION, gate);
@@ -99,9 +99,17 @@ async function waitForPr(
   try {
     return await waitForHead(pr, head, status);
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    const lines = message.split("\n");
-    (error instanceof Refusal ? lines : lines.slice(0, 1)).forEach(gate.err);
+    sayError(error, gate.err);
     return undefined;
   }
+}
+
+/**
+ * Says an error as the shell steps said one before mark-ready refused: a
+ * refusal whole, anything else by its first line, gh having printed the rest.
+ */
+function sayError(error: unknown, err: (line: string) => void) {
+  const message = error instanceof Error ? error.message : String(error);
+  const lines = message.split("\n");
+  (error instanceof Refusal ? lines : lines.slice(0, 1)).forEach(err);
 }

@@ -8,13 +8,11 @@ import { ghGitHub } from "../../../scripts/pr-gate-github";
 jest.mock("node:child_process", () => ({ execFileSync: jest.fn() }));
 
 const calls: string[][] = [];
-const quiet: boolean[] = [];
 const stdios: unknown[] = [];
 let answer: (args: readonly string[]) => string = () => "";
 
 beforeEach(() => {
   calls.length = 0;
-  quiet.length = 0;
   stdios.length = 0;
   jest.mocked(execFileSync).mockImplementation(((
     _file: string,
@@ -22,7 +20,6 @@ beforeEach(() => {
     options?: { stdio?: unknown }
   ) => {
     calls.push([...args]);
-    quiet.push(options?.stdio !== undefined);
     stdios.push(options?.stdio);
     return answer(args);
   }) as typeof execFileSync);
@@ -151,7 +148,7 @@ describe("the gh GitHub", () => {
   });
 
   it("says gh's error when it can't read the comments", () => {
-    // Recorded: gh pr view 99999 --json comments.
+    // Recorded: gh pr view 99999 --json comments (gh 2.103.3, 2026-11-20).
     answer = () => {
       throw exited(
         1,
@@ -346,7 +343,7 @@ describe("the gh GitHub", () => {
     ghGitHub.jobLog("o/r", "42");
     ghGitHub.mainCheck("Build");
 
-    expect(quiet).toEqual([true, true, true, true]);
+    expect(stdios).toEqual(Array(4).fill(["ignore", "pipe", "pipe"]));
   });
 
   // Its errors carry gh's own message, which the command prints on its way out.
@@ -355,6 +352,6 @@ describe("the gh GitHub", () => {
     answer = () => "OPEN\tticket\tabc\n";
     ghGitHub.pullRequest(256);
 
-    expect(quiet).toEqual([false]);
+    expect(stdios).toEqual([undefined]);
   });
 });

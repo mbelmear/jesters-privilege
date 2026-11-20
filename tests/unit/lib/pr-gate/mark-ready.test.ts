@@ -61,6 +61,20 @@ describe("mark-ready", () => {
     expect(t.github.labels).toEqual([]);
   });
 
+  // As when wait-pushed-head.sh failed on gh's error, having printed it.
+  it("says an error reading the head, then refuses", async () => {
+    const t = setup();
+    jest.spyOn(t.github, "pullRequest").mockImplementation(() => {
+      throw new Error("Command failed: gh pr view 7\nHTTP 502");
+    });
+
+    expect(await t.run()).toBe(1);
+    expect(t.err).toEqual([
+      "Command failed: gh pr view 7",
+      "Refusing to label #7: GitHub doesn't show this checkout's commit (see above).",
+    ]);
+  });
+
   // Each before the wait, so it fails in seconds, not minutes.
   describe("refuses before the wait", () => {
     it("a head without a passed review", async () => {
