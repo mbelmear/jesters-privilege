@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { axe } from "jest-axe";
 import { content } from "@/content";
 import { ShareButton } from "@/components/share-button";
+import type { MomentShare } from "@/components/use-episode-visit";
 
 const copy = content.episodePage.share;
 const title = "Episode 1: Celebrity Pastors";
@@ -22,12 +23,20 @@ function stubNavigator(stubs: {
   });
 }
 
+// Share with no Episode in the player: no moment, the plain link.
+const noMoment: MomentShare = {
+  moment: null,
+  frozen: false,
+  setFrozen: () => {},
+  target: (plain) => plain,
+};
+
 const renderShare = () =>
   render(
     <ShareButton
       title={title}
       path="/episodes/1"
-      episodeGuid="https://api.spreaker.com/episode/1"
+      share={noMoment}
       copy={copy}
       momentCopy={content.episodePage.moment}
     />

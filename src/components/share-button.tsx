@@ -5,18 +5,17 @@ import { useId, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { EpisodePage } from "@/lib/content";
-import { momentLabel, momentLink, sharedMoment } from "@/lib/moment";
+import { momentLabel } from "@/lib/moment";
 import { browserSharing, shareLink, type ShareOutcome } from "@/lib/share";
-import { usePlayer, usePlayerState } from "./player-provider";
+import type { MomentShare } from "./use-episode-visit";
 
 type Props = {
   // What the share sheet names the link.
   title: string;
   // The page's path; the link shared is it on whichever site serves it.
   path: string;
-  // The Episode the page is for: while it is in the player, Share can send a
-  // Moment link.
-  episodeGuid: string;
+  // Whether Share can send a Moment link, and which: the page's Visit.
+  share: MomentShare;
   copy: EpisodePage["share"];
   momentCopy: EpisodePage["moment"];
 };
@@ -27,37 +26,15 @@ type Props = {
  * Episode is in the player, a box by Share sends a Moment link instead, a
  * little before where the player is.
  */
-export function ShareButton({
-  title,
-  path,
-  episodeGuid,
-  copy,
-  momentCopy,
-}: Props) {
+export function ShareButton({ title, path, share, copy, momentCopy }: Props) {
   const [outcome, setOutcome] = useState<ShareOutcome | null>(null);
-  // The moment the box held when ticked; null while it is unticked.
-  const [frozen, setFrozen] = useState<number | null>(null);
   const boxId = useId();
-  const state = usePlayerState(usePlayer());
-  const position =
-    state && state.mode !== "empty" && state.episode.guid === episodeGuid
-      ? state.position
-      : null;
-  // A box hidden with the Episode comes back unticked.
-  if (position === null && frozen !== null) setFrozen(null);
-  const moment = position === null ? null : sharedMoment(position, frozen);
+  const { moment } = share;
 
-  function share() {
+  function send() {
     setOutcome(null);
     const url = new URL(path, window.location.origin).href;
-    const target =
-      moment !== null && frozen !== null
-        ? {
-            title,
-            url: momentLink(url, moment),
-            text: momentLabel(momentCopy.shareText.text, moment),
-          }
-        : { title, url };
+    const target = share.target({ title, url }, momentCopy.shareText.text);
     // shareLink reports its own failures; anything else still says so.
     shareLink(target, browserSharing()).then(setOutcome, () =>
       setOutcome("failed")
@@ -67,7 +44,7 @@ export function ShareButton({
   return (
     <div className="flex flex-col gap-2">
       <div className="flex flex-wrap items-center gap-3">
-        <Button type="button" variant="outline" size="lg" onClick={share}>
+        <Button type="button" variant="outline" size="lg" onClick={send}>
           <Share aria-hidden="true" />
           {copy.button}
         </Button>
@@ -76,16 +53,14 @@ export function ShareButton({
           <div className="flex items-center gap-2">
             <Checkbox
               id={boxId}
-              checked={frozen !== null}
-              onCheckedChange={(checked) =>
-                setFrozen(checked === true ? moment : null)
-              }
+              checked={share.frozen}
+              onCheckedChange={(checked) => share.setFrozen(checked === true)}
             />
             <label
               htmlFor={boxId}
               className="font-ui text-sm font-semibold tabular-nums"
             >
-              {momentLabel(momentCopy.startAt.text, moment)}
+              {momentLabel(momentCopy.shareFrom.text, moment)}
             </label>
           </div>
         )}

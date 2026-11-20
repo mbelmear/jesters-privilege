@@ -6,11 +6,7 @@ import type { PlayerCopy } from "@/lib/content";
 import type { PlayableEpisode } from "@/lib/feed";
 import { resumeLabel } from "@/lib/format-duration";
 import { momentLabel } from "@/lib/moment";
-import {
-  reportPlayerError,
-  usePlayer,
-  usePlayerState,
-} from "./player-provider";
+import { reportPlayerError, useLoadedEpisode } from "./player-provider";
 
 type Props = {
   episode: PlayableEpisode;
@@ -29,12 +25,7 @@ type Props = {
  * left, or to start over.
  */
 export function PlayEpisodeButton({ episode, name, copy, playFrom }: Props) {
-  const player = usePlayer();
-  const state = usePlayerState(player);
-  const loaded =
-    state && state.mode !== "empty" && state.episode.guid === episode.guid
-      ? state
-      : null;
+  const { player, loaded } = useLoadedEpisode(episode.guid);
   const saved = player && !loaded ? player.savedPosition(episode.guid) : null;
   const named = (label: string) => (
     <>
