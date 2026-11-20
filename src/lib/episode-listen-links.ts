@@ -31,7 +31,7 @@ export type AppLookup =
   | { kind: "failed"; reason: string };
 
 // Each app's lookup. An app with none (Amazon Music, YouTube, and Spotify in a
-// build without its key) links every Episode to the show.
+// build from the fixture) links every Episode to the show.
 export type Lookups = { readonly [A in EpisodeListenApp]?: AppLookup };
 
 export type EpisodeListenLink = { app: EpisodeListenApp; href: string };
