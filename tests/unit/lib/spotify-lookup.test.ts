@@ -211,14 +211,6 @@ describe("lookUpSpotify's failures", () => {
 });
 
 describe("lookUpSpotify without a whole key", () => {
-  it("skips the lookup, asking nothing, when the build has no key", async () => {
-    const { fetch, requests } = spotify({});
-    expect(
-      await lookUpSpotify(SHOW, { kind: "none" }, [CELEBRITY_PASTORS], fetch)
-    ).toBeUndefined();
-    expect(requests).toEqual([]);
-  });
-
   it("fails, asking nothing, when the key is half set", async () => {
     const { fetch, requests } = spotify({});
     const reason = "SPOTIFY_CLIENT_SECRET isn't set, so Spotify can't be asked";
@@ -348,35 +340,19 @@ describe("spotifyKey", () => {
     ).toEqual({ kind: "set", credentials: CREDENTIALS });
   });
 
-  // Forks, local builds, and CI's tests have neither, and skip the lookup.
-  it.each([{}, { SPOTIFY_CLIENT_ID: "", SPOTIFY_CLIENT_SECRET: "" }])(
-    "has none when neither secret is set (%j)",
-    (env) => {
-      expect(spotifyKey(env)).toEqual({ kind: "none" });
-    }
-  );
-
-  // A production build or the feed check has the key since 2026-11-05, so
+  // Every run that asks Spotify (a preview, a production build, the feed
+  // check, a local FEED=live build) is handed the key since 2026-11-05, so
   // going without means the secrets were deleted or renamed.
   it.each([{}, { SPOTIFY_CLIENT_ID: "", SPOTIFY_CLIENT_SECRET: "" }])(
-    "names both secrets when a run that needs the key has neither (%j)",
+    "names both secrets when neither is set (%j)",
     (env) => {
-      expect(spotifyKey(env, { required: true })).toEqual({
+      expect(spotifyKey(env)).toEqual({
         kind: "incomplete",
         reason:
           "SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET aren't set, so Spotify can't be asked",
       });
     }
   );
-
-  it("has the key when a run that needs it has both secrets", () => {
-    expect(
-      spotifyKey(
-        { SPOTIFY_CLIENT_ID: "the-id", SPOTIFY_CLIENT_SECRET: "the-secret" },
-        { required: true }
-      )
-    ).toEqual({ kind: "set", credentials: CREDENTIALS });
-  });
 
   it.each([
     [{ SPOTIFY_CLIENT_ID: "the-id" }, "SPOTIFY_CLIENT_SECRET"],

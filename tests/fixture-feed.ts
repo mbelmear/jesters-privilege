@@ -83,7 +83,6 @@ export function contentFeed(
     getEpisodes: () => feed.episodes(),
     getTranscript: (episode) => feed.transcript(episode),
     getEpisodeListenLinks: (episode) => feed.listenLinks(episode),
-    getListedEpisodes: () => feed.listedEpisodes(),
-    getTranscribedEpisodes: () => feed.transcribedEpisodes(),
+    getBuildRecord: () => feed.record(),
   };
 }
