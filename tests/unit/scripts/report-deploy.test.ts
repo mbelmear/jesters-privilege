@@ -16,7 +16,8 @@ let calls: string[];
 const jobLines = (names: readonly string[] = []) =>
   names.map((name, i) => `${i + 1}\t${name}\n`).join("");
 
-// Recorded: the error lines of a failed feed check's log (run 41899722981).
+// Recorded 2026-11-21: the error lines of a failed feed check's log (run
+// 41899722981).
 const JOB_LOG = [
   "2026-11-04T19:44:52.3422342Z ##[error]Feed check failed, so the live site stays as it is: Build manifest is missing episodeListenLinks",
   "2026-11-04T19:44:52.3670388Z ##[error]Process completed with exit code 1.",
@@ -39,13 +40,15 @@ function answer(args: readonly string[]): string {
   }
   if (call.includes("/logs")) return JOB_LOG;
   const view = /^run view (\d+)/.exec(call);
-  // Recorded, with the run's id swapped in.
+  // Recorded 2026-11-21 (run 41899722981), with the run's id swapped in.
   if (view) return `${RUN_URL}${view[1]}\n`;
   if (call.startsWith("issue list")) {
     // Made up, in the shape the --jq gives: an issue's number, or nothing.
     const title = /--search=(.+) in:title/.exec(call)?.[1] ?? "";
     return `${openIssues[title] ?? ""}\n`;
   }
+  // Made up: gh prints the URL of what issue create, comment and close
+  // changed, and the script ignores it.
   return "";
 }
 
