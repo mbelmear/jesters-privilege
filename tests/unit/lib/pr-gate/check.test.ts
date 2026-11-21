@@ -197,6 +197,7 @@ describe("the PR gate check", () => {
     it("fails it when the contents can't be read, after the review passed", () => {
       const t = setup();
       t.github.contents = () => {
+        // Made up, as the gh adapter's contents read refuses a shape it doesn't know.
         throw new Error("gh pr view gave title as undefined");
       };
 
