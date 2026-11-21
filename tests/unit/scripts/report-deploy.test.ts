@@ -1,7 +1,13 @@
-// Fakes the process call itself, so no test here can reach GitHub: a `gh` stub
-// on a PATH set in Jest is never found (#164, failed-run.test.ts). Each answer
-// says whether gh printed it (gh 2.103.3, 2026-11-21) or it is made up in the
-// shape the script's --jq gives.
+import {
+  fakeGh,
+  madeUp,
+  recorded,
+  type GhAnswer,
+  type GhCall,
+} from "../../fake-gh";
+
+// No test here can reach GitHub (tests/fake-gh.ts). Recorded answers are from
+// gh 2.103.3.
 jest.mock("node:child_process", () => ({ execFileSync: jest.fn() }));
 
 type Jobs = { failure?: string[]; success?: string[] };
@@ -9,15 +15,14 @@ type Jobs = { failure?: string[]; success?: string[] };
 let failedDeployRuns: string[];
 let jobsByRun: Record<string, Jobs>;
 let openIssues: Record<string, string>;
-let calls: string[];
+let calls: GhCall[];
 
-// Made up, in the "<id>\t<name>" lines the --jq gives. Only logs read the id,
-// so each job's is its place in the list.
-const jobLines = (names: readonly string[] = []) =>
-  names.map((name, i) => `${i + 1}\t${name}\n`).join("");
+// The --jq's "<id>\t<name>" lines. Only logs read the id, so each job's is its
+// place in the list.
+const jobsAnswer = (names: readonly string[] = []) =>
+  madeUp(names.map((name, i) => `${i + 1}\t${name}\n`).join(""));
 
-// Recorded 2026-11-21: the error lines of a failed feed check's log (run
-// 41899722981).
+// The error lines of a failed feed check's log (run 41899722981).
 const JOB_LOG = [
   "2026-11-04T19:44:52.3422342Z ##[error]Feed check failed, so the live site stays as it is: Build manifest is missing episodeListenLinks",
   "2026-11-04T19:44:52.3670388Z ##[error]Process completed with exit code 1.",
@@ -26,34 +31,34 @@ const FAILURE =
   "- Feed check failed, so the live site stays as it is: Build manifest is missing episodeListenLinks";
 const RUN_URL = "https://github.com/mbelmear/jesters-privilege/actions/runs/";
 
-function answer(args: readonly string[]): string {
+function answer(args: readonly string[]): GhAnswer {
   const call = args.join(" ");
-  calls.push(call);
   if (call.startsWith("run list --workflow=deploy.yml")) {
-    // Made up, in the shape --jq=.[].databaseId gives.
-    return failedDeployRuns.map((id) => `${id}\n`).join("");
+    // The shape --jq=.[].databaseId gives.
+    return madeUp(failedDeployRuns.map((id) => `${id}\n`).join(""));
   }
   const runJobs = /actions\/runs\/(\d+)\/jobs/.exec(call);
   if (runJobs) {
     const jobs = jobsByRun[runJobs[1] ?? ""] ?? {};
-    return jobLines(call.includes('"failure"') ? jobs.failure : jobs.success);
+    return jobsAnswer(call.includes('"failure"') ? jobs.failure : jobs.success);
   }
-  if (call.includes("/logs")) return JOB_LOG;
+  if (call.includes("/logs")) return recorded("2026-11-21", JOB_LOG);
   const view = /^run view (\d+)/.exec(call);
-  // Recorded 2026-11-21 (run 41899722981), with the run's id swapped in.
-  if (view) return `${RUN_URL}${view[1]}\n`;
+  // Run 41899722981's URL, with the run's id swapped in.
+  if (view) return recorded("2026-11-21", `${RUN_URL}${view[1]}\n`);
   if (call.startsWith("issue list")) {
-    // Made up, in the shape the --jq gives: an issue's number, or nothing.
+    // The --jq's shape: an issue's number, or nothing.
     const title = /--search=(.+) in:title/.exec(call)?.[1] ?? "";
-    return `${openIssues[title] ?? ""}\n`;
+    return madeUp(`${openIssues[title] ?? ""}\n`);
   }
-  // Made up: gh prints the URL of what issue create, comment and close
-  // changed, and the script ignores it.
-  return "";
+  // The writes: the script ignores what gh prints.
+  return madeUp("");
 }
 
 const writes = () =>
-  calls.filter((call) => /^issue (create|comment|close)/.test(call));
+  calls
+    .map((call) => call.command)
+    .filter((call) => /^issue (create|comment|close)/.test(call));
 
 // The script reports as it loads, so each run loads it afresh, with a fresh
 // fake gh behind it.
@@ -61,10 +66,7 @@ async function reportDeploy(...args: string[]) {
   process.argv = ["node", "report-deploy.ts", ...args];
   jest.resetModules();
   const { execFileSync } = await import("node:child_process");
-  jest
-    .mocked(execFileSync)
-    .mockImplementation(((_file: string, args: readonly string[]) =>
-      answer(args)) as typeof execFileSync);
+  calls = fakeGh(execFileSync, answer);
   await import("../../../scripts/report-deploy");
 }
 

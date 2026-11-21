@@ -176,6 +176,25 @@ const eslintConfig = defineConfig([
           message:
             "Hand-built execFileSync error. Use ghFailed from tests/gh-failed.ts, which carries status, stderr and stdout as execFileSync's error does.",
         })),
+        // A fake gh answer says whether gh printed it or it is made up
+        // (CODING_STANDARDS.md): #264's and #263's unlabelled answers took
+        // review rounds. fakeGh only takes answers built by recorded() or
+        // madeUp(). Test files only: tests/fake-gh.ts is the one place that
+        // fakes execFileSync.
+        ...[
+          // jest.mocked(execFileSync).mockReturnValue(…), (execFileSync as
+          // unknown as jest.Mock).mockImplementation(…), their Once forms.
+          "CallExpression[callee.property.name=/^mock(Implementation|ReturnValue)/] > MemberExpression.callee Identifier[name='execFileSync']",
+          // jest.spyOn(childProcess, "execFileSync")
+          "CallExpression[callee.property.name='spyOn'][arguments.1.value='execFileSync']",
+          // jest.mock("node:child_process", () => ({ execFileSync: … })) with
+          // anything but a bare jest.fn().
+          "CallExpression[callee.object.name='jest'][callee.property.name='mock'][arguments.0.value=/child_process$/] Property[key.name='execFileSync'] > :matches(ArrowFunctionExpression, FunctionExpression, CallExpression[arguments.length>0], CallExpression[callee.property.name=/^mock/])",
+        ].map((selector) => ({
+          selector,
+          message:
+            "execFileSync faked by hand. Use fakeGh from tests/fake-gh.ts, whose answers each say whether gh printed them (recorded) or they are made up (madeUp).",
+        })),
         // A fresh module registry loads a second React, so every hook in what
         // it renders fails with "Invalid hook call" (#21).
         {

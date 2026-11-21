@@ -6,38 +6,37 @@ import {
   fileReport,
   passedJobs,
 } from "../../../scripts/failed-run";
+import { fakeGh, madeUp, type GhAnswer, type GhCall } from "../../fake-gh";
 
-// Fakes the process call itself, so no test here can reach GitHub. failed-run.ts
-// spawns `gh` without an `env`, so a stub on a PATH set in Jest, whose
-// `process.env` is a copy, is never found: the first version of this file opened
-// real issues.
+// No test here can reach GitHub (tests/fake-gh.ts): the first version of this
+// file, with a gh stub on Jest's PATH, opened real issues.
 jest.mock("node:child_process", () => ({ execFileSync: jest.fn() }));
 
 const TITLE = "Feed check is failing";
-const calls: string[] = [];
+let calls: GhCall[] = [];
 let openIssue = "";
 
-function answer(args: readonly string[]): string {
+function answer(args: readonly string[]): GhAnswer {
   const call = args.join(" ");
-  calls.push(call);
-  if (call.startsWith("issue list")) return `${openIssue}\n`;
-  // Made up, in the shape --jq=.[].databaseId gives: newest first.
-  if (call.startsWith("run list")) return "30\n20\n";
-  if (call.includes('"failure"')) return "1\tFeed check\n";
-  if (call.includes('"success"')) return "2\tDeploy to production\n";
-  return "";
+  // The --jq's shape: the open issue's number, or nothing.
+  if (call.startsWith("issue list")) return madeUp(`${openIssue}\n`);
+  // The --jq's shape, newest first.
+  if (call.startsWith("run list")) return madeUp("30\n20\n");
+  // The --jq's "<id>\t<name>" lines.
+  if (call.includes('"failure"')) return madeUp("1\tFeed check\n");
+  if (call.includes('"success"')) return madeUp("2\tDeploy to production\n");
+  // The writes: the code ignores what gh prints.
+  return madeUp("");
 }
 
 beforeEach(() => {
-  calls.length = 0;
   openIssue = "";
-  jest
-    .mocked(execFileSync)
-    .mockImplementation(((_file: string, args: readonly string[]) =>
-      answer(args)) as typeof execFileSync);
+  calls = fakeGh(execFileSync, answer);
 });
 
-const writes = () => calls.filter((call) => !call.startsWith("issue list"));
+const commands = () => calls.map((call) => call.command);
+const writes = () =>
+  commands().filter((call) => !call.startsWith("issue list"));
 
 describe("fileReport", () => {
   it("opens an issue, marked for triage, when none is open", () => {
@@ -87,14 +86,14 @@ describe("a run's jobs", () => {
 describe("failedRunsOnMain", () => {
   it("lists a workflow's failed runs on main, newest first", () => {
     expect(failedRunsOnMain("deploy.yml", { limit: 20 })).toEqual(["30", "20"]);
-    expect(calls).toEqual([
+    expect(commands()).toEqual([
       "run list --workflow=deploy.yml --status=failure --branch=main --limit=20 --json=databaseId --jq=.[].databaseId",
     ]);
   });
 
   it("narrows to scheduled runs when asked", () => {
     failedRunsOnMain("nightly.yml", { limit: 1, event: "schedule" });
-    expect(calls).toEqual([
+    expect(commands()).toEqual([
       "run list --workflow=nightly.yml --status=failure --branch=main --event=schedule --limit=1 --json=databaseId --jq=.[].databaseId",
     ]);
   });
