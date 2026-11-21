@@ -1,5 +1,5 @@
-// The `gh` wiring a failed run's report shares: how its jobs ended, their logs,
-// and the one open issue that tracks it. Used by report-nightly and
+// The `gh` wiring a failed run's report shares: which runs failed, how their
+// jobs ended, their logs, and the one open issue that tracks it. Used by report-nightly and
 // report-deploy; the PR gate's GitHub (pr-gate-github.ts) runs gh through
 // gh, ghQuiet and ghLoud.
 import { execFileSync } from "node:child_process";
@@ -19,6 +19,30 @@ export const ghQuiet = (...args: string[]) =>
 export const ghLoud = (...args: string[]) => {
   execFileSync("gh", args, { ...GH, stdio: ["ignore", "inherit", "inherit"] });
 };
+
+/**
+ * A workflow's failed runs on main, newest first: where a --dry-run finds the
+ * run to report. A scheduled run is always on main, so `event: "schedule"`
+ * narrows rather than widens.
+ */
+export function failedRunsOnMain(
+  workflow: string,
+  { limit, event }: { readonly limit: number; readonly event?: string }
+): string[] {
+  return gh(
+    "run",
+    "list",
+    `--workflow=${workflow}`,
+    "--status=failure",
+    "--branch=main",
+    ...(event ? [`--event=${event}`] : []),
+    `--limit=${limit}`,
+    "--json=databaseId",
+    "--jq=.[].databaseId"
+  )
+    .split("\n")
+    .filter(Boolean);
+}
 
 export type Job = { readonly id: string; readonly name: string };
 

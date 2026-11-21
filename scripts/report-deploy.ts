@@ -14,8 +14,8 @@ import {
 import {
   closeReport,
   failedJobs,
+  failedRunsOnMain,
   fileReport,
-  gh,
   jobLogs,
   passedJobs,
   runUrl,
@@ -27,26 +27,14 @@ if (!argument) {
 }
 const dryRun = argument === "--dry-run";
 
-const failedRuns = () =>
-  gh(
-    "run",
-    "list",
-    "--workflow=deploy.yml",
-    "--status=failure",
-    "--branch=main",
-    "--limit=20",
-    "--json=databaseId",
-    "--jq=.[].databaseId"
-  )
-    .split("\n")
-    .filter(Boolean);
-
 const failedIn = (runId: string, job: string) =>
   failedJobs(runId).filter((failed) => failed.name === job);
 
 for (const { job, title, report } of REPORTED_JOBS) {
   const runId = dryRun
-    ? failedRuns().find((id) => failedIn(id, job).length > 0)
+    ? failedRunsOnMain("deploy.yml", { limit: 20 }).find(
+        (id) => failedIn(id, job).length > 0
+      )
     : argument;
   const jobs = runId ? failedIn(runId, job) : [];
   if (!runId || jobs.length === 0) {

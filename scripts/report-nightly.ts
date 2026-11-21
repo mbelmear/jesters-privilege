@@ -6,7 +6,13 @@
 // GitHub nothing: the newest failure only shows the advice its own jobs earn.
 // Usage: npm run report-nightly -- <run-id> | --dry-run [--failed-job <name>]...
 import { NIGHTLY_ISSUE_TITLE, nightlyReport } from "@/lib/nightly-report";
-import { failedJobs, fileReport, gh, jobLogs, runUrl } from "./failed-run";
+import {
+  failedJobs,
+  failedRunsOnMain,
+  fileReport,
+  jobLogs,
+  runUrl,
+} from "./failed-run";
 
 const USAGE =
   "Usage: npm run report-nightly -- <run-id> | --dry-run [--failed-job <name>]...";
@@ -31,16 +37,7 @@ if (names.length) {
 }
 
 const runId = dryRun
-  ? gh(
-      "run",
-      "list",
-      "--workflow=nightly.yml",
-      "--status=failure",
-      "--event=schedule",
-      "--limit=1",
-      "--json=databaseId",
-      "--jq=.[0].databaseId"
-    ).trim()
+  ? failedRunsOnMain("nightly.yml", { limit: 1, event: "schedule" })[0]
   : argument;
 if (!runId) {
   console.log("No failed Nightly to report.");
