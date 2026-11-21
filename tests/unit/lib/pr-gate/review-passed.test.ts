@@ -130,7 +130,7 @@ describe("review-passed", () => {
       return t.github.pr.head;
     }
 
-    // merge and mark-ready carry it over to the head, as they do any review.
+    // The PR gate check and mark-ready carry it over to the head, as they do any review.
     it("records the reviewed commit when only a clean merge of main follows it", async () => {
       const t = setup();
       mainGains(t, "other.md", "other\n");

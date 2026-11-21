@@ -24,7 +24,7 @@ export function prGateCheck(pr: number, gate: CheckGate): number {
 
   set("pending", "Checking the review, closing issues and first-screen cost");
   try {
-    requireReview(pr, head, "merge", gate);
+    requireReview(pr, head, "merge", gate, "throw");
     const contents = github.contents(pr);
     requireNamedClosures(pr, contents, "merge");
     requireFirstScreenCost(pr, contents, gate.firstScreen, "merge");
@@ -49,7 +49,7 @@ export function prGateCheck(pr: number, gate: CheckGate): number {
   return 0;
 }
 
-// GitHub keeps 140 characters of a status's description.
+// GitHub's API takes at most 140 characters of a status's description.
 const KEPT = 140;
 
 const firstLine = (text: string) => text.split("\n")[0] ?? "";

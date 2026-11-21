@@ -39,7 +39,7 @@ export interface Git {
    * main touching one of those files, or a merge commit adding a change of
    * its own, says "merge changes files". What it can't see is main changing
    * something the PR relies on in another file; CI runs on the merged code.
-   * tests/unit/scripts/since-review.test.ts runs it through each case.
+   * tests/unit/scripts/pr-gate-git.test.ts runs it through each case.
    */
   sinceReview(reviewed: string, head: string): SinceReview;
 }

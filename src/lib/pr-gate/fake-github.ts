@@ -2,6 +2,7 @@
 // and changes it as the gate waits (fakeClock's onSleep).
 import {
   Disconnected,
+  type Association,
   type Check,
   type Comment,
   type CommitStatus,
@@ -15,7 +16,7 @@ export class FakeGitHub implements GitHub {
   /** Every comment, those the gate posts included. */
   commentBodies: string[] = [];
   /** Each comment's author association, by body: OWNER unless set here. */
-  associations: Record<string, string> = {};
+  associations: Record<string, Association> = {};
   /** A read of the comments throws this, if set. */
   commentsFail?: Error;
   /** Every status the gate set, in order. */

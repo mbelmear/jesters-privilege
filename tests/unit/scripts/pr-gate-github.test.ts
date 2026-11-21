@@ -193,6 +193,16 @@ describe("the gh GitHub", () => {
     );
   });
 
+  it("refuses an association it doesn't know, rather than guess who wrote it", () => {
+    // Made up.
+    answer = () =>
+      '[{"association":"MAINTAINER","body":"Code review: passed at abc"}]\n';
+
+    expect(() => ghGitHub.comments(7)).toThrow(
+      'gh pr view gave association as "MAINTAINER"'
+    );
+  });
+
   // Its output, the status as JSON, is kept from the run's log; its errors print.
   it("sets the PR gate status on a commit", () => {
     ghGitHub.setStatus("fba0575902521d377b4b061cf1af908a600002ae", {

@@ -1,8 +1,10 @@
 // The PR gate's GitHub (src/lib/pr-gate/github.ts), built from `gh`.
 import {
+  ASSOCIATIONS,
   CHECK_STATES,
   Disconnected,
   PR_STATES,
+  type Association,
   type Check,
   type CheckState,
   type GitHub,
@@ -78,6 +80,8 @@ function field<T>(
 }
 
 const isString = (value: unknown): value is string => typeof value === "string";
+const isAssociation = (value: unknown): value is Association =>
+  ASSOCIATIONS.some((known) => known === value);
 const isNumber = (value: unknown): value is number => typeof value === "number";
 const isList = (value: unknown): value is unknown[] => Array.isArray(value);
 const isBody = (value: unknown): value is string | null =>
@@ -184,7 +188,7 @@ export const ghGitHub: GitHub = {
     // A comment read without its association would drop a review that counts.
     return (Array.isArray(json) ? json : []).map((comment) => ({
       body: field(comment, "body", isString),
-      association: field(comment, "association", isString),
+      association: field(comment, "association", isAssociation),
     }));
   },
 

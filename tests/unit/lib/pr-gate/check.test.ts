@@ -79,7 +79,7 @@ describe("the PR gate check", () => {
     });
   });
 
-  it("refuses a first-screen change without its cost, cutting the line to the 140 characters GitHub keeps", () => {
+  it("refuses a first-screen change without its cost, cutting the line to the 140 characters GitHub takes", () => {
     const t = setup();
     t.github.prContents.files = [
       "src/app/layout.tsx",
@@ -95,7 +95,7 @@ describe("the PR gate check", () => {
     expect(final(t)?.description).toHaveLength(140);
   });
 
-  it.each(["CONTRIBUTOR", "NONE", "FIRST_TIME_CONTRIBUTOR"])(
+  it.each(["CONTRIBUTOR", "NONE", "FIRST_TIME_CONTRIBUTOR"] as const)(
     "ignores a passed review posted as %s, without write access",
     (association) => {
       const t = setup();
@@ -108,7 +108,7 @@ describe("the PR gate check", () => {
     }
   );
 
-  it.each(["OWNER", "MEMBER", "COLLABORATOR"])(
+  it.each(["OWNER", "MEMBER", "COLLABORATOR"] as const)(
     "counts a passed review posted as %s",
     (association) => {
       const t = setup();
@@ -139,7 +139,8 @@ describe("the PR gate check", () => {
       expect(t.github.commentBodies.at(-1)).toBe(t.carried);
     });
 
-    // The workflow posts as github-actions[bot], whose association is NONE,
+    // The workflow posts as github-actions[bot], whose association is NONE
+    // (recorded: its preview comment on #221, gh 2.103.3, 2026-11-21),
     // so its comment never counts as a review, and each run carries it again.
     it("records it once, however often the check runs", () => {
       const t = merged();
@@ -173,6 +174,23 @@ describe("the PR gate check", () => {
       expect(t.err).toEqual([
         "Couldn't check #7: gh pr view 7 --json=comments: HTTP 502: Bad Gateway",
       ]);
+    });
+
+    // Unfetched, a clean merge of main looks like a commit of the PR's own,
+    // and would read as a missing review rather than as the fetch failing.
+    it("fails it when main and the head can't be fetched", () => {
+      const t = setup();
+      mainGains(t, "other.md", "other\n");
+      git(t.dir, "merge", "--quiet", "--no-edit", "origin/main");
+      git(t.dir, "push", "--quiet", "origin", "ticket");
+      t.github.pr.head = git(t.dir, "rev-parse", "HEAD");
+      git(t.dir, "remote", "set-url", "origin", join(t.dir, "nowhere.git"));
+
+      expect(t.run()).toBe(1);
+      expect(final(t)).toMatchObject({
+        state: "failure",
+        description: `Couldn't check #7: couldn't fetch main and ${t.github.pr.head}`,
+      });
     });
 
     it("fails it when the contents can't be read, after the review passed", () => {

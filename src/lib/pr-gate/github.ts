@@ -37,17 +37,29 @@ export type PrContents = {
 
 export type Check = { name: string; state: CheckState; link: string };
 
+/** How a comment's author is associated with the repository, as GitHub's API names it. */
+export const ASSOCIATIONS = [
+  "OWNER",
+  "MEMBER",
+  "COLLABORATOR",
+  "CONTRIBUTOR",
+  "FIRST_TIME_CONTRIBUTOR",
+  "FIRST_TIMER",
+  "MANNEQUIN",
+  "NONE",
+] as const;
+export type Association = (typeof ASSOCIATIONS)[number];
+
 /**
- * A PR comment, with its author's association to the repository as GitHub
- * gives it: OWNER, MEMBER and COLLABORATOR have write access; anyone can
- * comment on a public repo, as CONTRIBUTOR, NONE and the rest.
+ * A PR comment, with its author's association: OWNER, MEMBER and COLLABORATOR
+ * have write access; anyone can comment on a public repo, as the rest.
  */
-export type Comment = { body: string; association: string };
+export type Comment = { body: string; association: Association };
 
 /** A commit status, which a required status check reads by its context. */
 export type CommitStatus = {
   state: "pending" | "success" | "failure";
-  /** GitHub keeps 140 characters. */
+  /** At most 140 characters, which GitHub's API takes. */
   description: string;
   /** Where the status links: the run that set it. */
   targetUrl: string;
