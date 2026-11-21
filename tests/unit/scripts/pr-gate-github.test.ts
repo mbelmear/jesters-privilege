@@ -1,29 +1,26 @@
 import { execFileSync } from "node:child_process";
 import { Disconnected } from "@/lib/pr-gate/github";
 import { ghExit, ghGitHub, sayUnlessGh } from "../../../scripts/pr-gate-github";
+import {
+  fakeGh,
+  madeUp,
+  recorded,
+  type GhAnswer,
+  type GhCall,
+} from "../../fake-gh";
 import { ghFailed } from "../../gh-failed";
 
-// Fakes the process call itself, so no test here can reach GitHub (#164): see
-// failed-run.test.ts. Each answer says whether gh printed it (gh 2.103.3,
-// 2026-11-20) or it is made up in the shape gh's --jq gives.
+// No test here can reach GitHub (tests/fake-gh.ts). Recorded answers are from
+// gh 2.103.3; a made-up one is in the shape gh's --jq gives.
 jest.mock("node:child_process", () => ({ execFileSync: jest.fn() }));
 
-const calls: string[][] = [];
-const stdios: unknown[] = [];
-let answer: (args: readonly string[]) => string = () => "";
+let answer: (args: readonly string[]) => GhAnswer = () => madeUp("");
+let fake: GhCall[] = [];
+const calls = () => fake.map((call) => call.args);
+const stdios = () => fake.map((call) => call.stdio);
 
 beforeEach(() => {
-  calls.length = 0;
-  stdios.length = 0;
-  jest.mocked(execFileSync).mockImplementation(((
-    _file: string,
-    args: readonly string[],
-    options?: { stdio?: unknown }
-  ) => {
-    calls.push([...args]);
-    stdios.push(options?.stdio);
-    return answer(args);
-  }) as typeof execFileSync);
+  fake = fakeGh(execFileSync, (args) => answer(args));
 });
 
 // gh exiting non-zero, as execFileSync throws it (tests/gh-failed.ts).
@@ -34,14 +31,17 @@ describe("the gh GitHub", () => {
   it("reads a PR's state, branch and head in one call", () => {
     // Recorded: PR #256 (its state then MERGED).
     answer = () =>
-      "OPEN\tepisode-visit\t5c8068b2027589f957bc1f5a201e182b30c90038\n";
+      recorded(
+        "2026-11-20",
+        "OPEN\tepisode-visit\t5c8068b2027589f957bc1f5a201e182b30c90038\n"
+      );
 
     expect(ghGitHub.pullRequest(256)).toEqual({
       state: "OPEN",
       branch: "episode-visit",
       head: "5c8068b2027589f957bc1f5a201e182b30c90038",
     });
-    expect(calls).toEqual([
+    expect(calls()).toEqual([
       [
         "pr",
         "view",
@@ -58,7 +58,7 @@ describe("the gh GitHub", () => {
       "Playwright (Chromium, WebKit)\tpass\thttps://github.com/mbelmear/jesters-privilege/actions/runs/44780476936/job/136442437798\nPreview URL\tskipping\t\n";
 
     it("reads each check's name, bucket and link", () => {
-      answer = () => SAMPLE;
+      answer = () => recorded("2026-11-20", SAMPLE);
 
       expect(ghGitHub.checks(256)).toEqual([
         {
@@ -68,7 +68,7 @@ describe("the gh GitHub", () => {
         },
         { name: "Preview URL", state: "skipping", link: "" },
       ]);
-      expect(calls).toEqual([
+      expect(calls()).toEqual([
         [
           "pr",
           "checks",
@@ -157,7 +157,10 @@ describe("the gh GitHub", () => {
   it("reads each comment's body and its author's association", () => {
     // Recorded: PR #221 (gh 2.103.3, 2026-11-21), its first comment cut short.
     answer = () =>
-      '[{"association":"OWNER","body":"For the Jester, on the preview: open `/styleguide`."},{"association":"NONE","body":"\\u003c!-- deploy-preview --\\u003e\\n**Preview:** https://pr-221-jesters-privilege.jestersprivilege.workers.dev\\n\\nBuilt from fba0575902521d377b4b061cf1af908a600002ae. This comment updates on every push."},{"association":"OWNER","body":"Code review: passed at fba0575902521d377b4b061cf1af908a600002ae"}]\n';
+      recorded(
+        "2026-11-21",
+        '[{"association":"OWNER","body":"For the Jester, on the preview: open `/styleguide`."},{"association":"NONE","body":"\\u003c!-- deploy-preview --\\u003e\\n**Preview:** https://pr-221-jesters-privilege.jestersprivilege.workers.dev\\n\\nBuilt from fba0575902521d377b4b061cf1af908a600002ae. This comment updates on every push."},{"association":"OWNER","body":"Code review: passed at fba0575902521d377b4b061cf1af908a600002ae"}]\n'
+      );
 
     expect(ghGitHub.comments(221)).toEqual([
       {
@@ -173,7 +176,7 @@ describe("the gh GitHub", () => {
         body: "Code review: passed at fba0575902521d377b4b061cf1af908a600002ae",
       },
     ]);
-    expect(calls).toEqual([
+    expect(calls()).toEqual([
       [
         "pr",
         "view",
@@ -186,7 +189,7 @@ describe("the gh GitHub", () => {
 
   it("refuses a comment shape it doesn't know, rather than read nothing", () => {
     // Made up: a comment without its association.
-    answer = () => '[{"body":"Code review: passed at abc"}]\n';
+    answer = () => madeUp('[{"body":"Code review: passed at abc"}]\n');
 
     expect(() => ghGitHub.comments(7)).toThrow(
       "gh pr view gave association as undefined"
@@ -195,7 +198,7 @@ describe("the gh GitHub", () => {
 
   it("refuses an answer that isn't a list, rather than read no comments", () => {
     // Made up.
-    answer = () => '{"comments":[]}\n';
+    answer = () => madeUp('{"comments":[]}\n');
 
     expect(() => ghGitHub.comments(7)).toThrow(
       'gh pr view gave comments as {"comments":[]}'
@@ -205,7 +208,9 @@ describe("the gh GitHub", () => {
   it("refuses an association it doesn't know, rather than guess who wrote it", () => {
     // Made up.
     answer = () =>
-      '[{"association":"MAINTAINER","body":"Code review: passed at abc"}]\n';
+      madeUp(
+        '[{"association":"MAINTAINER","body":"Code review: passed at abc"}]\n'
+      );
 
     expect(() => ghGitHub.comments(7)).toThrow(
       'gh pr view gave association as "MAINTAINER"'
@@ -220,7 +225,7 @@ describe("the gh GitHub", () => {
       targetUrl: "https://github.com/o/r/actions/runs/1",
     });
 
-    expect(calls).toEqual([
+    expect(calls()).toEqual([
       [
         "api",
         "--method=POST",
@@ -235,7 +240,7 @@ describe("the gh GitHub", () => {
         "target_url=https://github.com/o/r/actions/runs/1",
       ],
     ]);
-    expect(stdios).toEqual([undefined]);
+    expect(stdios()).toEqual([undefined]);
   });
 
   describe("contents", () => {
@@ -285,7 +290,7 @@ describe("the gh GitHub", () => {
     });
 
     it("reads a PR's text, what it closes, its commit messages and its files in one call", () => {
-      answer = () => SAMPLE;
+      answer = () => recorded("2026-11-20", SAMPLE);
 
       expect(ghGitHub.contents(213)).toEqual({
         title:
@@ -298,7 +303,7 @@ describe("the gh GitHub", () => {
         ],
         files: ["docs/testing.md", "scripts/closing-issues.sh"],
       });
-      expect(calls).toEqual([
+      expect(calls()).toEqual([
         [
           "pr",
           "view",
@@ -311,13 +316,15 @@ describe("the gh GitHub", () => {
     it("reads what a PR closes, and a missing body as empty", () => {
       // Made up: #211's closing reference, cut to its number, and no body.
       answer = () =>
-        JSON.stringify({
-          title: "A fix (#158)",
-          body: null,
-          closingIssuesReferences: [{ number: 158 }, { number: 209 }],
-          commits: [],
-          files: [],
-        });
+        madeUp(
+          JSON.stringify({
+            title: "A fix (#158)",
+            body: null,
+            closingIssuesReferences: [{ number: 158 }, { number: 209 }],
+            commits: [],
+            files: [],
+          })
+        );
 
       expect(ghGitHub.contents(211)).toMatchObject({
         body: "",
@@ -327,13 +334,15 @@ describe("the gh GitHub", () => {
     it("refuses a shape it doesn't know, rather than read nothing", () => {
       // Made up: a closing reference without its number.
       answer = () =>
-        JSON.stringify({
-          title: "A fix",
-          body: "",
-          closingIssuesReferences: [{ id: "I_1" }],
-          commits: [],
-          files: [],
-        });
+        madeUp(
+          JSON.stringify({
+            title: "A fix",
+            body: "",
+            closingIssuesReferences: [{ id: "I_1" }],
+            commits: [],
+            files: [],
+          })
+        );
 
       expect(() => ghGitHub.contents(211)).toThrow(
         "gh pr view gave number as undefined"
@@ -345,10 +354,10 @@ describe("the gh GitHub", () => {
   it("posts a comment, printing its URL", () => {
     ghGitHub.comment(256, "Code review: passed at abc");
 
-    expect(calls).toEqual([
+    expect(calls()).toEqual([
       ["pr", "comment", "256", "--body=Code review: passed at abc"],
     ]);
-    expect(stdios).toEqual([["ignore", "inherit", "inherit"]]);
+    expect(stdios()).toEqual([["ignore", "inherit", "inherit"]]);
   });
 
   // review-passed.sh ended with gh's own exit code when gh pr comment
@@ -378,28 +387,28 @@ describe("the gh GitHub", () => {
   it("adds a label, printing the PR's URL", () => {
     ghGitHub.addLabel(256, "ready-for-human");
 
-    expect(calls).toEqual([
+    expect(calls()).toEqual([
       ["pr", "edit", "256", "--add-label=ready-for-human"],
     ]);
-    expect(stdios).toEqual([["ignore", "inherit", "inherit"]]);
+    expect(stdios()).toEqual([["ignore", "inherit", "inherit"]]);
   });
 
   it("reads a job's log through the jobs API", () => {
     // Made up.
-    answer = () => "##[error]the cause\n";
+    answer = () => madeUp("##[error]the cause\n");
 
     expect(ghGitHub.jobLog("o/r", "42")).toBe("##[error]the cause\n");
-    expect(calls).toEqual([
+    expect(calls()).toEqual([
       ["api", "--allow-escape-sequences", "repos/o/r/actions/jobs/42/logs"],
     ]);
   });
 
   it("reads how main's head last ran a check", () => {
     // Made up.
-    answer = () => "failure\n";
+    answer = () => madeUp("failure\n");
 
     expect(ghGitHub.mainCheck("Lint workflows")).toBe("failure");
-    expect(calls).toEqual([
+    expect(calls()).toEqual([
       [
         "api",
         "-X",
@@ -414,7 +423,7 @@ describe("the gh GitHub", () => {
 
   it("refuses a PR state it doesn't know", () => {
     // Made up: gh has no such state.
-    answer = () => "DRAFTED\tticket\tabc\n";
+    answer = () => madeUp("DRAFTED\tticket\tabc\n");
 
     expect(() => ghGitHub.pullRequest(256)).toThrow(
       "gh pr view gave #256 an unknown state: DRAFTED"
@@ -424,21 +433,21 @@ describe("the gh GitHub", () => {
   // A poll reads again on an error, so gh's own errors would print at each try.
   it("keeps gh's errors to itself on reads that are polled or reported on", () => {
     // Made up: empty answers, read only for how gh was called.
-    answer = (args) => (args.includes("--json=comments") ? "[]" : "");
+    answer = (args) => madeUp(args.includes("--json=comments") ? "[]" : "");
     ghGitHub.checks(256);
     ghGitHub.comments(256);
     ghGitHub.jobLog("o/r", "42");
     ghGitHub.mainCheck("Build");
 
-    expect(stdios).toEqual(Array(4).fill(["ignore", "pipe", "pipe"]));
+    expect(stdios()).toEqual(Array(4).fill(["ignore", "pipe", "pipe"]));
   });
 
   // Its errors carry gh's own message, which the command prints on its way out.
   it("lets gh print its errors on the read that ends a command", () => {
     // Made up.
-    answer = () => "OPEN\tticket\tabc\n";
+    answer = () => madeUp("OPEN\tticket\tabc\n");
     ghGitHub.pullRequest(256);
 
-    expect(stdios).toEqual([undefined]);
+    expect(stdios()).toEqual([undefined]);
   });
 });

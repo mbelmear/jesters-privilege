@@ -176,6 +176,17 @@ const eslintConfig = defineConfig([
           message:
             "Hand-built execFileSync error. Use ghFailed from tests/gh-failed.ts, which carries status, stderr and stdout as execFileSync's error does.",
         })),
+        // A fake gh answer says whether gh printed it or it is made up
+        // (CODING_STANDARDS.md): #264's and #263's unlabelled answers took
+        // review rounds. fakeGh only takes answers built by recorded() or
+        // madeUp(). Test files only: tests/fake-gh.ts is the one place that
+        // fakes execFileSync.
+        {
+          selector:
+            "CallExpression[callee.property.name=/^mock(Implementation|ReturnValue)/][callee.object.callee.object.name='jest'][callee.object.callee.property.name='mocked'][callee.object.arguments.0.name='execFileSync']",
+          message:
+            "execFileSync faked by hand. Use fakeGh from tests/fake-gh.ts, whose answers each say whether gh printed them (recorded) or they are made up (madeUp).",
+        },
         // A fresh module registry loads a second React, so every hook in what
         // it renders fails with "Invalid hook call" (#21).
         {
