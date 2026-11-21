@@ -183,17 +183,13 @@ const eslintConfig = defineConfig([
         // fakes execFileSync.
         ...[
           // jest.mocked(execFileSync).mockReturnValue(…), (execFileSync as
-          // jest.Mock).mockImplementation(…), and their Once forms.
-          ...[
-            "[callee.object.arguments.0.name='execFileSync']",
-            "[callee.object.expression.name='execFileSync']",
-            "[callee.object.name='execFileSync']",
-          ].map(
-            (on) =>
-              `CallExpression[callee.property.name=/^mock(Implementation|ReturnValue)/]${on}`
-          ),
-          // jest.mock("node:child_process", () => ({ execFileSync: jest.fn(() => …) }))
-          "CallExpression[callee.object.name='jest'][callee.property.name='mock'][arguments.0.value=/child_process$/] Property[key.name='execFileSync'] > CallExpression[arguments.length>0]",
+          // unknown as jest.Mock).mockImplementation(…), their Once forms.
+          "CallExpression[callee.property.name=/^mock(Implementation|ReturnValue)/] > MemberExpression.callee Identifier[name='execFileSync']",
+          // jest.spyOn(childProcess, "execFileSync")
+          "CallExpression[callee.property.name='spyOn'][arguments.1.value='execFileSync']",
+          // jest.mock("node:child_process", () => ({ execFileSync: … })) with
+          // anything but a bare jest.fn().
+          "CallExpression[callee.object.name='jest'][callee.property.name='mock'][arguments.0.value=/child_process$/] Property[key.name='execFileSync'] > :matches(ArrowFunctionExpression, FunctionExpression, CallExpression[arguments.length>0], CallExpression[callee.property.name=/^mock/])",
         ].map((selector) => ({
           selector,
           message:

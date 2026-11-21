@@ -51,8 +51,7 @@ function answer(args: readonly string[]): GhAnswer {
     const title = /--search=(.+) in:title/.exec(call)?.[1] ?? "";
     return madeUp(`${openIssues[title] ?? ""}\n`);
   }
-  // The writes. gh prints the URL of the issue or comment it made, which the
-  // script ignores.
+  // The writes: the script ignores what gh prints.
   return madeUp("");
 }
 
