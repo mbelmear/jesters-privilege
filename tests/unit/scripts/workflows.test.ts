@@ -215,6 +215,21 @@ describe("a workflow's secrets", () => {
 
 // ubuntu-latest moved to ubuntu-26.04 on 2026-11-08 without a commit here, and
 // WebKit stopped launching (#196). A runner image changes only in a PR.
+// A pull_request_target run holds a write token even for a fork's PR, so only
+// the one workflow CODING_STANDARDS.md (Secrets) names may use it: pr-gate.yml,
+// which runs main's copy of itself and never the PR's code.
+describe("pull_request_target", () => {
+  it("starts only the PR gate", () => {
+    const using = readdirSync(".github/workflows").filter((file) =>
+      readFileSync(`.github/workflows/${file}`, "utf8").includes(
+        "pull_request_target"
+      )
+    );
+
+    expect(using).toEqual(["pr-gate.yml"]);
+  });
+});
+
 describe("a workflow's runners", () => {
   it.each(readdirSync(".github/workflows"))("%s names its image", (file) => {
     const runners = readFileSync(`.github/workflows/${file}`, "utf8").match(
