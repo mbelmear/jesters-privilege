@@ -15,7 +15,10 @@ export class FakeGitHub implements GitHub {
   checkList: Check[] = [];
   /** Every comment, those the gate posts included. */
   commentBodies: string[] = [];
-  /** Each comment's author association, by body: OWNER unless set here. */
+  /**
+   * Each comment's author association, by body. Made up: OWNER unless set
+   * here, as Michael posts the reviews.
+   */
   associations: Record<string, Association> = {};
   /** A read of the comments throws this, if set. */
   commentsFail?: Error;

@@ -37,7 +37,10 @@ export type PrContents = {
 
 export type Check = { name: string; state: CheckState; link: string };
 
-/** How a comment's author is associated with the repository, as GitHub's API names it. */
+/**
+ * How a comment's author is associated with the repository, as GitHub's API
+ * names it.
+ */
 export const ASSOCIATIONS = [
   "OWNER",
   "MEMBER",

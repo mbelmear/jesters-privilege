@@ -193,6 +193,15 @@ describe("the gh GitHub", () => {
     );
   });
 
+  it("refuses an answer that isn't a list, rather than read no comments", () => {
+    // Made up.
+    answer = () => '{"comments":[]}\n';
+
+    expect(() => ghGitHub.comments(7)).toThrow(
+      'gh pr view gave comments as {"comments":[]}'
+    );
+  });
+
   it("refuses an association it doesn't know, rather than guess who wrote it", () => {
     // Made up.
     answer = () =>

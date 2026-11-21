@@ -159,6 +159,7 @@ describe("the PR gate check", () => {
   describe("a failed read", () => {
     it("fails the status, naming it, and the run", () => {
       const t = setup();
+      // Made up, in the shape a quiet gh read throws (scripts/pr-gate-github.ts).
       t.github.commentsFail = new Error(
         "gh pr view 7 --json=comments: HTTP 502: Bad Gateway\nmore from gh"
       );

@@ -1,8 +1,8 @@
 // The review rule the PR gate check (check.ts) and `mark-ready` share: a
 // PR's head needs a passed /code-review, recorded as a "Code review: passed
-// at <sha>" comment (`npm run review-passed`). A head that adds only clean merges of main keeps
-// its review, recorded as a comment on that head for the post-merge audit
-// (scripts/audit-merge.sh), which reads the line through
+// at <sha>" comment (`npm run review-passed`). A head that adds only clean
+// merges of main keeps its review, recorded as a comment on that head for the
+// post-merge audit (scripts/audit-merge.sh), which reads the line through
 // scripts/last-reviewed-sha.sh; a test holds the two to the same reading.
 import type { Association } from "./github";
 import type { Gate } from "./pr-status";

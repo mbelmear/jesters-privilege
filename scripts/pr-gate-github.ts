@@ -185,8 +185,11 @@ export const ghGitHub: GitHub = {
       throw quietError(`gh pr view ${pr} --json=comments`, error);
     }
     const json: unknown = JSON.parse(read);
+    if (!isList(json)) {
+      throw new Error(`gh pr view gave comments as ${JSON.stringify(json)}`);
+    }
     // A comment read without its association would drop a review that counts.
-    return (Array.isArray(json) ? json : []).map((comment) => ({
+    return json.map((comment) => ({
       body: field(comment, "body", isString),
       association: field(comment, "association", isAssociation),
     }));
