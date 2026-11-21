@@ -136,6 +136,7 @@ function deployComment(pr: number, github: GitHub): string {
     return (
       github
         .comments(pr)
+        .map(({ body }) => body)
         .findLast((body) => body.startsWith("<!-- deploy-preview -->")) ?? ""
     );
   } catch {

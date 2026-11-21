@@ -4,7 +4,7 @@
 # A follow-up review skips these files, and the Spec review rechecks the ticket
 # without them (docs/testing.md, Merging).
 #
-# Like merged-main-only.sh, it compares blobs against each commit's merge-base
+# Like the PR gate's sinceReview (scripts/pr-gate-git.ts), it compares blobs against each commit's merge-base
 # with main, so a merge of main in between doesn't count as a change.
 # Usage: scripts/restored-to-main.sh <reviewed> <head> <main>
 set -euo pipefail

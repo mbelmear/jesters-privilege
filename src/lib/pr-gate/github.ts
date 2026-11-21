@@ -37,15 +37,33 @@ export type PrContents = {
 
 export type Check = { name: string; state: CheckState; link: string };
 
+/**
+ * A PR comment, with its author's association to the repository as GitHub
+ * gives it: OWNER, MEMBER and COLLABORATOR have write access; anyone can
+ * comment on a public repo, as CONTRIBUTOR, NONE and the rest.
+ */
+export type Comment = { body: string; association: string };
+
+/** A commit status, which a required status check reads by its context. */
+export type CommitStatus = {
+  state: "pending" | "success" | "failure";
+  /** GitHub keeps 140 characters. */
+  description: string;
+  /** Where the status links: the run that set it. */
+  targetUrl: string;
+};
+
 export interface GitHub {
   pullRequest(pr: number): PullRequest;
   /** Every check on the PR's head; none before CI starts. */
   checks(pr: number): Check[];
   contents(pr: number): PrContents;
-  /** Each comment's body, oldest first. */
-  comments(pr: number): string[];
+  /** Each comment, oldest first. */
+  comments(pr: number): Comment[];
   comment(pr: number, body: string): void;
   addLabel(pr: number, label: string): void;
+  /** Sets the `PR gate` status on a commit. */
+  setStatus(sha: string, status: CommitStatus): void;
   /** A job's log, as the jobs API serves it. */
   jobLog(repo: string, job: string): string;
   /**

@@ -3,6 +3,8 @@
 import {
   Disconnected,
   type Check,
+  type Comment,
+  type CommitStatus,
   type GitHub,
   type PrContents,
   type PullRequest,
@@ -12,6 +14,12 @@ export class FakeGitHub implements GitHub {
   checkList: Check[] = [];
   /** Every comment, those the gate posts included. */
   commentBodies: string[] = [];
+  /** Each comment's author association, by body: OWNER unless set here. */
+  associations: Record<string, string> = {};
+  /** A read of the comments throws this, if set. */
+  commentsFail?: Error;
+  /** Every status the gate set, in order. */
+  statuses: (CommitStatus & { sha: string })[] = [];
   /** The labels the gate added. */
   labels: string[] = [];
   prContents: PrContents = {
@@ -46,8 +54,12 @@ export class FakeGitHub implements GitHub {
     return structuredClone(this.prContents);
   }
 
-  comments(): string[] {
-    return [...this.commentBodies];
+  comments(): Comment[] {
+    if (this.commentsFail) throw this.commentsFail;
+    return this.commentBodies.map((body) => ({
+      body,
+      association: this.associations[body] ?? "OWNER",
+    }));
   }
 
   comment(_pr: number, body: string): void {
@@ -56,6 +68,10 @@ export class FakeGitHub implements GitHub {
 
   addLabel(_pr: number, label: string): void {
     this.labels.push(label);
+  }
+
+  setStatus(sha: string, status: CommitStatus): void {
+    this.statuses.push({ sha, ...status });
   }
 
   jobLog(repo: string, job: string): string {

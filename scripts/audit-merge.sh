@@ -5,9 +5,10 @@
 #     adds it only to a reviewed head, but a push after labelling goes
 #     unchecked here), or
 #   - a logic/infra PR whose "Code review: passed at <sha>" names its final head.
-# main's ruleset requires passing checks but can't require the review comment,
-# so a merge that skips npm run merge can still land; this runs after every
-# push to main and fails loudly instead; a failed run emails whoever triggered it.
+# main's ruleset requires the PR gate status, which holds the review rule
+# (src/lib/pr-gate/check.ts); this is the backstop behind it, should a merge
+# land without it. It runs after every push to main and fails loudly; a failed
+# run emails whoever triggered it.
 # Usage: scripts/audit-merge.sh <commit-sha>
 set -euo pipefail
 

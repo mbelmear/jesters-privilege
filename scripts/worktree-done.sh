@@ -4,8 +4,9 @@
 # squash-merged, so git can't tell the branch is merged (`git branch -d`
 # refuses); instead merge-holds-branch.sh checks the merge commit holds the
 # branch's work, and this refuses otherwise, when the worktree holds
-# uncommitted changes, or when its folder survives removal. `npm run merge` already deletes the GitHub branch, so
-# that step matters mostly for PRs merged in GitHub's UI, such as visual ones.
+# uncommitted changes, or when its folder survives removal. GitHub deletes a
+# merged PR's branch itself (the repo's delete_branch_on_merge), so that step
+# matters only when it didn't.
 # Usage: npm run worktree-done -- <pr-number>
 set -euo pipefail
 

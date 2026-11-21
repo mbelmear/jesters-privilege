@@ -175,14 +175,33 @@ export const ghGitHub: GitHub = {
         "view",
         String(pr),
         "--json=comments",
-        "--jq=[.comments[].body]"
+        "--jq=[.comments[] | {body, association: .authorAssociation}]"
       );
     } catch (error) {
       throw quietError(`gh pr view ${pr} --json=comments`, error);
     }
     const json: unknown = JSON.parse(read);
-    const bodies: unknown[] = Array.isArray(json) ? json : [];
-    return bodies.filter((body): body is string => typeof body === "string");
+    // A comment read without its association would drop a review that counts.
+    return (Array.isArray(json) ? json : []).map((comment) => ({
+      body: field(comment, "body", isString),
+      association: field(comment, "association", isString),
+    }));
+  },
+
+  setStatus(sha, { state, description, targetUrl }) {
+    gh(
+      "api",
+      "--method=POST",
+      `repos/{owner}/{repo}/statuses/${sha}`,
+      "-f",
+      `state=${state}`,
+      "-f",
+      "context=PR gate",
+      "-f",
+      `description=${description}`,
+      "-f",
+      `target_url=${targetUrl}`
+    );
   },
 
   jobLog(repo, job) {

@@ -1,4 +1,4 @@
-// The review rule `merge` and `mark-ready` share: a PR's head needs a passed
+// The review rule the PR gate check (check.ts) and `mark-ready` share: a PR's head needs a passed
 // /code-review, recorded as a "Code review: passed at <sha>" comment
 // (`npm run review-passed`). A head that adds only clean merges of main keeps
 // its review, recorded as a comment on that head for the post-merge audit
@@ -8,6 +8,10 @@ import type { Gate } from "./pr-status";
 import { refusing, type Action } from "./snapshot";
 
 const PASSED = /^Code review: passed at ([0-9a-f]{40})/;
+
+// The associations with write access. Anyone can comment on a public repo,
+// so only these accounts' reviews count.
+const WRITERS = new Set(["OWNER", "MEMBER", "COLLABORATOR"]);
 
 /** The commit the newest "Code review: passed at <sha>" line names, in any comment. */
 export function lastReviewed(comments: readonly string[]): string | undefined {
@@ -28,7 +32,12 @@ export function requireReview(
   action: Action,
   { github, git, err }: Gate
 ) {
-  const reviewed = lastReviewed(github.comments(pr));
+  const comments = github.comments(pr);
+  const reviewed = lastReviewed(
+    comments
+      .filter(({ association }) => WRITERS.has(association))
+      .map(({ body }) => body)
+  );
   if (reviewed === head) return;
   if (reviewed) {
     // Unfetched, a merge of newer main looks like commits of the PR's own,
@@ -37,10 +46,14 @@ export function requireReview(
       err(`Couldn't fetch main and ${head}; checking what's here.`);
     }
     if (git.sinceReview(reviewed, head) === "clean merges") {
-      github.comment(
-        pr,
-        `Code review: passed at ${head} (carried over from ${reviewed}: only clean merges of main since)`
-      );
+      const carried = `Code review: passed at ${head} (carried over from ${reviewed}: only clean merges of main since)`;
+      // The PR gate workflow posts it as github-actions[bot], which isn't a
+      // writer, so the next run carries the same review again: once is enough.
+      // A new comment, not an edit of the last: the audit reads the newest
+      // passed line, and an edited comment keeps its place among the rest.
+      if (!comments.some(({ body }) => body === carried)) {
+        github.comment(pr, carried);
+      }
       return;
     }
   }

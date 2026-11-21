@@ -25,7 +25,7 @@ The show's website: a fast, static, mobile-first site built with Next.js and ser
 
 ## How it's built
 
-The site is built agent-first. The Jesters' brief became [`docs/spec.md`](docs/spec.md) in a grilling session, the spec became tickets on GitHub Issues, and coding agents build each ticket test-first in its own git worktree. Every pull request is reviewed against [`CODING_STANDARDS.md`](CODING_STANDARDS.md) and its ticket before it merges, and `npm run merge` merges only a reviewed pull request whose checks all pass. Anything a visitor sees waits for a Jester's approval on a preview deploy. After a ticket ships, a retro turns what went wrong into a check, a script, or a coding standard, so the next ticket starts from a better place. The full rules are in [`AGENTS.md`](AGENTS.md) and [`docs/testing.md`](docs/testing.md).
+The site is built agent-first. The Jesters' brief became [`docs/spec.md`](docs/spec.md) in a grilling session, the spec became tickets on GitHub Issues, and coding agents build each ticket test-first in its own git worktree. Every pull request is reviewed against [`CODING_STANDARDS.md`](CODING_STANDARDS.md) and its ticket before it merges, and GitHub's merge button stays shut until a required `PR gate` status says the pull request's head has passed that review. Anything a visitor sees waits for a Jester's approval on a preview deploy. After a ticket ships, a retro turns what went wrong into a check, a script, or a coding standard, so the next ticket starts from a better place. The full rules are in [`AGENTS.md`](AGENTS.md) and [`docs/testing.md`](docs/testing.md).
 
 Three test layers guard it: Jest with React Testing Library and jest-axe for logic and components, Playwright on Chromium and WebKit at phone and desktop sizes, and a Lighthouse CI budget for mobile performance.
 
@@ -40,15 +40,15 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Commands
 
-| Command                | What it does                              |
-| ---------------------- | ----------------------------------------- |
-| `npm run dev`          | Start the dev server                      |
-| `npm run build`        | Export the static site to `out/`          |
-| `npm test`             | Unit and component tests (Jest)           |
-| `npm run test:e2e`     | Browser tests against `out/` (Playwright) |
-| `npm run lighthouse`   | Mobile performance budget against `out/`  |
-| `npm run typecheck`    | Type-check the project                    |
-| `npm run format`       | Format everything with Prettier           |
-| `npm run merge -- <n>` | Merge PR `<n>` once reviewed and green    |
+| Command                    | What it does                              |
+| -------------------------- | ----------------------------------------- |
+| `npm run dev`              | Start the dev server                      |
+| `npm run build`            | Export the static site to `out/`          |
+| `npm test`                 | Unit and component tests (Jest)           |
+| `npm run test:e2e`         | Browser tests against `out/` (Playwright) |
+| `npm run lighthouse`       | Mobile performance budget against `out/`  |
+| `npm run typecheck`        | Type-check the project                    |
+| `npm run format`           | Format everything with Prettier           |
+| `npm run pr-status -- <n>` | Wait for PR `<n>`'s checks and preview    |
 
 How each test layer works and how to run it locally: [`docs/testing.md`](docs/testing.md).

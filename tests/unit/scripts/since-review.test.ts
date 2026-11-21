@@ -1,16 +1,17 @@
 /**
  * @jest-environment node
  */
-import { execFileSync, spawnSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { localGit } from "../../../scripts/pr-gate-git";
 import { scriptsDir } from "../../paths";
 
-// merge (require-review.sh) still runs the script; the PR gate has its own
-// reading (src/lib/pr-gate/git.ts, sinceReview). Every case runs both.
-const script = join(scriptsDir, "merged-main-only.sh");
+// Whether a review carries over to a PR's head: the PR gate's sinceReview
+// (src/lib/pr-gate/git.ts), run by git in a throwaway repo. These cases held
+// the shell script merge ran to the same reading until both were deleted
+// (#262).
 
 // Git run from a hook inherits GIT_DIR and GIT_INDEX_FILE, which point every
 // git command at the real repository (merge-holds-branch.test.ts tells that
@@ -21,7 +22,7 @@ for (const name of Object.keys(env)) {
 }
 
 function repo() {
-  const dir = mkdtempSync(join(tmpdir(), "merged-main-only-"));
+  const dir = mkdtempSync(join(tmpdir(), "since-review-"));
   const git = (...args: string[]) =>
     // Piped, so a merge's chatter on stderr ("Automatic merge went well")
     // stays out of every test run; a failed git still throws with it.
@@ -45,30 +46,18 @@ function repo() {
     git("commit", "--quiet", "-m", message);
     return git("rev-parse", "HEAD");
   };
-  // Both readings, the script's and the gate's, against main as origin/main.
+  // The gate's reading, against main as origin/main.
   const gate = localGit(dir, join(scriptsDir, "fetch.sh"), env);
   const carries = (reviewed: string, head: string) => {
     git("update-ref", "refs/remotes/origin/main", "main");
-    const byScript =
-      spawnSync("bash", [script, reviewed, head, "origin/main"], {
-        cwd: dir,
-        env,
-        encoding: "utf8",
-      }).status === 0;
-    const byGate = gate.sinceReview(reviewed, head) === "clean merges";
-    if (byScript !== byGate) {
-      throw new Error(
-        `merged-main-only.sh says ${byScript}, the gate ${byGate}`
-      );
-    }
-    return byGate;
+    return gate.sinceReview(reviewed, head) === "clean merges";
   };
   return { dir, git, commit, carries };
 }
 
 const lines = "one\ntwo\nthree\nfour\nfive\nsix\nseven\neight\nnine\n";
 
-describe("merged-main-only, as the script and the gate read it", () => {
+describe("sinceReview", () => {
   let r: ReturnType<typeof repo>;
   let reviewed: string;
   beforeEach(() => {
