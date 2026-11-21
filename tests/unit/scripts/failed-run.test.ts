@@ -2,6 +2,7 @@ import { execFileSync } from "node:child_process";
 import {
   closeReport,
   failedJobs,
+  failedRunsOnMain,
   fileReport,
   passedJobs,
 } from "../../../scripts/failed-run";
@@ -20,6 +21,8 @@ function answer(args: readonly string[]): string {
   const call = args.join(" ");
   calls.push(call);
   if (call.startsWith("issue list")) return `${openIssue}\n`;
+  // Made up, in the shape --jq=.[].databaseId gives: newest first.
+  if (call.startsWith("run list")) return "30\n20\n";
   if (call.includes('"failure"')) return "1\tFeed check\n";
   if (call.includes('"success"')) return "2\tDeploy to production\n";
   return "";
@@ -77,6 +80,22 @@ describe("a run's jobs", () => {
     expect(failedJobs("1")).toEqual([{ id: "1", name: "Feed check" }]);
     expect(passedJobs("1")).toEqual([
       { id: "2", name: "Deploy to production" },
+    ]);
+  });
+});
+
+describe("failedRunsOnMain", () => {
+  it("lists a workflow's failed runs on main, newest first", () => {
+    expect(failedRunsOnMain("deploy.yml", { limit: 20 })).toEqual(["30", "20"]);
+    expect(calls).toEqual([
+      "run list --workflow=deploy.yml --status=failure --branch=main --limit=20 --json=databaseId --jq=.[].databaseId",
+    ]);
+  });
+
+  it("narrows to scheduled runs when asked", () => {
+    failedRunsOnMain("nightly.yml", { limit: 1, event: "schedule" });
+    expect(calls).toEqual([
+      "run list --workflow=nightly.yml --status=failure --branch=main --event=schedule --limit=1 --json=databaseId --jq=.[].databaseId",
     ]);
   });
 });
