@@ -4,17 +4,17 @@ name: PR gate
 # ruleset requires, so the merge button waits for it: success once the head
 # has a passed review, the PR closes only the issues it names, and a
 # first-screen change carries its cost (scripts/pr-gate-check.ts,
-# src/lib/pr-gate/check.ts). It runs main's code, never the PR's: a comment's
-# run is main's anyway, and the status must mean the same on both. See
-# docs/testing.md, Merging.
+# src/lib/pr-gate/check.ts). It runs main's code, never the PR's, and main's
+# copy of this file: a PR's own pull_request run would take the PR's copy, so
+# a PR could rewrite its gate to pass. See docs/testing.md, Merging.
 
+# zizmor warns of both triggers because their runs hold a write token and are
+# often made to run the PR's code. This one checks out main, keeps no
+# credentials in it, and only reads the PR's commits as git objects.
 on:
-  pull_request:
+  pull_request_target: # zizmor: ignore[dangerous-triggers]
     types: [opened, synchronize, reopened, edited, labeled, unlabeled]
-  # A review is recorded as a comment (npm run review-passed). zizmor warns
-  # of this trigger because its runs hold a write token and are often made to
-  # run the PR's code; this one checks out main, keeps no credentials in it,
-  # and only reads the PR's commits as git objects.
+  # A review is recorded as a comment (npm run review-passed).
   issue_comment: # zizmor: ignore[dangerous-triggers]
     types: [created, edited, deleted]
 
@@ -32,7 +32,7 @@ jobs:
     # since the refusal is in the status, so it must never meet that name.
     name: Set the PR gate status
     # An issue's comments start this workflow too; only a PR's count.
-    if: github.event_name == 'pull_request' || github.event.issue.pull_request
+    if: github.event_name == 'pull_request_target' || github.event.issue.pull_request
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
