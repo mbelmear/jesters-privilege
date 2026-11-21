@@ -19,7 +19,7 @@ let calls: GhCall[];
 
 // The --jq's "<id>\t<name>" lines. Only logs read the id, so each job's is its
 // place in the list.
-const jobLines = (names: readonly string[] = []) =>
+const jobsAnswer = (names: readonly string[] = []) =>
   madeUp(names.map((name, i) => `${i + 1}\t${name}\n`).join(""));
 
 // The error lines of a failed feed check's log (run 41899722981).
@@ -40,7 +40,7 @@ function answer(args: readonly string[]): GhAnswer {
   const runJobs = /actions\/runs\/(\d+)\/jobs/.exec(call);
   if (runJobs) {
     const jobs = jobsByRun[runJobs[1] ?? ""] ?? {};
-    return jobLines(call.includes('"failure"') ? jobs.failure : jobs.success);
+    return jobsAnswer(call.includes('"failure"') ? jobs.failure : jobs.success);
   }
   if (call.includes("/logs")) return recorded("2026-11-21", JOB_LOG);
   const view = /^run view (\d+)/.exec(call);
@@ -51,7 +51,8 @@ function answer(args: readonly string[]): GhAnswer {
     const title = /--search=(.+) in:title/.exec(call)?.[1] ?? "";
     return madeUp(`${openIssues[title] ?? ""}\n`);
   }
-  // The writes: what they print, the script ignores.
+  // The writes. gh prints the URL of the issue or comment it made, which the
+  // script ignores.
   return madeUp("");
 }
 

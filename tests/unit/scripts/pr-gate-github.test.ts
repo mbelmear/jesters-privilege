@@ -11,7 +11,7 @@ import {
 import { ghFailed } from "../../gh-failed";
 
 // No test here can reach GitHub (tests/fake-gh.ts). Recorded answers are from
-// gh 2.103.3; a made-up one is in the shape gh's --jq gives.
+// gh 2.103.3; a made-up one is in the shape gh, or the code's --jq, gives.
 jest.mock("node:child_process", () => ({ execFileSync: jest.fn() }));
 
 let answer: (args: readonly string[]) => GhAnswer = () => madeUp("");
@@ -124,7 +124,7 @@ describe("the gh GitHub", () => {
     });
 
     it("pass any other error on", () => {
-      // Recorded: gh pr checks 99999.
+      // Recorded: gh pr checks 99999 (gh 2.103.3, 2026-11-20).
       answer = () => {
         throw exited(
           1,

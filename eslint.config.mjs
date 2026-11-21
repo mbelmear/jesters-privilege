@@ -181,12 +181,24 @@ const eslintConfig = defineConfig([
         // review rounds. fakeGh only takes answers built by recorded() or
         // madeUp(). Test files only: tests/fake-gh.ts is the one place that
         // fakes execFileSync.
-        {
-          selector:
-            "CallExpression[callee.property.name=/^mock(Implementation|ReturnValue)/][callee.object.callee.object.name='jest'][callee.object.callee.property.name='mocked'][callee.object.arguments.0.name='execFileSync']",
+        ...[
+          // jest.mocked(execFileSync).mockReturnValue(…), (execFileSync as
+          // jest.Mock).mockImplementation(…), and their Once forms.
+          ...[
+            "[callee.object.arguments.0.name='execFileSync']",
+            "[callee.object.expression.name='execFileSync']",
+            "[callee.object.name='execFileSync']",
+          ].map(
+            (on) =>
+              `CallExpression[callee.property.name=/^mock(Implementation|ReturnValue)/]${on}`
+          ),
+          // jest.mock("node:child_process", () => ({ execFileSync: jest.fn(() => …) }))
+          "CallExpression[callee.object.name='jest'][callee.property.name='mock'][arguments.0.value=/child_process$/] Property[key.name='execFileSync'] > CallExpression[arguments.length>0]",
+        ].map((selector) => ({
+          selector,
           message:
             "execFileSync faked by hand. Use fakeGh from tests/fake-gh.ts, whose answers each say whether gh printed them (recorded) or they are made up (madeUp).",
-        },
+        })),
         // A fresh module registry loads a second React, so every hook in what
         // it renders fails with "Invalid hook call" (#21).
         {

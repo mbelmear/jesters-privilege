@@ -25,7 +25,8 @@ function answer(args: readonly string[]): GhAnswer {
   // The --jq's "<id>\t<name>" lines.
   if (call.includes('"failure"')) return madeUp("1\tFeed check\n");
   if (call.includes('"success"')) return madeUp("2\tDeploy to production\n");
-  // The writes: what they print, the code ignores.
+  // The writes. gh prints the URL of the issue or comment it made, which the
+  // code ignores.
   return madeUp("");
 }
 
