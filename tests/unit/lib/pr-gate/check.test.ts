@@ -79,7 +79,7 @@ describe("the PR gate check", () => {
     });
   });
 
-  it("refuses a first-screen change without its cost, cutting the line to the 140 characters GitHub takes", () => {
+  it("refuses a first-screen change without its cost, cutting the line to 140 characters", () => {
     const t = setup();
     t.github.prContents.files = [
       "src/app/layout.tsx",

@@ -49,7 +49,9 @@ export function prGateCheck(pr: number, gate: CheckGate): number {
   return 0;
 }
 
-// GitHub's API takes at most 140 characters of a status's description.
+// A status's description is cut to 140 characters, a short line beside the
+// check's name. #262 gave 140 as GitHub's limit; GitHub's REST docs for
+// commit statuses (read 2026-11-21) give none, so the cut relies on none.
 const KEPT = 140;
 
 const firstLine = (text: string) => text.split("\n")[0] ?? "";

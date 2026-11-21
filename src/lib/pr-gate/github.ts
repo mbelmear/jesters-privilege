@@ -59,7 +59,7 @@ export type Comment = { body: string; association: Association };
 /** A commit status, which a required status check reads by its context. */
 export type CommitStatus = {
   state: "pending" | "success" | "failure";
-  /** At most 140 characters, which GitHub's API takes. */
+  /** One short line; the check cuts it to 140 characters (check.ts). */
   description: string;
   /** Where the status links: the run that set it. */
   targetUrl: string;
