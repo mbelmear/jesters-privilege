@@ -1,22 +1,35 @@
 // Fakes the process call itself, so no test here can reach GitHub: a `gh` stub
-// on a PATH set in Jest is never found (#164, failed-run.test.ts).
+// on a PATH set in Jest is never found (#164, failed-run.test.ts). Each answer
+// says whether gh printed it (gh 2.103.3, 2026-11-21) or it is made up in the
+// shape the script's --jq gives.
 jest.mock("node:child_process", () => ({ execFileSync: jest.fn() }));
 
 type Jobs = { failure?: string[]; success?: string[] };
 
-// Each faked answer is labelled by what it stands for in GitHub.
 let failedDeployRuns: string[];
 let jobsByRun: Record<string, Jobs>;
 let openIssues: Record<string, string>;
 let calls: string[];
 
+// Made up, in the "<id>\t<name>" lines the --jq gives. Only logs read the id,
+// so each job's is its place in the list.
 const jobLines = (names: readonly string[] = []) =>
-  names.map((name, i) => `${name.length}${i}\t${name}\n`).join("");
+  names.map((name, i) => `${i + 1}\t${name}\n`).join("");
+
+// Recorded: the error lines of a failed feed check's log (run 41899722981).
+const JOB_LOG = [
+  "2026-11-04T19:44:52.3422342Z ##[error]Feed check failed, so the live site stays as it is: Build manifest is missing episodeListenLinks",
+  "2026-11-04T19:44:52.3670388Z ##[error]Process completed with exit code 1.",
+].join("\n");
+const FAILURE =
+  "- Feed check failed, so the live site stays as it is: Build manifest is missing episodeListenLinks";
+const RUN_URL = "https://github.com/mbelmear/jesters-privilege/actions/runs/";
 
 function answer(args: readonly string[]): string {
   const call = args.join(" ");
   calls.push(call);
   if (call.startsWith("run list --workflow=deploy.yml")) {
+    // Made up, in the shape --jq=.[].databaseId gives.
     return failedDeployRuns.map((id) => `${id}\n`).join("");
   }
   const runJobs = /actions\/runs\/(\d+)\/jobs/.exec(call);
@@ -24,10 +37,12 @@ function answer(args: readonly string[]): string {
     const jobs = jobsByRun[runJobs[1] ?? ""] ?? {};
     return jobLines(call.includes('"failure"') ? jobs.failure : jobs.success);
   }
-  if (call.includes("/logs")) return "##[error]Smoke check failed: /feed\n";
+  if (call.includes("/logs")) return JOB_LOG;
   const view = /^run view (\d+)/.exec(call);
-  if (view) return `https://github.com/runs/${view[1]}\n`;
+  // Recorded, with the run's id swapped in.
+  if (view) return `${RUN_URL}${view[1]}\n`;
   if (call.startsWith("issue list")) {
+    // Made up, in the shape the --jq gives: an issue's number, or nothing.
     const title = /--search=(.+) in:title/.exec(call)?.[1] ?? "";
     return `${openIssues[title] ?? ""}\n`;
   }
@@ -71,8 +86,8 @@ describe("report-deploy <run-id>", () => {
     await reportDeploy("9");
 
     expect(writes()).toEqual([
-      expect.stringMatching(
-        /^issue create --title=Production deploy is failing --body=The production deploy failed: https:\/\/github.com\/runs\/9\n\n- Smoke check failed: \/feed\n/
+      expect.stringContaining(
+        `issue create --title=Production deploy is failing --body=The production deploy failed: ${RUN_URL}9\n\n${FAILURE}\n\n`
       ),
     ]);
   });
@@ -84,8 +99,8 @@ describe("report-deploy <run-id>", () => {
     await reportDeploy("9");
 
     expect(writes()).toEqual([
-      expect.stringMatching(
-        /^issue comment 7 --body=The feed check failed: https:\/\/github.com\/runs\/9\n/
+      expect.stringContaining(
+        `issue comment 7 --body=The feed check failed: ${RUN_URL}9\n\n${FAILURE}\n\n`
       ),
     ]);
   });
@@ -111,7 +126,7 @@ describe("report-deploy <run-id>", () => {
     await reportDeploy("9");
 
     expect(writes()).toEqual([
-      "issue close 7 --comment=A feed check passed: https://github.com/runs/9",
+      `issue close 7 --comment=A feed check passed: ${RUN_URL}9`,
     ]);
   });
 
@@ -136,12 +151,8 @@ describe("report-deploy --dry-run", () => {
 
     expect(writes()).toEqual([]);
     const printed = log.mock.calls.flat().join("\n");
-    expect(printed).toContain(
-      "The production deploy failed: https://github.com/runs/10"
-    );
-    expect(printed).toContain(
-      "The feed check failed: https://github.com/runs/20"
-    );
+    expect(printed).toContain(`The production deploy failed: ${RUN_URL}10`);
+    expect(printed).toContain(`The feed check failed: ${RUN_URL}20`);
   });
 
   it("says so when no run failed in a job", async () => {

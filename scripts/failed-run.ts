@@ -1,7 +1,7 @@
-// The `gh` wiring a failed run's report shares: which runs failed, how their
-// jobs ended, their logs, and the one open issue that tracks it. Used by report-nightly and
-// report-deploy; the PR gate's GitHub (pr-gate-github.ts) runs gh through
-// gh, ghQuiet and ghLoud.
+// The `gh` wiring a failed run's report shares: which runs failed, how a run's
+// jobs ended, their logs, and the one open issue that tracks the failure. Used
+// by report-nightly and report-deploy; the PR gate's GitHub
+// (pr-gate-github.ts) runs gh through gh, ghQuiet and ghLoud.
 import { execFileSync } from "node:child_process";
 
 const GH = { encoding: "utf8", maxBuffer: 1 << 28 } as const;
@@ -27,7 +27,7 @@ export const ghLoud = (...args: string[]) => {
  */
 export function failedRunsOnMain(
   workflow: string,
-  { limit, event }: { readonly limit: number; readonly event?: string }
+  { limit, event }: { readonly limit: number; readonly event?: "schedule" }
 ): string[] {
   return gh(
     "run",
