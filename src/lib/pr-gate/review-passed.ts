@@ -1,6 +1,6 @@
 // npm run review-passed: record that /code-review passed on a PR's head, as
-// the "Code review: passed at <sha>" comment that `merge` and `mark-ready`
-// require (review.ts).
+// the "Code review: passed at <sha>" comment that the PR gate check and
+// `mark-ready` require (review.ts).
 import { pushedHead, Refusal, refusalExit, type Reader } from "./snapshot";
 
 export type ReviewPassedGate = Reader & {

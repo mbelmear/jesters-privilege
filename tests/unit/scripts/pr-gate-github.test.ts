@@ -89,8 +89,7 @@ describe("the gh GitHub", () => {
     });
 
     it("are none before CI starts", () => {
-      // Made up: no PR here has run without checks to record. gh's wording, as
-      // read-checks.test.ts has it.
+      // Made up: no PR here has run without checks to record, in gh's wording.
       answer = () => {
         throw exited(1, "no checks reported on the 'ticket' branch\n");
       };
@@ -98,7 +97,7 @@ describe("the gh GitHub", () => {
       expect(ghGitHub.checks(256)).toEqual([]);
     });
 
-    // Made up: one error per pattern read-checks.sh has retried on.
+    // Made up: one error per pattern a dropped connection shows.
     it.each([
       "error connecting to api.github.com",
       'Post "https://api.github.com/graphql": dial tcp: lookup api.github.com: no such host',
@@ -155,17 +154,88 @@ describe("the gh GitHub", () => {
     );
   });
 
-  it("reads each comment's body", () => {
-    // Made up.
-    answer = () => '["Looks good","<!-- deploy-preview -->\\nBuilt from a."]\n';
+  it("reads each comment's body and its author's association", () => {
+    // Recorded: PR #221 (gh 2.103.3, 2026-11-21), its first comment cut short.
+    answer = () =>
+      '[{"association":"OWNER","body":"For the Jester, on the preview: open `/styleguide`."},{"association":"NONE","body":"\\u003c!-- deploy-preview --\\u003e\\n**Preview:** https://pr-221-jesters-privilege.jestersprivilege.workers.dev\\n\\nBuilt from fba0575902521d377b4b061cf1af908a600002ae. This comment updates on every push."},{"association":"OWNER","body":"Code review: passed at fba0575902521d377b4b061cf1af908a600002ae"}]\n';
 
-    expect(ghGitHub.comments(256)).toEqual([
-      "Looks good",
-      "<!-- deploy-preview -->\nBuilt from a.",
+    expect(ghGitHub.comments(221)).toEqual([
+      {
+        association: "OWNER",
+        body: "For the Jester, on the preview: open `/styleguide`.",
+      },
+      {
+        association: "NONE",
+        body: "<!-- deploy-preview -->\n**Preview:** https://pr-221-jesters-privilege.jestersprivilege.workers.dev\n\nBuilt from fba0575902521d377b4b061cf1af908a600002ae. This comment updates on every push.",
+      },
+      {
+        association: "OWNER",
+        body: "Code review: passed at fba0575902521d377b4b061cf1af908a600002ae",
+      },
     ]);
     expect(calls).toEqual([
-      ["pr", "view", "256", "--json=comments", "--jq=[.comments[].body]"],
+      [
+        "pr",
+        "view",
+        "221",
+        "--json=comments",
+        "--jq=[.comments[] | {body, association: .authorAssociation}]",
+      ],
     ]);
+  });
+
+  it("refuses a comment shape it doesn't know, rather than read nothing", () => {
+    // Made up: a comment without its association.
+    answer = () => '[{"body":"Code review: passed at abc"}]\n';
+
+    expect(() => ghGitHub.comments(7)).toThrow(
+      "gh pr view gave association as undefined"
+    );
+  });
+
+  it("refuses an answer that isn't a list, rather than read no comments", () => {
+    // Made up.
+    answer = () => '{"comments":[]}\n';
+
+    expect(() => ghGitHub.comments(7)).toThrow(
+      'gh pr view gave comments as {"comments":[]}'
+    );
+  });
+
+  it("refuses an association it doesn't know, rather than guess who wrote it", () => {
+    // Made up.
+    answer = () =>
+      '[{"association":"MAINTAINER","body":"Code review: passed at abc"}]\n';
+
+    expect(() => ghGitHub.comments(7)).toThrow(
+      'gh pr view gave association as "MAINTAINER"'
+    );
+  });
+
+  // Its output, the status as JSON, is kept from the run's log; its errors print.
+  it("sets the PR gate status on a commit", () => {
+    ghGitHub.setStatus("fba0575902521d377b4b061cf1af908a600002ae", {
+      state: "failure",
+      description: "Refusing to merge #7: head is abc",
+      targetUrl: "https://github.com/o/r/actions/runs/1",
+    });
+
+    expect(calls).toEqual([
+      [
+        "api",
+        "--method=POST",
+        "repos/{owner}/{repo}/statuses/fba0575902521d377b4b061cf1af908a600002ae",
+        "-f",
+        "state=failure",
+        "-f",
+        "context=PR gate",
+        "-f",
+        "description=Refusing to merge #7: head is abc",
+        "-f",
+        "target_url=https://github.com/o/r/actions/runs/1",
+      ],
+    ]);
+    expect(stdios).toEqual([undefined]);
   });
 
   describe("contents", () => {

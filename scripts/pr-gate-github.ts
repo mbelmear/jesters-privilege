@@ -1,8 +1,10 @@
 // The PR gate's GitHub (src/lib/pr-gate/github.ts), built from `gh`.
 import {
+  ASSOCIATIONS,
   CHECK_STATES,
   Disconnected,
   PR_STATES,
+  type Association,
   type Check,
   type CheckState,
   type GitHub,
@@ -78,6 +80,8 @@ function field<T>(
 }
 
 const isString = (value: unknown): value is string => typeof value === "string";
+const isAssociation = (value: unknown): value is Association =>
+  ASSOCIATIONS.some((known) => known === value);
 const isNumber = (value: unknown): value is number => typeof value === "number";
 const isList = (value: unknown): value is unknown[] => Array.isArray(value);
 const isBody = (value: unknown): value is string | null =>
@@ -175,14 +179,36 @@ export const ghGitHub: GitHub = {
         "view",
         String(pr),
         "--json=comments",
-        "--jq=[.comments[].body]"
+        "--jq=[.comments[] | {body, association: .authorAssociation}]"
       );
     } catch (error) {
       throw quietError(`gh pr view ${pr} --json=comments`, error);
     }
     const json: unknown = JSON.parse(read);
-    const bodies: unknown[] = Array.isArray(json) ? json : [];
-    return bodies.filter((body): body is string => typeof body === "string");
+    if (!isList(json)) {
+      throw new Error(`gh pr view gave comments as ${JSON.stringify(json)}`);
+    }
+    // A comment read without its association would drop a review that counts.
+    return json.map((comment) => ({
+      body: field(comment, "body", isString),
+      association: field(comment, "association", isAssociation),
+    }));
+  },
+
+  setStatus(sha, { state, description, targetUrl }) {
+    gh(
+      "api",
+      "--method=POST",
+      `repos/{owner}/{repo}/statuses/${sha}`,
+      "-f",
+      `state=${state}`,
+      "-f",
+      "context=PR gate",
+      "-f",
+      `description=${description}`,
+      "-f",
+      `target_url=${targetUrl}`
+    );
   },
 
   jobLog(repo, job) {

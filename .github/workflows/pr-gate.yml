@@ -1,0 +1,57 @@
+name: PR gate
+
+# Sets the `PR gate` commit status on a PR's head, which the `Protect main`
+# ruleset requires, so the merge button waits for it: success once the head
+# has a passed review, the PR closes only the issues it names, and a
+# first-screen change carries its cost (scripts/pr-gate-check.ts,
+# src/lib/pr-gate/check.ts). It runs main's code, never the PR's, and main's
+# copy of this file: a PR's own pull_request run would take the PR's copy, so
+# a PR could rewrite its gate to pass. See docs/testing.md, Merging.
+
+# zizmor warns of both triggers because their runs hold a write token and are
+# often made to run the PR's code. This one checks out main, keeps no
+# credentials in it, and only reads the PR's commits as git objects.
+on:
+  pull_request_target: # zizmor: ignore[dangerous-triggers]
+    types: [opened, synchronize, reopened, edited, labeled, unlabeled]
+  # A review is recorded as a comment (npm run review-passed).
+  issue_comment: # zizmor: ignore[dangerous-triggers]
+    types: [created, edited, deleted]
+
+# The newest change to a PR is the one to check.
+concurrency:
+  group: pr-gate-${{ github.event.pull_request.number || github.event.issue.number }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  check:
+    # Not "PR gate": the ruleset requires that name, and a check run of the
+    # same name would count for it. This job passes when it refuses a PR,
+    # since the refusal is in the status, so it must never meet that name.
+    name: Set the PR gate status
+    # An issue's comments start this workflow too; only a PR's count.
+    if: github.event_name == 'pull_request_target' || github.event.issue.pull_request
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      # The status itself.
+      statuses: write
+      # The comment carrying a review over a clean merge of main.
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+          persist-credentials: false
+          # The review rule reads the PR's history against main's.
+          fetch-depth: 0
+      - uses: ./.github/actions/setup
+      # The gate fetches the PR's head itself, as objects, with no branch made.
+      - run: npx tsx scripts/pr-gate-check.ts "$PR"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number || github.event.issue.number }}
+          PR_GATE_TARGET_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}

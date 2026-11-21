@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # Print the commit named by a pull request's newest "Code review: passed at
-# <sha>" comment, or nothing if it has none. Shared by require-review.sh
-# (merge) and the post-merge audit so both read reviews the same way; the PR
-# gate's lastReviewed (src/lib/pr-gate/review.ts) is held to the same reading
-# by tests/unit/scripts/last-reviewed-sha.test.ts.
+# <sha>" comment, or nothing if it has none, for the post-merge audit. The
+# PR gate's lastReviewed (src/lib/pr-gate/review.ts) is held to the same
+# reading by tests/unit/scripts/last-reviewed-sha.test.ts. It reads every
+# comment, where the gate counts only those from accounts with write access:
+# the gate's own carried-over review is posted by github-actions[bot].
 # Usage: scripts/last-reviewed-sha.sh <pr-number>
 set -euo pipefail
 

@@ -78,11 +78,11 @@ export function localGit(
         "--not",
         main,
       ]);
-      // A failed read stops here, as merged-main-only.sh did, and names the
-      // merge, as review-passed.sh's message did.
+      // A failed read stops here, naming the merge, so it never carries a
+      // review it couldn't check.
       if (own.status !== 0) return "merge changes files";
       if (own.stdout.trim()) return "own commits";
-      // A failed read stops here too, as set -e stopped merged-main-only.sh.
+      // A failed read stops here too.
       const was = changes(reviewed, main);
       if (was === undefined) return "merge changes files";
       return changes(head, main) === was

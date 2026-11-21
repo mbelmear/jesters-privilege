@@ -1,5 +1,5 @@
 // Record that /code-review passed on a pull request's head commit, as the
-// "Code review: passed at <sha>" comment that `npm run merge` and
+// "Code review: passed at <sha>" comment that the PR gate status and
 // `npm run mark-ready` require. The logic is src/lib/pr-gate/review-passed.ts.
 // Usage: npm run review-passed -- <pr-number> <reviewed full SHA>
 import { join } from "node:path";
