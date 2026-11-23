@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 # Claude Code SessionStart hook (.claude/settings.json): names the repo's open
 # Dependabot alerts, if any. A minimatch alert sat open from 2026-11-05 to
-# 2026-11-22 because nothing showed it (that session's retro).
+# 2026-11-22 because nothing showed it (#278's retro).
 # Prints to stdout, which the hook adds to the session's context.
 set -euo pipefail
 
-where="repos/{owner}/{repo}/dependabot/alerts?state=open"
-if ! alerts=$(gh api "$where&per_page=100" \
+alerts_api="repos/{owner}/{repo}/dependabot/alerts?state=open"
+if ! alerts=$(gh api "$alerts_api&per_page=100" \
   --jq '.[] | "\(.security_advisory.severity) \(.dependency.package.name)"' 2>/dev/null); then
-  echo "Couldn't read the open Dependabot alerts (gh api '$where'), so whether any are open is unknown."
+  echo "Couldn't read the open Dependabot alerts (gh api '$alerts_api'), so whether any are open is unknown."
   exit 0
 fi
 
@@ -23,4 +23,4 @@ done <<<"$alerts"
 
 noun=alerts
 ((count == 1)) && noun=alert
-echo "$count open Dependabot $noun: $named. Tell the user; gh api '$where' has the advisories, and docs/testing.md (Dependency advisories) says how to fix one."
+echo "$count open Dependabot $noun: $named. Tell the user; gh api '$alerts_api' has the advisories, and docs/testing.md (Dependency advisories) says how to fix one."

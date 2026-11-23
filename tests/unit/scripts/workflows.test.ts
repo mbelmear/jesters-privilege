@@ -298,7 +298,11 @@ describe("Nightly's failure report", () => {
 // #276's gate went red on one dropped `gh pr view` and needed a manual rerun.
 describe("pr-gate.yml's check step", () => {
   const text = readFileSync(".github/workflows/pr-gate.yml", "utf8");
-  const block = /^ {6}- run: \|\n((?: {10}.*\n)+)/m.exec(text)?.[1] ?? "";
+  // The `run: |` block that runs the check, wherever it sits in the job.
+  const block =
+    [...text.matchAll(/^ {6}- run: \|\n((?: {10}.*\n)+)/gm)]
+      .map((match) => match[1] ?? "")
+      .find((body) => body.includes("pr-gate-check.ts")) ?? "";
   const script = block.replace(/^ {10}/gm, "");
 
   // Runs the step with npx answering each call with the next exit code.
@@ -323,6 +327,7 @@ ${script}`,
   it("tries once more when a read failed, and passes if that one does", () => {
     const result = run([1, 0]);
     expect(result.stdout).toContain("call 1");
+    expect(result.stdout).toContain("::warning::The PR gate check failed");
     expect(result.status).toBe(0);
   });
 

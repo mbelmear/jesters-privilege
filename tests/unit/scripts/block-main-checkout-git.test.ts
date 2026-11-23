@@ -25,13 +25,13 @@ describe("block-main-checkout-git", () => {
   // The hook reads Claude Code's PreToolUse JSON; exit 2 blocks the call.
   // The tables are built before beforeAll runs, so they name each directory
   // by a token.
-  const at = (token: string) =>
+  const dirFor = (token: string) =>
     ({ MAIN: main, WORKTREE: worktree, ROOT: root })[token] ?? token;
   const hook = (command: string, cwd: string) =>
     spawnSync("bash", [script], {
       env,
       encoding: "utf8",
-      input: JSON.stringify({ cwd: at(cwd), tool_input: { command } }),
+      input: JSON.stringify({ cwd: dirFor(cwd), tool_input: { command } }),
     });
 
   beforeAll(() => {
@@ -61,7 +61,7 @@ describe("block-main-checkout-git", () => {
     rmSync(root, { recursive: true, force: true });
   });
 
-  // The 2026-11-22 session checked out origin/main detached in the human's
+  // #278's session checked out origin/main detached in the human's
   // checkout while reading a Dependabot alert; only Edit and Write were guarded.
   it.each([
     [
@@ -79,6 +79,29 @@ describe("block-main-checkout-git", () => {
     ["a quoted path", (m: string) => `cd "${m}" && git pull`, "ROOT"],
     ["after a pipe", () => "git status | head; git restore file", "MAIN"],
     ["gh checking out a PR", () => "gh pr checkout 12", "MAIN"],
+    // #278's review found each of these passed.
+    ["after an assignment", () => "GIT_TRACE=1 git checkout x", "MAIN"],
+    ["behind env", () => "env FOO=1 git reset --hard", "MAIN"],
+    [
+      "behind command or sudo",
+      () => "command git switch x; sudo git pull",
+      "MAIN",
+    ],
+    ["by git's full path", () => "/usr/bin/git checkout x", "MAIN"],
+    ["in a subshell", (m: string) => `(cd ${m} && git checkout x)`, "ROOT"],
+    ["after pushd", (m: string) => `pushd ${m} && git merge x`, "ROOT"],
+    [
+      "named with --work-tree",
+      (m: string) => `git --work-tree ${m} --git-dir ${m}/.git checkout x`,
+      "WORKTREE",
+    ],
+    [
+      "named with --git-dir=",
+      (m: string) => `git --git-dir=${m}/.git update-ref HEAD x`,
+      "WORKTREE",
+    ],
+    ["a bisect", () => "git bisect start", "MAIN"],
+    ["dropping a stash", () => "git stash list && git stash drop", "MAIN"],
   ])(
     "refuses a command that changes the main checkout: %s",
     (_, command, cwd) => {
@@ -102,6 +125,11 @@ describe("block-main-checkout-git", () => {
       "MAIN",
     ],
     ["list worktrees", () => "git worktree list", "MAIN"],
+    [
+      "list and show stashes",
+      () => "git stash list; git stash show -p",
+      "MAIN",
+    ],
     ["make a worktree", () => "npm run worktree -- 5 branch", "MAIN"],
     ["commit in a worktree", () => "git add -A && git commit -m x", "WORKTREE"],
     [
