@@ -73,6 +73,14 @@ Open [http://localhost:3000](http://localhost:3000).
 
 How each test layer works and how to run it locally: [`docs/testing.md`](docs/testing.md).
 
+## Start here
+
+| To follow                                           | Start with                                                                                                                                                                     |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| An Episode from the feed to its page                | [Feed-to-site walkthrough](docs/architecture.md#from-feed-to-live-site) · [snapshot script](scripts/snapshot.ts) · [Episode route](src/app/episodes/%5B...address%5D/page.tsx) |
+| A Speak Freely Submission from the form to the show | [Form](src/components/submit-form.tsx) · [Worker entry point](src/worker/index.ts) · [validation and delivery](src/lib/submit.ts)                                              |
+| A change from pull request to production            | [How changes ship](docs/architecture.md#how-changes-ship) · [CI workflow](.github/workflows/ci.yml) · [deploy workflow](.github/workflows/deploy.yml)                          |
+
 ## Documentation
 
 | Document                                       | What it covers                                                  |
@@ -91,6 +99,10 @@ How each test layer works and how to run it locally: [`docs/testing.md`](docs/te
 ## Listening, questions, and feedback
 
 To ask the Jesters a Question, send a Confession, or suggest a Topic idea, use [Speak Freely](https://jestersprivilegepodcast.com/speak-freely) on the site, not GitHub Issues. Issues here are the build's own tickets, and the repo doesn't take outside contributions ([`CONTRIBUTING.md`](CONTRIBUTING.md)). If a Transcript gets something wrong, Speak Freely is the place for that too. Report a security problem privately, as [`SECURITY.md`](SECURITY.md) describes.
+
+## Contributors
+
+[OpenAI Codex](https://github.com/apps/chatgpt-codex-connector) contributed the repository assessment, release and deployment hardening, and this code tour.
 
 ## License
 
