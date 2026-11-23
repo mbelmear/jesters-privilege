@@ -115,6 +115,24 @@ describe("block-main-checkout-git", () => {
     ],
     ["inside $(…)", (m: string) => `echo $(git -C ${m} checkout x)`, "ROOT"],
     ["behind exec -a", () => "exec -a name git checkout x", "MAIN"],
+    // #278's third review found these passed.
+    [
+      "behind sudo -n, which takes no value",
+      () => "sudo -n git checkout x",
+      "MAIN",
+    ],
+    [
+      "behind long options",
+      () => "sudo --user root git pull; env --unset FOO git reset",
+      "MAIN",
+    ],
+    [
+      "pointed by GIT_DIR and GIT_WORK_TREE",
+      (m: string) => `GIT_DIR=${m}/.git GIT_WORK_TREE=${m} git checkout x`,
+      "WORKTREE",
+    ],
+    // The Markdown bullet below passes for its dash, not for its newline.
+    ["on a line of its own", () => "echo x\ngit add file", "MAIN"],
     // A quoted ) once ended the cd before it (#278's third review).
     [
       "after a quoted )",

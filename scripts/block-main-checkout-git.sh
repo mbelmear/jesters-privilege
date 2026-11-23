@@ -5,18 +5,19 @@
 # guards Edit and Write. #278's session checked out origin/main detached
 # there while reading a Dependabot alert. Reads, fetches, `git stash list` and
 # `git worktree` stay allowed. It reads each command in a chain (&&, ||, ;, |,
-# newlines, braces, parentheses), seeing git behind `VAR=value`, a wrapper and
-# its options (`env -i`, `sudo -u root`, `nice -n 5`, `if`), or a full path,
-# and tracks `cd`, `pushd`, `git -C`, `--work-tree` and `--git-dir`. A `cd`
-# lasts to the end of the command, even past a `)` or `popd` that would end
-# it: #278's review found a quoted `)` undoing a `cd` when they ended it, so
-# reading on is the safe side, and a worktree command after `(cd <main> …)`
-# is refused; run it as a command of its own.
-# It guards against slips, not evasion. Git inside `bash -c`, backticks, or
-# `env -C <dir>`, and a `cd $(…)` path, go unread and run, and nothing flags
-# them afterwards: the human finds the main checkout changed. Since it splits
-# on separators even inside quotes, a commit message holding "; git add" can
-# be refused. Reads the hook's JSON on stdin; exit 2 blocks.
+# newlines, braces, parentheses), seeing git behind `VAR=value`, the wrappers
+# and options named below, `if` and the like, or a full path, and tracks `cd`,
+# `pushd`, `git -C`, `--work-tree`, `--git-dir` and `GIT_DIR=`/`GIT_WORK_TREE=`.
+# A `cd` lasts to the end of the command, even past a `)` or `popd`: #278's
+# review found a quoted `)` ending one early, so a worktree command after
+# `(cd <main> …)` is refused; run it as a command of its own.
+# It reads words, not shell: git it can't see by those rules (run by another
+# program such as `bash -c`, `xargs` or `timeout`, inside backticks, behind
+# an option not named below, or in a directory named by a variable or `$(…)`)
+# goes unread and runs, and nothing flags it afterwards: the human finds the
+# main checkout changed. Since it splits on separators even inside quotes, a
+# commit message holding "; git add" can be refused. Reads the hook's JSON on
+# stdin; exit 2 blocks.
 set -euo pipefail
 
 input=$(cat)
@@ -56,23 +57,29 @@ refuse() {
   exit 2
 }
 
+# The wrapper options that take the word after them.
+takes_value=" env:-u env:--unset env:-C env:--chdir sudo:-u sudo:--user sudo:-g sudo:--group sudo:-h sudo:--host nice:-n nice:--adjustment exec:-a "
+
 segments=$(sed -E 's/(&&|\|\||;|\||\(|\)|\{|\})/\n/g' <<<"$command")
 while IFS= read -r segment; do
   read -ra words <<<"$segment" || true
   # Words that run the next one as the command: assignments, shell keywords,
-  # and wrappers with their options. These options take the word after them:
-  # env -u VAR, env -C dir, sudo -u user, sudo -g group, nice -n 5,
-  # exec -a name.
-  wrapped=false
+  # and wrappers with their options. GIT_DIR= and GIT_WORK_TREE= point git
+  # as --git-dir and --work-tree do.
+  wrapper=""
+  env_target=""
   while ((${#words[@]} > 0)); do
-    if [[ ${words[0]} =~ ^[A-Za-z_][A-Za-z0-9_]*= || ${words[0]} =~ ^(if|then|else|elif|do|while|until|!)$ ]]; then
+    if [[ ${words[0]} =~ ^GIT_(DIR|WORK_TREE)= ]]; then
+      env_target=$(resolve "${words[0]#*=}")
+      words=("${words[@]:1}")
+    elif [[ ${words[0]} =~ ^[A-Za-z_][A-Za-z0-9_]*= || ${words[0]} =~ ^(if|then|else|elif|do|while|until|!)$ ]]; then
       words=("${words[@]:1}")
     elif [[ ${words[0]} =~ ^(env|command|sudo|exec|nohup|time|nice|builtin)$ ]]; then
-      wrapped=true
+      wrapper=${words[0]}
       words=("${words[@]:1}")
-    elif [[ $wrapped == true && ${words[0]} =~ ^-[ugnCa]$ ]]; then
+    elif [[ -n $wrapper && $takes_value == *" $wrapper:${words[0]} "* ]]; then
       words=("${words[@]:2}")
-    elif [[ $wrapped == true && ${words[0]} == -* ]]; then
+    elif [[ -n $wrapper && ${words[0]} == -* ]]; then
       words=("${words[@]:1}")
     else
       break
@@ -87,7 +94,7 @@ while IFS= read -r segment; do
       if ((i < ${#words[@]})); then dir=$(resolve "${words[i]}"); else dir=$HOME; fi
       ;;
     git)
-      target=$dir
+      target=${env_target:-$dir}
       i=1
       while ((i < ${#words[@]})) && [[ ${words[i]} == -* ]]; do
         case ${words[i]} in
