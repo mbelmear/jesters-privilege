@@ -21,6 +21,8 @@
 
 The show's website: a fast, static, mobile-first site built with Next.js and served from a Cloudflare Worker. New Episodes arrive from the Spreaker feed on their own, so nobody touches the site when an Episode is published. What it does and why is in [`docs/spec.md`](docs/spec.md); the words it uses are in [`GLOSSARY.md`](GLOSSARY.md).
 
+You’re welcome to run, fork, and reuse the [MIT-licensed code](LICENSE). The Jesters maintain the upstream project in-house.
+
 <p align="center">
   <img src="docs/readme/episode-desktop.png" alt="Episode 1, Celebrity Pastors, on a desktop: Play and Share buttons, links to the podcast apps, the Show notes, and the start of the Transcript" width="68%">
   &nbsp;

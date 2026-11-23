@@ -49,7 +49,7 @@ jobs:
       # than a week (#240); a scheduled or pull request run refuses one.
       TRANSCRIBE_ANY_AGE: ${{ github.event_name == 'workflow_dispatch' }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup
@@ -85,7 +85,7 @@ jobs:
         run: command -v ffmpeg || { sudo apt-get update && sudo apt-get install -y ffmpeg; }
       - id: whisper-cache
         if: steps.plan.outputs.needed == 'true'
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: ~/whisper
           key: whisper-${{ runner.os }}-${{ env.WHISPER_VERSION }}-${{ env.WHISPER_MODEL_NAME }}
@@ -131,7 +131,7 @@ jobs:
         if: >-
           !cancelled() && github.event_name == 'pull_request' &&
           steps.plan.outputs.needed == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: transcripts
           path: ${{ env.TRANSCRIPTS_DIR }}/*.vtt

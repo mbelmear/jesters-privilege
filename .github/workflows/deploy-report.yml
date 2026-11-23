@@ -44,7 +44,7 @@ jobs:
       actions: read
       issues: write
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup
@@ -63,14 +63,14 @@ jobs:
       actions: read
       issues: read
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup
       - run: npm run --silent report-deploy -- --dry-run > deploy-report.txt
         env:
           GH_TOKEN: ${{ github.token }}
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: deploy-report
           path: deploy-report.txt

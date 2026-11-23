@@ -15,7 +15,7 @@ runs:
         echo "playwright=$(npx playwright --version | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
         echo "image=${ImageOS:?is unset, so the browser cache cannot name the runner image}" >> "$GITHUB_OUTPUT"
     - id: cache
-      uses: actions/cache@v4
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
       with:
         path: ~/.cache/ms-playwright
         key: playwright-${{ steps.version.outputs.image }}-${{ steps.version.outputs.playwright }}-${{ inputs.browsers }}
