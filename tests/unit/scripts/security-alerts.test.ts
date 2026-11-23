@@ -46,7 +46,8 @@ function runHook(alerts: object[], exit = 0) {
     `#!/bin/sh
 echo "$*" > "${join(root, "args")}"
 [ ${exit} -eq 0 ] || exit ${exit}
-while [ "$1" != --jq ]; do shift; done
+while [ $# -gt 0 ] && [ "$1" != --jq ]; do shift; done
+[ $# -gt 1 ] || { echo "fake gh: no --jq" >&2; exit 3; }
 jq -r "$2" "${join(root, "answer")}"
 `
   );

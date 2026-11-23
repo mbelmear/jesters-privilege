@@ -3,18 +3,20 @@
 # command that would move the main checkout's branch, index or files, since
 # that checkout belongs to the human (AGENTS.md); block-main-checkout-edits.sh
 # guards Edit and Write. #278's session checked out origin/main detached
-# there while reading a Dependabot alert. Reads, fetches, and `git worktree`
-# stay allowed. It follows each command in a chain (&&, ||, ;, |, newlines,
-# braces, and parentheses, whose `cd` ends when they close), tracking `cd`,
-# `pushd`/`popd`, `git -C`, `--work-tree` and `--git-dir`, and sees git behind
-# `VAR=value`, a wrapper and its options (`env -i`, `sudo -u root`, `nice`,
-# `if`), or a full path, so `cd <main> && git checkout` from elsewhere is
-# caught too. It guards against slips, not evasion: git inside `bash -c` goes
-# unread and runs, and the human sees it as the next session start's warning
-# that the main checkout is off main or changed (freshen-main-checkout.sh).
-# Since it splits on separators even inside quotes, a commit message holding
-# "; git add" can be refused. Reads the hook's JSON on stdin;
-# exit 2 blocks.
+# there while reading a Dependabot alert. Reads, fetches, `git stash list` and
+# `git worktree` stay allowed. It reads each command in a chain (&&, ||, ;, |,
+# newlines, braces, parentheses), seeing git behind `VAR=value`, a wrapper and
+# its options (`env -i`, `sudo -u root`, `nice -n 5`, `if`), or a full path,
+# and tracks `cd`, `pushd`, `git -C`, `--work-tree` and `--git-dir`. A `cd`
+# lasts to the end of the command, even past a `)` or `popd` that would end
+# it: #278's review found a quoted `)` undoing a `cd` when they ended it, so
+# reading on is the safe side, and a worktree command after `(cd <main> …)`
+# is refused; run it as a command of its own.
+# It guards against slips, not evasion. Git inside `bash -c`, backticks, or
+# `env -C <dir>`, and a `cd $(…)` path, go unread and run, and nothing flags
+# them afterwards: the human finds the main checkout changed. Since it splits
+# on separators even inside quotes, a commit message holding "; git add" can
+# be refused. Reads the hook's JSON on stdin; exit 2 blocks.
 set -euo pipefail
 
 input=$(cat)
@@ -54,21 +56,23 @@ refuse() {
   exit 2
 }
 
-# A subshell's parentheses become segments of their own, so its `cd` can end
-# with it; `pushd` and `popd` share the stack.
-segments=$(sed -E -e 's/(&&|\|\||;|\||\{|\})/\n/g' -e 's/\(/\n(\n/g' -e 's/\)/\n)\n/g' <<<"$command")
-stack=()
+segments=$(sed -E 's/(&&|\|\||;|\||\(|\)|\{|\})/\n/g' <<<"$command")
 while IFS= read -r segment; do
   read -ra words <<<"$segment" || true
-  # Words that run the next one as the command: assignments, wrappers and
-  # their options, and shell keywords. An option that takes a value (env -u
-  # VAR, sudo -u root, nice -n 5) takes the word after it too.
+  # Words that run the next one as the command: assignments, shell keywords,
+  # and wrappers with their options. These options take the word after them:
+  # env -u VAR, env -C dir, sudo -u user, sudo -g group, nice -n 5,
+  # exec -a name.
+  wrapped=false
   while ((${#words[@]} > 0)); do
-    if [[ ${words[0]} =~ ^[A-Za-z_][A-Za-z0-9_]*= || ${words[0]} =~ ^(env|command|sudo|exec|nohup|time|nice|builtin|if|then|else|elif|do|while|until|!)$ ]]; then
+    if [[ ${words[0]} =~ ^[A-Za-z_][A-Za-z0-9_]*= || ${words[0]} =~ ^(if|then|else|elif|do|while|until|!)$ ]]; then
       words=("${words[@]:1}")
-    elif [[ ${words[0]} =~ ^-[ugnC]$ ]]; then
+    elif [[ ${words[0]} =~ ^(env|command|sudo|exec|nohup|time|nice|builtin)$ ]]; then
+      wrapped=true
+      words=("${words[@]:1}")
+    elif [[ $wrapped == true && ${words[0]} =~ ^-[ugnCa]$ ]]; then
       words=("${words[@]:2}")
-    elif [[ ${words[0]} == -* ]]; then
+    elif [[ $wrapped == true && ${words[0]} == -* ]]; then
       words=("${words[@]:1}")
     else
       break
@@ -77,15 +81,7 @@ while IFS= read -r segment; do
   ((${#words[@]} > 0)) || continue
   [[ ${words[0]} == */git ]] && words[0]=git
   case ${words[0]} in
-    "(") stack+=("$dir") ;;
-    ")" | popd)
-      if ((${#stack[@]} > 0)); then
-        dir=${stack[${#stack[@]} - 1]}
-        unset 'stack[${#stack[@]}-1]'
-      fi
-      ;;
     cd | pushd)
-      [[ ${words[0]} == pushd ]] && stack+=("$dir")
       i=1
       while ((i < ${#words[@]})) && [[ ${words[i]} == -* ]]; do i=$((i + 1)); done
       if ((i < ${#words[@]})); then dir=$(resolve "${words[i]}"); else dir=$HOME; fi

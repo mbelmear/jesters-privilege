@@ -102,6 +102,37 @@ describe("block-main-checkout-git", () => {
     ],
     ["a bisect", () => "git bisect start", "MAIN"],
     ["dropping a stash", () => "git stash list && git stash drop", "MAIN"],
+    // #278's reviews found these passed, or found them untested.
+    [
+      "behind env -u or command -p",
+      () => "env -u FOO git checkout x; command -p git pull",
+      "MAIN",
+    ],
+    [
+      "after builtin cd",
+      (m: string) => `builtin cd ${m} && git checkout x`,
+      "ROOT",
+    ],
+    ["inside $(…)", (m: string) => `echo $(git -C ${m} checkout x)`, "ROOT"],
+    ["behind exec -a", () => "exec -a name git checkout x", "MAIN"],
+    // A quoted ) once ended the cd before it (#278's third review).
+    [
+      "after a quoted )",
+      (m: string) => `pushd ${m}; echo ")"; git checkout x`,
+      "WORKTREE",
+    ],
+    // Refused on purpose: a cd lasts to the end of the command, so a quoted )
+    // can't end it (the hook's header).
+    [
+      "in a subshell, then in a worktree",
+      (m: string) => `(cd ${m} && git status) && git commit -m x`,
+      "WORKTREE",
+    ],
+    [
+      "after pushd and popd",
+      (m: string) => `pushd ${m}; popd; git checkout -b y`,
+      "WORKTREE",
+    ],
     // #278's second review found these passed.
     [
       "behind a wrapper's options",
@@ -153,16 +184,11 @@ describe("block-main-checkout-git", () => {
       "MAIN",
     ],
     ["make a worktree", () => "npm run worktree -- 5 branch", "MAIN"],
-    // #278's second review found these refused: a subshell's cd outlasted it.
+    // A line of a PR body read as a command once (#278's third review).
     [
-      "a commit after a subshell read the main checkout",
-      (m: string) => `(cd ${m} && git status) && git commit -m x`,
-      "WORKTREE",
-    ],
-    [
-      "a checkout after pushd and popd",
-      (m: string) => `pushd ${m}; popd; git checkout -b y`,
-      "WORKTREE",
+      "a Markdown bullet naming git",
+      () => "gh pr create --body '\n- git add the new hook'",
+      "MAIN",
     ],
     ["commit in a worktree", () => "git add -A && git commit -m x", "WORKTREE"],
     [
