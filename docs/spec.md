@@ -276,8 +276,8 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
 - **Footer**, stacked on phones:
   1. the logo and the site's one-line description
   2. Explore: the nav sections (Episodes, Fools' Gallery, About, Speak Freely)
-  3. Listen: the show's Listen links as icons
-  4. Follow: the social links as icons
+  3. Listen: the show's Listen links as icons, in alphabetical order
+  4. Follow: the social links as icons, in alphabetical order (YouTube Shorts sits here; the channel itself is a Listen link)
   5. a bottom strip: the contact email, the privacy note, © year, and the ESV notice
 - **Motion**: the Motion library, loaded lightweight. Shared presets: a slow "processional" ease for reveals and a quicker "courtly" one for menus. Reduced motion is respected site-wide.
 - **Navigation**:

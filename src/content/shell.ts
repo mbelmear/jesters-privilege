@@ -59,6 +59,7 @@ export const shell = {
       facebook: "Facebook",
       tiktok: "TikTok",
       x: "X",
+      "youtube-shorts": "YouTube Shorts",
     },
     contact: "Write to the Jesters",
     privacyNote: {
