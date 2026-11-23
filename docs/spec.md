@@ -149,7 +149,7 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
 - Review and merge policy:
   - **Logic and infrastructure** pull requests are merged by the agent only when CI is fully green and an automated `code-review` pass finds nothing serious.
   - **Visual** pull requests wait for a Jester's approval of the preview URL.
-  - The repo is public for now, so GitHub enforces main's ruleset: a pull request, squash merges only, and six required checks, with no bypass. The ruleset also requires the `PR gate` status, which a workflow sets only once a PR's head has a passed review (`docs/testing.md`, Merging). Once the repo goes private on GitHub Free, the ruleset stops being enforced and the post-merge audit is what's left (#145). Upgrade to GitHub Pro if it ever slips.
+  - The repo is public, and stays so (Michael, 2026-11-22: the code is there to be shown, under MIT; #145 has why), so GitHub enforces main's ruleset: a pull request, squash merges only, and six required checks, with no bypass. The ruleset also requires the `PR gate` status, which a workflow sets only once a PR's head has a passed review (`docs/testing.md`, Merging). On GitHub Free a private repo's ruleset isn't enforced, so going private would need GitHub Pro.
 
 ### Feed and Episodes
 
