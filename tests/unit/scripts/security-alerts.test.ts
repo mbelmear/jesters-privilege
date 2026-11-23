@@ -46,7 +46,8 @@ function runHook(alerts: object[], exit = 0) {
     `#!/bin/sh
 echo "$*" > "${join(root, "args")}"
 [ ${exit} -eq 0 ] || exit ${exit}
-jq -r "$4" "${join(root, "answer")}"
+while [ "$1" != --jq ]; do shift; done
+jq -r "$2" "${join(root, "answer")}"
 `
   );
   chmodSync(join(root, "gh"), 0o755);

@@ -102,6 +102,28 @@ describe("block-main-checkout-git", () => {
     ],
     ["a bisect", () => "git bisect start", "MAIN"],
     ["dropping a stash", () => "git stash list && git stash drop", "MAIN"],
+    // #278's second review found these passed.
+    [
+      "behind a wrapper's options",
+      () => "env -i git checkout x; sudo -u root git pull",
+      "MAIN",
+    ],
+    [
+      "behind time -p or nice",
+      () => "time -p git reset; nice -n 5 git merge x",
+      "MAIN",
+    ],
+    ["after cd --", (m: string) => `cd -- ${m} && git checkout x`, "ROOT"],
+    [
+      "inside an if",
+      (m: string) => `if cd ${m}; then git checkout x; fi`,
+      "ROOT",
+    ],
+    [
+      "a --git-dir relative to -C",
+      (m: string) => `git -C ${m} --git-dir=.git checkout x`,
+      "ROOT",
+    ],
   ])(
     "refuses a command that changes the main checkout: %s",
     (_, command, cwd) => {
@@ -131,6 +153,17 @@ describe("block-main-checkout-git", () => {
       "MAIN",
     ],
     ["make a worktree", () => "npm run worktree -- 5 branch", "MAIN"],
+    // #278's second review found these refused: a subshell's cd outlasted it.
+    [
+      "a commit after a subshell read the main checkout",
+      (m: string) => `(cd ${m} && git status) && git commit -m x`,
+      "WORKTREE",
+    ],
+    [
+      "a checkout after pushd and popd",
+      (m: string) => `pushd ${m}; popd; git checkout -b y`,
+      "WORKTREE",
+    ],
     ["commit in a worktree", () => "git add -A && git commit -m x", "WORKTREE"],
     [
       "cd into a worktree to check out",

@@ -5,12 +5,15 @@
 # guards Edit and Write. #278's session checked out origin/main detached
 # there while reading a Dependabot alert. Reads, fetches, and `git worktree`
 # stay allowed. It follows each command in a chain (&&, ||, ;, |, newlines,
-# a subshell's parentheses), tracking `cd`, `pushd`, `git -C`, `--work-tree`
-# and `--git-dir`, and sees git behind `VAR=value`, `env`, `command`, `sudo`
-# or a full path, so `cd <main> && git checkout` from elsewhere is caught too.
-# It guards against slips, not evasion: git inside `$(…)` or `bash -c` goes
-# unread, and since it splits on separators even inside quotes, a commit
-# message holding "; git add" can be refused. Reads the hook's JSON on stdin;
+# braces, and parentheses, whose `cd` ends when they close), tracking `cd`,
+# `pushd`/`popd`, `git -C`, `--work-tree` and `--git-dir`, and sees git behind
+# `VAR=value`, a wrapper and its options (`env -i`, `sudo -u root`, `nice`,
+# `if`), or a full path, so `cd <main> && git checkout` from elsewhere is
+# caught too. It guards against slips, not evasion: git inside `bash -c` goes
+# unread and runs, and the human sees it as the next session start's warning
+# that the main checkout is off main or changed (freshen-main-checkout.sh).
+# Since it splits on separators even inside quotes, a commit message holding
+# "; git add" can be refused. Reads the hook's JSON on stdin;
 # exit 2 blocks.
 set -euo pipefail
 
@@ -23,12 +26,13 @@ dir=$(jq -r '.cwd // empty' <<<"$input")
 # Every git subcommand that writes the working tree, the index, or HEAD.
 writes=" checkout switch reset restore stash merge pull rebase cherry-pick revert commit am apply clean rm mv add bisect submodule sparse-checkout update-ref read-tree checkout-index "
 
-# A path as the command would see it from $dir, quotes dropped.
+# A path as the command would see it from <base> (default $dir), quotes
+# dropped.
 resolve() {
-  local path=${1//\"/}
+  local path=${1//\"/} base=${2:-$dir}
   path=${path//\'/}
   path=${path/#\~/$HOME}
-  [[ $path == /* ]] || path="$dir/$path"
+  [[ $path == /* ]] || path="$base/$path"
   printf '%s\n' "$path"
 }
 
@@ -50,34 +54,54 @@ refuse() {
   exit 2
 }
 
-segments=$(sed -E 's/(&&|\|\||;|\||\(|\)|\{|\})/\n/g' <<<"$command")
+# A subshell's parentheses become segments of their own, so its `cd` can end
+# with it; `pushd` and `popd` share the stack.
+segments=$(sed -E -e 's/(&&|\|\||;|\||\{|\})/\n/g' -e 's/\(/\n(\n/g' -e 's/\)/\n)\n/g' <<<"$command")
+stack=()
 while IFS= read -r segment; do
   read -ra words <<<"$segment" || true
-  # Words that run the next one as the command: assignments and wrappers.
-  while ((${#words[@]} > 0)) && [[ ${words[0]} =~ ^[A-Za-z_][A-Za-z0-9_]*= || ${words[0]} =~ ^(env|command|sudo|exec|nohup|time)$ ]]; do
-    words=("${words[@]:1}")
+  # Words that run the next one as the command: assignments, wrappers and
+  # their options, and shell keywords. An option that takes a value (env -u
+  # VAR, sudo -u root, nice -n 5) takes the word after it too.
+  while ((${#words[@]} > 0)); do
+    if [[ ${words[0]} =~ ^[A-Za-z_][A-Za-z0-9_]*= || ${words[0]} =~ ^(env|command|sudo|exec|nohup|time|nice|builtin|if|then|else|elif|do|while|until|!)$ ]]; then
+      words=("${words[@]:1}")
+    elif [[ ${words[0]} =~ ^-[ugnC]$ ]]; then
+      words=("${words[@]:2}")
+    elif [[ ${words[0]} == -* ]]; then
+      words=("${words[@]:1}")
+    else
+      break
+    fi
   done
   ((${#words[@]} > 0)) || continue
   [[ ${words[0]} == */git ]] && words[0]=git
   case ${words[0]} in
+    "(") stack+=("$dir") ;;
+    ")" | popd)
+      if ((${#stack[@]} > 0)); then
+        dir=${stack[${#stack[@]} - 1]}
+        unset 'stack[${#stack[@]}-1]'
+      fi
+      ;;
     cd | pushd)
-      if ((${#words[@]} > 1)); then dir=$(resolve "${words[1]}"); else dir=$HOME; fi
+      [[ ${words[0]} == pushd ]] && stack+=("$dir")
+      i=1
+      while ((i < ${#words[@]})) && [[ ${words[i]} == -* ]]; do i=$((i + 1)); done
+      if ((i < ${#words[@]})); then dir=$(resolve "${words[i]}"); else dir=$HOME; fi
       ;;
     git)
       target=$dir
       i=1
       while ((i < ${#words[@]})) && [[ ${words[i]} == -* ]]; do
         case ${words[i]} in
-          -C)
-            target=$(resolve "${words[i + 1]:-.}")
-            i=$((i + 2))
-            ;;
-          --work-tree | --git-dir)
-            target=$(resolve "${words[i + 1]:-.}")
+          # Each path is relative to the -C before it, as git reads them.
+          -C | --work-tree | --git-dir)
+            target=$(resolve "${words[i + 1]:-.}" "$target")
             i=$((i + 2))
             ;;
           --work-tree=* | --git-dir=*)
-            target=$(resolve "${words[i]#*=}")
+            target=$(resolve "${words[i]#*=}" "$target")
             i=$((i + 1))
             ;;
           -c) i=$((i + 2)) ;;
