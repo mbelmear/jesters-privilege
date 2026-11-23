@@ -103,12 +103,16 @@
     "ts-node": "^10.9.2",
     "tsx": "^4.23.15",
     "typescript": "^5",
-    "typescript-eslint": "^8.72.1",
+    "typescript-eslint": "^8.73.0",
     "wrangler": "^4.155.0",
     "yaml": "^2.9.1"
   },
   "overrides": {
     "compression": "^1.8.2",
-    "basic-ftp": "^6.2.6"
+    "basic-ftp": "^6.2.6",
+    "minimatch@^9": "^11.0.9",
+    "minimatch@^10": "^11.0.9",
+    "glob@^10": "^14.0.3",
+    "glob@^13": "^14.0.3"
   }
 }
