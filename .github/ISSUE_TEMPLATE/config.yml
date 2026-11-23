@@ -1,0 +1,10 @@
+# Issues here are the build's own tickets; listeners and security reports go
+# elsewhere (CONTRIBUTING.md, SECURITY.md).
+blank_issues_enabled: false
+contact_links:
+  - name: Ask the Jesters a Question, send a Confession, or suggest a Topic
+    url: https://jestersprivilegepodcast.com/speak-freely
+    about: Speak Freely on the site reaches the show. Transcript corrections go there too.
+  - name: Report a security problem
+    url: https://github.com/mbelmear/jesters-privilege/security/advisories/new
+    about: Report it privately, as SECURITY.md describes.

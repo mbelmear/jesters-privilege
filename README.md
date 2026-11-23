@@ -38,6 +38,8 @@ The show's website: a fast, static, mobile-first site built with Next.js and ser
 
 ## How it's built
 
+How the platform fits together, from the feed to the live site, is in [`docs/architecture.md`](docs/architecture.md).
+
 The site is built agent-first. The Jesters' brief became [`docs/spec.md`](docs/spec.md) in a grilling session, the spec became tickets on GitHub Issues, and coding agents build each ticket test-first in its own git worktree. Every pull request is reviewed against [`CODING_STANDARDS.md`](CODING_STANDARDS.md) and its ticket before it merges, and GitHub's merge button stays shut until a required `PR gate` status says the pull request's head has passed that review. Anything a visitor sees waits for a Jester's approval on a preview deploy. After a ticket ships, a retro turns what went wrong into a check, a script, or a coding standard, so the next ticket starts from a better place. The full rules are in [`AGENTS.md`](AGENTS.md) and [`docs/testing.md`](docs/testing.md).
 
 Three test layers guard it: Jest with React Testing Library and jest-axe for logic and components, Playwright on Chromium and WebKit at phone and desktop sizes, and a Lighthouse CI budget for mobile performance.
@@ -69,9 +71,24 @@ Open [http://localhost:3000](http://localhost:3000).
 
 How each test layer works and how to run it locally: [`docs/testing.md`](docs/testing.md).
 
+## Documentation
+
+| Document                                       | What it covers                                                  |
+| ---------------------------------------------- | --------------------------------------------------------------- |
+| [`docs/architecture.md`](docs/architecture.md) | How the platform is built and how it works                      |
+| [`docs/spec.md`](docs/spec.md)                 | What the site does, page by page, and why                       |
+| [`docs/adr/`](docs/adr/)                       | Architecture decisions that are hard to reverse                 |
+| [`docs/deploy.md`](docs/deploy.md)             | Deploys, the feed check, Transcripts, Submit, rolling back      |
+| [`docs/testing.md`](docs/testing.md)           | Each test layer, CI, and merging                                |
+| [`CODING_STANDARDS.md`](CODING_STANDARDS.md)   | How code here is written                                        |
+| [`GLOSSARY.md`](GLOSSARY.md)                   | The project's vocabulary                                        |
+| [`AGENTS.md`](AGENTS.md)                       | The working rules coding agents follow                          |
+| [`CONTRIBUTING.md`](CONTRIBUTING.md)           | Why outside contributions aren't taken, and where to go instead |
+| [`SECURITY.md`](SECURITY.md)                   | How to report a vulnerability privately                         |
+
 ## Listening, questions, and feedback
 
-To ask the Jesters a Question, send a Confession, or suggest a Topic, use [Speak Freely](https://jestersprivilegepodcast.com/speak-freely) on the site, not GitHub Issues. Issues here are the build's own tickets. If a Transcript gets something wrong, Speak Freely is the place for that too.
+To ask the Jesters a Question, send a Confession, or suggest a Topic, use [Speak Freely](https://jestersprivilegepodcast.com/speak-freely) on the site, not GitHub Issues. Issues here are the build's own tickets, and the repo doesn't take outside contributions ([`CONTRIBUTING.md`](CONTRIBUTING.md)). If a Transcript gets something wrong, Speak Freely is the place for that too. Report a security problem privately, as [`SECURITY.md`](SECURITY.md) describes.
 
 ## License
 
