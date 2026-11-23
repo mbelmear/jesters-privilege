@@ -88,7 +88,7 @@ How each test layer works and how to run it locally: [`docs/testing.md`](docs/te
 
 ## Listening, questions, and feedback
 
-To ask the Jesters a Question, send a Confession, or suggest a Topic, use [Speak Freely](https://jestersprivilegepodcast.com/speak-freely) on the site, not GitHub Issues. Issues here are the build's own tickets, and the repo doesn't take outside contributions ([`CONTRIBUTING.md`](CONTRIBUTING.md)). If a Transcript gets something wrong, Speak Freely is the place for that too. Report a security problem privately, as [`SECURITY.md`](SECURITY.md) describes.
+To ask the Jesters a Question, send a Confession, or suggest a Topic idea, use [Speak Freely](https://jestersprivilegepodcast.com/speak-freely) on the site, not GitHub Issues. Issues here are the build's own tickets, and the repo doesn't take outside contributions ([`CONTRIBUTING.md`](CONTRIBUTING.md)). If a Transcript gets something wrong, Speak Freely is the place for that too. Report a security problem privately, as [`SECURITY.md`](SECURITY.md) describes.
 
 ## License
 

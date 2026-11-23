@@ -79,7 +79,7 @@ Which feed a build reads is the `FEED` environment value (`src/lib/feed-source.t
 
 ### Transcripts
 
-Spreaker makes no Transcripts, so the site makes its own ([ADR 0003](adr/0003-site-makes-its-own-transcripts.md)). Half an hour after each feed check, `.github/workflows/transcribe.yml` finds Episodes in their first week with neither a host Transcript nor a saved one, transcribes each once with whisper.cpp, and pushes `<episode-guid>.vtt` to the `transcripts` branch. Builds read that branch; the next feed check sees the new Transcript and rebuilds. Because an Episode with a saved file is never transcribed again, a hand fix to its file sticks. An older Episode with nothing saved fails a scheduled run rather than spend an hour of Whisper on it; a run started by hand remakes it ([`deploy.md`](deploy.md), Transcripts).
+Spreaker makes no Transcripts, so the site makes its own ([ADR 0003](adr/0003-site-makes-its-own-transcripts.md)). Half an hour after each feed check, `.github/workflows/transcribe.yml` finds Episodes in their first week with neither a feed-linked Transcript nor a saved one, transcribes each once with whisper.cpp, and pushes `<episode-guid>.vtt` to the `transcripts` branch. Builds read that branch; the next feed check sees the new Transcript and rebuilds. Because an Episode with a saved file is never transcribed again, a hand fix to its file sticks. An older Episode with nothing saved fails a scheduled run rather than spend an hour of Whisper on it; a run started by hand remakes it ([`deploy.md`](deploy.md), Transcripts).
 
 On the page, the Transcript module (`src/lib/transcript.ts`) groups WebVTT cues into timestamped paragraphs. The full text is always in the HTML for search engines; tapping a timestamp seeks the player.
 
@@ -139,7 +139,7 @@ flowchart LR
   Main --> Deploy[Deploy to production<br/>+ smoke check]
 ```
 
-Every change is a ticket on GitHub Issues, built test-first in its own git worktree and branch ([`../AGENTS.md`](../AGENTS.md)). A pull request runs the following; one that changes only `docs/**` or top-level Markdown runs Jest alone and gets no preview:
+Every change is a ticket on GitHub Issues, built test-first in its own git worktree and branch ([`../AGENTS.md`](../AGENTS.md)). A pull request runs the following; one that changes only `docs/**` or top-level Markdown skips the build, Playwright and Lighthouse, and gets no preview:
 
 - **CI** (`.github/workflows/ci.yml`): format, lint, typecheck and Jest; the static build; Playwright on Chromium and WebKit at phone and desktop sizes, with axe scans, against both the fixture and an empty feed; a Lighthouse CI mobile performance budget; and actionlint, zizmor and shellcheck on the workflows and scripts. Firefox runs nightly.
 - **A preview** (`deploy.yml`): the PR's build, reading the live feed, uploaded as a preview version of the Worker at its own URL and posted on the PR.
@@ -147,7 +147,7 @@ Every change is a ticket on GitHub Issues, built test-first in its own git workt
 
 `main`'s ruleset requires a pull request, squash merges, every CI check and the PR gate, with no bypass. A visual PR also waits for a Jester's approval on the preview. A push to `main` deploys to production and runs a smoke check against the live site (`scripts/smoke-check.sh`). After the merge, the Merge audit workflow checks the review really happened, and Conflict watch flags waiting visual PRs that no longer merge cleanly. How each test layer runs and the full merge procedure: [`testing.md`](testing.md).
 
-When a scheduled run fails (the feed check, a production deploy, Nightly), a workflow opens an issue naming the failure, or comments on the one still open, (`deploy-report.yml`, `nightly.yml`). The next passing feed check closes its own issue; a failed deploy's or Nightly's is closed by hand once a run passes again.
+When a scheduled run fails (the feed check, a production deploy, Nightly), a workflow opens an issue naming the failure, or comments on the one still open (`deploy-report.yml`, `nightly.yml`). The next passing feed check closes its own issue; a failed deploy's or Nightly's is closed by hand once a run passes again.
 
 ## Where to read next
 
