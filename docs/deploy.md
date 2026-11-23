@@ -116,18 +116,20 @@ The site's version is `version` in `package.json` (and `package-lock.json`, whic
 | Minor | Something new a visitor can see or do              | A Scripture index page: 1.4.2 → 1.5.0     |
 | Patch | Fixes, copy, dependencies, tooling, docs           | The Listen icons reordered: 1.4.2 → 1.4.3 |
 
-1.0.0 is v1, the site that went live on 2026-11-11 (#284).
+1.0.0 is v1 as of #284; the site has been live since 2026-11-11.
 
-A ticket's PR never changes the version: several sessions build tickets at once, and each bumping the same line would conflict. A release is its own small PR, when Michael decides the work merged since the last one is worth naming. It changes nothing but the version, from a worktree on `origin/main`:
+A ticket's PR never changes the version: several sessions build tickets at once, and each bumping the same line would conflict. So a release bundles every change merged since the last one, and takes the biggest part any of them calls for. It is its own small PR, with its own issue and worktree (`AGENTS.md`), when Michael decides the work merged since the last release is worth naming. It changes nothing but the version:
 
 ```bash
 npm version <major|minor|patch> --no-git-tag-version   # updates both files
 ```
 
-Once it merges, tag the merge commit and publish the release, whose notes GitHub writes from the PRs merged since the previous tag:
+Once it merges, Michael, or an agent he asks, tags the merge commit and publishes the release, whose notes GitHub writes from the PRs merged since the previous release:
 
 ```bash
 gh release create v<version> --target <merge commit SHA> --title v<version> --generate-notes
 ```
+
+v1.0.0, the first release, has no previous one, so generated notes would list every PR since the repo began; it gets written notes instead (`--notes`, in place of `--generate-notes`).
 
 Deploys don't wait for a release: every merge to `main` goes live as before, so the version names a point in that stream, not what is deployed.
