@@ -1,8 +1,6 @@
 import { act, render, screen, within } from "@testing-library/react";
 import { axe } from "jest-axe";
 import { content } from "@/content";
-import { byName } from "@/lib/by-name";
-import { EPISODE_LISTEN_APPS } from "@/lib/episode-listen-links";
 import Home from "@/app/page";
 
 beforeAll(() => {
@@ -73,12 +71,12 @@ describe("Home", () => {
       // Every app the show is on opens the show, in alphabetical order: the
       // fixture's Apple lookup doesn't list this Episode, and a fixture build
       // doesn't ask Spotify.
-      EPISODE_LISTEN_APPS.flatMap((app) => {
-        const href = content.site.listen[app];
-        return href ? [{ href, name: content.listen.platforms[app] }] : [];
-      })
-        .sort(byName)
-        .map(({ href }) => href)
+      [
+        content.site.listen["amazon-music"],
+        content.site.listen["apple-podcasts"],
+        content.site.listen.spotify,
+        content.site.listen.youtube,
+      ]
     );
     expect(warn).toHaveBeenCalledWith(
       expect.stringMatching(
