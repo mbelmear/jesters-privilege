@@ -12,10 +12,14 @@ const links = [
     app: "spotify",
     href: "https://open.spotify.com/show/6a7KnKe6ohzrMGZwJDc5Ti",
   },
+  {
+    app: "amazon-music",
+    href: "https://music.amazon.com/podcasts/581f57eb-1503-4a04-b10d-5431bb5029b9/jesters-privilege",
+  },
 ] as const;
 
 describe("EpisodeListenLinks", () => {
-  it("offers the Episode in each app, named for a screen reader", () => {
+  it("offers the Episode in each app, in alphabetical order, named for a screen reader", () => {
     render(<EpisodeListenLinks links={links} copy={content.listen} />);
     const list = screen.getByRole("list", { name: "or listen on" });
     expect(list).toBeVisible();
@@ -24,6 +28,7 @@ describe("EpisodeListenLinks", () => {
         .getAllByRole("link")
         .map((link) => [link.textContent, link.getAttribute("href")])
     ).toEqual([
+      ["Amazon Music", links[2].href],
       ["Apple Podcasts", links[0].href],
       ["Spotify", links[1].href],
     ]);

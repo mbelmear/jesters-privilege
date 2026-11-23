@@ -1,6 +1,7 @@
 import { useId } from "react";
 import { ListenIcon } from "@/components/listen-icon";
 import { Button } from "@/components/ui/button";
+import { byName } from "@/lib/by-name";
 import {
   LISTEN_PLATFORMS,
   type Copy,
@@ -18,9 +19,9 @@ type Props = {
 };
 
 /**
- * "Listen on" buttons for every platform the show is on, each hidden until
- * its link exists, with a word for visitors new to podcasts. Before the show
- * is on any platform, nothing shows.
+ * "Listen on" buttons for every platform the show is on, in alphabetical
+ * order as in the footer, each hidden until its link exists, with a word for
+ * visitors new to podcasts. Before the show is on any platform, nothing shows.
  */
 export function ListenButtons({
   links,
@@ -32,8 +33,8 @@ export function ListenButtons({
   const headingId = useId();
   const platforms = LISTEN_PLATFORMS.flatMap((platform) => {
     const href = links[platform];
-    return href ? [{ platform, href }] : [];
-  });
+    return href ? [{ platform, href, name: copy.platforms[platform] }] : [];
+  }).sort(byName);
   if (platforms.length === 0) return null;
   return (
     <section
@@ -47,12 +48,12 @@ export function ListenButtons({
         {copy.title}
       </Heading>
       <ul className="flex flex-wrap justify-center gap-3">
-        {platforms.map(({ platform, href }) => (
+        {platforms.map(({ platform, href, name }) => (
           <li key={platform}>
             <Button asChild variant="outline" size="lg">
               <a href={href}>
                 <ListenIcon platform={platform} />
-                {copy.platforms[platform]}
+                {name}
               </a>
             </Button>
           </li>

@@ -10,6 +10,7 @@ import {
   type Shell,
   type Site,
 } from "@/lib/content";
+import { byName } from "@/lib/by-name";
 import { cn, focusRing } from "@/lib/utils";
 
 type Props = {
@@ -22,9 +23,6 @@ type Props = {
   // The copyright year, from the build.
   year: number;
 };
-
-const byName = (a: { name: string }, b: { name: string }) =>
-  a.name.localeCompare(b.name, "en");
 
 const linkClass = cn(
   "text-primary underline underline-offset-3 hover:decoration-2",
