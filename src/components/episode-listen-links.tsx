@@ -1,12 +1,13 @@
 import { useId } from "react";
 import { ListenIcon } from "@/components/listen-icon";
 import { Button } from "@/components/ui/button";
+import { byName } from "@/lib/by-name";
 import type { ListenCopy } from "@/lib/content";
 import type { EpisodeListenLink } from "@/lib/episode-listen-links";
 
 type Props = {
-  // In the order they show, each opening the Episode in its app where the app
-  // lists it, the show otherwise.
+  // Each opening the Episode in its app where the app lists it, the show
+  // otherwise. They show in alphabetical order, as in the footer.
   links: readonly EpisodeListenLink[];
   copy: ListenCopy;
 };
@@ -19,6 +20,9 @@ type Props = {
 export function EpisodeListenLinks({ links, copy }: Props) {
   const labelId = useId();
   if (links.length === 0) return null;
+  const named = links
+    .map(({ app, href }) => ({ app, href, name: copy.platforms[app] }))
+    .sort(byName);
   return (
     <div className="flex flex-wrap items-center gap-x-2">
       <p
@@ -28,7 +32,7 @@ export function EpisodeListenLinks({ links, copy }: Props) {
         {copy.onEpisode}
       </p>
       <ul aria-labelledby={labelId} className="flex flex-wrap">
-        {links.map(({ app, href }) => (
+        {named.map(({ app, href, name }) => (
           <li key={app}>
             <Button
               asChild
@@ -38,7 +42,7 @@ export function EpisodeListenLinks({ links, copy }: Props) {
             >
               <a href={href}>
                 <ListenIcon platform={app} />
-                <span className="sr-only">{copy.platforms[app]}</span>
+                <span className="sr-only">{name}</span>
               </a>
             </Button>
           </li>

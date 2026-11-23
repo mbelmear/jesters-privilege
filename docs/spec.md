@@ -214,7 +214,7 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
 
 - **Home**
   - the hero copy, with the reveal style chosen at the mockup gate: paragraph-by-paragraph on scroll, or simple
-  - the latest Episode, straight after the hero copy, with Play first and its Episode Listen links ("or listen on") as small icons under it; or the zero-Episodes message
+  - the latest Episode, straight after the hero copy, with Play first and its Episode Listen links ("or listen on") as small icons under it, in alphabetical order as in the footer; or the zero-Episodes message
   - a Fools' Gallery teaser
   - a "Meet the Jesters" strip linking to About
 - **Episodes**: the hymnal index.
@@ -222,7 +222,7 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
   - Each other Episode is a row: a large Episode number in the display face, then the title, date and length, a two-line excerpt, and play-in-place.
   - Rows are grouped by year. Bonus and trailer Episodes get an orange label and no number. Finished Episodes show a check.
   - The archive stays a single page; search and filters are in `LATER.md`.
-- **Episode**: title, number, date and length; play, with its Episode Listen links as small icons under the player; Show notes; Transcript; previous/next; Share.
+- **Episode**: title, number, date and length; play, with its Episode Listen links as small icons under the player, in alphabetical order as in the footer; Show notes; Transcript; previous/next; Share.
 - Episode Listen links appear only on the home page's latest Episode and on Episode pages: not on the Episodes page's featured card or archive rows.
 - **Fools' Gallery**
   - A timeline in eras: Holy Fools, the Medieval Court, the Renaissance, the Reformation.
@@ -232,7 +232,7 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
   - Fools with no recorded jests (Paul, Francis, Pablo de Valladolid, Calabacillas) keep their stories as written, apart from quoting Scripture in the ESV.
   - v1 Fools, each depending on finding a suitable public-domain painting: Paul's "fools for Christ" and the holy fools (St. Francis's _jongleurs de Dieu_, the Russian _yurodivy_), Stańczyk (Matejko, 1862), Triboulet, Will Somers, Archibald Armstrong, Richard Tarlton, the Spanish court fools painted by Velázquez, and Erasmus's _In Praise of Folly_ with Holbein's marginal drawings.
   - It ends with why this show wears the motley.
-- **About**: why the show is called "Jester's Privilege", closing on one line that the show is the Jesters' own and no church stands behind it, naming none (the elders' request on #6); the three Jesters with equal billing, each under the label they chose (Co-host; Aaron is Producer & Co-host) and with their full bio; what we believe; how to listen, with the show's Listen links and "New to podcasts?".
+- **About**: why the show is called "Jester's Privilege", closing on one line that the show is the Jesters' own and no church stands behind it, naming none (the elders' request on #6); the three Jesters with equal billing, each under the label they chose (Co-host; Aaron is Producer & Co-host) and with their full bio; what we believe; how to listen, with the show's Listen links in alphabetical order, as in the footer, and "New to podcasts?".
 - **Speak Freely** (`/speak-freely`; renamed from Submit in #85)
   - Type: Question (the default), Confession, Topic idea, or Other.
   - Message: required.

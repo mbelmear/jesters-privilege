@@ -6,8 +6,9 @@ import type { ListenPlatform, Site } from "./content";
 import { downloadText, errorMessage, type Fetch } from "./download";
 import type { Episode } from "./feed";
 
-// The apps an Episode can link into, in the order its icons show. RSS is a
-// feed, not an app, so it has no Episode Listen link.
+// The apps an Episode can link into; their icons show in alphabetical order
+// (src/components/episode-listen-links.tsx). RSS is a feed, not an app, so it
+// has no Episode Listen link.
 export const EPISODE_LISTEN_APPS = [
   "apple-podcasts",
   "spotify",

@@ -7,6 +7,7 @@ import { ListenButtons } from "@/components/listen-buttons";
 const all: Site["listen"] = {
   "apple-podcasts": "https://podcasts.apple.com/us/podcast/id1",
   spotify: "https://open.spotify.com/show/abc",
+  "amazon-music": "https://music.amazon.com/podcasts/abc",
   youtube: "https://www.youtube.com/@jestersprivilege",
   rss: "https://www.spreaker.com/show/1/episodes/feed",
 };
@@ -21,17 +22,18 @@ const renderButtons = (links: Site["listen"]) =>
   );
 
 describe("ListenButtons", () => {
-  it("links to every platform the show is on, in a fixed order", () => {
+  it("links to every platform the show is on, in alphabetical order", () => {
     renderButtons(all);
     expect(
       screen
         .getAllByRole("link")
         .map((link) => [link.textContent, link.getAttribute("href")])
     ).toEqual([
+      ["Amazon Music", all["amazon-music"]],
       ["Apple Podcasts", all["apple-podcasts"]],
+      ["RSS", all.rss],
       ["Spotify", all.spotify],
       ["YouTube", all.youtube],
-      ["RSS", all.rss],
     ]);
   });
 
