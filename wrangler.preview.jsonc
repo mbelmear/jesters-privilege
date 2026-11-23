@@ -1,0 +1,29 @@
+// Separate Worker for per-PR preview URLs. Never attach production routes.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "jesters-privilege-preview",
+  "main": "src/worker/index.ts",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./out",
+    "binding": "ASSETS",
+    "not_found_handling": "404-page",
+    // Every request reaches the Worker first so it can redirect www.
+    "run_worker_first": true,
+  },
+  // Submit emails go only to the show's Gmail, a verified Email Routing
+  // destination; the hello@ alias isn't one (src/worker/adapters.ts).
+  // TURNSTILE_SECRET_KEY is a Worker secret, uploaded by the deploy workflow.
+  "send_email": [
+    {
+      "name": "SUBMISSION_EMAIL",
+      "destination_address": "thejestersprivilegepodcast@gmail.com",
+    },
+  ],
+  // Workers Logs keep the Worker's logs, a failed Submission's among them,
+  // for a Jester to read in the dashboard. Cloudflare's default turns them on
+  // only for newly created Workers, so they're set here (#46, docs/deploy.md).
+  "observability": { "enabled": true },
+  "workers_dev": true,
+  "preview_urls": true,
+}

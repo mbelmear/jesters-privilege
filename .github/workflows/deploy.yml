@@ -32,7 +32,7 @@ jobs:
     outputs:
       docs-only: ${{ steps.check.outputs.docs-only }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           persist-credentials: false
           fetch-depth: 2
@@ -63,7 +63,7 @@ jobs:
       group: preview-${{ github.event.pull_request.number }}
       cancel-in-progress: true
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup
@@ -76,47 +76,26 @@ jobs:
           # Marks pages that use draft content with the DRAFT ribbon.
           SITE_ENV: preview
           # The Submit page's Turnstile widget (src/lib/turnstile.ts).
-          TURNSTILE_SITE_KEY: ${{ secrets.TURNSTILE_SITE_KEY }}
+          TURNSTILE_SITE_KEY: ${{ secrets.PREVIEW_TURNSTILE_SITE_KEY }}
           # Spotify's Episode Listen links (src/lib/spotify-lookup.ts). A run
           # without them logs the lookup as failed, naming each missing secret.
           SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
           SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
-      # A preview version can only be uploaded to a Worker that exists. Before the
-      # first production deploy it doesn't, so create it once with a blank
-      # placeholder page on workers.dev only: no custom domains, no PR content.
-      - name: Create the Worker on first run
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: |
-          if npx wrangler deployments list --name jesters-privilege >/dev/null 2>&1; then
-            exit 0
-          fi
-          echo "::notice::Worker not found; creating it with a placeholder page"
-          dir="$RUNNER_TEMP/placeholder"
-          mkdir -p "$dir"
-          echo '<!doctype html><title>Coming soon</title>' > "$dir/index.html"
-          cat > "$RUNNER_TEMP/bootstrap.json" <<JSON
-          {
-            "name": "jesters-privilege",
-            "compatibility_date": "2026-10-01",
-            "assets": { "directory": "$dir" },
-            "workers_dev": true,
-            "preview_urls": true
-          }
-          JSON
-          npx wrangler deploy --config "$RUNNER_TEMP/bootstrap.json"
       - name: Upload a preview version
         id: upload
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.PREVIEW_CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.PREVIEW_CLOUDFLARE_ACCOUNT_ID }}
+          TURNSTILE_SECRET_KEY: ${{ secrets.PREVIEW_TURNSTILE_SECRET_KEY }}
           ALIAS: pr-${{ github.event.pull_request.number }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ] || [ -z "$TURNSTILE_SECRET_KEY" ]; then
+            echo "::error::Preview Cloudflare and Turnstile credentials must be configured"
+            exit 1
+          fi
           jq -n '{TURNSTILE_SECRET_KEY: env.TURNSTILE_SECRET_KEY}' > "$RUNNER_TEMP/secrets.json"
-          npx wrangler versions upload --preview-alias "$ALIAS" \
+          npx wrangler versions upload --config wrangler.preview.jsonc --preview-alias "$ALIAS" \
             --secrets-file "$RUNNER_TEMP/secrets.json" \
             --message "PR #${{ github.event.pull_request.number }} at ${HEAD_SHA::7}" \
             | tee upload.log
@@ -154,7 +133,7 @@ jobs:
     outputs:
       rebuild: ${{ steps.check.outputs.rebuild }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup
@@ -182,12 +161,13 @@ jobs:
       needs.feed-check.outputs.rebuild == 'true')
     runs-on: ubuntu-24.04
     timeout-minutes: 45
+    environment: production
     # Queue production deploys; never cancel one partway.
     concurrency:
       group: production
       cancel-in-progress: false
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup
@@ -198,8 +178,8 @@ jobs:
       - name: Check the Submission email's destination is verified
         run: npm run email-destination
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.PRODUCTION_CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.PRODUCTION_CLOUDFLARE_ACCOUNT_ID }}
       - uses: ./.github/actions/image-cache
       # A failed build stops here, so the last good deploy stays live.
       - run: npm run build
@@ -212,15 +192,19 @@ jobs:
           # without the token.
           SITE_ENV: production
           WEB_ANALYTICS_TOKEN: ${{ vars.WEB_ANALYTICS_TOKEN }}
-          TURNSTILE_SITE_KEY: ${{ secrets.TURNSTILE_SITE_KEY }}
+          TURNSTILE_SITE_KEY: ${{ secrets.PRODUCTION_TURNSTILE_SITE_KEY }}
           SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
           SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
       - run: |
+          if [ -z "$TURNSTILE_SECRET_KEY" ]; then
+            echo "::error::Production Turnstile secret must be configured"
+            exit 1
+          fi
           jq -n '{TURNSTILE_SECRET_KEY: env.TURNSTILE_SECRET_KEY}' > "$RUNNER_TEMP/secrets.json"
           npx wrangler deploy --message "${GITHUB_SHA::7}" \
             --secrets-file "$RUNNER_TEMP/secrets.json"
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.PRODUCTION_CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.PRODUCTION_CLOUDFLARE_ACCOUNT_ID }}
+          TURNSTILE_SECRET_KEY: ${{ secrets.PRODUCTION_TURNSTILE_SECRET_KEY }}
       - run: scripts/smoke-check.sh "$GITHUB_SHA"
