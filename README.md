@@ -10,9 +10,22 @@
   <a href="https://jestersprivilegepodcast.com">jestersprivilegepodcast.com</a>
 </p>
 
+<p align="center">
+  <a href="https://github.com/mbelmear/jesters-privilege/actions/workflows/deploy.yml"><img src="https://github.com/mbelmear/jesters-privilege/actions/workflows/deploy.yml/badge.svg?branch=main" alt="Deploy"></a>
+  <a href="https://github.com/mbelmear/jesters-privilege/actions/workflows/ci.yml"><img src="https://github.com/mbelmear/jesters-privilege/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
+  <a href="https://github.com/mbelmear/jesters-privilege/actions/workflows/nightly.yml"><img src="https://github.com/mbelmear/jesters-privilege/actions/workflows/nightly.yml/badge.svg" alt="Nightly"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/code-MIT-blue" alt="Code: MIT"></a>
+</p>
+
 # Jester's Privilege
 
 The show's website: a fast, static, mobile-first site built with Next.js and served from a Cloudflare Worker. New Episodes arrive from the Spreaker feed on their own, so nobody touches the site when an Episode is published. What it does and why is in [`docs/spec.md`](docs/spec.md); the words it uses are in [`GLOSSARY.md`](GLOSSARY.md).
+
+<p align="center">
+  <img src="docs/readme/episode-desktop.png" alt="Episode 1, Celebrity Pastors, on a desktop: Play and Share buttons, links to the podcast apps, the Show notes, and the start of the Transcript" width="68%">
+  &nbsp;
+  <img src="docs/readme/gallery-phone.jpg" alt="The Fools' Gallery on a phone: its title, introduction, and a painting of a holy fool in a Russian winter crowd" width="22%">
+</p>
 
 ## What's on the site
 
@@ -31,7 +44,10 @@ Three test layers guard it: Jest with React Testing Library and jest-axe for log
 
 ## Getting started
 
+Use Node 24, the version in `.nvmrc`: newer versions fail a unit test that passes in CI.
+
 ```bash
+nvm use
 npm install
 npm run dev
 ```
@@ -52,3 +68,11 @@ Open [http://localhost:3000](http://localhost:3000).
 | `npm run pr-status -- <n>` | Wait for PR `<n>`'s checks and preview    |
 
 How each test layer works and how to run it locally: [`docs/testing.md`](docs/testing.md).
+
+## Listening, questions, and feedback
+
+To ask the Jesters a Question, send a Confession, or suggest a Topic, use [Speak Freely](https://jestersprivilegepodcast.com/speak-freely) on the site, not GitHub Issues. Issues here are the build's own tickets. If a Transcript gets something wrong, Speak Freely is the place for that too.
+
+## License
+
+The code is under the [MIT License](LICENSE). The show's name, logos and artwork, the Jesters' photos, the site's copy, and the Episodes themselves are © the Jesters, all rights reserved. The Fools' paintings are public domain, each with its source in `src/content/paintings.ts`. The fonts keep their own SIL Open Font License.
