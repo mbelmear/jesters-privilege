@@ -1,6 +1,7 @@
 /**
  * @jest-environment node
  */
+import { spawnSync } from "node:child_process";
 import { readdirSync, readFileSync } from "node:fs";
 
 // A job's own `if:` decides whether it runs, but without `!cancelled()` GitHub
@@ -291,5 +292,52 @@ describe("Nightly's failure report", () => {
     expect([...(report?.needs ?? [])].sort()).toEqual(
       scheduled.map((job) => job.name).sort()
     );
+  });
+});
+
+// #276's gate went red on one dropped `gh pr view` and needed a manual rerun.
+describe("pr-gate.yml's check step", () => {
+  const text = readFileSync(".github/workflows/pr-gate.yml", "utf8");
+  // The `run: |` block that runs the check, wherever it sits in the job.
+  const block =
+    [...text.matchAll(/^ {6}- run: \|\n((?: {10}.*\n)+)/gm)]
+      .map((match) => match[1] ?? "")
+      .find((body) => body.includes("pr-gate-check.ts")) ?? "";
+  const script = block.replace(/^ {10}/gm, "");
+
+  // Runs the step with npx answering each call with the next exit code.
+  const run = (codes: number[]) =>
+    spawnSync(
+      "bash",
+      [
+        "-e",
+        "-c",
+        `codes=(${codes.join(" ")}); calls=0
+npx() { echo "call $calls"; local code=\${codes[$calls]}; calls=$((calls + 1)); return "$code"; }
+sleep() { :; }
+${script}`,
+      ],
+      { encoding: "utf8", env: { ...process.env, PR: "1" } }
+    );
+
+  it("names the check it runs", () => {
+    expect(script).toContain('npx tsx scripts/pr-gate-check.ts "$PR"');
+  });
+
+  it("tries once more when a read failed, and passes if that one does", () => {
+    const result = run([1, 0]);
+    expect(result.stdout).toContain("call 1");
+    expect(result.stdout).toContain("::warning::The PR gate check failed");
+    expect(result.status).toBe(0);
+  });
+
+  it("fails when the second try's read fails too", () => {
+    expect(run([1, 1]).status).toBe(1);
+  });
+
+  it.each([0, 2])("runs the check once when it exits %i", (code) => {
+    const result = run([code]);
+    expect(result.stdout).not.toContain("call 1");
+    expect(result.status).toBe(code);
   });
 });

@@ -50,7 +50,18 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/actions/setup
       # The gate fetches the PR's head itself, as objects, with no branch made.
-      - run: npx tsx scripts/pr-gate-check.ts "$PR"
+      # A read that failed exits 1 and leaves the status red, as one dropped
+      # `gh pr view` did on #276; one more try after 20 s rides that out
+      # (#278's retro asked for it). A ::warning:: names the first failure on
+      # the run's summary, since CODING_STANDARDS.md (Failures are loud)
+      # wants a recovery seen. Any other exit is the gate's answer.
+      - run: |
+          status=0
+          npx tsx scripts/pr-gate-check.ts "$PR" || status=$?
+          if ((status != 1)); then exit "$status"; fi
+          echo "::warning::The PR gate check failed (exit 1, a read or a status write); trying once more in 20 s."
+          sleep 20
+          npx tsx scripts/pr-gate-check.ts "$PR"
         env:
           GH_TOKEN: ${{ github.token }}
           PR: ${{ github.event.pull_request.number || github.event.issue.number }}

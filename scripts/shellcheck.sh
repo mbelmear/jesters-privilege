@@ -34,17 +34,9 @@ dir="$root/node_modules/.cache/shellcheck-$version"
 bin="$dir/shellcheck"
 
 if [[ ! -x $bin ]]; then
-  mkdir -p "$dir"
-  archive="shellcheck-v$version.$platform.tar.gz"
-  curl -fsSL --retry 3 -o "$dir/$archive" \
-    "https://github.com/koalaman/shellcheck/releases/download/v$version/$archive"
-  (cd "$dir" && echo "$checksum  $archive" | shasum -a 256 -c - >/dev/null) || {
-    echo "shellcheck $archive doesn't match its pinned checksum" >&2
-    rm -f "$dir/$archive"
-    exit 1
-  }
-  tar -xzf "$dir/$archive" -C "$dir" --strip-components=1 "shellcheck-v$version/shellcheck"
-  rm -f "$dir/$archive"
+  "$root/scripts/install-release-binary.sh" \
+    "https://github.com/koalaman/shellcheck/releases/download/v$version/shellcheck-v$version.$platform.tar.gz" \
+    "$checksum" "shellcheck-v$version/shellcheck" "$bin"
 fi
 
 exec "$bin" "$@"
