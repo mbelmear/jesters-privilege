@@ -97,17 +97,17 @@ These Cloudflare settings can only be made by a human in the dashboard, and noth
 
 Create a GitHub deployment environment named `production` with a deployment branch policy allowing only the branch `main`. Scheduled feed deployments use this environment too, so leave required deployment reviewers disabled for unattended publishing.
 
-| Location                        | Secrets                                                                                                                                                                             |
-| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| GitHub `production` environment | `PRODUCTION_CLOUDFLARE_API_TOKEN`, `PRODUCTION_CLOUDFLARE_ACCOUNT_ID`, `PRODUCTION_TURNSTILE_SITE_KEY`, `PRODUCTION_TURNSTILE_SECRET_KEY`                                           |
-| GitHub repository               | `PREVIEW_CLOUDFLARE_API_TOKEN`, `PREVIEW_CLOUDFLARE_ACCOUNT_ID`, `PREVIEW_TURNSTILE_SITE_KEY`, `PREVIEW_TURNSTILE_SECRET_KEY`, and the existing `CLOUDFLARE_READ_TOKEN` for Nightly |
+| Location                        | Secrets                                                                                                                                                                                             |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GitHub `production` environment | `PRODUCTION_CLOUDFLARE_API_TOKEN`, `PRODUCTION_CLOUDFLARE_ACCOUNT_ID`, `PRODUCTION_TURNSTILE_SITE_KEY`, `PRODUCTION_TURNSTILE_SECRET_KEY`                                                           |
+| GitHub repository               | `PREVIEW_CLOUDFLARE_API_TOKEN`, `PREVIEW_CLOUDFLARE_ACCOUNT_ID`, `PREVIEW_TURNSTILE_SITE_KEY`, `PREVIEW_TURNSTILE_SECRET_KEY`, plus `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_READ_TOKEN` for Nightly |
 
 Create the preview Worker once with a maintainer credential that can create Workers, using a local build and `npx wrangler deploy --config wrangler.preview.jsonc`. Configure a separate Turnstile widget for the preview hostnames. Give the preview account-owned API token the Workers Editor role scoped specifically to `jesters-privilege-preview`. Verify the token cannot list deployments for the production Worker and can upload preview versions. Both Workers deliver test or real Submissions to the show's verified inbox, so identify test Submissions when testing the preview.
 
 ### Credential cutover
 
 1. Populate the new secrets and confirm the preview build and Speak Freely on the PR before merging. Use a fresh production Cloudflare token for the new environment. Keep its value only in that environment.
-2. Merge through the normal PR gate during a monitored deployment window. Confirm the automatic production deploy and smoke check succeed, then remove the old repository-level `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `TURNSTILE_SITE_KEY`, and `TURNSTILE_SECRET_KEY`. Revoke the old shared Cloudflare token and rotate the production Turnstile secret if it was previously shared with previews. Verify a production deploy and a test Submission after rotation.
+2. Merge through the normal PR gate during a monitored deployment window. Confirm the automatic production deploy and smoke check succeed, then remove the old repository-level `CLOUDFLARE_API_TOKEN`, `TURNSTILE_SITE_KEY`, and `TURNSTILE_SECRET_KEY`. Keep the repository-level `CLOUDFLARE_ACCOUNT_ID` for Nightly’s Email Routing check. Revoke the old shared Cloudflare token and rotate the production Turnstile secret if it was previously shared with previews. Verify a production deploy and a test Submission after rotation.
 
 The site key goes into the Speak Freely page at build time. CI and local builds use Turnstile's always-pass test key (`src/lib/turnstile.ts`). Each workflow uploads its matching secret key to its Worker. Only production uses the repository variable `WEB_ANALYTICS_TOKEN` to load the analytics beacon (`src/lib/analytics.ts`).
 
