@@ -7,16 +7,19 @@
 # Prints to stdout, which the hook adds to the session's context.
 set -euo pipefail
 
+# The repo the session opened, wherever its working directory is.
+cd "${CLAUDE_PROJECT_DIR:-.}"
+
 api="repos/{owner}/{repo}/actions/permissions/selected-actions"
 file=.github/allowed-actions.json
 # Key order and pattern order don't matter to GitHub, so neither counts.
-normal='{github_owned_allowed, patterns_allowed: (.patterns_allowed | sort), verified_allowed} | tojson'
+canonical='{github_owned_allowed, patterns_allowed: (.patterns_allowed | sort), verified_allowed} | tojson'
 
-if ! live=$(gh api "$api" 2>/dev/null) || ! live=$(jq -r "$normal" <<<"$live" 2>/dev/null); then
+if ! live=$(gh api "$api" 2>/dev/null) || ! live=$(jq -r "$canonical" <<<"$live" 2>/dev/null); then
   echo "Couldn't read GitHub's Actions allowlist (gh api '$api'), so whether $file matches it is unknown."
   exit 0
 fi
-if ! want=$(jq -r "$normal" "$file" 2>/dev/null); then
+if ! want=$(jq -r "$canonical" "$file" 2>/dev/null); then
   echo "Couldn't read $file, so whether it matches GitHub's Actions allowlist is unknown."
   exit 0
 fi

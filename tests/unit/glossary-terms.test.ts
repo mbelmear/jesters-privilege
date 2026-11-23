@@ -7,12 +7,12 @@ import { join } from "node:path";
 import { repoRoot } from "../paths";
 
 // Phrases GLOSSARY.md lists under _Avoid_ that have no other use here, each
-// with the term to write instead. Bare words with a second meaning stay out:
-// "host" (Spreaker, hosting, the Jesters' "Co-host" labels, a bio's
-// "co-hosts"), "message", "story". Review still catches those (#281 wrote
-// the Jesters as hosts and Submissions as listener messages).
+// with the term to write instead (#281 wrote the Jesters as hosts and
+// Submissions as listener messages). Words with a second meaning stay out,
+// for review to catch: "host" (Spreaker, hosting, the Jesters' "Co-host"
+// labels), "message", "story". "hosts" counts, but not a bio's "co-hosts".
 const AVOIDED: [RegExp, string][] = [
-  [/\b(?:the|our|three) hosts\b/i, "Jesters"],
+  [/(?<!co-)\bhosts\b/i, "Jesters"],
   [/\blistener messages?\b/i, "Submission"],
   [/\blistener questions?\b/i, "Question"],
   [/\bmailbag\b/i, "Speak Freely"],
@@ -31,6 +31,7 @@ const AVOIDED: [RegExp, string][] = [
 const LEFT_AS_WRITTEN = [
   "GLOSSARY.md",
   "docs/brief.md",
+  "package-lock.json",
   "tests/unit/glossary-terms.test.ts",
 ];
 
@@ -39,7 +40,10 @@ const files = execFileSync("git", ["ls-files"], {
   encoding: "utf8",
 })
   .split("\n")
-  .filter((path) => /\.(md|ts|tsx|yml|yaml)$/.test(path))
+  // Everything a person or an agent reads: docs, content, code, scripts and
+  // their messages, workflows, config and styles. The lockfile only names
+  // packages.
+  .filter((path) => /\.(md|ts|tsx|yml|yaml|sh|json|css)$/.test(path))
   .filter(
     (path) =>
       !path.startsWith("docs/inputs/") && !LEFT_AS_WRITTEN.includes(path)

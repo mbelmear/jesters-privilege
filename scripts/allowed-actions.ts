@@ -21,6 +21,9 @@ const matches = (pattern: string, uses: string) =>
       .join(".*")}$`
   ).test(uses);
 
+// The owners whose actions count as GitHub-owned.
+const GITHUB_OWNERS = ["actions", "github"];
+
 /**
  * Whether the policy lets a step use `uses`. A local action (`./…`) always
  * runs. A Marketplace-verified one counts as refused: nothing here can tell
@@ -29,11 +32,7 @@ const matches = (pattern: string, uses: string) =>
 export function allows(policy: ActionsPolicy, uses: string): boolean {
   if (uses.startsWith("./")) return true;
   const owner = uses.split("/")[0];
-  if (
-    policy.github_owned_allowed &&
-    (owner === "actions" || owner === "github")
-  )
-    return true;
+  if (policy.github_owned_allowed && GITHUB_OWNERS.includes(owner)) return true;
   return policy.patterns_allowed.some((pattern) => matches(pattern, uses));
 }
 
@@ -42,11 +41,13 @@ export function usesIn(yaml: string): string[] {
   const found: string[] = [];
   const walk = (node: unknown) => {
     if (Array.isArray(node)) node.forEach(walk);
-    else if (node && typeof node === "object")
-      for (const [key, value] of Object.entries(node)) {
+    else if (node && typeof node === "object") {
+      const entries: [string, unknown][] = Object.entries(node);
+      for (const [key, value] of entries) {
         if (key === "uses" && typeof value === "string") found.push(value);
         else walk(value);
       }
+    }
   };
   walk(parse(yaml));
   return found;

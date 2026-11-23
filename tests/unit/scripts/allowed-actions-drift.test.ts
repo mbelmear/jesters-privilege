@@ -30,12 +30,17 @@ afterEach(() => {
 });
 
 // Recorded: gh 2.103.3, gh api repos/mbelmear/jesters-privilege/actions/permissions/selected-actions
-// on 2026-11-23, the sha256 pattern cut.
+// on 2026-11-23, as it printed it.
 const live = {
   github_owned_allowed: true,
-  patterns_allowed: ["rhysd/actionlint@*", "docker://rhysd/actionlint:*"],
+  patterns_allowed: [
+    "rhysd/actionlint@*",
+    "docker://rhysd/actionlint:*",
+    "docker://rhysd/actionlint@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667",
+  ],
   verified_allowed: false,
 };
+const sha256 = live.patterns_allowed[2];
 
 function runHook(
   file: object | undefined,
@@ -57,10 +62,12 @@ cat "${join(root, "answer")}"
 `
   );
   chmodSync(join(root, "bin/gh"), 0o755);
+  // The hook reads the repo Claude Code opened, not its working directory.
   const result = spawnSync("bash", [script], {
-    cwd: root,
+    cwd: tmpdir(),
     env: {
       ...process.env,
+      CLAUDE_PROJECT_DIR: root,
       PATH: `${join(root, "bin")}${delimiter}${process.env.PATH}`,
     },
     encoding: "utf8",
@@ -70,6 +77,7 @@ cat "${join(root, "answer")}"
 
 describe("allowed-actions-drift", () => {
   it("asks GitHub for the repo's Actions allowlist", () => {
+    // live recorded (above).
     const result = runHook(live, live);
 
     expect(result.args).toBe(
@@ -84,6 +92,7 @@ describe("allowed-actions-drift", () => {
       github_owned_allowed: true,
     };
 
+    // live recorded (above).
     const result = runHook(reordered, live);
 
     expect(result.stdout).toBe("");
@@ -98,7 +107,7 @@ describe("allowed-actions-drift", () => {
     });
 
     expect(result.stdout).toBe(
-      `GitHub's Actions allowlist (gh api 'repos/{owner}/{repo}/actions/permissions/selected-actions') differs from .github/allowed-actions.json, which the unit tests check every workflow's uses: against. GitHub: {"github_owned_allowed":true,"patterns_allowed":["docker://rhysd/actionlint:*","dorny/paths-filter@*","rhysd/actionlint@*"],"verified_allowed":false}. The file: {"github_owned_allowed":true,"patterns_allowed":["docker://rhysd/actionlint:*","rhysd/actionlint@*"],"verified_allowed":false}. Tell the user, and make them match in a worktree (docs/testing.md, In CI).\n`
+      `GitHub's Actions allowlist (gh api 'repos/{owner}/{repo}/actions/permissions/selected-actions') differs from .github/allowed-actions.json, which the unit tests check every workflow's uses: against. GitHub: {"github_owned_allowed":true,"patterns_allowed":["docker://rhysd/actionlint:*","${sha256}","dorny/paths-filter@*","rhysd/actionlint@*"],"verified_allowed":false}. The file: {"github_owned_allowed":true,"patterns_allowed":["docker://rhysd/actionlint:*","${sha256}","rhysd/actionlint@*"],"verified_allowed":false}. Tell the user, and make them match in a worktree (docs/testing.md, In CI).\n`
     );
     expect(result.status).toBe(0);
   });
@@ -114,6 +123,7 @@ describe("allowed-actions-drift", () => {
   });
 
   it("says the file is missing or unreadable, without failing the session", () => {
+    // live recorded (above).
     const result = runHook(undefined, live);
 
     expect(result.stdout).toBe(
