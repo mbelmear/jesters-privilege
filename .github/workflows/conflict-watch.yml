@@ -31,7 +31,7 @@ jobs:
     steps:
       # flag-conflicts.sh runs git ls-remote, which needs the token once the repo
       # is private (#145). This job installs nothing that could read it.
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # zizmor: ignore[artipacked]
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # zizmor: ignore[artipacked]
       # PR is empty on a push to main, which checks every waiting PR.
       - run: scripts/flag-conflicts.sh ${PR:+"$PR"}
         env:
