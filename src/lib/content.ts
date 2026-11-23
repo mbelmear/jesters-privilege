@@ -39,6 +39,7 @@ export const SOCIAL_NETWORKS = [
   "facebook",
   "tiktok",
   "x",
+  "youtube-shorts",
 ] as const;
 export type SocialNetwork = (typeof SOCIAL_NETWORKS)[number];
 

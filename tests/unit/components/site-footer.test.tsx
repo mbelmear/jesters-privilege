@@ -30,6 +30,7 @@ const everyLink: Site = {
     facebook: "https://www.facebook.com/show",
     tiktok: "https://www.tiktok.com/@show",
     x: "https://x.com/show",
+    "youtube-shorts": "https://www.youtube.com/@show/shorts",
   },
 };
 
@@ -75,21 +76,22 @@ describe("SiteFooter", () => {
     );
   });
 
-  it("shows each Listen link and social link as an icon with a hidden name", () => {
+  it("shows each Listen link and social link as an icon with a hidden name, in alphabetical order", () => {
     renderFooter(everyLink);
     expect(links(part("Listen"))).toEqual([
-      ["Apple Podcasts", everyLink.listen["apple-podcasts"]],
-      ["Spotify", everyLink.listen.spotify],
       ["Amazon Music", everyLink.listen["amazon-music"]],
-      ["YouTube", everyLink.listen.youtube],
+      ["Apple Podcasts", everyLink.listen["apple-podcasts"]],
       ["RSS", everyLink.listen.rss],
+      ["Spotify", everyLink.listen.spotify],
+      ["YouTube", everyLink.listen.youtube],
     ]);
     expect(links(part("Follow"))).toEqual([
+      ["Facebook", everyLink.social.facebook],
       ["Instagram", everyLink.social.instagram],
       ["LinkedIn", everyLink.social.linkedin],
-      ["Facebook", everyLink.social.facebook],
       ["TikTok", everyLink.social.tiktok],
       ["X", everyLink.social.x],
+      ["YouTube Shorts", everyLink.social["youtube-shorts"]],
     ]);
     for (const name of ["Listen", "Follow"]) {
       for (const link of within(part(name)).getAllByRole("link")) {

@@ -1,4 +1,10 @@
-import { siFacebook, siInstagram, siTiktok, siX } from "simple-icons";
+import {
+  siFacebook,
+  siInstagram,
+  siTiktok,
+  siX,
+  siYoutubeshorts,
+} from "simple-icons";
 import { linkedinMark } from "@/components/brand-marks";
 import { Mark, type MarkSource } from "@/components/mark";
 import type { SocialNetwork } from "@/lib/content";
@@ -11,6 +17,7 @@ export const SOCIAL_MARKS: Record<SocialNetwork, MarkSource> = {
   facebook: siFacebook,
   tiktok: siTiktok,
   x: siX,
+  "youtube-shorts": siYoutubeshorts,
 };
 
 // Decorative: the link it sits in carries the network's name.

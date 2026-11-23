@@ -23,6 +23,9 @@ type Props = {
   year: number;
 };
 
+const byName = (a: { name: string }, b: { name: string }) =>
+  a.name.localeCompare(b.name, "en");
+
 const linkClass = cn(
   "text-primary underline underline-offset-3 hover:decoration-2",
   focusRing
@@ -34,6 +37,9 @@ const linkClass = cn(
  * its social accounts; then a strip with the contact email, the privacy note,
  * copyright, and the ESV notice. Stacked on phones. Each Listen link and
  * social link is an icon with a hidden name, and shows once it's filled in.
+ * Both columns list their icons alphabetically by name, so a new link takes
+ * its place on its own (Michael, 2026-11-22); the Episode page keeps the
+ * apps' own order.
  * Footer UI text is semibold, like the header's, so the shell loads one Barlow
  * weight.
  */
@@ -60,7 +66,7 @@ export function SiteFooter({
           },
         ]
       : [];
-  });
+  }).sort(byName);
   const social = SOCIAL_NETWORKS.flatMap((network) => {
     const href = site.social[network];
     return href
@@ -73,7 +79,7 @@ export function SiteFooter({
           },
         ]
       : [];
-  });
+  }).sort(byName);
   return (
     <footer className="mt-auto border-t-4 border-brand bg-muted">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-10 sm:px-6">

@@ -22,6 +22,8 @@ const social: Site["social"] = {
   instagram: "https://www.instagram.com/jestersprivilegepod/",
   linkedin: "https://www.linkedin.com/company/jester-s-privilege",
   tiktok: "https://www.tiktok.com/@jestersprivilegepod",
+  "youtube-shorts":
+    "https://www.youtube.com/@TheJestersPrivilegePodcast/shorts",
 };
 
 // Each Listen and social link appears on the site as soon as it's filled in.
