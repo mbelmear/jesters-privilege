@@ -34,17 +34,9 @@ dir="$root/node_modules/.cache/zizmor-$version"
 bin="$dir/zizmor"
 
 if [[ ! -x $bin ]]; then
-  mkdir -p "$dir"
-  archive="zizmor-$platform.tar.gz"
-  curl -fsSL --retry 3 -o "$dir/$archive" \
-    "https://github.com/zizmorcore/zizmor/releases/download/v$version/$archive"
-  (cd "$dir" && echo "$checksum  $archive" | shasum -a 256 -c - >/dev/null) || {
-    echo "zizmor $archive doesn't match its pinned checksum" >&2
-    rm -f "$dir/$archive"
-    exit 1
-  }
-  tar -xzf "$dir/$archive" -C "$dir" zizmor
-  rm -f "$dir/$archive"
+  "$root/scripts/install-release-binary.sh" \
+    "https://github.com/zizmorcore/zizmor/releases/download/v$version/zizmor-$platform.tar.gz" \
+    "$checksum" zizmor "$bin"
 fi
 
 exec "$bin" "$@"

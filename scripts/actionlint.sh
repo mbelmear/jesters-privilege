@@ -27,18 +27,15 @@ dir="$root/node_modules/.cache/actionlint-$version"
 bin="$dir/actionlint"
 
 if [[ ! -x $bin ]]; then
-  mkdir -p "$dir"
   base="https://github.com/rhysd/actionlint/releases/download/v$version"
   archive="actionlint_${version}_${platform}.tar.gz"
-  curl -fsSL -o "$dir/$archive" "$base/$archive"
-  curl -fsSL -o "$dir/checksums.txt" "$base/actionlint_${version}_checksums.txt"
-  (cd "$dir" && grep " $archive\$" checksums.txt | shasum -a 256 -c - >/dev/null) || {
-    echo "actionlint $archive doesn't match the release's checksum" >&2
-    rm -f "$dir/$archive"
+  sums=$(curl -fsSL --retry 3 "$base/actionlint_${version}_checksums.txt")
+  checksum=$(awk -v archive="$archive" '$2 == archive { print $1 }' <<<"$sums")
+  [[ -n $checksum ]] || {
+    echo "actionlint's release lists no checksum for $archive" >&2
     exit 1
   }
-  tar -xzf "$dir/$archive" -C "$dir" actionlint
-  rm -f "$dir/$archive"
+  "$root/scripts/install-release-binary.sh" "$base/$archive" "$checksum" actionlint "$bin"
 fi
 
 # Downloads shellcheck now, if it's missing: actionlint runs it in parallel.
