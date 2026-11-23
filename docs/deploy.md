@@ -105,3 +105,29 @@ npx wrangler rollback <version-id>
 ```
 
 Or Workers & Pages → `jesters-privilege` → Deployments in the Cloudflare dashboard.
+
+## Versions
+
+The site's version is `version` in `package.json` (and `package-lock.json`, which `npm version` keeps in step). It follows [semantic versioning](https://semver.org), read for a website:
+
+| Part  | Goes up for                                        | Example                                   |
+| ----- | -------------------------------------------------- | ----------------------------------------- |
+| Major | A new spec: a redesign, or the next `docs/spec.md` | 1.4.2 → 2.0.0                             |
+| Minor | Something new a visitor can see or do              | A Scripture index page: 1.4.2 → 1.5.0     |
+| Patch | Fixes, copy, dependencies, tooling, docs           | The Listen icons reordered: 1.4.2 → 1.4.3 |
+
+1.0.0 is v1, the site that went live on 2026-11-11 (#284).
+
+A ticket's PR never changes the version: several sessions build tickets at once, and each bumping the same line would conflict. A release is its own small PR, when Michael decides the work merged since the last one is worth naming. It changes nothing but the version, from a worktree on `origin/main`:
+
+```bash
+npm version <major|minor|patch> --no-git-tag-version   # updates both files
+```
+
+Once it merges, tag the merge commit and publish the release, whose notes GitHub writes from the PRs merged since the previous tag:
+
+```bash
+gh release create v<version> --target <merge commit SHA> --title v<version> --generate-notes
+```
+
+Deploys don't wait for a release: every merge to `main` goes live as before, so the version names a point in that stream, not what is deployed.
