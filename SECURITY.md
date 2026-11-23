@@ -4,7 +4,7 @@
 
 Please report security problems privately, through GitHub's [private vulnerability reporting](https://github.com/mbelmear/jesters-privilege/security/advisories/new) (the repo's **Security** tab › **Report a vulnerability**). Don't open a public issue, and don't use the site's Speak Freely form: Submissions are read by the show, not the maintainer.
 
-Include what you found, where, and the steps that show it. The maintainer replies in the advisory, and credits the reporter there unless they ask not to be.
+Include what you found, where, and the steps that show it. The maintainer replies in the advisory.
 
 ## Scope
 

@@ -28,6 +28,9 @@ flowchart LR
   end
 
   Spreaker --> Check
+  Apple --> Check
+  Spotify --> Check
+  TB --> Check
   Spreaker --> Build
   Spreaker --> Transcribe
   Apple --> Build
@@ -43,16 +46,16 @@ flowchart LR
   Email --> Gmail[Show's Gmail]
 ```
 
-| Piece             | Technology                                                                         | Where                                         |
-| ----------------- | ---------------------------------------------------------------------------------- | --------------------------------------------- |
-| Pages             | Next.js 16 (App Router, `output: "export"`), React 19, TypeScript, Tailwind CSS v4 | `src/app/`, `src/components/`                 |
-| Hosting           | One Cloudflare Worker with static assets, custom domains                           | `wrangler.jsonc`, `src/worker/`               |
-| Content           | Typed content files, validated at build time                                       | `src/content/`, `src/lib/content.ts`          |
-| Episodes          | The Spreaker RSS feed, read once per build                                         | `src/lib/feed.ts`, `src/lib/episode-feed.ts`  |
-| Transcripts       | whisper.cpp on GitHub's runners, saved to a `transcripts` branch                   | `.github/workflows/transcribe.yml`            |
-| Listener messages | The Worker's `POST /api/submit`, Turnstile, Cloudflare email binding               | `src/lib/submit.ts`, `src/worker/adapters.ts` |
-| Analytics         | Cloudflare Web Analytics (cookieless), production builds only                      | `src/lib/analytics.ts`                        |
-| CI/CD             | GitHub Actions, `wrangler`                                                         | `.github/workflows/`                          |
+| Piece       | Technology                                                                         | Where                                         |
+| ----------- | ---------------------------------------------------------------------------------- | --------------------------------------------- |
+| Pages       | Next.js 16 (App Router, `output: "export"`), React 19, TypeScript, Tailwind CSS v4 | `src/app/`, `src/components/`                 |
+| Hosting     | One Cloudflare Worker with static assets, custom domains                           | `wrangler.jsonc`, `src/worker/`               |
+| Content     | Typed content files, validated at build time                                       | `src/content/`, `src/lib/content.ts`          |
+| Episodes    | The Spreaker RSS feed, read once per build                                         | `src/lib/feed.ts`, `src/lib/episode-feed.ts`  |
+| Transcripts | whisper.cpp on GitHub's runners, saved to a `transcripts` branch                   | `.github/workflows/transcribe.yml`            |
+| Submissions | The Worker's `POST /api/submit`, Turnstile, Cloudflare email binding               | `src/lib/submit.ts`, `src/worker/adapters.ts` |
+| Analytics   | Cloudflare Web Analytics (cookieless), production builds only                      | `src/lib/analytics.ts`                        |
+| CI/CD       | GitHub Actions, `wrangler`                                                         | `.github/workflows/`                          |
 
 ## From feed to live site
 
@@ -62,7 +65,7 @@ A build runs `npm run build`, which is three steps:
 2. **`npm run snapshot`** (`scripts/snapshot.ts`) asks the outside world everything the build needs, **once**: the feed, every Episode's Transcript, and each podcast app's lookup of the Episodes. It writes the answer to `.feed-snapshot.json`. Next renders pages in several worker processes, and a network read in each could succeed in one and fail in another, leaving pages that disagree with each other; reading one snapshot rules that out (`src/lib/episode-feed.ts`).
 3. **`next build`** renders every page and the build manifest from the content files and the snapshot into `out/`.
 
-Which feed a build reads is the `FEED` environment value (`src/lib/feed-source.ts`): `live` for the Spreaker feed, which only deploys and the feed check use; `fixture` (the default) for `src/content/feed-fixture.xml`, so tests never depend on Spreaker; and `empty` for a feed with no Episodes. A production build that isn't reading the live feed fails.
+Which feed a build reads is the `FEED` environment value (`src/lib/feed-source.ts`): `live` for the Spreaker feed, which deploys, previews, the feed check, Transcribe and `npm run launch-check` read; `fixture` (the default) for `src/content/feed-fixture.xml`, so tests never depend on Spreaker; and `empty` for a feed with no Episodes. A production build that isn't reading the live feed fails.
 
 **The Feed module** (`src/lib/feed.ts`) takes the raw feed text and returns validated Episodes or throws an error naming the Episode and the rule it broke: two full Episodes sharing a number, a full Episode without one, a missing required field. Show notes are sanitized to a small allowlist. A failure fails the build, and the last good deploy stays live.
 
@@ -76,7 +79,7 @@ Which feed a build reads is the `FEED` environment value (`src/lib/feed-source.t
 
 ### Transcripts
 
-Spreaker makes no Transcripts, so the site makes its own ([ADR 0003](adr/0003-site-makes-its-own-transcripts.md)). Half an hour after each feed check, `.github/workflows/transcribe.yml` finds Episodes with neither a host Transcript nor a saved one, transcribes each once with whisper.cpp, and pushes `<episode-guid>.vtt` to the `transcripts` branch. Builds read that branch; the next feed check sees the new Transcript and rebuilds. Because an Episode with a saved file is never transcribed again, a hand fix to its file sticks.
+Spreaker makes no Transcripts, so the site makes its own ([ADR 0003](adr/0003-site-makes-its-own-transcripts.md)). Half an hour after each feed check, `.github/workflows/transcribe.yml` finds Episodes in their first week with neither a host Transcript nor a saved one, transcribes each once with whisper.cpp, and pushes `<episode-guid>.vtt` to the `transcripts` branch. Builds read that branch; the next feed check sees the new Transcript and rebuilds. Because an Episode with a saved file is never transcribed again, a hand fix to its file sticks. An older Episode with nothing saved fails a scheduled run rather than spend an hour of Whisper on it; a run started by hand remakes it ([`deploy.md`](deploy.md), Transcripts).
 
 On the page, the Transcript module (`src/lib/transcript.ts`) groups WebVTT cues into timestamped paragraphs. The full text is always in the HTML for search engines; tapping a timestamp seeks the player.
 
@@ -136,7 +139,7 @@ flowchart LR
   Main --> Deploy[Deploy to production<br/>+ smoke check]
 ```
 
-Every change is a ticket on GitHub Issues, built test-first in its own git worktree and branch ([`../AGENTS.md`](../AGENTS.md)). A pull request runs:
+Every change is a ticket on GitHub Issues, built test-first in its own git worktree and branch ([`../AGENTS.md`](../AGENTS.md)). A pull request runs the following; one that changes only `docs/**` or top-level Markdown runs Jest alone and gets no preview:
 
 - **CI** (`.github/workflows/ci.yml`): format, lint, typecheck and Jest; the static build; Playwright on Chromium and WebKit at phone and desktop sizes, with axe scans, against both the fixture and an empty feed; a Lighthouse CI mobile performance budget; and actionlint, zizmor and shellcheck on the workflows and scripts. Firefox runs nightly.
 - **A preview** (`deploy.yml`): the PR's build, reading the live feed, uploaded as a preview version of the Worker at its own URL and posted on the PR.
@@ -144,17 +147,8 @@ Every change is a ticket on GitHub Issues, built test-first in its own git workt
 
 `main`'s ruleset requires a pull request, squash merges, every CI check and the PR gate, with no bypass. A visual PR also waits for a Jester's approval on the preview. A push to `main` deploys to production and runs a smoke check against the live site (`scripts/smoke-check.sh`). After the merge, the Merge audit workflow checks the review really happened, and Conflict watch flags waiting visual PRs that no longer merge cleanly. How each test layer runs and the full merge procedure: [`testing.md`](testing.md).
 
-When a scheduled run fails (the feed check, a production deploy, Nightly), a workflow opens an issue naming the failure, or comments on the one still open, and the next passing run closes it (`deploy-report.yml`, `nightly.yml`).
+When a scheduled run fails (the feed check, a production deploy, Nightly), a workflow opens an issue naming the failure, or comments on the one still open, (`deploy-report.yml`, `nightly.yml`). The next passing feed check closes its own issue; a failed deploy's or Nightly's is closed by hand once a run passes again.
 
 ## Where to read next
 
-| To understand                                | Read                                               |
-| -------------------------------------------- | -------------------------------------------------- |
-| What the site does, page by page, and why    | [`spec.md`](spec.md)                               |
-| The decisions that are hard to reverse       | [`adr/`](adr/)                                     |
-| Deploys, triggers, credentials, rolling back | [`deploy.md`](deploy.md)                           |
-| Each test layer, CI, and merging             | [`testing.md`](testing.md)                         |
-| How code here is written                     | [`../CODING_STANDARDS.md`](../CODING_STANDARDS.md) |
-| The project's vocabulary                     | [`../GLOSSARY.md`](../GLOSSARY.md)                 |
-| How agents build tickets                     | [`../AGENTS.md`](../AGENTS.md)                     |
-| Ideas left out of v1                         | [`../LATER.md`](../LATER.md)                       |
+The README's [Documentation](../README.md#documentation) table maps every doc; [`testing.md`](testing.md) has the full CI and merge procedure this guide summarizes.
