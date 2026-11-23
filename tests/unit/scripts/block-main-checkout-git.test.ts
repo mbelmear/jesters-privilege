@@ -133,6 +133,50 @@ describe("block-main-checkout-git", () => {
     ],
     // The Markdown bullet below passes for its dash, not for its newline.
     ["on a line of its own", () => "echo x\ngit add file", "MAIN"],
+    // #278's fourth review found these passed: git dir and work tree can
+    // point apart, and git is refused when either names the main checkout.
+    [
+      "with GIT_DIR alone, from inside it",
+      (_m: string, w: string) => `GIT_DIR=${w}/.git git checkout -- f`,
+      "MAIN",
+    ],
+    [
+      "with GIT_DIR on it and the work tree elsewhere",
+      (m: string) => `GIT_DIR=${m}/.git GIT_WORK_TREE=/tmp git checkout x`,
+      "WORKTREE",
+    ],
+    [
+      "with the work tree on it and GIT_DIR elsewhere",
+      (m: string, w: string) =>
+        `GIT_WORK_TREE=${m} GIT_DIR=${w}/.git git checkout x`,
+      "WORKTREE",
+    ],
+    [
+      "with --git-dir on it and --work-tree elsewhere",
+      (m: string) => `git --git-dir=${m}/.git --work-tree=/tmp checkout x`,
+      "WORKTREE",
+    ],
+    [
+      "with GIT_DIR on it past a -C",
+      (m: string, w: string) => `GIT_DIR=${m}/.git git -C ${w} checkout x`,
+      "WORKTREE",
+    ],
+    [
+      "after an exported GIT_DIR",
+      (m: string) => `export GIT_DIR=${m}/.git; git checkout x`,
+      "WORKTREE",
+    ],
+    [
+      "behind env -C or --chdir",
+      (m: string) => `env -C ${m} git checkout x; env --chdir ${m} git pull`,
+      "WORKTREE",
+    ],
+    ["after a lone &", () => "git fetch & git checkout x", "MAIN"],
+    [
+      "after cd - back into it",
+      (_m: string, w: string) => `cd ${w}; cd -; git checkout x`,
+      "MAIN",
+    ],
     // A quoted ) once ended the cd before it (#278's third review).
     [
       "after a quoted )",
@@ -176,7 +220,7 @@ describe("block-main-checkout-git", () => {
   ])(
     "refuses a command that changes the main checkout: %s",
     (_, command, cwd) => {
-      const result = hook(command(main), cwd);
+      const result = hook(command(main, worktree), cwd);
 
       expect(result.status).toBe(2);
       expect(result.stderr).toContain("the main checkout belongs to the human");
@@ -202,6 +246,16 @@ describe("block-main-checkout-git", () => {
       "MAIN",
     ],
     ["make a worktree", () => "npm run worktree -- 5 branch", "MAIN"],
+    [
+      "a -C into a worktree, from the main checkout",
+      (_m: string, w: string) => `git -C ${w} commit -m x`,
+      "MAIN",
+    ],
+    [
+      "a GIT_DIR read in the main checkout",
+      (m: string) => `GIT_DIR=${m}/.git git status`,
+      "WORKTREE",
+    ],
     // A line of a PR body read as a command once (#278's third review).
     [
       "a Markdown bullet naming git",
