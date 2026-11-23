@@ -55,7 +55,7 @@ Default to option 1 unless something in v1 truly needs a server. Rebuild the sit
 >
 > The King of kings and Lord of lords needs no jester. But to his church, he gave the keys of the kingdom. She is dearly loved, yet she can wander, and she has courtiers of her own.
 >
-> Paul says we are fools for Christ. So, as servants of the true King, we've put on the motley to laugh at ourselves, speak the truth in love, and call the church to listen to her King.
+> Saint Paul says we are fools for Christ. So, as servants of the true King, we've put on the motley to laugh at ourselves, speak the truth in love, and call the church to listen to her King.
 >
 > This is Jester's Privilege.
 
