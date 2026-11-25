@@ -2,7 +2,13 @@
  * @jest-environment node
  */
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -315,7 +321,9 @@ ${script}`,
         },
       }
     );
-    return { result, output: readFileSync(output, "utf8") };
+    const written = readFileSync(output, "utf8");
+    rmSync(dir, { recursive: true });
+    return { result, output: written };
   };
 
   it("says it pushed after pushing a Transcript", () => {

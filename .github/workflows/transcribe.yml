@@ -14,8 +14,8 @@ name: Transcribe
 
 on:
   schedule:
-    # Half an hour after the feed check, so a new Episode is usually live
-    # first. GitHub delays and drops scheduled runs: 2 a day, not 12, from
+    # Half an hour after the feed check, so when both run on time a new
+    # Episode is live first. GitHub delays and drops scheduled runs: 2 a day, not 12, from
     # 2026-11-22 to 11-25 (docs/deploy.md, Triggers).
     - cron: "47 */2 * * *"
   workflow_dispatch:
