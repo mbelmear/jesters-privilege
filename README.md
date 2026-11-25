@@ -102,6 +102,8 @@ To ask the Jesters a Question, send a Confession, or suggest a Topic idea, use [
 
 ## Contributors
 
+[Claude Code](https://claude.com/claude-code) co-authored most of the commits here: the spec, drawn from the Jesters' brief in a grilling session; the tickets; the site and its three test layers; the deploy, feed check, and Transcribe workflows; the PR gate; the architecture guide; and the retros that keep changing how the site is built.
+
 [OpenAI Codex](https://github.com/apps/chatgpt-codex-connector) contributed the repository assessment, release and deployment hardening, and this code tour.
 
 ## License
