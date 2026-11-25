@@ -2,7 +2,9 @@
  * @jest-environment node
  */
 import { spawnSync } from "node:child_process";
-import { readdirSync, readFileSync } from "node:fs";
+import { mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 // A job's own `if:` decides whether it runs, but without `!cancelled()` GitHub
 // also skips it when any job before it, however far back, was skipped (#171).
@@ -273,6 +275,80 @@ describe("Transcribe", () => {
   it("tells the plan whether the run was started by hand", () => {
     expect(readFileSync(".github/workflows/transcribe.yml", "utf8")).toMatch(
       /^ {6}TRANSCRIBE_ANY_AGE: \$\{\{ github\.event_name == 'workflow_dispatch' \}\}$/m
+    );
+  });
+});
+
+// A saved Transcript publishes when Transcribe starts Deploy itself, not at the
+// next feed check, which GitHub may run hours late (#298). Only a run that
+// pushed one starts it.
+describe("Transcribe's push", () => {
+  const text = readFileSync(".github/workflows/transcribe.yml", "utf8");
+  const script = (
+    /^ {6}- name: Push to the transcripts branch\n(?: {8}.*\n)*? {8}run: \|\n((?: {10}.*\n|\n)+)/m.exec(
+      text
+    )?.[1] ?? ""
+  ).replace(/^ {10}/gm, "");
+
+  // Runs the step with git answering `diff --cached --quiet` with the given
+  // exit code (1: something is staged), and returns what it wrote to
+  // $GITHUB_OUTPUT.
+  const run = (diffCode: number) => {
+    const dir = mkdtempSync(join(tmpdir(), "transcribe-push-"));
+    const output = join(dir, "output");
+    writeFileSync(output, "");
+    const result = spawnSync(
+      "bash",
+      [
+        "-e",
+        "-c",
+        `git() { echo "git $*"; if [ "$1" = diff ]; then return ${diffCode}; fi; }
+${script}`,
+      ],
+      {
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          TRANSCRIPTS_DIR: dir,
+          GITHUB_OUTPUT: output,
+          GITHUB_RUN_ID: "1",
+        },
+      }
+    );
+    return { result, output: readFileSync(output, "utf8") };
+  };
+
+  it("says it pushed after pushing a Transcript", () => {
+    const { result, output } = run(1);
+    expect(result.stdout).toContain("git push origin transcripts");
+    expect(result.status).toBe(0);
+    expect(output).toBe("pushed=true\n");
+  });
+
+  it("says nothing when there was nothing to push", () => {
+    const { result, output } = run(0);
+    expect(result.stdout).not.toContain("git push");
+    expect(result.status).toBe(0);
+    expect(output).toBe("");
+  });
+
+  // The step that starts Deploy, from its `- name:` to the next step.
+  const dispatch =
+    text
+      .split(/^(?= {6}- )/m)
+      .find((step) => step.includes("gh workflow run deploy.yml")) ?? "";
+
+  it("starts a production Deploy", () => {
+    expect(dispatch).toMatch(/^ {10}gh workflow run deploy\.yml --ref main$/m);
+  });
+
+  it("starts it only after a push, and never from a pull request", () => {
+    const condition = /^ {8}if: (?:>-\n)?((?: {10}.*\n)+|.*\n)/m
+      .exec(dispatch)?.[1]
+      ?.replace(/\s+/g, " ")
+      .trim();
+    expect(condition).toBe(
+      "github.event_name != 'pull_request' && steps.push.outputs.pushed == 'true'"
     );
   });
 });

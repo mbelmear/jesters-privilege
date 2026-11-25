@@ -5,16 +5,18 @@ name: Transcribe
 # none saved, is transcribed once with whisper.cpp and saved as
 # `<episode-guid>.vtt` on the `transcripts` branch, which builds read. Only an
 # Episode in its first week is transcribed; an older one fails the run,
-# named, unless it was started from Run workflow (#240). The feed check
-# (deploy.yml, at 17 past) then rebuilds the site, since an Episode has gained
-# a Transcript. A pull request that changes the transcriber runs it for real
+# named, unless it was started from Run workflow (#240). A run that pushes a
+# Transcript then starts Deploy itself, so the site shows it within minutes
+# rather than at the next feed check, which GitHub may run hours late or drop
+# (#298). A pull request that changes the transcriber runs it for real
 # against the live feed and uploads what it made, pushing nothing.
 # See docs/deploy.md.
 
 on:
   schedule:
-    # Half an hour after the feed check, so a new Episode deploys first and
-    # its Transcript follows.
+    # Half an hour after the feed check, so a new Episode is usually live
+    # first. GitHub delays and drops scheduled runs: 2 a day, not 12, from
+    # 2026-11-22 to 11-25 (docs/deploy.md, Triggers).
     - cron: "47 */2 * * *"
   workflow_dispatch:
   pull_request:
@@ -39,6 +41,8 @@ jobs:
     permissions:
       # Pushes to the transcripts branch, which main's ruleset doesn't cover.
       contents: write
+      # Starts Deploy once a Transcript is pushed.
+      actions: write
     # One run writes to the branch at a time; a pull request's run only reads.
     concurrency:
       group: transcribe-${{ github.event_name == 'pull_request' && github.ref || 'transcripts' }}
@@ -111,6 +115,7 @@ jobs:
           npm run transcribe
       # Pushes whatever was saved, even when another Episode failed.
       - name: Push to the transcripts branch
+        id: push
         if: >-
           !cancelled() && github.event_name != 'pull_request' &&
           steps.plan.outputs.needed == 'true'
@@ -127,6 +132,23 @@ jobs:
             -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
             commit -m "Transcripts from the Transcribe workflow, run $GITHUB_RUN_ID"
           git push origin transcripts
+          echo "pushed=true" >> "$GITHUB_OUTPUT"
+      # Publishes the new Transcript now rather than at the next feed check,
+      # which GitHub may run hours late or drop (docs/deploy.md, Transcripts).
+      # The push above starts no workflow, since GITHUB_TOKEN's events don't,
+      # but a workflow_dispatch does. Not a fallback (CODING_STANDARDS.md,
+      # "Failures are loud"): it runs once, only after a run that pushed and
+      # failed nothing, and never retries; a failed run's Transcripts wait for
+      # the feed check (#298).
+      - name: Start Deploy
+        if: >-
+          github.event_name != 'pull_request' &&
+          steps.push.outputs.pushed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh workflow run deploy.yml --ref main
       - name: Upload what a pull request made
         if: >-
           !cancelled() && github.event_name == 'pull_request' &&
