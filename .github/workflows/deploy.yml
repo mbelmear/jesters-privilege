@@ -6,8 +6,9 @@ name: Deploy
 # comment (Dependabot's and forks' run without secrets, so they skip it, and a
 # docs-only one has no page to preview). Every 2 hours the feed
 # check deploys only when the feed has an Episode the live site lacks, or an
-# Episode has gained an Episode Listen link or a Transcript (transcribe.yml
-# makes them). See docs/deploy.md.
+# Episode has gained an Episode Listen link or a Transcript. Transcribe
+# (transcribe.yml) starts this workflow itself once it pushes a Transcript, so
+# the feed check only catches the Transcripts it missed. See docs/deploy.md.
 
 on:
   push:
@@ -16,7 +17,9 @@ on:
   workflow_dispatch:
   schedule:
     # Every 2 hours at 17 past: GitHub delays and drops the most scheduled runs
-    # at the top of the hour.
+    # at the top of the hour. It drops many anyway: 2 a day, not 12, from
+    # 2026-11-22 to 11-25, so release day means pressing Run workflow until
+    # #302 (docs/deploy.md, Triggers).
     - cron: "17 */2 * * *"
 
 permissions:
