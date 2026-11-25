@@ -256,7 +256,7 @@ Two more run on every push to `main`:
 
 ## Workflow changes
 
-A workflow's steps are tested like any script: `tests/unit/scripts/workflows.test.ts` runs a step's `run:` block under bash with stubs and checks a step's `if:`. Two more steps come before review, from CODING_STANDARDS.md, Workflows. A path the PR's own run can't reach (a schedule, the **Run workflow** button, a step skipped on pull requests) is shown on a throwaway run. So is a write made with the workflow's token, once, with that token. #298's Start Deploy step is skipped on pull requests and writes with `GITHUB_TOKEN`, and its review had to ask for this; a throwaway workflow in its own PR, removed before merge, started Deploy with that token on the PR's branch, where every job skips (run 45708748133).
+A workflow's steps are tested like any script: `tests/unit/scripts/workflows.test.ts` runs a step's `run:` block under bash with stubs and checks a step's `if:`. CODING_STANDARDS.md, Workflows, holds the rest, and two of its rules are steps to take before review, not only checks for it: a path the PR's own run can't reach (a schedule, the **Run workflow** button, a step skipped on pull requests) is shown on a throwaway run, and so is a write made with the workflow's token; the first real run after merge is read too. #298's Start Deploy step is both, and its review had to ask: a throwaway workflow added to its PR (#303) and removed before merge started Deploy with that token on the PR's branch, where every job skips (run 45708748133), and docs/deploy.md (Transcripts) says how to read the first real run.
 
 ## Merging
 
