@@ -4,6 +4,8 @@ The site is one Cloudflare Worker (`jesters-privilege`) serving the static expor
 
 ## Triggers
 
+`docs/architecture.md` (From feed to live site) summarizes this section and Transcripts, below; a change to either updates it too.
+
 | Trigger                                    | What happens                                                                                                                                                                                                                                                                  |
 | ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Push to `main`                             | Build, `wrangler deploy` to production, then `scripts/smoke-check.sh`                                                                                                                                                                                                         |

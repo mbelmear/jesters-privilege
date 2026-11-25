@@ -1,0 +1,32 @@
+name: Throwaway 298
+
+# Throwaway for #298, removed before merge (CODING_STANDARDS.md, Workflows):
+# shows that GITHUB_TOKEN with actions: write starts Deploy through
+# workflow_dispatch, as transcribe.yml's Start Deploy step does. It starts it
+# on this branch, where every Deploy job skips: preview and the docs-only check
+# run only on pull requests, the feed check only on schedule, and production
+# only on main.
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/throwaway-298.yml
+
+permissions:
+  contents: read
+
+jobs:
+  dispatch:
+    name: Start Deploy on this branch
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      actions: write
+    steps:
+      - name: Start Deploy
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          BRANCH: ${{ github.head_ref }}
+        run: |
+          gh workflow run deploy.yml --ref "$BRANCH"
