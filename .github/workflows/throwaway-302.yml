@@ -1,0 +1,27 @@
+name: Throwaway 302
+
+# Throwaway for #302: does a job after one that set an output and then failed
+# still read the output, and does a blank run-name fall back to GitHub's own?
+run-name: ${{ inputs.feed-check && 'Feed check started by the Worker' || '' }}
+
+on: pull_request
+
+permissions: {}
+
+jobs:
+  first:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      rebuild: ${{ steps.check.outputs.rebuild }}
+    steps:
+      - id: check
+        run: echo "rebuild=true" >> "$GITHUB_OUTPUT"
+      - run: exit 1
+  second:
+    needs: first
+    if: ${{ !cancelled() && needs.first.outputs.rebuild == 'true' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - run: echo "Read rebuild=true from the failed job"
