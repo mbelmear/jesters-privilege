@@ -40,7 +40,7 @@ export async function needingTranscripts<E extends TranscribableEpisode>(
 // How long an Episode counts as new (#240). The show releases about every
 // other week. Deploy starts a run once it deploys a new Episode (ADR 0004),
 // and a week of Transcribe's own schedule, even at the twice a day GitHub has
-// run it, is ample to retry a failure.
+// run it (docs/deploy.md, Triggers), is ample to retry a failure.
 export const NEW_FOR_DAYS = 7;
 const NEW_FOR_MS = NEW_FOR_DAYS * 24 * 60 * 60 * 1000;
 

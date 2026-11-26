@@ -53,7 +53,7 @@ describe("Transcribe started by Deploy's feed check", () => {
   it("starts once the deploy shipped a new Episode, even if the smoke check failed", () => {
     expect(job("start-transcribe")).toContain("needs: [feed-check, deploy]");
     expect(job("start-transcribe")).toMatch(
-      /if: >-\n {6}!cancelled\(\) && needs\.feed-check\.outputs\.new-episode == 'true' &&\n {6}needs\.deploy\.outputs\.shipped == 'true'\n/
+      /if: >-\n {6}!cancelled\(\) && github\.ref == 'refs\/heads\/main' &&\n {6}needs\.feed-check\.outputs\.new-episode == 'true' &&\n {6}needs\.deploy\.outputs\.shipped == 'true'\n/
     );
   });
 

@@ -1,4 +1,5 @@
-// Opens an issue when a run of Deploy fails in its production or feed check job,
+// Opens an issue when a run of Deploy fails in its production, feed check or
+// Start Transcribe job,
 // or adds to the one already open, and closes the feed check's once one passes.
 // The logic is src/lib/deploy-report.ts;
 // scripts/failed-run.ts wires in `gh`. --dry-run prints the report for the newest

@@ -272,14 +272,16 @@ jobs:
   # from-feed-check keeps Transcribe refusing an Episode older than a week
   # (#240). The Deploy that Transcribe starts once it pushes has the feed
   # check off, so this never loops. Runs once, never retries; a missed Episode
-  # waits for Transcribe's schedule. A run whose deploy the production queue
+  # waits for Transcribe's schedule, and a failure opens "Transcribe wasn't
+  # started for a new Episode" (scripts/report-deploy.ts). A run whose deploy the production queue
   # cancels never ships, but the Episode is still new to the live site, so the
   # next feed check deploys it and gets here.
   start-transcribe:
     name: Start Transcribe
     needs: [feed-check, deploy]
     if: >-
-      !cancelled() && needs.feed-check.outputs.new-episode == 'true' &&
+      !cancelled() && github.ref == 'refs/heads/main' &&
+      needs.feed-check.outputs.new-episode == 'true' &&
       needs.deploy.outputs.shipped == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 5

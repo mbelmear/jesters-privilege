@@ -3,6 +3,7 @@ import {
   DEPLOY_JOB,
   FEED_CHECK_JOB,
   REPORTED_JOBS,
+  START_TRANSCRIBE_JOB,
   deployFailures,
   deployReport,
   feedCheckPassed,
@@ -104,6 +105,11 @@ describe("REPORTED_JOBS", () => {
       "The production deploy failed",
     ],
     ["Feed check", "Feed check is failing", "The feed check failed"],
+    [
+      "Start Transcribe",
+      "Transcribe wasn't started for a new Episode",
+      "Deploy shipped a new Episode but couldn't start Transcribe",
+    ],
   ])("gives %s its own title and report", (job, title, headline) => {
     const reported = REPORTED_JOBS.find((entry) => entry.job === job);
     expect(reported?.title).toBe(title);
@@ -117,6 +123,7 @@ describe("the workflows it reads", () => {
     const deploy = readFileSync(".github/workflows/deploy.yml", "utf8");
     expect(deploy).toContain(`name: ${DEPLOY_JOB}\n`);
     expect(deploy).toContain(`name: ${FEED_CHECK_JOB}\n`);
+    expect(deploy).toContain(`name: ${START_TRANSCRIBE_JOB}\n`);
     expect(deploy).toMatch(/^name: Deploy$/m);
     const report = readFileSync(".github/workflows/deploy-report.yml", "utf8");
     expect(report).toContain("workflows: [Deploy]");

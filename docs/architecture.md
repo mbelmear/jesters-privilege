@@ -150,7 +150,7 @@ Every change is a ticket on GitHub Issues, built test-first in its own git workt
 
 `main`'s ruleset requires a pull request, squash merges, every CI check and the PR gate, with no bypass. A visual PR also waits for a Jester's approval on the preview. A push to `main` deploys to production and runs a smoke check against the live site (`scripts/smoke-check.sh`). After the merge, the Merge audit workflow checks the review really happened, and Conflict watch flags waiting visual PRs that no longer merge cleanly. How each test layer runs and the full merge procedure: [`testing.md`](testing.md).
 
-When a feed check, a production deploy, or Nightly fails, a workflow opens an issue naming the failure, or comments on the one still open (`deploy-report.yml`, `nightly.yml`). The next passing feed check closes its own issue; a failed deploy's or Nightly's is closed by hand once a run passes again.
+When a feed check, a production deploy, Deploy's Start Transcribe, or Nightly fails, a workflow opens an issue naming the failure, or comments on the one still open (`deploy-report.yml`, `nightly.yml`). The next passing feed check closes its own issue; the others are closed by hand once a run passes again.
 
 ## Where to read next
 
