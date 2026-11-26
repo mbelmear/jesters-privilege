@@ -49,11 +49,12 @@ export function buildRecord({
   };
 }
 
-// Whether the live site is behind, and why.
-export type FeedCheck = {
-  rebuild: boolean;
-  reason: string;
-};
+// Whether the live site is behind, and why. `newEpisode` says the feed's
+// newest Episode is one the live site lacks, which is when a feed check
+// starts Transcribe after it deploys (ADR 0004).
+export type FeedCheck =
+  | { rebuild: false; reason: string }
+  | { rebuild: true; newEpisode: boolean; reason: string };
 
 // Compares the live site's record with a fresh one: rebuild when the feed's
 // newest Episode differs (ADR 0001), or when an Episode has gained an Episode
@@ -66,6 +67,7 @@ export function compareRecords(
   if (live.newestEpisodeGuid !== fresh.newestEpisodeGuid) {
     return {
       rebuild: true,
+      newEpisode: true,
       reason: `The feed's newest Episode (${fresh.newestEpisodeGuid}) isn't on the live site, which has ${live.newestEpisodeGuid}`,
     };
   }
@@ -79,6 +81,7 @@ export function compareRecords(
       .join(", ");
     return {
       rebuild: true,
+      newEpisode: false,
       reason: `Episodes have gained Episode Listen links since the live site was built: ${named}`,
     };
   }
@@ -87,6 +90,7 @@ export function compareRecords(
   if (transcribed.length > 0) {
     return {
       rebuild: true,
+      newEpisode: false,
       reason: `Episodes have gained Transcripts since the live site was built: ${transcribed.join(", ")}`,
     };
   }

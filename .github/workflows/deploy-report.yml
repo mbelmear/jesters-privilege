@@ -29,13 +29,15 @@ permissions:
 jobs:
   report:
     name: Report the run
-    # A scheduled run that passes still runs this: it closes the feed check's
-    # issue. Other runs that pass have no feed check to report.
+    # A scheduled run or one the Worker started (ADR 0004) that passes still
+    # runs this: it closes the feed check's issue. Other runs that pass have
+    # no feed check to report.
     if: >-
       github.event_name == 'workflow_run' &&
       (github.event.workflow_run.conclusion == 'failure' ||
       (github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.event == 'schedule')) &&
+      (github.event.workflow_run.event == 'schedule' ||
+      github.event.workflow_run.display_title == 'Feed check started by the Worker'))) &&
       github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-24.04
     timeout-minutes: 10

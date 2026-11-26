@@ -1,11 +1,13 @@
 name: Transcribe
 
-# Spreaker makes no Transcripts, so the site makes its own (ADR 0003): every 2
-# hours, each Episode the feed links no WebVTT Transcript for, and that has
+# Spreaker makes no Transcripts, so the site makes its own (ADR 0003): each
+# Episode the feed links no WebVTT Transcript for, and that has
 # none saved, is transcribed once with whisper.cpp and saved as
 # `<episode-guid>.vtt` on the `transcripts` branch, which builds read. Only an
 # Episode in its first week is transcribed; an older one fails the run,
-# named, unless it was started from Run workflow (#240). A run that pushes a
+# named, unless it was started from Run workflow (#240). Deploy starts it once
+# a feed check deploys a new Episode, and its own schedule every 2 hours
+# retries what a failed run missed (ADR 0004). A run that pushes a
 # Transcript then starts Deploy itself, so the site shows it within minutes
 # rather than at the next feed check, which GitHub may run hours late or drop
 # (#298). A pull request that changes the transcriber runs it for real
@@ -14,11 +16,19 @@ name: Transcribe
 
 on:
   schedule:
-    # Half an hour after the feed check, so when both run on time a new
-    # Episode is live first. GitHub delays and drops scheduled runs: 2 a
-    # day, not 12, from 2026-11-22 to 11-25 (docs/deploy.md, Triggers).
+    # The backstop: Deploy starts a run as soon as it deploys a new Episode.
+    # Half an hour after Deploy's schedule. GitHub delays and drops scheduled
+    # runs: 2 a day, not 12, from 2026-11-22 to 11-26 (docs/deploy.md,
+    # Triggers).
     - cron: "47 */2 * * *"
   workflow_dispatch:
+    inputs:
+      from-feed-check:
+        description: >-
+          Started by Deploy's feed check, so an Episode older than a week is
+          refused, as on a schedule. Leave it off.
+        type: boolean
+        default: false
   pull_request:
     paths:
       - .github/workflows/transcribe.yml
@@ -50,8 +60,9 @@ jobs:
     env:
       FEED: live
       # Only a run from the Run workflow button transcribes an Episode older
-      # than a week (#240); a scheduled or pull request run refuses one.
-      TRANSCRIBE_ANY_AGE: ${{ github.event_name == 'workflow_dispatch' }}
+      # than a week (#240); a scheduled or pull request run refuses one, and
+      # so does one Deploy's feed check started.
+      TRANSCRIBE_ANY_AGE: ${{ github.event_name == 'workflow_dispatch' && !inputs.from-feed-check }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

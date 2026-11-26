@@ -72,6 +72,19 @@ describe("feedCheckReport", () => {
     expect(report).toContain("closes itself once a feed check passes");
   });
 
+  it("says a scheduled check that only found the Worker stopped still deploys", () => {
+    const report = feedCheckReport(
+      RUN,
+      "2026-11-26T15:20:00.0000000Z ##[error]No feed check started by the Worker has run in the last 3 hours (the newest was at 2026-11-26T11:00:02Z), so a new Episode waits for GitHub's schedule."
+    );
+    expect(report).toContain(
+      "- No feed check started by the Worker has run in the last 3 hours"
+    );
+    expect(report).toContain(
+      "One that only found the Worker has stopped starting feed checks still deploys what it found"
+    );
+  });
+
   it("says so when the logs name no failure", () => {
     expect(feedCheckReport(RUN, "")).toContain("No failure is named");
   });
@@ -109,8 +122,9 @@ describe("the workflows it reads", () => {
     expect(report).toContain("workflows: [Deploy]");
     // A run where the feed check passes and nothing deploys ends in success, and
     // the report job has to run for it, or the feed check's issue never closes.
+    // The Worker's runs count too (tests/unit/scripts/feed-check-workflows.test.ts).
     expect(report).toMatch(
-      /conclusion == 'success' &&\s+github\.event\.workflow_run\.event == 'schedule'/
+      /conclusion == 'success' &&\s+\(?github\.event\.workflow_run\.event == 'schedule'/
     );
   });
 });

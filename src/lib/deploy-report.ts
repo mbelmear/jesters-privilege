@@ -54,7 +54,7 @@ export function feedCheckReport(runUrl: string, log: string): string {
     "",
     failureList(log),
     "",
-    "While the feed check is red, no new Episode, Episode Listen link, or Transcript deploys on its own, and the live site stays as it is. This issue closes itself once a feed check passes.",
+    "A feed check that can't read the feed or the live site deploys nothing: no new Episode, Episode Listen link, or Transcript deploys on its own, and the live site stays as it is. One that only found the Worker has stopped starting feed checks still deploys what it found, but a new Episode then waits hours for GitHub's schedule. This issue closes itself once a feed check passes.",
   ].join("\n");
 }
 
