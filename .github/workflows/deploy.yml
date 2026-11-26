@@ -273,9 +273,10 @@ jobs:
   # (#240). The Deploy that Transcribe starts once it pushes has the feed
   # check off, so this never loops. Runs once, never retries; a missed Episode
   # waits for Transcribe's schedule, and a failure opens "Transcribe wasn't
-  # started for a new Episode" (scripts/report-deploy.ts). A run whose deploy the production queue
-  # cancels never ships, but the Episode is still new to the live site, so the
-  # next feed check deploys it and gets here.
+  # started for a new Episode" (scripts/report-deploy.ts). A run whose deploy
+  # the production queue cancels never ships, but the Episode is still new to
+  # the live site, so the next feed check deploys it and gets here. It checks
+  # the ref as the deploy job does, so only main's runs start Transcribe.
   start-transcribe:
     name: Start Transcribe
     needs: [feed-check, deploy]

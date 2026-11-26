@@ -8,6 +8,7 @@ import {
   deployReport,
   feedCheckPassed,
   feedCheckReport,
+  startTranscribeReport,
 } from "@/lib/deploy-report";
 
 const RUN = "https://github.com/mbelmear/jesters-privilege/actions/runs/1";
@@ -88,6 +89,23 @@ describe("feedCheckReport", () => {
 
   it("says so when the logs name no failure", () => {
     expect(feedCheckReport(RUN, "")).toContain("No failure is named");
+  });
+});
+
+describe("startTranscribeReport", () => {
+  it("links the run, names the cause, and says how to get the Transcript", () => {
+    const report = startTranscribeReport(
+      RUN,
+      "2026-11-27T10:05:00.0000000Z ##[error]HTTP 403: Resource not accessible by integration"
+    );
+    expect(report).toContain(
+      `Deploy shipped a new Episode but couldn't start Transcribe: ${RUN}`
+    );
+    expect(report).toContain(
+      "- HTTP 403: Resource not accessible by integration"
+    );
+    expect(report).toContain("press Run workflow on Transcribe");
+    expect(report).toContain("Close this once Transcribe has run.");
   });
 });
 
