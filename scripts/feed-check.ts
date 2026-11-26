@@ -1,4 +1,4 @@
-// The scheduled feed check (#18): decides whether the Deploy workflow rebuilds,
+// The feed check (#18; hourly from the Worker, ADR 0004): decides whether the Deploy workflow rebuilds,
 // by comparing the record a fresh build would make (the feed's newest Episode,
 // its Episodes' Listen links, and which of them have Transcripts) with the
 // live site's build manifest. The logic is src/lib/feed-check.ts; this wires

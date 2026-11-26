@@ -1,5 +1,5 @@
 // The build manifest is published at BUILD_MANIFEST_PATH on every deploy. The
-// scheduled feed check reads it from the live site and rebuilds when the
+// feed check (ADR 0004) reads it from the live site and rebuilds when the
 // feed's newest Episode differs from the one recorded here (ADR 0001), or when
 // an Episode has gained a Transcript or an Episode Listen link since (ADR 0003).
 // Both sides build their record with `buildRecord`, so the check compares

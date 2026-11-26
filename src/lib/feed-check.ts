@@ -30,8 +30,9 @@ export type FeedCheckEnv = {
 // Sets the step outputs `rebuild` and `new-episode` (the feed's newest
 // Episode is one the live site lacks) to "true" or "false" and returns the
 // exit code. A feed or live manifest that can't be read fails the run (1) with no
-// output, so the deploy is skipped, the live site stays as it is, and GitHub
-// emails whoever last changed the workflow's cron line.
+// output, so the deploy is skipped, the live site stays as it is, and the
+// Deploy report opens "Feed check is failing" (docs/deploy.md, Triggers, says
+// whom GitHub emails).
 export async function runFeedCheck(
   site: string,
   env: FeedCheckEnv

@@ -178,7 +178,8 @@ describe("Worker", () => {
 
     it("starts Deploy on main with the feed check turned on", async () => {
       // Made up in the format GitHub's REST docs give for a dispatch that
-      // returns the run's details (read 2026-11-26).
+      // returns the run's details (read 2026-11-26); only the log line reads
+      // it. Its 200 isn't pinned: the Worker takes any 2xx as started.
       const github = jest.spyOn(globalThis, "fetch").mockResolvedValue(
         Response.json({
           workflow_run_id: 101,

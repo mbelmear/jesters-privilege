@@ -251,12 +251,12 @@ open_url "https://github.com/settings/personal-access-tokens"
 pause "Press Enter once #304 has the date."
 
 stage "Give the Worker the token"
-say "Each production deploy uploads it to the Worker. Once #302's pull request"
-say "has merged, press Actions → Deploy → Run workflow, on main. (If it hasn't"
-say "merged, its merge deploys and uploads it.)"
+say "Each production deploy uploads it to the Worker, so deploy once now:"
+say "Actions → Deploy → Run workflow, on main, with feed-check left off."
 open_url "https://github.com/mbelmear/jesters-privilege/actions/workflows/deploy.yml"
 say "Within the hour Actions → Deploy shows a run named"
-say "'Feed check started by the Worker'."
+say "'Feed check started by the Worker': the token can start runs. The check"
+say "above showed only that it can read them."
 pause "Press Enter to finish."
 
 finish

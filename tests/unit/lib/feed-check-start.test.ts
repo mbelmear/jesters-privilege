@@ -47,6 +47,7 @@ describe("checkFeedChecksStarted", () => {
   it("fails, naming the newest, when the Worker's feed checks are older than 3 hours", () => {
     expect(
       check([
+        // Made up in BUTTON_RUNS' format: a recent button run.
         { createdAt: "2026-11-26T14:40:00Z", displayTitle: "Deploy" },
         workerRun("2026-11-26T11:59:59Z"),
       ])
@@ -61,6 +62,7 @@ describe("checkFeedChecksStarted", () => {
   it("fails when no run the Worker started is listed, however recent the button's", () => {
     expect(
       check([
+        // Made up in BUTTON_RUNS' format: a recent button run.
         { createdAt: "2026-11-26T14:50:00Z", displayTitle: "Deploy" },
         ...BUTTON_RUNS,
       ])
@@ -72,6 +74,7 @@ describe("checkFeedChecksStarted", () => {
     });
   });
 
+  // Made up: lists gh never prints, to show each is refused, not read.
   it.each([
     ["isn't JSON", "not json", "isn't JSON"],
     ["isn't a list", "{}", "isn't a list"],

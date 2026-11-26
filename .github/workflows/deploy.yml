@@ -14,7 +14,9 @@ name: Deploy
 
 # The runs the Worker started carry this name, which is how the backstop and
 # the Deploy report find them (src/lib/feed-check-start.ts); every other run
-# keeps GitHub's own name, since a blank run-name falls back to it.
+# keeps GitHub's own name, since a blank run-name falls back to it (#305). The
+# Worker's token belongs to a Jester, so a button run with feed-check ticked
+# gets the same name; the input's description says to leave it off.
 run-name: ${{ inputs.feed-check && 'Feed check started by the Worker' || '' }}
 
 on:
@@ -25,9 +27,9 @@ on:
     inputs:
       feed-check:
         description: >-
-          Check the feed first and deploy only if the site is behind, as the
-          Worker's hourly runs do. Leave it off to deploy whatever the feed
-          holds.
+          Set only by the site Worker's hourly trigger: checks the feed first
+          and deploys only if the site is behind. Leave it off; ticked, the
+          run counts as the Worker's and hides a broken Worker for 3 hours.
         type: boolean
         default: false
   schedule:
@@ -256,7 +258,9 @@ jobs:
       # hours late. from-feed-check keeps it refusing an Episode older than a
       # week (#240). The Deploy that Transcribe starts once it pushes has the
       # feed check off, so this never loops. Runs once, never retries; a missed
-      # Episode waits for Transcribe's schedule.
+      # Episode waits for Transcribe's schedule. A run whose deploy the
+      # production queue cancels never gets here, but the Episode is still
+      # new to the live site, so the next feed check deploys it and starts this.
       - name: Start Transcribe
         if: needs.feed-check.outputs.new-episode == 'true'
         env:
