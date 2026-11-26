@@ -94,6 +94,7 @@ describe("feedCheckReport", () => {
 
 describe("startTranscribeReport", () => {
   it("links the run, names the cause, and says how to get the Transcript", () => {
+    // Made up in a job log's format: the error a refused dispatch might print.
     const report = startTranscribeReport(
       RUN,
       "2026-11-27T10:05:00.0000000Z ##[error]HTTP 403: Resource not accessible by integration"
