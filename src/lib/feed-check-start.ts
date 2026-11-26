@@ -28,7 +28,7 @@ export async function startFeedCheck(
 ): Promise<void> {
   if (!token) {
     throw new Error(
-      "DEPLOY_DISPATCH_TOKEN isn't set, so no feed check was started (docs/deploy.md, Secrets)"
+      "DEPLOY_DISPATCH_TOKEN isn't set, so no feed check was started (docs/deploy.md, Credentials)"
     );
   }
   const response = await fetch(DISPATCHES, {

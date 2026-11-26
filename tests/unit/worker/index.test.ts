@@ -242,7 +242,9 @@ describe("Worker", () => {
 
       await expect(
         worker.scheduled({}, { ...env, DEPLOY_DISPATCH_TOKEN: undefined })
-      ).rejects.toThrow("DEPLOY_DISPATCH_TOKEN isn't set");
+      ).rejects.toThrow(
+        "DEPLOY_DISPATCH_TOKEN isn't set, so no feed check was started (docs/deploy.md, Credentials)"
+      );
       expect(github).not.toHaveBeenCalled();
     });
   });

@@ -33,7 +33,30 @@ describe("Deploy's feed check started by the Worker", () => {
   });
 });
 
+// A job's lines, from its key to the next job's.
+function job(name: string): string {
+  return (
+    new RegExp(`^ {2}${name}:\\n((?: {4}.*\\n|\\n)+)`, "m").exec(deploy)?.[1] ??
+    ""
+  );
+}
+
 describe("Transcribe started by Deploy's feed check", () => {
+  it("is started from its own job, so the build's token can't start workflows", () => {
+    expect(job("deploy")).not.toBe("");
+    expect(job("deploy")).not.toContain("actions: write");
+    expect(job("start-transcribe")).toContain("actions: write");
+  });
+
+  // The Episode is live once wrangler deploy has shipped it, so the next feed
+  // check would find nothing new and never start Transcribe.
+  it("starts once the deploy shipped a new Episode, even if the smoke check failed", () => {
+    expect(job("start-transcribe")).toContain("needs: [feed-check, deploy]");
+    expect(job("start-transcribe")).toMatch(
+      /if: >-\n {6}!cancelled\(\) && needs\.feed-check\.outputs\.new-episode == 'true' &&\n {6}needs\.deploy\.outputs\.shipped == 'true'\n/
+    );
+  });
+
   it("is started with the input saying it isn't the Run workflow button", () => {
     expect(deploy).toContain(
       "gh workflow run transcribe.yml --ref main -f from-feed-check=true"

@@ -199,10 +199,9 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     environment: production
-    permissions:
-      contents: read
-      # Starts Transcribe after deploying a new Episode.
-      actions: write
+    outputs:
+      # Set once wrangler deploy has shipped, whatever the smoke check says.
+      shipped: ${{ steps.ship.outputs.shipped }}
     # Queue production deploys; never cancel one partway.
     concurrency:
       group: production
@@ -237,33 +236,57 @@ jobs:
           SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
           SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
       # DEPLOY_DISPATCH_TOKEN lets the Worker's Cron Trigger start the feed
-      # check (ADR 0004; scripts/deploy-dispatch-token-wizard.sh makes it).
-      - run: |
-          if [ -z "$TURNSTILE_SECRET_KEY" ] || [ -z "$DEPLOY_DISPATCH_TOKEN" ]; then
-            echo "::error::The production Turnstile secret and DEPLOY_DISPATCH_TOKEN must be configured"
+      # check (ADR 0004; scripts/deploy-dispatch-token-wizard.sh makes it). The
+      # site works without it, so a deploy lacking it goes ahead with a
+      # warning, as one lacking Spotify's key does (CODING_STANDARDS.md,
+      # Secrets): wrangler keeps a secret the file leaves out, and the backstop
+      # fails once the Worker stops starting feed checks.
+      - id: ship
+        run: |
+          if [ -z "$TURNSTILE_SECRET_KEY" ]; then
+            echo "::error::Production Turnstile secret must be configured"
             exit 1
           fi
-          jq -n '{TURNSTILE_SECRET_KEY: env.TURNSTILE_SECRET_KEY, DEPLOY_DISPATCH_TOKEN: env.DEPLOY_DISPATCH_TOKEN}' \
-            > "$RUNNER_TEMP/secrets.json"
+          if [ -n "$DEPLOY_DISPATCH_TOKEN" ]; then
+            jq -n '{TURNSTILE_SECRET_KEY: env.TURNSTILE_SECRET_KEY, DEPLOY_DISPATCH_TOKEN: env.DEPLOY_DISPATCH_TOKEN}' \
+              > "$RUNNER_TEMP/secrets.json"
+          else
+            echo "::warning::DEPLOY_DISPATCH_TOKEN isn't set, so the Worker keeps the token it last had, if any, to start feed checks (docs/deploy.md, Credentials)"
+            jq -n '{TURNSTILE_SECRET_KEY: env.TURNSTILE_SECRET_KEY}' > "$RUNNER_TEMP/secrets.json"
+          fi
           npx wrangler deploy --message "${GITHUB_SHA::7}" \
             --secrets-file "$RUNNER_TEMP/secrets.json"
+          echo "shipped=true" >> "$GITHUB_OUTPUT"
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.PRODUCTION_CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.PRODUCTION_CLOUDFLARE_ACCOUNT_ID }}
           TURNSTILE_SECRET_KEY: ${{ secrets.PRODUCTION_TURNSTILE_SECRET_KEY }}
           DEPLOY_DISPATCH_TOKEN: ${{ secrets.DEPLOY_DISPATCH_TOKEN }}
       - run: scripts/smoke-check.sh "$GITHUB_SHA"
-      # A feed check that deployed a new newest Episode starts Transcribe now,
-      # rather than leaving it to Transcribe's schedule, which GitHub may run
-      # hours late. from-feed-check keeps it refusing an Episode older than a
-      # week (#240). The Deploy that Transcribe starts once it pushes has the
-      # feed check off, so this never loops. Runs once, never retries; a missed
-      # Episode waits for Transcribe's schedule. A run whose deploy the
-      # production queue cancels never gets here, but the Episode is still
-      # new to the live site, so the next feed check deploys it and starts this.
-      - name: Start Transcribe
-        if: needs.feed-check.outputs.new-episode == 'true'
-        env:
+
+  # A feed check that deployed a new newest Episode starts Transcribe now,
+  # rather than leaving it to Transcribe's schedule, which GitHub may run hours
+  # late. Its own job, so the build above never holds a token that can start
+  # workflows. It runs once the deploy shipped, even if the smoke check then
+  # failed: the Episode is live, so no later feed check would see it as new.
+  # from-feed-check keeps Transcribe refusing an Episode older than a week
+  # (#240). The Deploy that Transcribe starts once it pushes has the feed
+  # check off, so this never loops. Runs once, never retries; a missed Episode
+  # waits for Transcribe's schedule. A run whose deploy the production queue
+  # cancels never ships, but the Episode is still new to the live site, so the
+  # next feed check deploys it and gets here.
+  start-transcribe:
+    name: Start Transcribe
+    needs: [feed-check, deploy]
+    if: >-
+      !cancelled() && needs.feed-check.outputs.new-episode == 'true' &&
+      needs.deploy.outputs.shipped == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      actions: write
+    steps:
+      - env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: gh workflow run transcribe.yml --ref main -f from-feed-check=true

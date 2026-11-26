@@ -52,7 +52,10 @@ export async function runFeedCheck(
     return 1;
   }
   env.setOutput("rebuild", String(result.rebuild));
-  env.setOutput("new-episode", String(result.rebuild && result.newEpisode));
+  env.setOutput(
+    "new-episode",
+    String(result.rebuild && result.cause === "new-episode")
+  );
   env.log(
     `::notice::${result.rebuild ? "Rebuilding" : "No rebuild"}: ${result.reason}`
   );

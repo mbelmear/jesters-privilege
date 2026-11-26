@@ -127,7 +127,7 @@ describe("compareRecords", () => {
   it("rebuilds when the feed has a newer Episode than the live site", () => {
     expect(compareRecords(record(EPISODE_1), record(EPISODE_2))).toEqual({
       rebuild: true,
-      newEpisode: true,
+      cause: "new-episode",
       reason: `The feed's newest Episode (${EPISODE_2}) isn't on the live site, which has ${EPISODE_1}`,
     });
   });
@@ -141,7 +141,7 @@ describe("compareRecords", () => {
     });
     expect(compareRecords(live, fresh)).toEqual({
       rebuild: true,
-      newEpisode: false,
+      cause: "listen-links",
       reason: `Episodes have gained Episode Listen links since the live site was built: ${EPISODE_2} in Apple Podcasts`,
     });
   });
@@ -158,7 +158,7 @@ describe("compareRecords", () => {
     const fresh = record(EPISODE_2, { transcripts: [EPISODE_2, EPISODE_1] });
     expect(compareRecords(live, fresh)).toEqual({
       rebuild: true,
-      newEpisode: false,
+      cause: "transcripts",
       reason: `Episodes have gained Transcripts since the live site was built: ${EPISODE_2}`,
     });
   });
