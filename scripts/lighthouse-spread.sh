@@ -2,7 +2,7 @@
 # How far each budgeted page's Lighthouse figures moved across main's last N
 # CI runs (default 10): the range of its medians and of its single runs, with
 # its early bytes beside them, so a budget can be set from what the runner
-# holds (docs/testing.md, Lighthouse). Downloads each run's lighthouse-reports,
+# holds (docs/testing.md, Performance). Downloads each run's lighthouse-reports,
 # which CI keeps for 14 days; a finished run without them is skipped. Usage:
 #   npm run lighthouse:spread [-- <runs>]
 set -euo pipefail

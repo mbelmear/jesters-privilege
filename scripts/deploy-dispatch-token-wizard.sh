@@ -250,14 +250,33 @@ say "GitHub shows for it:"
 open_url "https://github.com/settings/personal-access-tokens"
 pause "Press Enter once #304 has the date."
 
+# Saving the secret reaches nothing until a deploy uploads it, and on #306 the
+# deploy this stage only asked for was never started, so it starts it itself.
 stage "Give the Worker the token"
-say "Each production deploy uploads it to the Worker, so deploy once now:"
-say "Actions → Deploy → Run workflow, on main, with feed-check left off."
-open_url "https://github.com/mbelmear/jesters-privilege/actions/workflows/deploy.yml"
-say "Within the hour Actions → Deploy shows a run named"
-say "'Feed check started by the Worker': the token can start runs. The check"
-say "above showed only that it can read them."
-pause "Press Enter to finish."
+say "Each production deploy uploads it to the Worker. Until one runs, the"
+say "Worker has no token and starts no feed check."
+if confirm "Deploy main now, with feed-check off, so the Worker gets it?"; then
+  if deploy_main; then
+    printf '  %s✓%s %s\n' "$GREEN" "$RESET" "$DEPLOY_RESULT"
+    if confirm "Wait for the Worker's first feed check (up to 70 minutes)?"; then
+      if wait_for_worker_run; then
+        printf '  %s✓%s %s\n' "$GREEN" "$RESET" "$WORKER_RESULT"
+      else
+        warn "$WORKER_RESULT"
+      fi
+    else
+      say "Within the hour Actions → Deploy shows a run named 'Feed check"
+      say "started by the Worker': the token can start runs. The check above"
+      say "showed only that it can read them."
+    fi
+  else
+    warn "$DEPLOY_RESULT"
+    SKIPPED+=("a production deploy to upload it (Actions → Deploy → Run workflow, on main)")
+  fi
+else
+  warn "The Worker has no token until a production deploy runs."
+  SKIPPED+=("a production deploy to upload it (Actions → Deploy → Run workflow, on main)")
+fi
 
 finish
 }
@@ -281,6 +300,59 @@ check_token() {
       } catch { process.exit(1); } });') || {
     CHECK_RESULT="GitHub didn't show the Deploy workflow with that token: $answer"
     return 1; }
+}
+
+DEPLOY_RUNS="https://github.com/mbelmear/jesters-privilege/actions/workflows/deploy.yml"
+
+# deploy_main starts Deploy on main with gh, as the Run workflow button does,
+# and waits for it. Sets DEPLOY_RESULT to the run and how it ended, and fails
+# when the run fails or its log says the token wasn't uploaded.
+deploy_main() {
+  local started id
+  started=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+  gh workflow run deploy.yml --ref main >/dev/null 2>&1 || {
+    DEPLOY_RESULT="gh couldn't start Deploy; press Run workflow at $DEPLOY_RUNS"
+    return 1; }
+  say "Started Deploy; waiting for GitHub to list it…"
+  for _ in 1 2 3 4 5 6 7 8 9 10; do
+    sleep 3
+    id=$(gh run list --workflow=deploy.yml --event=workflow_dispatch --branch=main \
+      --limit=5 --json databaseId,createdAt \
+      --jq "[.[] | select(.createdAt >= \"$started\")][0].databaseId // empty")
+    [[ -n "$id" ]] && break
+  done
+  [[ -n "$id" ]] || { DEPLOY_RESULT="Deploy started but GitHub doesn't list it yet: $DEPLOY_RUNS"; return 1; }
+  say "Deploying (a few minutes; it waits behind any production deploy running)…"
+  if ! gh run watch "$id" --exit-status >/dev/null 2>&1; then
+    DEPLOY_RESULT="Deploy failed: $(gh run view "$id" --json url --jq .url)"
+    return 1
+  fi
+  if gh run view "$id" --log 2>/dev/null | grep -q "DEPLOY_DISPATCH_TOKEN isn't set"; then
+    DEPLOY_RESULT="Deploy passed but didn't find the token in production: $(gh run view "$id" --json url --jq .url)"
+    return 1
+  fi
+  DEPLOY_RESULT="Deployed with the token: $(gh run view "$id" --json url --jq .url)"
+}
+
+# wait_for_worker_run polls for a Deploy run the Worker started, which proves
+# the token can start runs; the Cron Trigger fires at the top of each hour.
+# Sets WORKER_RESULT.
+wait_for_worker_run() {
+  local since url
+  since=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+  say "Waiting for the top of the hour…"
+  for _ in $(seq 70); do
+    url=$(gh run list --workflow=deploy.yml --event=workflow_dispatch --branch=main \
+      --limit=5 --json url,createdAt,displayTitle \
+      --jq "[.[] | select(.createdAt >= \"$since\" and .displayTitle == \"Feed check started by the Worker\")][0].url // empty")
+    if [[ -n "$url" ]]; then
+      WORKER_RESULT="The Worker started a feed check: $url"
+      return
+    fi
+    sleep 60
+  done
+  WORKER_RESULT="No feed check from the Worker in 70 minutes. Its logs (Workers & Pages → jesters-privilege → Logs) name GitHub's answer (docs/deploy.md, Triggers)."
+  return 1
 }
 
 # set_environment_secret ENV NAME VALUE sets a GitHub Actions environment

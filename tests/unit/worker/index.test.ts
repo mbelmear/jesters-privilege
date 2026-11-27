@@ -2,6 +2,7 @@
  * @jest-environment node
  */
 import worker from "@/worker/index";
+import { fakeFetch, madeUpResponse, recordedResponse } from "../../fake-fetch";
 
 const assets = {
   fetch: async (request: Request) => new Response(`asset ${request.url}`),
@@ -82,9 +83,8 @@ describe("Worker", () => {
     afterEach(() => jest.restoreAllMocks());
 
     it("checks the token with Turnstile, then emails the show", async () => {
-      const siteverify = jest
-        .spyOn(globalThis, "fetch")
-        .mockResolvedValue(Response.json({ success: true }));
+      // Made up in the format Cloudflare's Siteverify docs give.
+      const siteverify = fakeFetch(() => madeUpResponse({ success: true }));
       const { env, sent } = fakeEnv();
 
       const response = await worker.fetch(submitRequest(), env);
@@ -123,8 +123,9 @@ describe("Worker", () => {
     });
 
     it("sends nothing when Turnstile says the token is bad", async () => {
-      jest.spyOn(globalThis, "fetch").mockResolvedValue(
-        Response.json({
+      // Made up in the format Cloudflare's Siteverify docs give.
+      fakeFetch(() =>
+        madeUpResponse({
           success: false,
           "error-codes": ["invalid-input-response"],
         })
@@ -137,19 +138,20 @@ describe("Worker", () => {
       expect(sent).toEqual([]);
     });
 
+    // Made up: Siteverify's error codes as its docs give them, and answers
+    // only the Worker's handling of a failure reads.
     it.each([
-      ["answers with an error", () => new Response("down", { status: 500 })],
+      ["answers with an error", madeUpResponse("down", { status: 500 })],
       [
         "refuses the site's secret",
-        () =>
-          Response.json({
-            success: false,
-            "error-codes": ["invalid-input-secret"],
-          }),
+        madeUpResponse({
+          success: false,
+          "error-codes": ["invalid-input-secret"],
+        }),
       ],
-      ["answers with something other than a verdict", () => Response.json({})],
+      ["answers with something other than a verdict", madeUpResponse({})],
     ])("sends nothing when Turnstile %s", async (_case, answer) => {
-      jest.spyOn(globalThis, "fetch").mockResolvedValue(answer());
+      fakeFetch(() => answer);
       jest.spyOn(console, "error").mockImplementation(() => {});
       const { env, sent } = fakeEnv();
 
@@ -180,8 +182,8 @@ describe("Worker", () => {
       // Made up in the format GitHub's REST docs give for a dispatch that
       // returns the run's details (read 2026-11-26); only the log line reads
       // it. Its 200 isn't pinned: the Worker takes any 2xx as started.
-      const github = jest.spyOn(globalThis, "fetch").mockResolvedValue(
-        Response.json({
+      const github = fakeFetch(() =>
+        madeUpResponse({
           workflow_run_id: 101,
           run_url:
             "https://api.github.com/repos/mbelmear/jesters-privilege/actions/runs/101",
@@ -213,8 +215,9 @@ describe("Worker", () => {
     it("fails, naming GitHub's answer, when GitHub refuses the token", async () => {
       // Recorded 2026-11-26: GitHub's answer to a POST to DISPATCHES with a
       // token that isn't one.
-      jest.spyOn(globalThis, "fetch").mockResolvedValue(
-        Response.json(
+      fakeFetch(() =>
+        recordedResponse(
+          "2026-11-26",
           {
             message: "Bad credentials",
             documentation_url: "https://docs.github.com/rest",
@@ -237,7 +240,9 @@ describe("Worker", () => {
     });
 
     it("fails without asking GitHub when the Worker has no token", async () => {
-      const github = jest.spyOn(globalThis, "fetch");
+      const github = fakeFetch(() => {
+        throw new Error("The Worker asked GitHub without a token");
+      });
       const { env } = fakeEnv();
 
       await expect(

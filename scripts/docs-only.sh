@@ -2,7 +2,7 @@
 # Print "true" if the only files that differ between two commits are under
 # docs/ or top-level Markdown, which nothing built or browser-tested reads, and
 # "false" otherwise. CI and the preview skip their build and browser jobs on
-# true (docs/testing.md, CI).
+# true (docs/testing.md, In CI).
 # Usage: scripts/docs-only.sh <base> <head>
 set -euo pipefail
 

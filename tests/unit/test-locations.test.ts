@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { repoRoot } from "../paths";
 
 // Tests live under tests/, so src/ and scripts/ hold only the code itself
-// (docs/testing.md, Unit tests).
+// (docs/testing.md, Unit and component tests).
 describe("test locations", () => {
   it.each(["src", "scripts"])("puts no test or spec file in %s/", (dir) => {
     const misplaced = globSync(
