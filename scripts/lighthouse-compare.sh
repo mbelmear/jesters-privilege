@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Lighthouse for this branch beside a base (default origin/main), per page:
 # simulated and observed LCP/FCP, and the bytes requested before the observed
-# paint, which drive the simulated figure (docs/testing.md, Lighthouse).
+# paint, which drive the simulated figure (docs/testing.md, Performance).
 # Builds the base in a throwaway worktree. This branch is measured as it
 # stands in this checkout (uncommitted changes included), replacing its
 # .next/, out/, and .lighthouseci/, so run it from your own ticket worktree

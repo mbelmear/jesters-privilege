@@ -243,21 +243,40 @@ else
 fi
 
 stage "Save it for production deploys"
-set_environment_secret production DEPLOY_DISPATCH_TOKEN "$DEPLOY_DISPATCH_TOKEN"
+saved=""
+if set_environment_secret production DEPLOY_DISPATCH_TOKEN "$DEPLOY_DISPATCH_TOKEN"; then
+  saved=yes
+fi
 expires=$(node -e 'const d = new Date(); d.setUTCDate(d.getUTCDate() + 366); console.log(d.toISOString().slice(0, 10))')
 say "It expires about $expires. Set #304's title and dates to the expiry"
 say "GitHub shows for it:"
 open_url "https://github.com/settings/personal-access-tokens"
 pause "Press Enter once #304 has the date."
 
+# Saving the secret reaches nothing until a deploy uploads it, and on #306 the
+# deploy this stage only asked for was never started, so it starts it itself.
 stage "Give the Worker the token"
-say "Each production deploy uploads it to the Worker, so deploy once now:"
-say "Actions → Deploy → Run workflow, on main, with feed-check left off."
-open_url "https://github.com/mbelmear/jesters-privilege/actions/workflows/deploy.yml"
-say "Within the hour Actions → Deploy shows a run named"
-say "'Feed check started by the Worker': the token can start runs. The check"
-say "above showed only that it can read them."
-pause "Press Enter to finish."
+say "Each production deploy uploads it to the Worker. Until one runs, the"
+say "Worker has no token and starts no feed check."
+# Enter means yes to both: on #306 the step that waited on a person was the
+# one skipped.
+if [[ -z "$saved" ]]; then
+  warn "Save the token first (above); a deploy now would upload nothing."
+elif confirm_yes "Deploy main now, with feed-check off, so the Worker gets it?" &&
+  deploy_main; then
+  printf '  %s✓%s %s\n' "$GREEN" "$RESET" "$DEPLOY_RESULT"
+  # Only a run the Worker started shows the token can start runs; the check
+  # above showed only that it can read them.
+  if confirm_yes "Wait for the Worker's first feed check (up to 70 minutes)?" &&
+    wait_for_worker_run; then
+    printf '  %s✓%s %s\n' "$GREEN" "$RESET" "$WORKER_RESULT"
+  else
+    warn "${WORKER_RESULT:-Not checked: within the hour Actions → Deploy should show a run named 'Feed check started by the Worker'.}"
+  fi
+else
+  warn "${DEPLOY_RESULT:-Not deployed: the Worker has no token until a production deploy runs.}"
+  SKIPPED+=("a production deploy to upload it (Actions → Deploy → Run workflow, on main)")
+fi
 
 finish
 }
@@ -283,6 +302,88 @@ check_token() {
     return 1; }
 }
 
+DEPLOY_RUNS="https://github.com/mbelmear/jesters-privilege/actions/workflows/deploy.yml"
+DEPLOY_RESULT=""
+WORKER_RESULT=""
+
+# confirm_yes QUESTION is the library's confirm with yes as the default.
+confirm_yes() {
+  local reply=""
+  printf '  %s? %s [Y/n] ' "$YELLOW" "$1"
+  read -r reply || true
+  [[ ! "$reply" =~ ^[Nn] ]]
+}
+
+# newest_dispatch SINCE TITLE prints the newest Deploy run on main from the
+# button or a dispatch with that title, made at or after SINCE (UTC, as
+# GitHub's createdAt is): its id and url, or nothing. When gh fails, its error
+# shows and this fails, so a broken gh never reads as no run.
+newest_dispatch() {
+  gh run list --workflow=deploy.yml --event=workflow_dispatch --branch=main \
+    --limit=5 --json databaseId,url,createdAt,displayTitle \
+    --jq "[.[] | select(.createdAt >= \"$1\" and .displayTitle == \"$2\")][0] | select(.) | \"\\(.databaseId) \\(.url)\""
+}
+
+# deploy_main starts Deploy on main with gh, as the Run workflow button does,
+# and waits for it. Sets DEPLOY_RESULT to the run and how it ended, and fails
+# when the run fails or its log says the token wasn't uploaded.
+deploy_main() {
+  local started run="" id url log
+  started=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+  gh workflow run deploy.yml --ref main >/dev/null 2>&1 || {
+    DEPLOY_RESULT="gh couldn't start Deploy; press Run workflow at $DEPLOY_RUNS"
+    return 1; }
+  for _ in 1 2 3 4 5 6 7 8 9 10; do
+    sleep 3
+    # The Worker's own run at the top of the hour carries its name; this one
+    # keeps Deploy's.
+    run=$(newest_dispatch "$started" Deploy) || {
+      DEPLOY_RESULT="gh couldn't list Deploy's runs (its error is above): $DEPLOY_RUNS"
+      return 1; }
+    [[ -n "$run" ]] && break
+  done
+  [[ -n "$run" ]] || { DEPLOY_RESULT="Deploy started but GitHub doesn't list it yet: $DEPLOY_RUNS"; return 1; }
+  id=${run%% *}; url=${run#* }
+  say "Deploying: $url"
+  say "(a few minutes; it waits behind any production deploy running)"
+  if ! gh run watch "$id" --exit-status >/dev/null 2>&1; then
+    DEPLOY_RESULT="Deploy failed: $url"
+    return 1
+  fi
+  # The log also holds the step's script, warning line included, so only the
+  # annotation GitHub prints for it counts.
+  if ! log=$(gh run view "$id" --log 2>/dev/null); then
+    DEPLOY_RESULT="Deploy passed, but its log couldn't be read to check the token: $url"
+    return 1
+  fi
+  if [[ "$log" == *"##[warning]DEPLOY_DISPATCH_TOKEN isn't set"* ]]; then
+    DEPLOY_RESULT="Deploy passed but didn't find the token in production: $url"
+    return 1
+  fi
+  DEPLOY_RESULT="Deployed with the token: $url"
+}
+
+# wait_for_worker_run polls for a Deploy run the Worker started, which proves
+# the token can start runs; the Cron Trigger fires at the top of each hour.
+# Sets WORKER_RESULT.
+wait_for_worker_run() {
+  local since run
+  since=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+  say "Waiting for the top of the hour…"
+  for _ in $(seq 70); do
+    run=$(newest_dispatch "$since" "Feed check started by the Worker") || {
+      WORKER_RESULT="gh couldn't list Deploy's runs (its error is above): $DEPLOY_RUNS"
+      return 1; }
+    if [[ -n "$run" ]]; then
+      WORKER_RESULT="The Worker started a feed check: ${run#* }"
+      return
+    fi
+    sleep 60
+  done
+  WORKER_RESULT="No feed check from the Worker in 70 minutes. Its logs (Workers & Pages → jesters-privilege → Logs) name GitHub's answer (docs/deploy.md, Triggers)."
+  return 1
+}
+
 # set_environment_secret ENV NAME VALUE sets a GitHub Actions environment
 # secret, passing the value on stdin. The library's set_secret sets only
 # repository secrets, and this one belongs to production alone.
@@ -297,6 +398,7 @@ set_environment_secret() {
   fi
   SKIPPED+=("GitHub $env secret $name (set it by hand: gh secret set $name --env $env)")
   warn "skipped GitHub $env secret $name: gh not ready; set it later"
+  return 1
 }
 
 run_wizard "$@"; exit
