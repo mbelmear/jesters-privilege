@@ -1,4 +1,4 @@
-// What a failed production deploy or feed check tells the tracker
+// What a failed production deploy, feed check or Start Transcribe tells the tracker
 // (scripts/report-deploy.ts). It names a failed smoke check or a step's
 // `::error::`. Other steps, such as the build, fail with only an exit code, so
 // the report sends the reader to the run.
@@ -6,10 +6,14 @@ import { TERMINAL_COLOR } from "./nightly-report";
 
 export const DEPLOY_ISSUE_TITLE = "Production deploy is failing";
 export const FEED_CHECK_ISSUE_TITLE = "Feed check is failing";
+export const START_TRANSCRIBE_ISSUE_TITLE =
+  "Transcribe wasn't started for a new Episode";
 // The jobs in deploy.yml this reports on. Each has its own issue: a red feed
 // check means nothing new is deploying, not that a deploy went wrong.
 export const DEPLOY_JOB = "Deploy to production";
 export const FEED_CHECK_JOB = "Feed check";
+// Runs after a feed check ships a new Episode (ADR 0004).
+export const START_TRANSCRIBE_JOB = "Start Transcribe";
 
 const SMOKE_CHECK = /Smoke check failed: \S+/;
 const STEP_ERROR = /##\[error\](.+)$/;
@@ -54,7 +58,18 @@ export function feedCheckReport(runUrl: string, log: string): string {
     "",
     failureList(log),
     "",
-    "While the feed check is red, no new Episode, Episode Listen link, or Transcript deploys on its own, and the live site stays as it is. This issue closes itself once a feed check passes.",
+    "A feed check that can't read the feed or the live site deploys nothing: no new Episode, Episode Listen link, or Transcript deploys on its own, and the live site stays as it is. One that only found the Worker has stopped starting feed checks still deploys what it found, but a new Episode then waits hours for GitHub's schedule. This issue closes itself once a feed check passes.",
+  ].join("\n");
+}
+
+/** The issue text for a run whose Start Transcribe job failed. */
+export function startTranscribeReport(runUrl: string, log: string): string {
+  return [
+    `Deploy shipped a new Episode but couldn't start Transcribe: ${runUrl}`,
+    "",
+    failureList(log),
+    "",
+    "The Episode is live without its Transcript, which waits for Transcribe's own schedule; press Run workflow on Transcribe to make it now. Close this once Transcribe has run.",
   ].join("\n");
 }
 
@@ -69,5 +84,10 @@ export const REPORTED_JOBS = [
     job: FEED_CHECK_JOB,
     title: FEED_CHECK_ISSUE_TITLE,
     report: feedCheckReport,
+  },
+  {
+    job: START_TRANSCRIBE_JOB,
+    title: START_TRANSCRIBE_ISSUE_TITLE,
+    report: startTranscribeReport,
   },
 ];

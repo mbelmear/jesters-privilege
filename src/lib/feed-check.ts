@@ -1,4 +1,4 @@
-// The scheduled feed check (ADR 0001): every 2 hours, compare the record a
+// The feed check (ADR 0001): every hour (ADR 0004), compare the record a
 // fresh build would make with the one the live site was built with, and
 // rebuild only when the feed's newest Episode differs or an Episode has gained
 // an Episode Listen link or a Transcript since (ADR 0003). The comparison is
@@ -27,10 +27,12 @@ export type FeedCheckEnv = {
   log: (line: string) => void;
 };
 
-// Sets the step output `rebuild` to "true" or "false" and returns the exit
-// code. A feed or live manifest that can't be read fails the run (1) with no
-// output, so the deploy is skipped, the live site stays as it is, and GitHub
-// emails whoever last changed the workflow's cron line.
+// Sets the step outputs `rebuild` and `new-episode` (the feed's newest
+// Episode is one the live site lacks) to "true" or "false" and returns the
+// exit code. A feed or live manifest that can't be read fails the run (1) with no
+// output, so the deploy is skipped, the live site stays as it is, and the
+// Deploy report opens "Feed check is failing" (docs/deploy.md, Triggers, says
+// whom GitHub emails).
 export async function runFeedCheck(
   site: string,
   env: FeedCheckEnv
@@ -39,7 +41,7 @@ export async function runFeedCheck(
   try {
     const fresh = await env.freshRecord();
     // Unreadable, it fails the run rather than rebuilding: a manifest that
-    // GitHub's runners can never read would otherwise deploy every 2 hours
+    // GitHub's runners can never read would otherwise deploy every hour
     // without a word. The Run workflow button rebuilds by hand.
     const live = await readLiveManifest(site, env.fetch);
     result = compareRecords(live, fresh);
@@ -50,6 +52,10 @@ export async function runFeedCheck(
     return 1;
   }
   env.setOutput("rebuild", String(result.rebuild));
+  env.setOutput(
+    "new-episode",
+    String(result.rebuild && result.cause === "new-episode")
+  );
   env.log(
     `::notice::${result.rebuild ? "Rebuilding" : "No rebuild"}: ${result.reason}`
   );

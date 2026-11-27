@@ -4,22 +4,39 @@ name: Deploy
 # Pushes to main and the Run workflow button deploy to production; each pull
 # request from this repo's own branches gets its own preview URL, posted as a
 # comment (Dependabot's and forks' run without secrets, so they skip it, and a
-# docs-only one has no page to preview). Every 2 hours the feed
-# check deploys only when the feed has an Episode the live site lacks, or an
-# Episode has gained an Episode Listen link or a Transcript. Transcribe
-# (transcribe.yml) starts this workflow itself once it pushes a Transcript, so
-# the feed check only catches the Transcripts it missed. See docs/deploy.md.
+# docs-only one has no page to preview). The feed check deploys only when
+# the feed has an Episode the live site lacks, or an Episode has gained an
+# Episode Listen link or a Transcript. The site Worker's hourly Cron Trigger
+# starts it (ADR 0004), and GitHub's schedule runs it too, as a backstop that
+# also fails when the Worker has stopped. Transcribe (transcribe.yml) starts
+# this workflow itself once it pushes a Transcript, so the feed check only
+# catches the Transcripts it missed. See docs/deploy.md.
+
+# The runs the Worker started carry this name, which is how the backstop and
+# the Deploy report find them (src/lib/feed-check-start.ts); every other run
+# keeps GitHub's own name, since a blank run-name falls back to it (#305). The
+# Worker's token belongs to a Jester, so a button run with feed-check ticked
+# gets the same name; the input's description says to leave it off.
+run-name: ${{ inputs.feed-check && 'Feed check started by the Worker' || '' }}
 
 on:
   push:
     branches: [main]
   pull_request:
   workflow_dispatch:
+    inputs:
+      feed-check:
+        description: >-
+          Set only by the site Worker's hourly trigger: checks the feed first
+          and deploys only if the site is behind. Leave it off; ticked, the
+          run counts as the Worker's and hides a broken Worker for 3 hours.
+        type: boolean
+        default: false
   schedule:
-    # Every 2 hours at 17 past: GitHub delays and drops the most scheduled runs
-    # at the top of the hour. It drops many anyway: 2 a day, not 12, from
-    # 2026-11-22 to 11-25, so release day means pressing Run workflow until
-    # #302 (docs/deploy.md, Triggers).
+    # The backstop (ADR 0004). Every 2 hours at 17 past: GitHub delays and
+    # drops the most scheduled runs at the top of the hour. It drops many
+    # anyway: 2 a day, not 12, from 2026-11-22 to 11-26 (docs/deploy.md,
+    # Triggers).
     - cron: "17 */2 * * *"
 
 permissions:
@@ -130,11 +147,16 @@ jobs:
 
   feed-check:
     name: Feed check
-    if: github.event_name == 'schedule'
+    if: github.event_name == 'schedule' || inputs.feed-check
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    permissions:
+      contents: read
+      # The backstop lists Deploy's runs.
+      actions: read
     outputs:
       rebuild: ${{ steps.check.outputs.rebuild }}
+      new-episode: ${{ steps.check.outputs.new-episode }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -142,29 +164,44 @@ jobs:
       - uses: ./.github/actions/setup
       # Sets rebuild=true only when the feed's newest Episode isn't on the live
       # site, or an Episode has gained an Episode Listen link or a Transcript
-      # since. A feed or
-      # live manifest that can't be read fails this job, so nothing deploys.
+      # since, and new-episode=true in the first case. A feed or live manifest
+      # that can't be read fails this job, so nothing deploys.
       - id: check
         run: npm run feed-check
         env:
           FEED: live
           SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
           SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
+      # The backstop (ADR 0004): a scheduled run fails here, opening "Feed
+      # check is failing", when the Worker hasn't started a feed check for 3
+      # hours, as when its token has expired. The check above has set its
+      # outputs by then, so this run still deploys what it found.
+      - name: Check the Worker is starting feed checks
+        if: github.event_name == 'schedule'
+        run: npm run feed-checks-started
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
 
   deploy:
     name: Deploy to production
     needs: feed-check
-    # Pushes and the Run workflow button always deploy; a scheduled run only
-    # when the feed check asks. The button can pick any branch; only main
-    # reaches production. `!cancelled()` lets this run when the feed check was
-    # skipped, as it is for every trigger but the schedule.
+    # Pushes and the Run workflow button always deploy; a feed check (the
+    # schedule's, or a dispatch with feed-check on, as the Worker's are) only
+    # when it asks. The button can pick any branch; only main reaches
+    # production. `!cancelled()` lets this run when the feed check was
+    # skipped, and when only the backstop's step failed.
     if: >-
       !cancelled() && github.ref == 'refs/heads/main' &&
-      (github.event_name == 'push' || github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' ||
+      (github.event_name == 'workflow_dispatch' && !inputs.feed-check) ||
       needs.feed-check.outputs.rebuild == 'true')
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     environment: production
+    outputs:
+      # Set once wrangler deploy has shipped, whatever the smoke check says.
+      shipped: ${{ steps.ship.outputs.shipped }}
     # Queue production deploys; never cancel one partway.
     concurrency:
       group: production
@@ -198,16 +235,61 @@ jobs:
           TURNSTILE_SITE_KEY: ${{ secrets.PRODUCTION_TURNSTILE_SITE_KEY }}
           SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
           SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
-      - run: |
+      # DEPLOY_DISPATCH_TOKEN lets the Worker's Cron Trigger start the feed
+      # check (ADR 0004; scripts/deploy-dispatch-token-wizard.sh makes it). The
+      # site works without it, so a deploy lacking it goes ahead with a
+      # warning, as one lacking Spotify's key does (CODING_STANDARDS.md,
+      # Secrets): wrangler keeps a secret the file leaves out, and the backstop
+      # fails once the Worker stops starting feed checks.
+      - id: ship
+        run: |
           if [ -z "$TURNSTILE_SECRET_KEY" ]; then
             echo "::error::Production Turnstile secret must be configured"
             exit 1
           fi
-          jq -n '{TURNSTILE_SECRET_KEY: env.TURNSTILE_SECRET_KEY}' > "$RUNNER_TEMP/secrets.json"
+          if [ -n "$DEPLOY_DISPATCH_TOKEN" ]; then
+            jq -n '{TURNSTILE_SECRET_KEY: env.TURNSTILE_SECRET_KEY, DEPLOY_DISPATCH_TOKEN: env.DEPLOY_DISPATCH_TOKEN}' \
+              > "$RUNNER_TEMP/secrets.json"
+          else
+            echo "::warning::DEPLOY_DISPATCH_TOKEN isn't set, so the Worker keeps the token it last had, if any, to start feed checks (docs/deploy.md, Credentials)"
+            jq -n '{TURNSTILE_SECRET_KEY: env.TURNSTILE_SECRET_KEY}' > "$RUNNER_TEMP/secrets.json"
+          fi
           npx wrangler deploy --message "${GITHUB_SHA::7}" \
             --secrets-file "$RUNNER_TEMP/secrets.json"
+          echo "shipped=true" >> "$GITHUB_OUTPUT"
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.PRODUCTION_CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.PRODUCTION_CLOUDFLARE_ACCOUNT_ID }}
           TURNSTILE_SECRET_KEY: ${{ secrets.PRODUCTION_TURNSTILE_SECRET_KEY }}
+          DEPLOY_DISPATCH_TOKEN: ${{ secrets.DEPLOY_DISPATCH_TOKEN }}
       - run: scripts/smoke-check.sh "$GITHUB_SHA"
+
+  # A feed check that deployed a new newest Episode starts Transcribe now,
+  # rather than leaving it to Transcribe's schedule, which GitHub may run hours
+  # late. Its own job, so the build above never holds a token that can start
+  # workflows. It runs once the deploy shipped, even if the smoke check then
+  # failed: the Episode is live, so no later feed check would see it as new.
+  # from-feed-check keeps Transcribe refusing an Episode older than a week
+  # (#240). The Deploy that Transcribe starts once it pushes has the feed
+  # check off, so this never loops. Runs once, never retries; a missed Episode
+  # waits for Transcribe's schedule, and a failure opens "Transcribe wasn't
+  # started for a new Episode" (scripts/report-deploy.ts). A run whose deploy
+  # the production queue cancels never ships, but the Episode is still new to
+  # the live site, so the next feed check deploys it and gets here. It checks
+  # the ref as the deploy job does, so only main's runs start Transcribe.
+  start-transcribe:
+    name: Start Transcribe
+    needs: [feed-check, deploy]
+    if: >-
+      !cancelled() && github.ref == 'refs/heads/main' &&
+      needs.feed-check.outputs.new-episode == 'true' &&
+      needs.deploy.outputs.shipped == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      actions: write
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh workflow run transcribe.yml --ref main -f from-feed-check=true

@@ -45,7 +45,7 @@ describe("runFeedCheck", () => {
       async () => record(EPISODE_1)
     );
     expect(await runFeedCheck(SITE, env)).toBe(0);
-    expect(outputs).toEqual(["rebuild=false"]);
+    expect(outputs).toEqual(["rebuild=false", "new-episode=false"]);
     expect(log).toEqual([
       `::notice::No rebuild: The live site already has the newest Episode (${EPISODE_1}) and every Episode Listen link and Transcript`,
     ]);
@@ -57,7 +57,7 @@ describe("runFeedCheck", () => {
       async () => record(EPISODE_2)
     );
     expect(await runFeedCheck(SITE, env)).toBe(0);
-    expect(outputs).toEqual(["rebuild=true"]);
+    expect(outputs).toEqual(["rebuild=true", "new-episode=true"]);
     expect(log).toEqual([
       `::notice::Rebuilding: The feed's newest Episode (${EPISODE_2}) isn't on the live site, which has ${EPISODE_1}`,
     ]);
@@ -70,7 +70,7 @@ describe("runFeedCheck", () => {
         record(EPISODE_1, { episodeListenLinks: { spotify: [EPISODE_1] } })
     );
     expect(await runFeedCheck(SITE, env)).toBe(0);
-    expect(outputs).toEqual(["rebuild=true"]);
+    expect(outputs).toEqual(["rebuild=true", "new-episode=false"]);
     expect(log).toEqual([
       `::notice::Rebuilding: Episodes have gained Episode Listen links since the live site was built: ${EPISODE_1} in Spotify`,
     ]);
@@ -84,7 +84,7 @@ describe("runFeedCheck", () => {
       async () => record(EPISODE_1)
     );
     expect(await runFeedCheck(SITE, env)).toBe(0);
-    expect(outputs).toEqual(["rebuild=false"]);
+    expect(outputs).toEqual(["rebuild=false", "new-episode=false"]);
     expect(log).toEqual([
       `::notice::No rebuild: The live site already has the newest Episode (${EPISODE_1}) and every Episode Listen link and Transcript`,
     ]);
@@ -96,7 +96,7 @@ describe("runFeedCheck", () => {
       async () => record(EPISODE_1, { transcripts: [EPISODE_1] })
     );
     expect(await runFeedCheck(SITE, env)).toBe(0);
-    expect(outputs).toEqual(["rebuild=true"]);
+    expect(outputs).toEqual(["rebuild=true", "new-episode=false"]);
     expect(log).toEqual([
       `::notice::Rebuilding: Episodes have gained Transcripts since the live site was built: ${EPISODE_1}`,
     ]);

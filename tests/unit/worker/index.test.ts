@@ -12,6 +12,7 @@ function fakeEnv() {
   const env = {
     ASSETS: assets,
     TURNSTILE_SECRET_KEY: "turnstile-secret",
+    DEPLOY_DISPATCH_TOKEN: "dispatch-token",
     SUBMISSION_EMAIL: {
       send: async (message: unknown) => {
         sent.push(message);
@@ -166,6 +167,85 @@ describe("Worker", () => {
 
       expect(response.status).toBe(405);
       expect(response.headers.get("Allow")).toBe("POST");
+    });
+  });
+
+  describe("the hourly Cron Trigger", () => {
+    afterEach(() => jest.restoreAllMocks());
+
+    const DISPATCHES =
+      "https://api.github.com/repos/mbelmear/jesters-privilege/actions/workflows/deploy.yml/dispatches";
+
+    it("starts Deploy on main with the feed check turned on", async () => {
+      // Made up in the format GitHub's REST docs give for a dispatch that
+      // returns the run's details (read 2026-11-26); only the log line reads
+      // it. Its 200 isn't pinned: the Worker takes any 2xx as started.
+      const github = jest.spyOn(globalThis, "fetch").mockResolvedValue(
+        Response.json({
+          workflow_run_id: 101,
+          run_url:
+            "https://api.github.com/repos/mbelmear/jesters-privilege/actions/runs/101",
+          html_url:
+            "https://github.com/mbelmear/jesters-privilege/actions/runs/101",
+        })
+      );
+      const logged = jest.spyOn(console, "log").mockImplementation(() => {});
+
+      await worker.scheduled({}, fakeEnv().env);
+
+      const [url, init] = github.mock.calls[0];
+      expect(url).toBe(DISPATCHES);
+      expect(init?.method).toBe("POST");
+      const headers = new Headers(init?.headers);
+      expect(headers.get("Authorization")).toBe("Bearer dispatch-token");
+      // GitHub's REST API refuses a request without one.
+      expect(headers.get("User-Agent")).toBeTruthy();
+      expect(JSON.parse(String(init?.body))).toEqual({
+        ref: "main",
+        inputs: { "feed-check": "true" },
+        return_run_details: true,
+      });
+      expect(logged).toHaveBeenCalledWith(
+        "Started a feed check: https://github.com/mbelmear/jesters-privilege/actions/runs/101"
+      );
+    });
+
+    it("fails, naming GitHub's answer, when GitHub refuses the token", async () => {
+      // Recorded 2026-11-26: GitHub's answer to a POST to DISPATCHES with a
+      // token that isn't one.
+      jest.spyOn(globalThis, "fetch").mockResolvedValue(
+        Response.json(
+          {
+            message: "Bad credentials",
+            documentation_url: "https://docs.github.com/rest",
+            status: "401",
+          },
+          { status: 401 }
+        )
+      );
+
+      const error = await worker.scheduled({}, fakeEnv().env).then(
+        () => null,
+        (thrown: unknown) => thrown
+      );
+
+      expect(error).toEqual(
+        new Error(
+          "GitHub refused to start the feed check (401): Bad credentials"
+        )
+      );
+    });
+
+    it("fails without asking GitHub when the Worker has no token", async () => {
+      const github = jest.spyOn(globalThis, "fetch");
+      const { env } = fakeEnv();
+
+      await expect(
+        worker.scheduled({}, { ...env, DEPLOY_DISPATCH_TOKEN: undefined })
+      ).rejects.toThrow(
+        "DEPLOY_DISPATCH_TOKEN isn't set, so no feed check was started (docs/deploy.md, Credentials)"
+      );
+      expect(github).not.toHaveBeenCalled();
     });
   });
 });

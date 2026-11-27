@@ -1,5 +1,5 @@
 // The build manifest is published at BUILD_MANIFEST_PATH on every deploy. The
-// scheduled feed check reads it from the live site and rebuilds when the
+// feed check (ADR 0004) reads it from the live site and rebuilds when the
 // feed's newest Episode differs from the one recorded here (ADR 0001), or when
 // an Episode has gained a Transcript or an Episode Listen link since (ADR 0003).
 // Both sides build their record with `buildRecord`, so the check compares
@@ -49,11 +49,14 @@ export function buildRecord({
   };
 }
 
+// What a rebuild brings the live site. A new newest Episode is the one cause
+// after which a feed check starts Transcribe (ADR 0004).
+export type RebuildCause = "new-episode" | "listen-links" | "transcripts";
+
 // Whether the live site is behind, and why.
-export type FeedCheck = {
-  rebuild: boolean;
-  reason: string;
-};
+export type FeedCheck =
+  | { rebuild: false; reason: string }
+  | { rebuild: true; cause: RebuildCause; reason: string };
 
 // Compares the live site's record with a fresh one: rebuild when the feed's
 // newest Episode differs (ADR 0001), or when an Episode has gained an Episode
@@ -66,6 +69,7 @@ export function compareRecords(
   if (live.newestEpisodeGuid !== fresh.newestEpisodeGuid) {
     return {
       rebuild: true,
+      cause: "new-episode",
       reason: `The feed's newest Episode (${fresh.newestEpisodeGuid}) isn't on the live site, which has ${live.newestEpisodeGuid}`,
     };
   }
@@ -79,6 +83,7 @@ export function compareRecords(
       .join(", ");
     return {
       rebuild: true,
+      cause: "listen-links",
       reason: `Episodes have gained Episode Listen links since the live site was built: ${named}`,
     };
   }
@@ -87,6 +92,7 @@ export function compareRecords(
   if (transcribed.length > 0) {
     return {
       rebuild: true,
+      cause: "transcripts",
       reason: `Episodes have gained Transcripts since the live site was built: ${transcribed.join(", ")}`,
     };
   }

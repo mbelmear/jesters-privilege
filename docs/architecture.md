@@ -4,7 +4,7 @@ How the Jester's Privilege site is built and how it works, for an engineer new t
 
 ## The shape of it
 
-The site is a **static export**: Next.js renders every page to HTML at build time, and one Cloudflare Worker serves those files. Nothing renders on request. New Episodes reach the site because a GitHub Actions workflow checks the podcast feed every 2 hours and rebuilds when something has changed ([ADR 0001](adr/0001-static-site-rebuilt-on-schedule.md)). The Worker's only jobs beyond serving files are redirecting `www` and accepting listener Submissions.
+The site is a **static export**: Next.js renders every page to HTML at build time, and one Cloudflare Worker serves those files. Nothing renders on request. New Episodes reach the site because a GitHub Actions workflow checks the podcast feed every hour and rebuilds when something has changed ([ADR 0001](adr/0001-static-site-rebuilt-on-schedule.md)); the Worker starts that check ([ADR 0004](adr/0004-feed-check-started-by-cloudflare-cron.md)). The Worker's only jobs beyond serving files and starting the feed check are redirecting `www` and accepting listener Submissions.
 
 ```mermaid
 flowchart LR
@@ -16,9 +16,9 @@ flowchart LR
   end
 
   subgraph GitHub Actions
-    Check[Feed check<br/>every 2 hours]
+    Check[Feed check<br/>hourly]
     Build[Build<br/>snapshot + next build]
-    Transcribe[Transcribe<br/>Whisper, every 2 hours]
+    Transcribe[Transcribe<br/>Whisper]
   end
 
   subgraph Cloudflare
@@ -37,7 +37,9 @@ flowchart LR
   Spotify --> Build
   TB --> Build
   Transcribe -->|pushes .vtt| TB
+  Worker -->|hourly Cron Trigger| Check
   Check -->|rebuild=true| Build
+  Check -->|new Episode deployed| Transcribe
   Check -->|reads /build-manifest.json| Worker
   Build -->|wrangler deploy| Assets
   Visitor((Visitor)) --> Worker
@@ -75,11 +77,11 @@ Which feed a build reads is the `FEED` environment value (`src/lib/feed-source.t
 
 ### The feed check
 
-`.github/workflows/deploy.yml` runs the feed check every 2 hours (`scripts/feed-check.ts`, logic in `src/lib/feed-check.ts`). It builds the record a fresh build would publish and compares it with the live site's `/build-manifest.json` (`src/lib/build-manifest.ts`): the newest Episode's GUID, which Episodes each app lists, and which Episodes have a Transcript. Only when one differs does it rebuild and deploy, so one new Episode costs one deploy. GitHub runs the schedule far less often than it asks, so until #302 release day means pressing **Run workflow** on Deploy. [`deploy.md`](deploy.md) has every trigger and failure mode.
+`.github/workflows/deploy.yml` runs the feed check (`scripts/feed-check.ts`, logic in `src/lib/feed-check.ts`) every hour, started by the Worker's Cron Trigger ([ADR 0004](adr/0004-feed-check-started-by-cloudflare-cron.md)), and every 2 hours on GitHub's schedule, which is the backstop. It builds the record a fresh build would publish and compares it with the live site's `/build-manifest.json` (`src/lib/build-manifest.ts`): the newest Episode's GUID, which Episodes each app lists, and which Episodes have a Transcript. Only when one differs does it rebuild and deploy, so one new Episode costs one deploy, and a new Episode is live within about 1¼ hours. GitHub runs its schedule far less often than it asks, so the scheduled run also fails when the Worker hasn't started a feed check for 3 hours, as when its token has expired. [`deploy.md`](deploy.md) has every trigger and failure mode.
 
 ### Transcripts
 
-Spreaker makes no Transcripts, so the site makes its own ([ADR 0003](adr/0003-site-makes-its-own-transcripts.md)). Half an hour after each feed check, `.github/workflows/transcribe.yml` finds Episodes in their first week with neither a feed-linked Transcript nor a saved one, transcribes each once with whisper.cpp, and pushes `<episode-guid>.vtt` to the `transcripts` branch. Builds read that branch, and a run that pushed one then starts Deploy itself, so the Transcript is live within minutes; the feed check catches any it missed. Because an Episode with a saved file is never transcribed again, a hand fix to its file sticks. An older Episode with nothing saved fails a scheduled run rather than spend an hour of Whisper on it; a run started by hand remakes it ([`deploy.md`](deploy.md), Transcripts).
+Spreaker makes no Transcripts, so the site makes its own ([ADR 0003](adr/0003-site-makes-its-own-transcripts.md)). Once a feed check deploys a new Episode, Deploy starts `.github/workflows/transcribe.yml`, which finds Episodes in their first week with neither a feed-linked Transcript nor a saved one, transcribes each once with whisper.cpp, and pushes `<episode-guid>.vtt` to the `transcripts` branch. Builds read that branch, and a run that pushed one then starts Deploy itself, so the Transcript is live within minutes; Transcribe's own schedule retries what a failed run missed, and the feed check catches any Transcript a failed deploy left out. Because an Episode with a saved file is never transcribed again, a hand fix to its file sticks. An older Episode with nothing saved fails a scheduled run rather than spend an hour of Whisper on it; a run started by hand remakes it ([`deploy.md`](deploy.md), Transcripts).
 
 On the page, the Transcript module (`src/lib/transcript.ts`) groups WebVTT cues into timestamped paragraphs. The full text is always in the HTML for search engines; tapping a timestamp seeks the player.
 
@@ -89,6 +91,7 @@ On the page, the Transcript module (`src/lib/transcript.ts`) groups WebVTT cues 
 
 - `www.jestersprivilegepodcast.com/<path>` answers with a 301 to the apex.
 - `POST /api/submit` goes to the Submit handler.
+- Its Cron Trigger (`triggers` in `wrangler.jsonc`, production only) calls `scheduled` every hour, which starts Deploy's feed check through GitHub's API (`src/lib/feed-check-start.ts`, [`deploy.md`](deploy.md), Triggers).
 - Everything else is served from `out/`, with the themed 404 page for a missing path.
 
 **Submit** (`src/lib/submit.ts`) validates the Submission, drops honeypot hits silently, verifies the Cloudflare Turnstile token server-side, and sends one email to the show's Gmail through the Worker's `send_email` binding. Nothing is stored. The Turnstile verifier and the email sender are injected (`src/worker/adapters.ts`), so the handler is tested without Cloudflare. The request and response shapes are in [`deploy.md`](deploy.md), Submit endpoint.
@@ -147,7 +150,7 @@ Every change is a ticket on GitHub Issues, built test-first in its own git workt
 
 `main`'s ruleset requires a pull request, squash merges, every CI check and the PR gate, with no bypass. A visual PR also waits for a Jester's approval on the preview. A push to `main` deploys to production and runs a smoke check against the live site (`scripts/smoke-check.sh`). After the merge, the Merge audit workflow checks the review really happened, and Conflict watch flags waiting visual PRs that no longer merge cleanly. How each test layer runs and the full merge procedure: [`testing.md`](testing.md).
 
-When a scheduled run fails (the feed check, a production deploy, Nightly), a workflow opens an issue naming the failure, or comments on the one still open (`deploy-report.yml`, `nightly.yml`). The next passing feed check closes its own issue; a failed deploy's or Nightly's is closed by hand once a run passes again.
+When a feed check, a production deploy, Deploy's Start Transcribe, or Nightly fails, a workflow opens an issue naming the failure, or comments on the one still open (`deploy-report.yml`, `nightly.yml`). The next passing feed check closes its own issue; the others are closed by hand, a failed deploy's or Nightly's once a run passes again and Start Transcribe's once Transcribe has run.
 
 ## Where to read next
 

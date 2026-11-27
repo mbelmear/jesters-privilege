@@ -25,6 +25,11 @@
       "destination_address": "thejestersprivilegepodcast@gmail.com",
     },
   ],
+  // Hourly, the Worker starts the feed check through GitHub (ADR 0004,
+  // src/lib/feed-check-start.ts) with DEPLOY_DISPATCH_TOKEN, a Worker secret
+  // the deploy workflow uploads. Production only: the preview Worker
+  // (wrangler.preview.jsonc) has no trigger, so previews never start one.
+  "triggers": { "crons": ["0 * * * *"] },
   // Workers Logs keep the Worker's logs, a failed Submission's among them,
   // for a Jester to read in the dashboard. Cloudflare's default turns them on
   // only for newly created Workers, so they're set here (#46, docs/deploy.md).

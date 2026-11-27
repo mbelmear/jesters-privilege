@@ -3,10 +3,12 @@ import {
   DEPLOY_JOB,
   FEED_CHECK_JOB,
   REPORTED_JOBS,
+  START_TRANSCRIBE_JOB,
   deployFailures,
   deployReport,
   feedCheckPassed,
   feedCheckReport,
+  startTranscribeReport,
 } from "@/lib/deploy-report";
 
 const RUN = "https://github.com/mbelmear/jesters-privilege/actions/runs/1";
@@ -72,8 +74,39 @@ describe("feedCheckReport", () => {
     expect(report).toContain("closes itself once a feed check passes");
   });
 
+  it("says a scheduled check that only found the Worker stopped still deploys", () => {
+    const report = feedCheckReport(
+      RUN,
+      "2026-11-26T15:20:00.0000000Z ##[error]No feed check started by the Worker has run in the last 3 hours (the newest was at 2026-11-26T11:00:02Z), so a new Episode waits for GitHub's schedule."
+    );
+    expect(report).toContain(
+      "- No feed check started by the Worker has run in the last 3 hours"
+    );
+    expect(report).toContain(
+      "One that only found the Worker has stopped starting feed checks still deploys what it found"
+    );
+  });
+
   it("says so when the logs name no failure", () => {
     expect(feedCheckReport(RUN, "")).toContain("No failure is named");
+  });
+});
+
+describe("startTranscribeReport", () => {
+  it("links the run, names the cause, and says how to get the Transcript", () => {
+    // Made up in a job log's format: the error a refused dispatch might print.
+    const report = startTranscribeReport(
+      RUN,
+      "2026-11-27T10:05:00.0000000Z ##[error]HTTP 403: Resource not accessible by integration"
+    );
+    expect(report).toContain(
+      `Deploy shipped a new Episode but couldn't start Transcribe: ${RUN}`
+    );
+    expect(report).toContain(
+      "- HTTP 403: Resource not accessible by integration"
+    );
+    expect(report).toContain("press Run workflow on Transcribe");
+    expect(report).toContain("Close this once Transcribe has run.");
   });
 });
 
@@ -91,6 +124,11 @@ describe("REPORTED_JOBS", () => {
       "The production deploy failed",
     ],
     ["Feed check", "Feed check is failing", "The feed check failed"],
+    [
+      "Start Transcribe",
+      "Transcribe wasn't started for a new Episode",
+      "Deploy shipped a new Episode but couldn't start Transcribe",
+    ],
   ])("gives %s its own title and report", (job, title, headline) => {
     const reported = REPORTED_JOBS.find((entry) => entry.job === job);
     expect(reported?.title).toBe(title);
@@ -104,13 +142,15 @@ describe("the workflows it reads", () => {
     const deploy = readFileSync(".github/workflows/deploy.yml", "utf8");
     expect(deploy).toContain(`name: ${DEPLOY_JOB}\n`);
     expect(deploy).toContain(`name: ${FEED_CHECK_JOB}\n`);
+    expect(deploy).toContain(`name: ${START_TRANSCRIBE_JOB}\n`);
     expect(deploy).toMatch(/^name: Deploy$/m);
     const report = readFileSync(".github/workflows/deploy-report.yml", "utf8");
     expect(report).toContain("workflows: [Deploy]");
     // A run where the feed check passes and nothing deploys ends in success, and
     // the report job has to run for it, or the feed check's issue never closes.
+    // The Worker's runs count too (tests/unit/scripts/feed-check-workflows.test.ts).
     expect(report).toMatch(
-      /conclusion == 'success' &&\s+github\.event\.workflow_run\.event == 'schedule'/
+      /conclusion == 'success' &&\s+\(?github\.event\.workflow_run\.event == 'schedule'/
     );
   });
 });

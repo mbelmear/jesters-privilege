@@ -141,7 +141,7 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
 
 - One GitHub Actions workflow builds and deploys with `wrangler`. It has three triggers:
   - every push to `main`
-  - a feed check **every 2 hours**, which rebuilds when the newest Episode differs from what's deployed, or when an Episode has gained a Transcript or an Episode Listen link since (ADR 0003)
+  - a feed check **every hour**, started by the Worker's Cron Trigger with GitHub's schedule as a backstop (ADR 0004), which rebuilds when the newest Episode differs from what's deployed, or when an Episode has gained a Transcript or an Episode Listen link since (ADR 0003)
   - a manual **Run workflow** button
 - The site publishes a small build manifest (the identity of the newest Episode it was built with, and which Episodes it had Transcripts and Episode Listen links for), which the feed check compares against.
 - If the feed can't be reached or fails validation, the build fails and the last good deploy stays live. A failed workflow emails whoever GitHub notifies for that run (`docs/deploy.md`, Triggers).
@@ -389,7 +389,7 @@ Episodes come from the Spreaker podcast feed and appear automatically. The visua
   - the Jesters' approval of the rewritten Fools' Gallery copy and the light wit pass on working messages
   - headshots for all three Jesters
   - final logo files (SVG, transparent background, square mark, dark-background version)
-- **Human-only setup**: a Cloudflare account and domain purchase; the account prerequisites in `docs/deploy.md`: the workers.dev subdomain `jestersprivilege`, Always Use HTTPS on, `thejestersprivilegepodcast@gmail.com` verified as an Email Routing destination, a routing rule forwarding `hello@` to that Gmail and no other inbox, and the API token's permissions; that token and the account ID as GitHub secrets; Turnstile keys; and the Spotify key (`scripts/spotify-key-wizard.sh`, done 2026-11-05).
+- **Human-only setup**: a Cloudflare account and domain purchase; the account prerequisites in `docs/deploy.md`: the workers.dev subdomain `jestersprivilege`, Always Use HTTPS on, `thejestersprivilegepodcast@gmail.com` verified as an Email Routing destination, a routing rule forwarding `hello@` to that Gmail and no other inbox, and the API token's permissions; that token and the account ID as GitHub secrets; Turnstile keys; the Spotify key (`scripts/spotify-key-wizard.sh`, done 2026-11-05); and the GitHub token the Worker starts the feed check with (`scripts/deploy-dispatch-token-wizard.sh`, renewed yearly on #304).
 - **Build phases**:
 
   0. Human setup.
