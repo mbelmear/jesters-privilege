@@ -243,7 +243,10 @@ else
 fi
 
 stage "Save it for production deploys"
-set_environment_secret production DEPLOY_DISPATCH_TOKEN "$DEPLOY_DISPATCH_TOKEN"
+saved=""
+if set_environment_secret production DEPLOY_DISPATCH_TOKEN "$DEPLOY_DISPATCH_TOKEN"; then
+  saved=yes
+fi
 expires=$(node -e 'const d = new Date(); d.setUTCDate(d.getUTCDate() + 366); console.log(d.toISOString().slice(0, 10))')
 say "It expires about $expires. Set #304's title and dates to the expiry"
 say "GitHub shows for it:"
@@ -257,7 +260,9 @@ say "Each production deploy uploads it to the Worker. Until one runs, the"
 say "Worker has no token and starts no feed check."
 # Enter means yes to both: on #306 the step that waited on a person was the
 # one skipped.
-if confirm_yes "Deploy main now, with feed-check off, so the Worker gets it?" &&
+if [[ -z "$saved" ]]; then
+  warn "Save the token first (above); a deploy now would upload nothing."
+elif confirm_yes "Deploy main now, with feed-check off, so the Worker gets it?" &&
   deploy_main; then
   printf '  %s✓%s %s\n' "$GREEN" "$RESET" "$DEPLOY_RESULT"
   # Only a run the Worker started shows the token can start runs; the check
@@ -309,14 +314,14 @@ confirm_yes() {
   [[ ! "$reply" =~ ^[Nn] ]]
 }
 
-# newest_dispatch SINCE [TITLE] prints the newest Deploy run on main from the
-# button or a dispatch, made at or after SINCE (UTC, as GitHub's createdAt
-# is), with that title if given: its id and url, or nothing.
+# newest_dispatch SINCE TITLE prints the newest Deploy run on main from the
+# button or a dispatch with that title, made at or after SINCE (UTC, as
+# GitHub's createdAt is): its id and url, or nothing. When gh fails, its error
+# shows and this fails, so a broken gh never reads as no run.
 newest_dispatch() {
   gh run list --workflow=deploy.yml --event=workflow_dispatch --branch=main \
     --limit=5 --json databaseId,url,createdAt,displayTitle \
-    --jq "[.[] | select(.createdAt >= \"$1\" and (\"$2\" == \"\" or .displayTitle == \"$2\"))][0] | select(.) | \"\\(.databaseId) \\(.url)\"" \
-    2>/dev/null || true
+    --jq "[.[] | select(.createdAt >= \"$1\" and .displayTitle == \"$2\")][0] | select(.) | \"\\(.databaseId) \\(.url)\""
 }
 
 # deploy_main starts Deploy on main with gh, as the Run workflow button does,
@@ -332,7 +337,9 @@ deploy_main() {
     sleep 3
     # The Worker's own run at the top of the hour carries its name; this one
     # keeps Deploy's.
-    run=$(newest_dispatch "$started" Deploy)
+    run=$(newest_dispatch "$started" Deploy) || {
+      DEPLOY_RESULT="gh couldn't list Deploy's runs (its error is above): $DEPLOY_RUNS"
+      return 1; }
     [[ -n "$run" ]] && break
   done
   [[ -n "$run" ]] || { DEPLOY_RESULT="Deploy started but GitHub doesn't list it yet: $DEPLOY_RUNS"; return 1; }
@@ -364,7 +371,9 @@ wait_for_worker_run() {
   since=$(date -u +%Y-%m-%dT%H:%M:%SZ)
   say "Waiting for the top of the hour…"
   for _ in $(seq 70); do
-    run=$(newest_dispatch "$since" "Feed check started by the Worker")
+    run=$(newest_dispatch "$since" "Feed check started by the Worker") || {
+      WORKER_RESULT="gh couldn't list Deploy's runs (its error is above): $DEPLOY_RUNS"
+      return 1; }
     if [[ -n "$run" ]]; then
       WORKER_RESULT="The Worker started a feed check: ${run#* }"
       return
@@ -389,6 +398,7 @@ set_environment_secret() {
   fi
   SKIPPED+=("GitHub $env secret $name (set it by hand: gh secret set $name --env $env)")
   warn "skipped GitHub $env secret $name: gh not ready; set it later"
+  return 1
 }
 
 run_wizard "$@"; exit
