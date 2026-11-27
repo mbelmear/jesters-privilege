@@ -138,17 +138,20 @@ describe("Worker", () => {
       expect(sent).toEqual([]);
     });
 
-    // Made up: Siteverify's error codes as its docs give them, and answers
-    // only the Worker's handling of a failure reads.
     it.each([
+      // Made up: only the Worker's handling of a failure reads it.
       ["answers with an error", madeUpResponse("down", { status: 500 })],
       [
         "refuses the site's secret",
-        madeUpResponse({
-          success: false,
+        // Recorded 2026-11-27 (UTC): Siteverify's answer to a POST with a
+        // secret and a token that aren't ones.
+        recordedResponse("2026-11-27", {
           "error-codes": ["invalid-input-secret"],
+          success: false,
+          messages: [],
         }),
       ],
+      // Made up: only the Worker's handling of a failure reads it.
       ["answers with something other than a verdict", madeUpResponse({})],
     ])("sends nothing when Turnstile %s", async (_case, answer) => {
       fakeFetch(() => answer);

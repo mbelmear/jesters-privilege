@@ -255,26 +255,21 @@ pause "Press Enter once #304 has the date."
 stage "Give the Worker the token"
 say "Each production deploy uploads it to the Worker. Until one runs, the"
 say "Worker has no token and starts no feed check."
-if confirm "Deploy main now, with feed-check off, so the Worker gets it?"; then
-  if deploy_main; then
-    printf '  %s✓%s %s\n' "$GREEN" "$RESET" "$DEPLOY_RESULT"
-    if confirm "Wait for the Worker's first feed check (up to 70 minutes)?"; then
-      if wait_for_worker_run; then
-        printf '  %s✓%s %s\n' "$GREEN" "$RESET" "$WORKER_RESULT"
-      else
-        warn "$WORKER_RESULT"
-      fi
-    else
-      say "Within the hour Actions → Deploy shows a run named 'Feed check"
-      say "started by the Worker': the token can start runs. The check above"
-      say "showed only that it can read them."
-    fi
+# Enter means yes to both: on #306 the step that waited on a person was the
+# one skipped.
+if confirm_yes "Deploy main now, with feed-check off, so the Worker gets it?" &&
+  deploy_main; then
+  printf '  %s✓%s %s\n' "$GREEN" "$RESET" "$DEPLOY_RESULT"
+  # Only a run the Worker started shows the token can start runs; the check
+  # above showed only that it can read them.
+  if confirm_yes "Wait for the Worker's first feed check (up to 70 minutes)?" &&
+    wait_for_worker_run; then
+    printf '  %s✓%s %s\n' "$GREEN" "$RESET" "$WORKER_RESULT"
   else
-    warn "$DEPLOY_RESULT"
-    SKIPPED+=("a production deploy to upload it (Actions → Deploy → Run workflow, on main)")
+    warn "${WORKER_RESULT:-Not checked: within the hour Actions → Deploy should show a run named 'Feed check started by the Worker'.}"
   fi
 else
-  warn "The Worker has no token until a production deploy runs."
+  warn "${DEPLOY_RESULT:-Not deployed: the Worker has no token until a production deploy runs.}"
   SKIPPED+=("a production deploy to upload it (Actions → Deploy → Run workflow, on main)")
 fi
 
@@ -303,50 +298,75 @@ check_token() {
 }
 
 DEPLOY_RUNS="https://github.com/mbelmear/jesters-privilege/actions/workflows/deploy.yml"
+DEPLOY_RESULT=""
+WORKER_RESULT=""
+
+# confirm_yes QUESTION is the library's confirm with yes as the default.
+confirm_yes() {
+  local reply=""
+  printf '  %s? %s [Y/n] ' "$YELLOW" "$1"
+  read -r reply || true
+  [[ ! "$reply" =~ ^[Nn] ]]
+}
+
+# newest_dispatch SINCE [TITLE] prints the newest Deploy run on main from the
+# button or a dispatch, made at or after SINCE (UTC, as GitHub's createdAt
+# is), with that title if given: its id and url, or nothing.
+newest_dispatch() {
+  gh run list --workflow=deploy.yml --event=workflow_dispatch --branch=main \
+    --limit=5 --json databaseId,url,createdAt,displayTitle \
+    --jq "[.[] | select(.createdAt >= \"$1\" and (\"$2\" == \"\" or .displayTitle == \"$2\"))][0] | select(.) | \"\\(.databaseId) \\(.url)\"" \
+    2>/dev/null || true
+}
 
 # deploy_main starts Deploy on main with gh, as the Run workflow button does,
 # and waits for it. Sets DEPLOY_RESULT to the run and how it ended, and fails
 # when the run fails or its log says the token wasn't uploaded.
 deploy_main() {
-  local started id
+  local started run="" id url log
   started=$(date -u +%Y-%m-%dT%H:%M:%SZ)
   gh workflow run deploy.yml --ref main >/dev/null 2>&1 || {
     DEPLOY_RESULT="gh couldn't start Deploy; press Run workflow at $DEPLOY_RUNS"
     return 1; }
-  say "Started Deploy; waiting for GitHub to list it…"
   for _ in 1 2 3 4 5 6 7 8 9 10; do
     sleep 3
-    id=$(gh run list --workflow=deploy.yml --event=workflow_dispatch --branch=main \
-      --limit=5 --json databaseId,createdAt \
-      --jq "[.[] | select(.createdAt >= \"$started\")][0].databaseId // empty")
-    [[ -n "$id" ]] && break
+    # The Worker's own run at the top of the hour carries its name; this one
+    # keeps Deploy's.
+    run=$(newest_dispatch "$started" Deploy)
+    [[ -n "$run" ]] && break
   done
-  [[ -n "$id" ]] || { DEPLOY_RESULT="Deploy started but GitHub doesn't list it yet: $DEPLOY_RUNS"; return 1; }
-  say "Deploying (a few minutes; it waits behind any production deploy running)…"
+  [[ -n "$run" ]] || { DEPLOY_RESULT="Deploy started but GitHub doesn't list it yet: $DEPLOY_RUNS"; return 1; }
+  id=${run%% *}; url=${run#* }
+  say "Deploying: $url"
+  say "(a few minutes; it waits behind any production deploy running)"
   if ! gh run watch "$id" --exit-status >/dev/null 2>&1; then
-    DEPLOY_RESULT="Deploy failed: $(gh run view "$id" --json url --jq .url)"
+    DEPLOY_RESULT="Deploy failed: $url"
     return 1
   fi
-  if gh run view "$id" --log 2>/dev/null | grep -q "DEPLOY_DISPATCH_TOKEN isn't set"; then
-    DEPLOY_RESULT="Deploy passed but didn't find the token in production: $(gh run view "$id" --json url --jq .url)"
+  # The log also holds the step's script, warning line included, so only the
+  # annotation GitHub prints for it counts.
+  if ! log=$(gh run view "$id" --log 2>/dev/null); then
+    DEPLOY_RESULT="Deploy passed, but its log couldn't be read to check the token: $url"
     return 1
   fi
-  DEPLOY_RESULT="Deployed with the token: $(gh run view "$id" --json url --jq .url)"
+  if [[ "$log" == *"##[warning]DEPLOY_DISPATCH_TOKEN isn't set"* ]]; then
+    DEPLOY_RESULT="Deploy passed but didn't find the token in production: $url"
+    return 1
+  fi
+  DEPLOY_RESULT="Deployed with the token: $url"
 }
 
 # wait_for_worker_run polls for a Deploy run the Worker started, which proves
 # the token can start runs; the Cron Trigger fires at the top of each hour.
 # Sets WORKER_RESULT.
 wait_for_worker_run() {
-  local since url
+  local since run
   since=$(date -u +%Y-%m-%dT%H:%M:%SZ)
   say "Waiting for the top of the hour…"
   for _ in $(seq 70); do
-    url=$(gh run list --workflow=deploy.yml --event=workflow_dispatch --branch=main \
-      --limit=5 --json url,createdAt,displayTitle \
-      --jq "[.[] | select(.createdAt >= \"$since\" and .displayTitle == \"Feed check started by the Worker\")][0].url // empty")
-    if [[ -n "$url" ]]; then
-      WORKER_RESULT="The Worker started a feed check: $url"
+    run=$(newest_dispatch "$since" "Feed check started by the Worker")
+    if [[ -n "$run" ]]; then
+      WORKER_RESULT="The Worker started a feed check: ${run#* }"
       return
     fi
     sleep 60

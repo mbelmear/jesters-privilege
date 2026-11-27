@@ -77,7 +77,7 @@ describe("retired claims", () => {
     ).toBe(false);
   });
 
-  it("appear nowhere but the ADRs", () => {
+  it("appear nowhere but the ADRs, the Jesters' inputs and this file", () => {
     const found = files.flatMap((path) =>
       readFileSync(join(repoRoot, path), "utf8")
         .split("\n")
